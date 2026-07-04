@@ -58,7 +58,7 @@ export default function SignInForm({ onSwitchForm, onAuthSuccess }) {
       <div className="form-header">
         <h2 className="form-title">Welcome back</h2>
         <p className="form-subtitle">
-          Don't have an account? <span onClick={() => onSwitchForm('signup')}>Sign up</span>
+          New to OYEN GRID? <span onClick={() => onSwitchForm('portal')}>Register account</span>
         </p>
       </div>
 

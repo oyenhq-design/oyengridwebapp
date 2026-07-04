@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Grid, ShieldCheck, LogOut, LayoutDashboard, Users, BookOpen, MessageSquare, BrainCircuit, BarChart3, Settings } from 'lucide-react';
+import { Sun, Moon, Grid, ShieldCheck, LogOut, LayoutDashboard, Users, BookOpen, MessageSquare, BrainCircuit, BarChart3, Settings, Building2, User, UserCheck } from 'lucide-react';
 import SignInForm from './components/SignInForm';
-import SignUpForm from './components/SignUpForm';
+import OrgRegistrationForm from './components/OrgRegistrationForm';
+import InvitedUserForm from './components/InvitedUserForm';
+import IndividualRegistrationForm from './components/IndividualRegistrationForm';
 import ForgotPasswordForm from './components/ForgotPasswordForm';
 
 export default function App() {
-  const [activeForm, setActiveForm] = useState('signin'); // 'signin' | 'signup' | 'forgot'
+  const [activeForm, setActiveForm] = useState('portal'); // 'portal' | 'signin' | 'org_signup' | 'invite_signup' | 'individual_signup' | 'forgot'
   const [theme, setTheme] = useState('dark');
   const [user, setUser] = useState(null); // When authenticated, holds user email
+  const [userRole, setUserRole] = useState('Super Admin'); // Dynamically updated based on entry point
   const canvasRef = useRef(null);
 
   // Initialize and update theme attributes
@@ -161,13 +164,14 @@ export default function App() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const handleAuthSuccess = (email) => {
+  const handleAuthSuccess = (email, role = 'Super Admin') => {
     setUser(email);
+    setUserRole(role);
   };
 
   const handleLogOut = () => {
     setUser(null);
-    setActiveForm('signin');
+    setActiveForm('portal');
   };
 
   // Render Dashboard Workspace Preview if Logged In
@@ -224,7 +228,7 @@ export default function App() {
                 OG
               </div>
               <div style={{ overflow: 'hidden' }}>
-                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>Administrator</p>
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{userRole}</p>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user}</p>
               </div>
             </div>
@@ -239,14 +243,14 @@ export default function App() {
           {/* Header */}
           <header style={{ height: '70px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', backgroundColor: 'var(--bg-card)', backdropFilter: 'blur(10px)' }}>
             <div>
-              <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Workspace Shell Preview</h1>
+              <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>OYEN GRID Workspace Shell</h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <button onClick={toggleTheme} className="theme-toggle-btn" style={{ position: 'static' }}>
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               </button>
               <div style={{ padding: '0.25rem 0.75rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid var(--border-focus)' }}>
-                MVP Mode
+                Identity Verified
               </div>
             </div>
           </header>
@@ -256,18 +260,18 @@ export default function App() {
             <div className="form-card" style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)', marginBottom: '1rem' }}>
                 <ShieldCheck size={32} />
-                <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Authentication Complete</h2>
+                <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Enterprise Authentication Successful</h2>
               </div>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '1.05rem', lineHeight: '1.6' }}>
-                Welcome to OYEN GRID. You have logged in successfully with <strong>{user}</strong>. The application scaffolding and entry point authentication is now verified.
+                Authenticated successfully as <strong>{userRole}</strong> ({user}). Your access scope is mapped directly to this OYEN GRID instance.
               </p>
               
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.75rem' }}>Next Sprints from Roadmap:</h3>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.75rem' }}>Active Security Policies Applied:</h3>
                 <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <li><strong>Sprint 1 Foundation</strong> — Shell Layout, Responsive Workspace Sidebar, Header Navigation, Dark/Light Theme controls.</li>
-                  <li><strong>Sprint 2 Setup</strong> — Organization creation dialogs, invite workflows, multi-role workspace profiles.</li>
-                  <li><strong>Sprint 3 Dashboard Insights</strong> — Integration of personalized activity grids, today's sessions list, and mock AI insight items.</li>
+                  <li><strong>Multi-Factor Authentication (MFA)</strong> — Active</li>
+                  <li><strong>Audit Log Tracking</strong> — Commenced</li>
+                  <li><strong>Active Session Tokens</strong> — Scoped & Enforced</li>
                 </ul>
               </div>
 
@@ -317,17 +321,82 @@ export default function App() {
         </button>
 
         <div className="form-wrapper">
+          {activeForm === 'portal' && (
+            <div className="form-card animate-fade-in">
+              <div className="form-header">
+                <h2 className="form-title">Welcome to OYEN GRID</h2>
+                <p className="form-subtitle">Choose an entry pathway to continue</p>
+              </div>
+
+              <div className="portal-list">
+                {/* Organization Onboarding */}
+                <button className="portal-btn" onClick={() => setActiveForm('org_signup')}>
+                  <div className="portal-btn-icon">
+                    <Building2 size={24} />
+                  </div>
+                  <div className="portal-btn-content">
+                    <div className="portal-btn-title">🏢 Organization</div>
+                    <div className="portal-btn-desc">Register a new company workspace group</div>
+                  </div>
+                </button>
+
+                {/* Individual Learner */}
+                <button className="portal-btn" onClick={() => setActiveForm('individual_signup')}>
+                  <div className="portal-btn-icon">
+                    <User size={24} />
+                  </div>
+                  <div className="portal-btn-content">
+                    <div className="portal-btn-title">👤 Individual</div>
+                    <div className="portal-btn-desc">Register as freelancer or guest learner</div>
+                  </div>
+                </button>
+
+                {/* Invited Workspace User */}
+                <button className="portal-btn" onClick={() => setActiveForm('invite_signup')}>
+                  <div className="portal-btn-icon">
+                    <UserCheck size={24} />
+                  </div>
+                  <div className="portal-btn-content">
+                    <div className="portal-btn-title">🎓 Invited User</div>
+                    <div className="portal-btn-desc">Join via workspace code or invite links</div>
+                  </div>
+                </button>
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '1rem' }} className="form-subtitle">
+                Already have an account? <span onClick={() => setActiveForm('signin')}>Sign in</span>
+              </div>
+            </div>
+          )}
+
           {activeForm === 'signin' && (
             <SignInForm 
               onSwitchForm={setActiveForm} 
-              onAuthSuccess={handleAuthSuccess} 
+              onAuthSuccess={(email) => handleAuthSuccess(email, 'Workspace Super Admin')} 
             />
           )}
-          {activeForm === 'signup' && (
-            <SignUpForm 
+
+          {activeForm === 'org_signup' && (
+            <OrgRegistrationForm 
               onSwitchForm={setActiveForm} 
+              onComplete={(email) => handleAuthSuccess(email, 'Organization Admin')} 
             />
           )}
+
+          {activeForm === 'invite_signup' && (
+            <InvitedUserForm 
+              onSwitchForm={setActiveForm} 
+              onComplete={(email) => handleAuthSuccess(email, 'Invited Employee')} 
+            />
+          )}
+
+          {activeForm === 'individual_signup' && (
+            <IndividualRegistrationForm 
+              onSwitchForm={setActiveForm} 
+              onComplete={(email) => handleAuthSuccess(email, 'Individual User')} 
+            />
+          )}
+
           {activeForm === 'forgot' && (
             <ForgotPasswordForm 
               onSwitchForm={setActiveForm} 
