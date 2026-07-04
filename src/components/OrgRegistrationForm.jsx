@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Globe, Mail, Phone, ShieldCheck, ArrowRight, ArrowLeft, Lock, FileText, Users, User, Check, Copy, Key } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, ShieldCheck, ArrowRight, ArrowLeft, Lock, FileText, Users, User, Check, Copy, Key, Calendar, Laptop, BookOpen } from 'lucide-react';
 
 export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
   const [step, setStep] = useState(1);
@@ -18,12 +18,14 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
     country: '',
     // Step 2 (Verification OTP)
     // Step 3
+    workspaceTemplate: 'enterprise', // 'enterprise' | 'bootcamp' | 'education' | 'events'
+    // Step 4 (Details)
     bizRegNum: '',
     website: '',
     phone: '',
     address: '',
-    employeeCount: '1-10',
-    // Step 4
+    employeeCount: '11-50',
+    // Step 5 (Primary Admin)
     adminName: '',
     adminTitle: '',
     adminPhone: '',
@@ -31,7 +33,7 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
     confirmPassword: ''
   });
 
-  // Generated Security codes for Step 5
+  // Generated Security codes for Step 6
   const [securityData, setSecurityData] = useState({
     orgId: '',
     accessCode: '',
@@ -56,9 +58,9 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
         tempErrors.email = 'Enter a valid corporate email address';
       }
-    } else if (step === 3) {
-      if (!formData.bizRegNum.trim()) tempErrors.bizRegNum = 'Business Registration Number is required';
     } else if (step === 4) {
+      if (!formData.bizRegNum.trim()) tempErrors.bizRegNum = 'Business Registration Number is required';
+    } else if (step === 5) {
       if (!formData.adminName.trim()) tempErrors.adminName = 'Full Name is required';
       if (!formData.adminTitle.trim()) tempErrors.adminTitle = 'Job Title is required';
       if (!formData.password) {
@@ -78,23 +80,23 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
   const handleNext = () => {
     if (step === 1) {
       if (!validateStep()) return;
-      // Simulate sending OTP
       setOtpSent(true);
       setOtpError('');
       setStep(2);
     } else if (step === 2) {
-      // Validate OTP code (mock expected value is 482913)
       if (verificationCode === '482913') {
         setStep(3);
       } else {
         setOtpError('Invalid verification code. Hint: use 482913');
       }
     } else if (step === 3) {
-      if (!validateStep()) return;
       setStep(4);
     } else if (step === 4) {
       if (!validateStep()) return;
-      // Generate security credentials for Step 5
+      setStep(5);
+    } else if (step === 5) {
+      if (!validateStep()) return;
+      // Generate security credentials
       const randString = (len) => Math.random().toString(36).substring(2, 2 + len).toUpperCase();
       const randNum = (len) => Math.floor(Math.pow(10, len - 1) + Math.random() * 9 * Math.pow(10, len - 1)).toString();
 
@@ -103,12 +105,12 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
         accessCode: `OYG-${randString(3)}${randNum(3)}-${randString(2)}`,
         adminId: `ADM-00001`
       });
-      setStep(5);
+      setStep(6);
     }
   };
 
   const handleBack = () => {
-    if (step > 1 && step < 5) setStep(step - 1);
+    if (step > 1 && step < 6) setStep(step - 1);
   };
 
   const handleCopy = (field, text) => {
@@ -119,12 +121,12 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
 
   const handleFinish = () => {
     if (onComplete) {
-      onComplete(formData.email);
+      onComplete(formData.email, formData.workspaceTemplate, 'Enterprise / Pro');
     }
   };
 
   return (
-    <div className="form-card animate-fade-in" style={{ maxWidth: '580px' }}>
+    <div className="form-card animate-fade-in" style={{ maxWidth: '640px' }}>
       <div className="form-header">
         <h2 className="form-title">Register Organization</h2>
         <p className="form-subtitle">
@@ -133,12 +135,13 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
       </div>
 
       {/* Progress Indicators */}
-      <div className="wizard-steps">
+      <div className="wizard-steps" style={{ marginBottom: '2rem' }}>
         <div className={`wizard-step-node ${step >= 1 ? 'completed' : ''} ${step === 1 ? 'active' : ''}`}>1</div>
         <div className={`wizard-step-node ${step >= 2 ? 'completed' : ''} ${step === 2 ? 'active' : ''}`}>2</div>
         <div className={`wizard-step-node ${step >= 3 ? 'completed' : ''} ${step === 3 ? 'active' : ''}`}>3</div>
         <div className={`wizard-step-node ${step >= 4 ? 'completed' : ''} ${step === 4 ? 'active' : ''}`}>4</div>
         <div className={`wizard-step-node ${step >= 5 ? 'completed' : ''} ${step === 5 ? 'active' : ''}`}>5</div>
+        <div className={`wizard-step-node ${step >= 6 ? 'completed' : ''} ${step === 6 ? 'active' : ''}`}>6</div>
       </div>
 
       <div>
@@ -190,10 +193,12 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                     onChange={(e) => handleInputChange('orgType', e.target.value)}
                   >
                     <option value="Enterprise">Enterprise</option>
-                    <option value="Government">Government / Public Sector</option>
+                    <option value="Government">Government</option>
                     <option value="NGO">NGO / Non-Profit</option>
-                    <option value="University">University / Academy</option>
-                    <option value="Energy">Energy & Infrastructure</option>
+                    <option value="University">University</option>
+                    <option value="Energy & Oil">Energy & Oil</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Technology">Technology</option>
                   </select>
                   <Building2 className="input-icon" size={18} />
                 </div>
@@ -233,12 +238,11 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
           </div>
         )}
 
-        {/* STEP 2: Verify Corporate Email (OTP) */}
+        {/* STEP 2: Verify Corporate Email */}
         {step === 2 && (
           <div className="animate-fade-in">
             <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 2: Verify Corporate Email</h3>
             
-            {/* Simulated Email Delivery Information Banner */}
             <div className="alert-banner success" style={{ marginBottom: '1.5rem', flexDirection: 'column' }}>
               <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>📬 Mock Mailbox — Verification Code Sent</div>
               <div style={{ fontSize: '0.85rem' }}><strong>From:</strong> OYEN GRID Support</div>
@@ -258,7 +262,7 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                   type="text"
                   maxLength={6}
                   className="form-input"
-                  placeholder="0 0 0 0 0 0"
+                  placeholder="000000"
                   value={verificationCode}
                   onChange={(e) => {
                     setVerificationCode(e.target.value.replace(/\D/g, ''));
@@ -273,10 +277,98 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
           </div>
         )}
 
-        {/* STEP 3: Complete Organization Details */}
+        {/* STEP 3: Configure Your Workspace */}
         {step === 3 && (
           <div className="animate-fade-in">
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 3: Complete Organization Details</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Step 3: Configure Your Workspace</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+              Select the workspace template that matches your organization today. You can enable additional workspaces from the billing center later.
+            </p>
+
+            <div className="portal-list" style={{ gap: '0.75rem', margin: 0 }}>
+              {/* Enterprise */}
+              <button 
+                type="button"
+                className="portal-btn" 
+                style={{ 
+                  border: formData.workspaceTemplate === 'enterprise' ? '2px solid var(--border-focus)' : '1px solid var(--border-color)',
+                  backgroundColor: formData.workspaceTemplate === 'enterprise' ? 'var(--primary-glow)' : 'var(--bg-input)'
+                }}
+                onClick={() => handleInputChange('workspaceTemplate', 'enterprise')}
+              >
+                <div className="portal-btn-icon" style={{ background: formData.workspaceTemplate === 'enterprise' ? 'var(--gradient-brand)' : 'var(--primary-glow)', color: formData.workspaceTemplate === 'enterprise' ? 'white' : 'var(--primary)' }}>
+                  <Building2 size={20} />
+                </div>
+                <div className="portal-btn-content">
+                  <div className="portal-btn-title">Enterprise Workspace</div>
+                  <div className="portal-btn-desc">Best for corporates, government, NGOs, energy, and financial industries. Includes Departments, Compliance modules.</div>
+                </div>
+              </button>
+
+              {/* Bootcamp */}
+              <button 
+                type="button"
+                className="portal-btn" 
+                style={{ 
+                  border: formData.workspaceTemplate === 'bootcamp' ? '2px solid var(--border-focus)' : '1px solid var(--border-color)',
+                  backgroundColor: formData.workspaceTemplate === 'bootcamp' ? 'var(--primary-glow)' : 'var(--bg-input)'
+                }}
+                onClick={() => handleInputChange('workspaceTemplate', 'bootcamp')}
+              >
+                <div className="portal-btn-icon" style={{ background: formData.workspaceTemplate === 'bootcamp' ? 'var(--gradient-brand)' : 'var(--primary-glow)', color: formData.workspaceTemplate === 'bootcamp' ? 'white' : 'var(--primary)' }}>
+                  <Laptop size={20} />
+                </div>
+                <div className="portal-btn-content">
+                  <div className="portal-btn-title">Bootcamp & Talents</div>
+                  <div className="portal-btn-desc">Best for accelerators, fellowships, and training agencies. Includes Cohorts, Daily Timetables, Mentors.</div>
+                </div>
+              </button>
+
+              {/* Education */}
+              <button 
+                type="button"
+                className="portal-btn" 
+                style={{ 
+                  border: formData.workspaceTemplate === 'education' ? '2px solid var(--border-focus)' : '1px solid var(--border-color)',
+                  backgroundColor: formData.workspaceTemplate === 'education' ? 'var(--primary-glow)' : 'var(--bg-input)'
+                }}
+                onClick={() => handleInputChange('workspaceTemplate', 'education')}
+              >
+                <div className="portal-btn-icon" style={{ background: formData.workspaceTemplate === 'education' ? 'var(--gradient-brand)' : 'var(--primary-glow)', color: formData.workspaceTemplate === 'education' ? 'white' : 'var(--primary)' }}>
+                  <BookOpen size={20} />
+                </div>
+                <div className="portal-btn-content">
+                  <div className="portal-btn-title">Education & Academic</div>
+                  <div className="portal-btn-desc">Best for universities, schools, and custom academies. Includes Semesters, Lecturers, Gradebooks.</div>
+                </div>
+              </button>
+
+              {/* Events */}
+              <button 
+                type="button"
+                className="portal-btn" 
+                style={{ 
+                  border: formData.workspaceTemplate === 'events' ? '2px solid var(--border-focus)' : '1px solid var(--border-color)',
+                  backgroundColor: formData.workspaceTemplate === 'events' ? 'var(--primary-glow)' : 'var(--bg-input)'
+                }}
+                onClick={() => handleInputChange('workspaceTemplate', 'events')}
+              >
+                <div className="portal-btn-icon" style={{ background: formData.workspaceTemplate === 'events' ? 'var(--gradient-brand)' : 'var(--primary-glow)', color: formData.workspaceTemplate === 'events' ? 'white' : 'var(--primary)' }}>
+                  <Calendar size={20} />
+                </div>
+                <div className="portal-btn-content">
+                  <div className="portal-btn-title">Events & Conferences</div>
+                  <div className="portal-btn-desc">Best for live coordination, workshops, summits. Includes Speakers, Schedules, Attendee Passes.</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: Complete Organization Details */}
+        {step === 4 && (
+          <div className="animate-fade-in">
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 4: Organization Verification</h3>
             
             <div className="form-row">
               <div className="form-group">
@@ -362,10 +454,10 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
           </div>
         )}
 
-        {/* STEP 4: Primary Administrator */}
-        {step === 4 && (
+        {/* STEP 5: Primary Administrator */}
+        {step === 5 && (
           <div className="animate-fade-in">
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 4: Primary Administrator</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 5: Primary Administrator Setup</h3>
             
             <div className="form-row">
               <div className="form-group">
@@ -375,7 +467,7 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                     id="admin-name"
                     type="text"
                     className="form-input"
-                    placeholder="Sarah Connor"
+                    placeholder="Shola Oyewole"
                     value={formData.adminName}
                     onChange={(e) => handleInputChange('adminName', e.target.value)}
                   />
@@ -390,7 +482,7 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                     id="admin-title"
                     type="text"
                     className="form-input"
-                    placeholder="HR / Workspace Admin"
+                    placeholder="Chief Executive Officer"
                     value={formData.adminTitle}
                     onChange={(e) => handleInputChange('adminTitle', e.target.value)}
                   />
@@ -401,7 +493,7 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="admin-phone">Phone Number (optional)</label>
+              <label className="form-label" htmlFor="admin-phone">Corporate Phone (optional)</label>
               <div className="input-container">
                 <input
                   id="admin-phone"
@@ -450,16 +542,16 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
           </div>
         )}
 
-        {/* STEP 5: Create Organization (Credentials Generation) */}
-        {step === 5 && (
+        {/* STEP 6: Security Generation */}
+        {step === 6 && (
           <div className="animate-fade-in">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', marginBottom: '1.25rem' }}>
               <ShieldCheck size={28} />
-              <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Organization Configuration Created</h3>
+              <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Organization Workspace Initialized</h3>
             </div>
             
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              We have initialized OYEN GRID for your company. Please save the secure configuration profiles below:
+              OYEN GRID security protocols have established your tenant workspace configuration. Save these keys:
             </p>
 
             <div className="security-codes-grid">
@@ -513,15 +605,15 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
 
         {/* Footer wizard navigation buttons */}
         <div className="wizard-footer-buttons">
-          {step > 1 && step < 5 && (
+          {step > 1 && step < 6 && (
             <button type="button" className="secondary-btn" onClick={handleBack}>
               <ArrowLeft size={16} /> Back
             </button>
           )}
 
-          {step < 5 ? (
+          {step < 6 ? (
             <button type="button" className="submit-btn" onClick={handleNext}>
-              {step === 2 ? 'Verify Email' : 'Continue'} <ArrowRight size={16} />
+              {step === 2 ? 'Verify Email Code' : 'Continue'} <ArrowRight size={16} />
             </button>
           ) : (
             <button type="button" className="submit-btn" onClick={handleFinish}>
