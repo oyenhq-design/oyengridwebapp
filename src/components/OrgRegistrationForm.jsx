@@ -1,41 +1,41 @@
 import React, { useState } from 'react';
-import { Building2, Globe, Mail, Phone, ShieldCheck, ArrowRight, ArrowLeft, Lock, FileText, Users, User, Check, Copy } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, ShieldCheck, ArrowRight, ArrowLeft, Lock, FileText, Users, User, Check, Copy, Key } from 'lucide-react';
 
 export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
   const [step, setStep] = useState(1);
   const [copiedField, setCopiedField] = useState(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpError, setOtpError] = useState('');
 
   // Form Fields State
   const [formData, setFormData] = useState({
     // Step 1
     orgName: '',
+    email: '',
     orgType: 'Enterprise',
     industry: '',
     country: '',
-    state: '',
-    website: '',
-    email: '',
-    phone: '',
-    // Step 2
-    bizRegNum: '',
-    taxId: '',
-    domain: '',
-    employeeCount: '1-10',
-    expectedUsers: '',
+    // Step 2 (Verification OTP)
     // Step 3
+    bizRegNum: '',
+    website: '',
+    phone: '',
+    address: '',
+    employeeCount: '1-10',
+    // Step 4
     adminName: '',
     adminTitle: '',
-    adminEmail: '',
     adminPhone: '',
     password: '',
     confirmPassword: ''
   });
 
-  // Generated Security codes for Step 4
+  // Generated Security codes for Step 5
   const [securityData, setSecurityData] = useState({
     orgId: '',
     accessCode: '',
-    adminCode: ''
+    adminId: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -54,23 +54,13 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
       if (!formData.email) {
         tempErrors.email = 'Corporate Email is required';
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        tempErrors.email = 'Enter a valid email address';
-      }
-    } else if (step === 2) {
-      if (!formData.bizRegNum.trim()) tempErrors.bizRegNum = 'Business Registration Number is required';
-      if (!formData.domain.trim()) {
-        tempErrors.domain = 'Company Domain is required';
-      } else if (!/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/.test(formData.domain)) {
-        tempErrors.domain = 'Enter a valid domain name (e.g. company.com)';
+        tempErrors.email = 'Enter a valid corporate email address';
       }
     } else if (step === 3) {
+      if (!formData.bizRegNum.trim()) tempErrors.bizRegNum = 'Business Registration Number is required';
+    } else if (step === 4) {
       if (!formData.adminName.trim()) tempErrors.adminName = 'Full Name is required';
       if (!formData.adminTitle.trim()) tempErrors.adminTitle = 'Job Title is required';
-      if (!formData.adminEmail) {
-        tempErrors.adminEmail = 'Admin corporate email is required';
-      } else if (!/\S+@\S+\.\S+/.test(formData.adminEmail)) {
-        tempErrors.adminEmail = 'Enter a valid corporate email address';
-      }
       if (!formData.password) {
         tempErrors.password = 'Password is required';
       } else if (formData.password.length < 8) {
@@ -86,26 +76,39 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
   };
 
   const handleNext = () => {
-    if (!validateStep()) return;
-
-    if (step < 3) {
-      setStep(step + 1);
+    if (step === 1) {
+      if (!validateStep()) return;
+      // Simulate sending OTP
+      setOtpSent(true);
+      setOtpError('');
+      setStep(2);
+    } else if (step === 2) {
+      // Validate OTP code (mock expected value is 482913)
+      if (verificationCode === '482913') {
+        setStep(3);
+      } else {
+        setOtpError('Invalid verification code. Hint: use 482913');
+      }
     } else if (step === 3) {
-      // Generate security credentials for Step 4
+      if (!validateStep()) return;
+      setStep(4);
+    } else if (step === 4) {
+      if (!validateStep()) return;
+      // Generate security credentials for Step 5
       const randString = (len) => Math.random().toString(36).substring(2, 2 + len).toUpperCase();
       const randNum = (len) => Math.floor(Math.pow(10, len - 1) + Math.random() * 9 * Math.pow(10, len - 1)).toString();
 
       setSecurityData({
-        orgId: `ORG-${randString(6)}`,
-        accessCode: `OYG-${randNum(4)}-${randString(3)}`,
-        adminCode: `ADM-${randNum(5)}`
+        orgId: `ORG-2026-${randNum(5)}`,
+        accessCode: `OYG-${randString(3)}${randNum(3)}-${randString(2)}`,
+        adminId: `ADM-00001`
       });
-      setStep(4);
+      setStep(5);
     }
   };
 
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 1 && step < 5) setStep(step - 1);
   };
 
   const handleCopy = (field, text) => {
@@ -115,9 +118,8 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
   };
 
   const handleFinish = () => {
-    // Send data to layout coordinator
     if (onComplete) {
-      onComplete(formData.adminEmail);
+      onComplete(formData.email);
     }
   };
 
@@ -136,13 +138,14 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
         <div className={`wizard-step-node ${step >= 2 ? 'completed' : ''} ${step === 2 ? 'active' : ''}`}>2</div>
         <div className={`wizard-step-node ${step >= 3 ? 'completed' : ''} ${step === 3 ? 'active' : ''}`}>3</div>
         <div className={`wizard-step-node ${step >= 4 ? 'completed' : ''} ${step === 4 ? 'active' : ''}`}>4</div>
+        <div className={`wizard-step-node ${step >= 5 ? 'completed' : ''} ${step === 5 ? 'active' : ''}`}>5</div>
       </div>
 
       <div>
-        {/* STEP 1: Organization Information */}
+        {/* STEP 1: Basic Information */}
         {step === 1 && (
           <div className="animate-fade-in">
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 1: Organization Profile</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 1: Basic Information</h3>
             
             <div className="form-group">
               <label className="form-label" htmlFor="org-name">Organization Name</label>
@@ -158,6 +161,22 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                 <Building2 className="input-icon" size={18} />
               </div>
               {errors.orgName && <span className="error-msg">{errors.orgName}</span>}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="org-email">Corporate Email</label>
+              <div className="input-container">
+                <input
+                  id="org-email"
+                  type="email"
+                  className="form-input"
+                  placeholder="contact@company.com"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
+                <Mail className="input-icon" size={18} />
+              </div>
+              {errors.email && <span className="error-msg">{errors.email}</span>}
             </div>
 
             <div className="form-row">
@@ -196,101 +215,78 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="org-country">Country</label>
-                <div className="input-container">
-                  <input
-                    id="org-country"
-                    type="text"
-                    className="form-input"
-                    placeholder="United States"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                  />
-                  <Globe className="input-icon" size={18} />
-                </div>
-                {errors.country && <span className="error-msg">{errors.country}</span>}
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="org-state">State / Province</label>
-                <div className="input-container">
-                  <input
-                    id="org-state"
-                    type="text"
-                    className="form-input"
-                    placeholder="California"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
-                  />
-                  <Globe className="input-icon" size={18} />
-                </div>
-              </div>
-            </div>
-
             <div className="form-group">
-              <label className="form-label" htmlFor="org-website">Website URL (optional)</label>
+              <label className="form-label" htmlFor="org-country">Country</label>
               <div className="input-container">
                 <input
-                  id="org-website"
-                  type="url"
+                  id="org-country"
+                  type="text"
                   className="form-input"
-                  placeholder="https://www.cyberdyne.com"
-                  value={formData.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
+                  placeholder="United States"
+                  value={formData.country}
+                  onChange={(e) => handleInputChange('country', e.target.value)}
                 />
                 <Globe className="input-icon" size={18} />
               </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="org-email">Company Email</label>
-                <div className="input-container">
-                  <input
-                    id="org-email"
-                    type="email"
-                    className="form-input"
-                    placeholder="contact@company.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                  />
-                  <Mail className="input-icon" size={18} />
-                </div>
-                {errors.email && <span className="error-msg">{errors.email}</span>}
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="org-phone">Company Phone (optional)</label>
-                <div className="input-container">
-                  <input
-                    id="org-phone"
-                    type="tel"
-                    className="form-input"
-                    placeholder="+1 555-0199"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                  />
-                  <Phone className="input-icon" size={18} />
-                </div>
-              </div>
+              {errors.country && <span className="error-msg">{errors.country}</span>}
             </div>
           </div>
         )}
 
-        {/* STEP 2: Organization Verification */}
+        {/* STEP 2: Verify Corporate Email (OTP) */}
         {step === 2 && (
           <div className="animate-fade-in">
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 2: Business Verification</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 2: Verify Corporate Email</h3>
+            
+            {/* Simulated Email Delivery Information Banner */}
+            <div className="alert-banner success" style={{ marginBottom: '1.5rem', flexDirection: 'column' }}>
+              <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>📬 Mock Mailbox — Verification Code Sent</div>
+              <div style={{ fontSize: '0.85rem' }}><strong>From:</strong> OYEN GRID Support</div>
+              <div style={{ fontSize: '0.85rem' }}><strong>Subject:</strong> Verify your organization email</div>
+              <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', background: 'rgba(255,255,255,0.15)', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-block' }}>
+                Your verification code is: <strong>482913</strong>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="otp-input" style={{ textAlign: 'center', display: 'block', width: '100%', marginBottom: '0.75rem' }}>
+                Enter 6-Digit OTP Verification Code
+              </label>
+              <div className="input-container">
+                <input
+                  id="otp-input"
+                  type="text"
+                  maxLength={6}
+                  className="form-input"
+                  placeholder="0 0 0 0 0 0"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    setVerificationCode(e.target.value.replace(/\D/g, ''));
+                    setOtpError('');
+                  }}
+                  style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.4rem' }}
+                />
+                <Key className="input-icon" size={18} />
+              </div>
+              {otpError && <span className="error-msg" style={{ justifyContent: 'center' }}>{otpError}</span>}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Complete Organization Details */}
+        {step === 3 && (
+          <div className="animate-fade-in">
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 3: Complete Organization Details</h3>
             
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label" htmlFor="biz-reg">Business Registration #</label>
+                <label className="form-label" htmlFor="biz-reg">Company Registration #</label>
                 <div className="input-container">
                   <input
                     id="biz-reg"
                     type="text"
                     className="form-input"
-                    placeholder="REG-947192"
+                    placeholder="REG-2026-9810"
                     value={formData.bizRegNum}
                     onChange={(e) => handleInputChange('bizRegNum', e.target.value)}
                   />
@@ -299,43 +295,41 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                 {errors.bizRegNum && <span className="error-msg">{errors.bizRegNum}</span>}
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="tax-id">Tax ID (optional)</label>
+                <label className="form-label" htmlFor="website">Website</label>
                 <div className="input-container">
                   <input
-                    id="tax-id"
-                    type="text"
+                    id="website"
+                    type="url"
                     className="form-input"
-                    placeholder="TAX-884021"
-                    value={formData.taxId}
-                    onChange={(e) => handleInputChange('taxId', e.target.value)}
+                    placeholder="https://company.com"
+                    value={formData.website}
+                    onChange={(e) => handleInputChange('website', e.target.value)}
                   />
-                  <FileText className="input-icon" size={18} />
+                  <Globe className="input-icon" size={18} />
                 </div>
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="domain">Company Domain</label>
-              <div className="input-container">
-                <input
-                  id="domain"
-                  type="text"
-                  className="form-input"
-                  placeholder="company.com"
-                  value={formData.domain}
-                  onChange={(e) => handleInputChange('domain', e.target.value)}
-                />
-                <Globe className="input-icon" size={18} />
-              </div>
-              {errors.domain && <span className="error-msg">{errors.domain}</span>}
-            </div>
-
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label" htmlFor="emp-count">Number of Employees</label>
+                <label className="form-label" htmlFor="phone">Phone Number</label>
+                <div className="input-container">
+                  <input
+                    id="phone"
+                    type="tel"
+                    className="form-input"
+                    placeholder="+1 555-9081"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                  />
+                  <Phone className="input-icon" size={18} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="org-size">Organization Size</label>
                 <div className="input-container">
                   <select
-                    id="emp-count"
+                    id="org-size"
                     className="form-input"
                     value={formData.employeeCount}
                     onChange={(e) => handleInputChange('employeeCount', e.target.value)}
@@ -349,28 +343,29 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                   <Users className="input-icon" size={18} />
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="exp-users">Expected Users</label>
-                <div className="input-container">
-                  <input
-                    id="exp-users"
-                    type="number"
-                    className="form-input"
-                    placeholder="e.g. 50"
-                    value={formData.expectedUsers}
-                    onChange={(e) => handleInputChange('expectedUsers', e.target.value)}
-                  />
-                  <Users className="input-icon" size={18} />
-                </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="address">Address</label>
+              <div className="input-container">
+                <input
+                  id="address"
+                  type="text"
+                  className="form-input"
+                  placeholder="100 Innovation Way, Suite 400"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                />
+                <Building2 className="input-icon" size={18} />
               </div>
             </div>
           </div>
         )}
 
-        {/* STEP 3: Primary Administrator Account */}
-        {step === 3 && (
+        {/* STEP 4: Primary Administrator */}
+        {step === 4 && (
           <div className="animate-fade-in">
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 3: Primary Administrator Setup</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 4: Primary Administrator</h3>
             
             <div className="form-row">
               <div className="form-group">
@@ -405,35 +400,18 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="admin-email">Corporate Email</label>
-                <div className="input-container">
-                  <input
-                    id="admin-email"
-                    type="email"
-                    className="form-input"
-                    placeholder="sarah@company.com"
-                    value={formData.adminEmail}
-                    onChange={(e) => handleInputChange('adminEmail', e.target.value)}
-                  />
-                  <Mail className="input-icon" size={18} />
-                </div>
-                {errors.adminEmail && <span className="error-msg">{errors.adminEmail}</span>}
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="admin-phone">Corporate Phone (optional)</label>
-                <div className="input-container">
-                  <input
-                    id="admin-phone"
-                    type="tel"
-                    className="form-input"
-                    placeholder="+1 555-0320"
-                    value={formData.adminPhone}
-                    onChange={(e) => handleInputChange('adminPhone', e.target.value)}
-                  />
-                  <Phone className="input-icon" size={18} />
-                </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="admin-phone">Phone Number (optional)</label>
+              <div className="input-container">
+                <input
+                  id="admin-phone"
+                  type="tel"
+                  className="form-input"
+                  placeholder="+1 555-0320"
+                  value={formData.adminPhone}
+                  onChange={(e) => handleInputChange('adminPhone', e.target.value)}
+                />
+                <Phone className="input-icon" size={18} />
               </div>
             </div>
 
@@ -472,16 +450,16 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
           </div>
         )}
 
-        {/* STEP 4: Organization Security Generation */}
-        {step === 4 && (
+        {/* STEP 5: Create Organization (Credentials Generation) */}
+        {step === 5 && (
           <div className="animate-fade-in">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', marginBottom: '1.25rem' }}>
               <ShieldCheck size={28} />
-              <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Security Configuration Generated</h3>
+              <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Organization Configuration Created</h3>
             </div>
             
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              These unique credentials are part of your organization's security identity. Store them safely. Future employee invitations will reference these values.
+              We have initialized OYEN GRID for your company. Please save the secure configuration profiles below:
             </p>
 
             <div className="security-codes-grid">
@@ -503,7 +481,7 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
               {/* Organization Access Code */}
               <div className="security-code-card">
                 <div className="security-code-info">
-                  <span className="security-code-label">Organization Access Code</span>
+                  <span className="security-code-label">Organization Code</span>
                   <span className="security-code-value">{securityData.accessCode}</span>
                 </div>
                 <button
@@ -515,18 +493,18 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
                 </button>
               </div>
 
-              {/* Admin Verification Code */}
+              {/* Primary Admin ID */}
               <div className="security-code-card">
                 <div className="security-code-info">
-                  <span className="security-code-label">Admin Verification Code</span>
-                  <span className="security-code-value">{securityData.adminCode}</span>
+                  <span className="security-code-label">Primary Admin ID</span>
+                  <span className="security-code-value">{securityData.adminId}</span>
                 </div>
                 <button
                   type="button"
                   className="copy-badge"
-                  onClick={() => handleCopy('adminCode', securityData.adminCode)}
+                  onClick={() => handleCopy('adminId', securityData.adminId)}
                 >
-                  {copiedField === 'adminCode' ? <Check size={14} color="var(--primary)" /> : <Copy size={14} />}
+                  {copiedField === 'adminId' ? <Check size={14} color="var(--primary)" /> : <Copy size={14} />}
                 </button>
               </div>
             </div>
@@ -535,15 +513,15 @@ export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
 
         {/* Footer wizard navigation buttons */}
         <div className="wizard-footer-buttons">
-          {step > 1 && step < 4 && (
+          {step > 1 && step < 5 && (
             <button type="button" className="secondary-btn" onClick={handleBack}>
               <ArrowLeft size={16} /> Back
             </button>
           )}
 
-          {step < 4 ? (
+          {step < 5 ? (
             <button type="button" className="submit-btn" onClick={handleNext}>
-              Continue <ArrowRight size={16} />
+              {step === 2 ? 'Verify Email' : 'Continue'} <ArrowRight size={16} />
             </button>
           ) : (
             <button type="button" className="submit-btn" onClick={handleFinish}>
