@@ -40,7 +40,7 @@ export default function SignInForm({ onSwitchForm, onAuthSuccess }) {
       setIsLoading(false);
       // For demonstration, let's allow access
       if (email === 'admin@oyengrid.com' && password === 'password123') {
-        setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome to OYEN GRID.' });
+        setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
         if (onAuthSuccess) {
           setTimeout(() => onAuthSuccess(email), 1200);
         }
@@ -58,7 +58,7 @@ export default function SignInForm({ onSwitchForm, onAuthSuccess }) {
       <div className="form-header">
         <h2 className="form-title">Welcome back</h2>
         <p className="form-subtitle">
-          New to OYEN GRID? <span onClick={() => onSwitchForm('portal')}>Register account</span>
+          New to OYEN GRID? <span onClick={() => onSwitchForm('portal')}>Create organization</span>
         </p>
       </div>
 

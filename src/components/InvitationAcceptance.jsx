@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Mail, Lock, Building2, KeyRound, ArrowRight, ArrowLeft, AlertCircle, CheckCircle2, QrCode } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, Building2, KeyRound, ArrowRight, ArrowLeft, QrCode } from 'lucide-react';
 
-export default function InvitedUserForm({ onSwitchForm, onComplete }) {
+export default function InvitationAcceptance({ onSwitchForm, onComplete }) {
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +18,7 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
   });
 
   const [mfaSecret, setMfaSecret] = useState('');
+  const [assignedRole, setAssignedRole] = useState('Programme Manager'); // Defaults based on code prefix
 
   const handleInputChange = (field, val) => {
     setFormData({ ...formData, [field]: val });
@@ -27,15 +28,15 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
   const validateStep1 = () => {
     const tempErrors = {};
     if (!formData.orgId.trim()) {
-      tempErrors.orgId = 'Organization ID / Code is required';
+      tempErrors.orgId = 'Organization Code / ID is required';
     } else if (!/^ORG-[A-Z0-9]{6}$/i.test(formData.orgId) && formData.orgId !== 'ORG-43A81Q') {
       tempErrors.orgId = 'Enter a valid ID (e.g. ORG-43A81Q)';
     }
 
     if (!formData.inviteCode.trim()) {
       tempErrors.inviteCode = 'Invitation Code is required';
-    } else if (!/^(EMP|FAC|MGR)-\d{5}$/i.test(formData.inviteCode) && formData.inviteCode !== 'EMP-20483' && formData.inviteCode !== 'FAC-93822') {
-      tempErrors.inviteCode = 'Enter a valid invite code (e.g. EMP-20483 or FAC-93822)';
+    } else if (!/^(ADM|MGR|FAC|TRN|EMP|LRN)-\d{5}$/i.test(formData.inviteCode) && formData.inviteCode !== 'EMP-20483' && formData.inviteCode !== 'FAC-93822' && formData.inviteCode !== 'ADM-20483' && formData.inviteCode !== 'MGR-49211') {
+      tempErrors.inviteCode = 'Enter a valid code (e.g. FAC-93822 or ADM-20483)';
     }
 
     if (!formData.email) {
@@ -59,9 +60,9 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
       tempErrors.confirmPassword = 'Passwords do not match';
     }
     if (!formData.mfaToken) {
-      tempErrors.mfaToken = 'Authenticator code is required';
+      tempErrors.mfaToken = 'MFA verification code is required';
     } else if (!/^\d{6}$/.test(formData.mfaToken)) {
-      tempErrors.mfaToken = 'MFA code must be exactly 6 digits';
+      tempErrors.mfaToken = 'Code must be 6 digits';
     }
 
     setErrors(tempErrors);
@@ -79,7 +80,16 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
       // Verify Org and Invite Code
       setTimeout(() => {
         setIsLoading(false);
-        // Generate a mock MFA secret key
+        // Mapped role from prefix
+        const code = formData.inviteCode.toUpperCase();
+        if (code.startsWith('ADM')) setAssignedRole('Organization Admin');
+        else if (code.startsWith('MGR')) setAssignedRole('Programme Manager');
+        else if (code.startsWith('FAC')) setAssignedRole('Facilitator');
+        else if (code.startsWith('TRN')) setAssignedRole('Trainer');
+        else if (code.startsWith('EMP')) setAssignedRole('Employee');
+        else if (code.startsWith('LRN')) setAssignedRole('Participant');
+        else setAssignedRole('Participant');
+
         const secret = Array.from({ length: 4 }, () => Math.random().toString(36).substring(2, 6).toUpperCase()).join(' ');
         setMfaSecret(secret);
         setStep(2);
@@ -90,16 +100,15 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
       setIsLoading(true);
       setStatusMessage(null);
 
-      // Verify and register
       setTimeout(() => {
         setIsLoading(false);
         setStatusMessage({
           type: 'success',
-          text: 'Account verified and configured with Multi-Factor Authentication!'
+          text: `Onboarding completed! Welcome to OYEN GRID as ${assignedRole}.`
         });
         setTimeout(() => {
           if (onComplete) {
-            onComplete(formData.email);
+            onComplete(formData.email, assignedRole);
           }
         }, 1500);
       }, 1500);
@@ -109,9 +118,9 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
   return (
     <div className="form-card animate-fade-in" style={{ maxWidth: '500px' }}>
       <div className="form-header">
-        <h2 className="form-title">Join Organization</h2>
+        <h2 className="form-title">Accept Invitation</h2>
         <p className="form-subtitle">
-          Onboard using your corporate invite • <span onClick={() => onSwitchForm('portal')}>Back to portal</span>
+          Activate your organization workspace profile • <span onClick={() => onSwitchForm('portal')}>Back to portal</span>
         </p>
       </div>
 
@@ -122,7 +131,7 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
         </div>
       )}
 
-      {/* Progress Node */}
+      {/* Progress Wizard */}
       <div className="wizard-steps">
         <div className={`wizard-step-node ${step >= 1 ? 'completed' : ''} ${step === 1 ? 'active' : ''}`}>1</div>
         <div className={`wizard-step-node ${step >= 2 ? 'completed' : ''} ${step === 2 ? 'active' : ''}`}>2</div>
@@ -131,14 +140,14 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
       <form onSubmit={handleNext} noValidate>
         {step === 1 ? (
           <div className="animate-fade-in">
-            <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 1: Invitation Verification</h3>
+            <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 1: Verify Access Codes</h3>
             
-            {/* Org Code */}
+            {/* Org ID */}
             <div className="form-group">
-              <label className="form-label" htmlFor="org-id">Organization ID / Access Code</label>
+              <label className="form-label" htmlFor="invite-org-id">Organization Code / ID</label>
               <div className="input-container">
                 <input
-                  id="org-id"
+                  id="invite-org-id"
                   type="text"
                   className="form-input"
                   placeholder="e.g. ORG-43A81Q"
@@ -153,13 +162,13 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
 
             {/* Invite Code */}
             <div className="form-group">
-              <label className="form-label" htmlFor="invite-code">Invitation Code (Employee / Facilitator)</label>
+              <label className="form-label" htmlFor="invite-token">Invitation Code</label>
               <div className="input-container">
                 <input
-                  id="invite-code"
+                  id="invite-token"
                   type="text"
                   className="form-input"
-                  placeholder="e.g. EMP-20483 or FAC-93822"
+                  placeholder="e.g. ADM-20483 or FAC-93822"
                   value={formData.inviteCode}
                   onChange={(e) => handleInputChange('inviteCode', e.target.value)}
                   disabled={isLoading}
@@ -169,7 +178,7 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
               {errors.inviteCode && <span className="error-msg">{errors.inviteCode}</span>}
             </div>
 
-            {/* Corporate Email */}
+            {/* Email */}
             <div className="form-group">
               <label className="form-label" htmlFor="invite-email">Your Work Email</label>
               <div className="input-container">
@@ -189,15 +198,14 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
           </div>
         ) : (
           <div className="animate-fade-in">
-            <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 2: Password & MFA Setup</h3>
+            <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Step 2: Profile Security</h3>
             
-            {/* Passwords */}
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label" htmlFor="invite-pass">Create Password</label>
+                <label className="form-label" htmlFor="profile-pass">Password</label>
                 <div className="input-container">
                   <input
-                    id="invite-pass"
+                    id="profile-pass"
                     type="password"
                     className="form-input"
                     placeholder="Min. 8 characters"
@@ -210,10 +218,10 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
                 {errors.password && <span className="error-msg">{errors.password}</span>}
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="invite-confirm">Confirm Password</label>
+                <label className="form-label" htmlFor="profile-confirm">Confirm Password</label>
                 <div className="input-container">
                   <input
-                    id="invite-confirm"
+                    id="profile-confirm"
                     type="password"
                     className="form-input"
                     placeholder="Re-enter password"
@@ -231,11 +239,11 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
             <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--bg-input)', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <QrCode size={20} color="var(--primary)" />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Multi-Factor Authentication (MFA)</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Configure Authenticator MFA</span>
               </div>
               
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                Scan the QR code in your Authenticator app (Google Authenticator / Duo) or use the Setup Key:
+                Scan the QR code in your Authenticator app or use Setup Key:
               </p>
 
               <div style={{
@@ -254,10 +262,10 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" htmlFor="mfa-token">Enter Authenticator 6-Digit Code</label>
+                <label className="form-label" htmlFor="invite-mfa">Authenticator verification Code</label>
                 <div className="input-container">
                   <input
-                    id="mfa-token"
+                    id="invite-mfa"
                     type="text"
                     maxLength={6}
                     className="form-input"
@@ -287,7 +295,7 @@ export default function InvitedUserForm({ onSwitchForm, onComplete }) {
               <span className="spinner" />
             ) : (
               <>
-                {step === 1 ? 'Verify Invitation' : 'Finalize Onboarding'} <ArrowRight size={18} />
+                {step === 1 ? 'Verify Access' : 'Activate Account'} <ArrowRight size={18} />
               </>
             )}
           </button>

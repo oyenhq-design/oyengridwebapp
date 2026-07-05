@@ -2,17 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sun, Moon, Grid, ShieldCheck, LogOut, LayoutDashboard, Users, BookOpen, 
   MessageSquare, BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
-  Lock, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Plus, Play, HelpCircle, 
-  Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert
+  Lock, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Play, HelpCircle, 
+  Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert,
+  ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop
 } from 'lucide-react';
 import SignInForm from './components/SignInForm';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
-import InvitedUserForm from './components/InvitedUserForm';
-import IndividualRegistrationForm from './components/IndividualRegistrationForm';
+import PublicEventForm from './components/PublicEventForm';
+import InvitationAcceptance from './components/InvitationAcceptance';
 import ForgotPasswordForm from './components/ForgotPasswordForm';
 
+
 export default function App() {
-  const [activeForm, setActiveForm] = useState('portal'); // 'portal' | 'signin' | 'org_signup' | 'invite_signup' | 'individual_signup' | 'forgot'
+  const [activeRoute, setActiveRoute] = useState('portal'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
   const [theme, setTheme] = useState('dark');
   
   // Auth state
@@ -21,9 +23,8 @@ export default function App() {
   
   // Workspace Template configuration
   const [activeTemplate, setActiveTemplate] = useState('enterprise'); // 'enterprise' | 'bootcamp' | 'education' | 'events'
-  const [activePlan, setActivePlan] = useState('growth');
   
-  // Modules state (Dynamic activations via Marketplace/Billing)
+  // Modules status (Dynamic activations via Marketplace/Settings)
   const [enabledTemplates, setEnabledTemplates] = useState({
     enterprise: true,
     bootcamp: false,
@@ -31,9 +32,16 @@ export default function App() {
     events: false
   });
 
-  // Current tab inside dashboard
+  // Onboarding wizard internal step
+  const [onboardingStep, setOnboardingStep] = useState(1);
+  const [firstProgramName, setFirstProgramName] = useState('');
+  const [invitedTeamEmail, setInvitedTeamEmail] = useState('');
+  const [invitedTeamRole, setInvitedTeamRole] = useState('Programme Manager');
+  const [generatedInviteLink, setGeneratedInviteLink] = useState('');
+
+  // Dashboard state
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [lockedTabTarget, setLockedTabTarget] = useState(null); // Keeps track of clicked locked tab for upgrade screen
+  const [lockedTabTarget, setLockedTabTarget] = useState(null); 
 
   // AI Assistant Chat Mock
   const [aiPrompt, setAiPrompt] = useState('');
@@ -50,7 +58,7 @@ export default function App() {
 
   // Canvas Animation for Left Brand Panel (Interactive Digital Grid)
   useEffect(() => {
-    if (user) return; // Don't run canvas code if logged in
+    if (user || activeRoute === 'onboarding') return; 
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -173,37 +181,50 @@ export default function App() {
       }
       cancelAnimationFrame(animationFrameId);
     };
-  }, [user, theme]);
+  }, [user, theme, activeRoute]);
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const handleAuthSuccess = (email, role = 'Super Admin') => {
+  const handleAuthSuccess = (email, role = 'Workspace Super Admin') => {
     setUser(email);
     setUserRole(role);
+    setActiveRoute('dashboard');
+    setActiveTab('Dashboard');
+    setLockedTabTarget(null);
   };
 
-  const handleOrgRegistrationComplete = (email, template, plan) => {
-    // Set initial template based on onboarding selection
+  const handleOrgRegistrationComplete = (email, template) => {
+    // Save template choices
     setActiveTemplate(template);
-    setActivePlan(plan);
     
-    // Enable selected template, disable others initially
-    const newTemplates = { enterprise: false, bootcamp: false, education: false, events: false };
-    newTemplates[template] = true;
-    setEnabledTemplates(newTemplates);
+    // Enable the selected template specifically
+    const templates = { enterprise: false, bootcamp: false, education: false, events: false };
+    templates[template] = true;
+    setEnabledTemplates(templates);
 
-    // Navigate to dashboard
+    // Save auth email
     setUser(email);
-    setUserRole('Organization Admin');
+    setUserRole('Organization Owner');
+
+    // Route to Onboarding Walkthrough
+    setOnboardingStep(1);
+    setActiveRoute('onboarding');
+  };
+
+  const handleInviteAcceptanceComplete = (email, role) => {
+    setUser(email);
+    setUserRole(role);
+    // Switch active template depending on role or default
+    setActiveRoute('dashboard');
     setActiveTab('Dashboard');
     setLockedTabTarget(null);
   };
 
   const handleLogOut = () => {
     setUser(null);
-    setActiveForm('portal');
+    setActiveRoute('portal');
   };
 
   // Switch Templates from settings/billing easily for user testing
@@ -220,7 +241,6 @@ export default function App() {
       ...enabledTemplates,
       [tempId]: nextState
     });
-    // If we enable, switch to it automatically to show features
     if (nextState) {
       setActiveTemplate(tempId);
       setActiveTab('Dashboard');
@@ -228,7 +248,6 @@ export default function App() {
     }
   };
 
-  // Dynamic Navigation Definitions based on selected Workspace Template
   const getWorkspaceModules = () => {
     const modules = [
       { id: 'Dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, enabled: true }
@@ -252,19 +271,19 @@ export default function App() {
       );
     } else if (activeTemplate === 'education') {
       modules.push(
-        { id: 'Faculties', label: 'Faculties', icon: <Landmark size={18} />, enabled: true },
-        { id: 'Courses', label: 'Courses', icon: <BookOpen size={18} />, enabled: true },
-        { id: 'Semesters', label: 'Semesters', icon: <Calendar size={18} />, enabled: true },
         { id: 'Students', label: 'Students', icon: <Users size={18} />, enabled: true },
+        { id: 'Courses', label: 'Courses', icon: <BookOpen size={18} />, enabled: true },
+        { id: 'Faculties', label: 'Faculties', icon: <Landmark size={18} />, enabled: true },
+        { id: 'Semesters', label: 'Semesters', icon: <Calendar size={18} />, enabled: true },
         { id: 'Results', label: 'Results', icon: <FileSpreadsheet size={18} />, enabled: true }
       );
     } else if (activeTemplate === 'events') {
       modules.push(
-        { id: 'Events', label: 'Events', icon: <Calendar size={18} />, enabled: true },
         { id: 'Speakers', label: 'Speakers', icon: <Users size={18} />, enabled: true },
-        { id: 'Schedules', label: 'Schedules', icon: <Layers size={18} />, enabled: true },
-        { id: 'Tickets', label: 'Tickets', icon: <Award size={18} />, enabled: true },
-        { id: 'Feedback', label: 'Feedback', icon: <MessageSquare size={18} />, enabled: true }
+        { id: 'Sessions', label: 'Sessions', icon: <Layers size={18} />, enabled: true },
+        { id: 'Registration', label: 'Registration', icon: <ClipboardList size={18} />, enabled: true },
+        { id: 'Check-in', label: 'Check-in', icon: <Ticket size={18} />, enabled: true },
+        { id: 'Certificates', label: 'Certificates', icon: <Award size={18} />, enabled: true }
       );
     }
 
@@ -275,7 +294,6 @@ export default function App() {
       { id: 'Billing & Settings', label: 'Billing & Settings', icon: <Settings size={18} />, enabled: true }
     );
 
-    // Insert Locked Modules indicators (representing templates not active in current subscription)
     const allTemplates = [
       { id: 'enterprise', label: 'Enterprise Operations', icon: <Building2 size={18} /> },
       { id: 'bootcamp', label: 'Bootcamp Workspace', icon: <Laptop size={18} /> },
@@ -292,31 +310,30 @@ export default function App() {
     return modules;
   };
 
-  // AI Workspace Assistant prompts depending on active Workspace Template
   const getAiSuggestions = () => {
     if (activeTemplate === 'enterprise') {
       return [
-        'Draft corporate compliance report guidelines',
-        'Create a 6-week corporate training agenda',
-        'Analyze department skill gaps'
+        'Generate compliance training report',
+        'Outline department skill gaps policy',
+        'Draft corporate code of conduct'
       ];
     } else if (activeTemplate === 'bootcamp') {
       return [
-        'Generate Week 4 Bootcamp Curriculum timetable',
-        'Outline mentor review guidelines',
+        'Create a 12-week software engineering bootcamp',
+        'Generate Week 4 technical timetable schedule',
         'Draft graduation certificate templates'
       ];
     } else if (activeTemplate === 'education') {
       return [
-        'Generate custom Semester Course syllabus',
-        'Outline final exam results metrics',
-        'Draft academic faculty onboarding policy'
+        'Generate semester course grading thresholds',
+        'Outline student faculty allocation guidelines',
+        'Compile results grade spreadsheet template'
       ];
     } else if (activeTemplate === 'events') {
       return [
-        'Generate Speaker Bio invitation templates',
-        'Create virtual masterclass event agenda',
-        'Draft feedback questionnaire'
+        'Generate masterclass speaker session templates',
+        'Draft check-in confirmation correspondence',
+        'Outline virtual webinar agendas'
       ];
     }
     return [];
@@ -330,17 +347,16 @@ export default function App() {
     setAiPrompt('');
     setAiResponses(prev => [...prev, { role: 'user', text: userText }]);
 
-    // Simulated workspace-specific AI responses
     setTimeout(() => {
       let responseText = '';
       if (activeTemplate === 'bootcamp') {
-        responseText = `Based on your Bootcamp Workspace setup, I have generated a cohort schedule blueprint. We have mapped out daily standby stand-ups, technical courses, and weekly assessments for your learners. Let me know if you would like me to compile this into a downloadable PDF program format.`;
+        responseText = `Based on your Bootcamp Workspace, I have drafted the technical curriculum timeline. This template designates cohorts, mentors, curriculum content modules, and check-in attendance slots.`;
       } else if (activeTemplate === 'enterprise') {
-        responseText = `As an Enterprise Workspace administrator, I have drafted the requested compliance checkups. We will track employee training records across departments and flag any overdue certifications before your upcoming regulatory audits.`;
+        responseText = `I have compiled the compliance checkups report. This tags active employee records and flags any compliance gaps inside departments.`;
       } else if (activeTemplate === 'education') {
-        responseText = `Based on your Education template, I have generated the academic grade thresholds. You can assign these directly to student gradebooks under active Semesters.`;
+        responseText = `For your Education Workspace, I have mapped out course schedules across active Semesters. Let me know if you would like me to output this into student gradebook indexes.`;
       } else {
-        responseText = `I have updated your Event Masterclass agenda. I've scheduled speakers, designated breaks, and set up automatic feedback links to send to attendees post-session.`;
+        responseText = `I have structured your virtual events session check-in logs. Confirmation links have been created for attendees.`;
       }
       setAiResponses(prev => [...prev, { role: 'assistant', text: responseText }]);
     }, 1000);
@@ -356,8 +372,171 @@ export default function App() {
     }
   };
 
+  const generateInviteLink = () => {
+    if (!invitedTeamEmail.trim()) return;
+    const codes = {
+      'Organization Admin': 'ADM',
+      'Programme Manager': 'MGR',
+      'Facilitator': 'FAC',
+      'Trainer': 'TRN',
+      'Employee': 'EMP',
+      'Participant': 'LRN'
+    };
+    const codePrefix = codes[invitedTeamRole] || 'EMP';
+    const randCode = `${codePrefix}-${Math.floor(10000 + Math.random() * 90000)}`;
+    setGeneratedInviteLink(`https://app.oyengrid.com/invite/${randCode}`);
+  };
+
+  // Render Post-signup Onboarding Wizard Flow
+  if (activeRoute === 'onboarding' && user) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div className="form-card" style={{ maxWidth: '600px', width: '100%' }}>
+          
+          <div className="wizard-steps" style={{ marginBottom: '2.5rem' }}>
+            <div className={`wizard-step-node ${onboardingStep >= 1 ? 'completed' : ''} ${onboardingStep === 1 ? 'active' : ''}`}>1</div>
+            <div className={`wizard-step-node ${onboardingStep >= 2 ? 'completed' : ''} ${onboardingStep === 2 ? 'active' : ''}`}>2</div>
+            <div className={`wizard-step-node ${onboardingStep >= 3 ? 'completed' : ''} ${onboardingStep === 3 ? 'active' : ''}`}>3</div>
+            <div className={`wizard-step-node ${onboardingStep >= 4 ? 'completed' : ''} ${onboardingStep === 4 ? 'active' : ''}`}>4</div>
+          </div>
+
+          {/* STEP 1: Welcome */}
+          {onboardingStep === 1 && (
+            <div className="animate-fade-in" style={{ textAlign: 'center' }}>
+              <Sparkles size={48} color="var(--primary)" style={{ marginBottom: '1rem', filter: 'drop-shadow(0 0 10px var(--primary-glow))' }} />
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>Welcome to OYEN GRID!</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                Your organization workspace is created successfully. We've customized your initial dashboard with modules suited for your selected primary use case: <strong style={{ textTransform: 'uppercase', color: 'var(--primary)' }}>{activeTemplate}</strong>.
+              </p>
+              <button className="submit-btn" onClick={() => setOnboardingStep(2)}>
+                Let's configure your workspace <ArrowRight size={18} />
+              </button>
+            </div>
+          )}
+
+          {/* STEP 2: Create First Programme */}
+          {onboardingStep === 2 && (
+            <div className="animate-fade-in">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Step 2: Create First Programme</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                Quick-start your workspace by setting up your first cohort, training programme, event, or catalog.
+              </p>
+              
+              <div className="form-group">
+                <label className="form-label" htmlFor="prog-name">Programme or Event Name</label>
+                <div className="input-container">
+                  <input
+                    id="prog-name"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Graduate Trainee Cohort A"
+                    value={firstProgramName}
+                    onChange={(e) => setFirstProgramName(e.target.value)}
+                    style={{ paddingLeft: '1rem' }}
+                  />
+                </div>
+              </div>
+
+              <div className="wizard-footer-buttons">
+                <button className="secondary-btn" onClick={() => setOnboardingStep(1)}>
+                  Back
+                </button>
+                <button className="submit-btn" style={{ maxWidth: '200px' }} onClick={() => setOnboardingStep(3)}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: Invite Team */}
+          {onboardingStep === 3 && (
+            <div className="animate-fade-in">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Step 3: Invite Your Team</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                Invite co-workers, trainers, or managers. They will receive invitation links to configure their passwords.
+              </p>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="team-email">Email Address</label>
+                  <div className="input-container">
+                    <input
+                      id="team-email"
+                      type="email"
+                      className="form-input"
+                      placeholder="colleague@company.com"
+                      value={invitedTeamEmail}
+                      onChange={(e) => setInvitedTeamEmail(e.target.value)}
+                      style={{ paddingLeft: '1rem' }}
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="team-role">Role</label>
+                  <div className="input-container">
+                    <select
+                      id="team-role"
+                      className="form-input"
+                      value={invitedTeamRole}
+                      onChange={(e) => setInvitedTeamRole(e.target.value)}
+                      style={{ paddingLeft: '1rem' }}
+                    >
+                      <option value="Organization Admin">Organization Admin</option>
+                      <option value="Programme Manager">Programme Manager</option>
+                      <option value="Facilitator">Facilitator</option>
+                      <option value="Trainer">Trainer</option>
+                      <option value="Employee">Employee</option>
+                      <option value="Participant">Participant / Learner</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" className="secondary-btn" onClick={generateInviteLink} style={{ marginBottom: '1rem', width: '100%', justifyContent: 'center' }}>
+                <UserPlus size={18} /> Generate Invite Link
+              </button>
+
+              {generatedInviteLink && (
+                <div style={{ padding: '0.75rem', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Generated Code Link (Demo)</span>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--primary)', marginTop: '0.25rem', wordBreak: 'break-all' }}>
+                    {generatedInviteLink}
+                  </div>
+                </div>
+              )}
+
+              <div className="wizard-footer-buttons">
+                <button className="secondary-btn" onClick={() => setOnboardingStep(2)}>
+                  Back
+                </button>
+                <button className="submit-btn" style={{ maxWidth: '200px' }} onClick={() => setOnboardingStep(4)}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: Finish Setup */}
+          {onboardingStep === 4 && (
+            <div className="animate-fade-in" style={{ textAlign: 'center' }}>
+              <ShieldCheck size={48} color="var(--primary)" style={{ marginBottom: '1rem', filter: 'drop-shadow(0 0 10px var(--primary-glow))' }} />
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>Configuration Complete!</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                Your enterprise learning workspace is ready. Click below to launch the OYEN GRID administration dashboard.
+              </p>
+              <button className="submit-btn" onClick={() => handleAuthSuccess(user, 'Organization Owner')}>
+                Launch Workspace Dashboard
+              </button>
+            </div>
+          )}
+
+        </div>
+      </div>
+    );
+  }
+
   // Render Dashboard Workspace Preview if Logged In
-  if (user) {
+  if (activeRoute === 'dashboard' && user) {
     const modules = getWorkspaceModules();
     
     return (
@@ -383,7 +562,7 @@ export default function App() {
               <div>
                 <span style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 800, background: 'var(--gradient-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'block', lineHeight: 1 }}>OYEN GRID</span>
                 <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', fontWeight: 700 }}>
-                  {activeTemplate} workspace
+                  {activeTemplate} template
                 </span>
               </div>
             </div>
@@ -449,7 +628,7 @@ export default function App() {
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               </button>
               <div style={{ padding: '0.25rem 0.75rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid var(--border-focus)', textTransform: 'uppercase' }}>
-                {activePlan} plan
+                PRO SUBSCRIPTION
               </div>
             </div>
           </header>
@@ -646,7 +825,7 @@ export default function App() {
                   <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Enterprise Operations Workspace</h4>
+                        <h4 style={{ fontSize: '1.15rem' }}>Enterprise Operations</h4>
                         {enabledTemplates.enterprise && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
@@ -665,7 +844,7 @@ export default function App() {
                   <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Bootcamp & Accelerators</h4>
+                        <h4 style={{ fontSize: '1.15rem' }}>Bootcamps & Training</h4>
                         {enabledTemplates.bootcamp && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
@@ -684,7 +863,7 @@ export default function App() {
                   <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Education & Institution</h4>
+                        <h4 style={{ fontSize: '1.15rem' }}>Education & Institutions</h4>
                         {enabledTemplates.education && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
@@ -703,7 +882,7 @@ export default function App() {
                   <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Events & Conferences</h4>
+                        <h4 style={{ fontSize: '1.15rem' }}>Webinars & Events</h4>
                         {enabledTemplates.events && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
@@ -726,22 +905,22 @@ export default function App() {
               <div className="animate-fade-in">
                 <div style={{ marginBottom: '2rem' }}>
                   <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Billing & Subscription Settings</h2>
-                  <p style={{ color: 'var(--text-secondary)' }}>Manage your active billing templates and swap templates for quick sandbox testing.</p>
+                  <p style={{ color: 'var(--text-secondary)' }}>Manage active templates and switch setups for quick testing.</p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2.5rem' }}>
                   <div className="form-card">
                     <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem' }}>Sandbox Quick Switcher</h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                      As an administrator testing out OYEN GRID capabilities, you can switch the active template view directly:
+                      Test active workspace structures dynamically:
                     </p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {[
-                        { id: 'enterprise', name: 'Enterprise Operations Workspace' },
-                        { id: 'bootcamp', name: 'Bootcamp & Talents Workspace' },
-                        { id: 'education', name: 'Education Workspace' },
-                        { id: 'events', name: 'Events & Conferences Workspace' }
+                        { id: 'enterprise', name: 'Enterprise Operations' },
+                        { id: 'bootcamp', name: 'Bootcamp & Training' },
+                        { id: 'education', name: 'Education & Institutions' },
+                        { id: 'events', name: 'Webinars & Events' }
                       ].map(temp => {
                         const isCurrent = activeTemplate === temp.id;
                         const isSubscribed = enabledTemplates[temp.id];
@@ -771,7 +950,6 @@ export default function App() {
                               style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.8rem' }}
                               disabled={isCurrent}
                               onClick={() => {
-                                // If not subscribed, auto-enable to make testing easier
                                 if (!isSubscribed) {
                                   toggleTemplateSubscription(temp.id);
                                 } else {
@@ -790,8 +968,8 @@ export default function App() {
                   <div className="form-card" style={{ height: 'fit-content' }}>
                     <h3 style={{ fontSize: '1.15rem', marginBottom: '1rem' }}>Plan Details</h3>
                     <div style={{ padding: '1rem', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Current Active Subscription Plan</span>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'capitalize' }}>{activePlan} Plan</p>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Status Plan</span>
+                      <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>PRO PLAN</p>
                     </div>
 
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -827,7 +1005,7 @@ export default function App() {
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '1.5rem' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Template Hook State</span>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                    Active Workspace Template: <code>{activeTemplate}</code> • Active Plan: <code>{activePlan}</code>
+                    Active Workspace Template: <code>{activeTemplate}</code>
                   </p>
                 </div>
               </div>
@@ -875,85 +1053,76 @@ export default function App() {
         </button>
 
         <div className="form-wrapper">
-          {activeForm === 'portal' && (
+          {activeRoute === 'portal' && (
             <div className="form-card animate-fade-in">
               <div className="form-header">
                 <h2 className="form-title">Welcome to OYEN GRID</h2>
-                <p className="form-subtitle">Choose an entry pathway to continue</p>
+                <p className="form-subtitle">Choose how you'd like to get started</p>
               </div>
 
               <div className="portal-list">
                 {/* Organization Onboarding */}
-                <button className="portal-btn" onClick={() => setActiveForm('org_signup')}>
+                <button className="portal-btn" onClick={() => setActiveRoute('signup')}>
                   <div className="portal-btn-icon">
                     <Building2 size={24} />
                   </div>
                   <div className="portal-btn-content">
-                    <div className="portal-btn-title">🏢 Organization</div>
-                    <div className="portal-btn-desc">Register a new company workspace group</div>
+                    <div className="portal-btn-title">🏢 Create Organization</div>
+                    <div className="portal-btn-desc">Start managing programmes, training, events or institutional operations.</div>
                   </div>
                 </button>
 
-                {/* Individual Learner */}
-                <button className="portal-btn" onClick={() => setActiveForm('individual_signup')}>
+                {/* Join Public Event */}
+                <button className="portal-btn" onClick={() => setActiveRoute('public-event')}>
                   <div className="portal-btn-icon">
-                    <User size={24} />
+                    <Ticket size={24} />
                   </div>
                   <div className="portal-btn-content">
-                    <div className="portal-btn-title">👤 Individual</div>
-                    <div className="portal-btn-desc">Register as freelancer or guest learner</div>
-                  </div>
-                </button>
-
-                {/* Invited Workspace User */}
-                <button className="portal-btn" onClick={() => setActiveForm('invite_signup')}>
-                  <div className="portal-btn-icon">
-                    <UserCheck size={24} />
-                  </div>
-                  <div className="portal-btn-content">
-                    <div className="portal-btn-title">🎓 Invited User</div>
-                    <div className="portal-btn-desc">Join via workspace code or invite links</div>
+                    <div className="portal-btn-title">🎟 Join Public Event</div>
+                    <div className="portal-btn-desc">Register for a webinar, workshop or conference.</div>
                   </div>
                 </button>
               </div>
 
-              <div style={{ textItems: 'center', marginTop: '1rem', textAlign: 'center' }} className="form-subtitle">
-                Already have an account? <span onClick={() => setActiveForm('signin')}>Sign in</span>
+              <div style={{ textItems: 'center', marginTop: '1.5rem', textAlign: 'center' }} className="form-subtitle">
+                Already have an account? <span onClick={() => setActiveRoute('signin')}>🔑 Sign In</span>
               </div>
             </div>
           )}
 
-          {activeForm === 'signin' && (
+          {activeRoute === 'signin' && (
             <SignInForm 
-              onSwitchForm={setActiveForm} 
-              onAuthSuccess={(email) => handleAuthSuccess(email, 'Workspace Super Admin')} 
+              onSwitchForm={(route) => {
+                if (route === 'portal') setActiveRoute('signup');
+                else setActiveRoute(route);
+              }} 
+              onAuthSuccess={(email) => handleAuthSuccess(email, 'Workspace Owner')} 
             />
           )}
 
-          {activeForm === 'org_signup' && (
+          {activeRoute === 'signup' && (
             <OrgRegistrationForm 
-              onSwitchForm={setActiveForm} 
+              onSwitchForm={setActiveRoute} 
               onComplete={handleOrgRegistrationComplete} 
             />
           )}
 
-          {activeForm === 'invite_signup' && (
-            <InvitedUserForm 
-              onSwitchForm={setActiveForm} 
-              onComplete={(email) => handleAuthSuccess(email, 'Invited Employee')} 
+          {activeRoute === 'public-event' && (
+            <PublicEventForm 
+              onSwitchForm={setActiveRoute} 
             />
           )}
 
-          {activeForm === 'individual_signup' && (
-            <IndividualRegistrationForm 
-              onSwitchForm={setActiveForm} 
-              onComplete={(email) => handleAuthSuccess(email, 'Individual User')} 
+          {activeRoute === 'accept-invite' && (
+            <InvitationAcceptance 
+              onSwitchForm={setActiveRoute} 
+              onComplete={handleInviteAcceptanceComplete} 
             />
           )}
 
-          {activeForm === 'forgot' && (
+          {activeRoute === 'forgot-password' && (
             <ForgotPasswordForm 
-              onSwitchForm={setActiveForm} 
+              onSwitchForm={(route) => setActiveRoute(route === 'signin' ? 'signin' : 'portal')} 
             />
           )}
         </div>
