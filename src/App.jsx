@@ -43,6 +43,7 @@ export default function App() {
   const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
   const [verifyOrgEmailInput, setVerifyOrgEmailInput] = useState('');
   const [verifyError, setVerifyError] = useState('');
+  const [verificationResult, setVerificationResult] = useState(null); // null | 'found' | 'not-found'
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
 
   // Premium Onboarding Step 1 States
@@ -1460,106 +1461,242 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Title Header */}
-              <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Verify your organization</h2>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.5rem', lineHeight: '1.5' }}>
-                  Continue with the email used to subscribe to an OYEN GRID workspace.
-                </p>
-              </div>
+              {/* CASE 1: Subscription Found */}
+              {verificationResult === 'found' && (
+                <div className="animate-fade-in" style={{ textAlign: 'left' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Verify your organization</span>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Subscription Found</h2>
+                  
+                  <div className="form-card" style={{ 
+                    marginTop: '1.5rem', 
+                    marginBottom: '2rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                    borderColor: 'rgba(212, 175, 55, 0.15)',
+                    boxShadow: '0 0 30px rgba(212, 175, 55, 0.03)',
+                    padding: '1.5rem'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', fontSize: '0.9rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Organization:</span>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>{verifyOrgNameInput.trim() || 'ABC Energy Ltd'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Plan:</span>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>Bootcamps & Training</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Tier:</span>
+                        <span style={{ fontWeight: 600, color: '#D4AF37' }}>Standard</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Status:</span>
+                        <span style={{ color: '#22c55e', fontWeight: 600 }}>Active</span>
+                      </div>
+                    </div>
+                  </div>
 
-              {verifyError && (
-                <div style={{
-                  padding: '0.8rem 1rem',
-                  backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  borderRadius: '6px',
-                  color: '#ef4444',
-                  fontSize: '0.8rem',
-                  fontWeight: 500,
-                  marginBottom: '1.5rem',
-                  textAlign: 'left'
-                }}>
-                  ⚠️ {verifyError}
+                  <button 
+                    type="button" 
+                    className="submit-btn"
+                    style={{
+                      background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                      border: '1px solid #D4AF37',
+                      color: '#000',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      padding: '0.875rem'
+                    }}
+                    onClick={() => {
+                      setOrgName(verifyOrgNameInput.trim() || 'ABC Energy Ltd');
+                      setUser(verifyOrgEmailInput.trim());
+                      setUserRole('Organization Owner');
+                      handleOrgRegistrationComplete(verifyOrgEmailInput.trim(), 'bootcamp');
+                    }}
+                  >
+                    Continue Setup <ArrowRight size={16} />
+                  </button>
+
+                  <button 
+                    type="button"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'rgba(255,255,255,0.4)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      width: '100%',
+                      textAlign: 'center',
+                      marginTop: '1.25rem',
+                      fontWeight: 500
+                    }}
+                    onClick={() => setVerificationResult(null)}
+                  >
+                    ← Use different details
+                  </button>
                 </div>
               )}
 
-              {/* Form Inputs */}
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                if (!verifyOrgEmailInput.trim()) {
-                  setVerifyError('Organization email is required to verify your subscription.');
-                  return;
-                }
-                setVerifyError('');
+              {/* CASE 2: Subscription Not Found */}
+              {verificationResult === 'not-found' && (
+                <div className="animate-fade-in" style={{ textAlign: 'left' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '1px' }}>Verification Result</span>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff', fontFamily: "'Outfit', sans-serif", lineHeight: 1.3 }}>
+                    We couldn't find an active OYEN GRID subscription for this organization.
+                  </h2>
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.95rem', marginTop: '0.75rem', lineHeight: '1.6' }}>
+                    To create a workspace, your organization needs an active subscription.
+                  </p>
 
-                if (simulateStatus === 'Found') {
-                  // Simulate subscription matched
-                  const chosenName = verifyOrgNameInput.trim() || 'ABC Energy';
-                  setOrgName(chosenName);
-                  setUser(verifyOrgEmailInput.trim());
-                  setUserRole('Organization Owner');
-                  
-                  // Complete registration and enter onboarding Step 1 directly
-                  handleOrgRegistrationComplete(verifyOrgEmailInput.trim(), 'bootcamp');
-                } else {
-                  // Simulate no subscription
-                  setVerifyError('No active subscription found. Go to Pricing or Use another email.');
-                }
-              }} style={{ textAlign: 'left' }}>
-                
-                {/* Org Name */}
-                <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                  <label className="form-label" htmlFor="verify-name-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Name</label>
-                  <input
-                    id="verify-name-input"
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. ABC Energy Ltd"
-                    value={verifyOrgNameInput}
-                    onChange={(e) => setVerifyOrgNameInput(e.target.value)}
-                    style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
-                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '2rem' }}>
+                    <button 
+                      type="button" 
+                      className="submit-btn"
+                      style={{
+                        background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                        border: '1px solid #D4AF37',
+                        color: '#000',
+                        fontWeight: 700,
+                        borderRadius: '6px',
+                        padding: '0.875rem'
+                      }}
+                      onClick={() => alert('Demo Workspace launched inside mock container.')}
+                    >
+                      Start Free Demo
+                    </button>
+                    <button 
+                      type="button" 
+                      className="secondary-btn"
+                      style={{
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
+                        color: '#fff',
+                        width: '100%',
+                        justifyContent: 'center',
+                        borderRadius: '6px',
+                        padding: '0.875rem'
+                      }}
+                      onClick={() => alert('Navigating to pricing catalog...')}
+                    >
+                      View Plans
+                    </button>
+                  </div>
+
+                  <button 
+                    type="button"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'rgba(255,255,255,0.4)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      width: '100%',
+                      textAlign: 'center',
+                      marginTop: '1.25rem',
+                      fontWeight: 500
+                    }}
+                    onClick={() => setVerificationResult(null)}
+                  >
+                    ← Go back to verify
+                  </button>
                 </div>
+              )}
 
-                {/* Org Email */}
-                <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-                  <label className="form-label" htmlFor="verify-email-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Email</label>
-                  <input
-                    id="verify-email-input"
-                    type="email"
-                    className="form-input"
-                    placeholder="name@organization.com"
-                    value={verifyOrgEmailInput}
-                    onChange={(e) => setVerifyOrgEmailInput(e.target.value)}
-                    style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
-                  />
-                </div>
+              {/* Default Input Form */}
+              {verificationResult === null && (
+                <>
+                  {/* Title Header */}
+                  <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
+                    <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Verify your organization</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.5rem', lineHeight: '1.5' }}>
+                      Continue with the email used to subscribe to an OYEN GRID workspace.
+                    </p>
+                  </div>
 
-                <button 
-                  type="submit" 
-                  className="submit-btn"
-                  style={{
-                    background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
-                    border: '1px solid #D4AF37',
-                    color: '#000',
-                    fontWeight: 700,
-                    borderRadius: '6px',
-                    padding: '0.875rem'
-                  }}
-                >
-                  Continue <ArrowRight size={16} />
-                </button>
-              </form>
+                  {verifyError && (
+                    <div style={{
+                      padding: '0.8rem 1rem',
+                      backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '6px',
+                      color: '#ef4444',
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      marginBottom: '1.5rem',
+                      textAlign: 'left'
+                    }}>
+                      ⚠️ {verifyError}
+                    </div>
+                  )}
 
-              {/* Form Footer */}
-              <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
-                Already have an account? <span onClick={() => setActiveRoute('signin')} style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>Sign In</span>
-              </div>
+                  {/* Form Inputs */}
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!verifyOrgEmailInput.trim()) {
+                      setVerifyError('Organization email is required to verify your subscription.');
+                      return;
+                    }
+                    setVerifyError('');
 
-              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-                Need OYEN GRID? <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>View Plans →</span>
-              </div>
+                    if (simulateStatus === 'Found') {
+                      setVerificationResult('found');
+                    } else {
+                      setVerificationResult('not-found');
+                    }
+                  }} style={{ textAlign: 'left' }}>
+                    
+                    {/* Org Name */}
+                    <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                      <label className="form-label" htmlFor="verify-name-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Name</label>
+                      <input
+                        id="verify-name-input"
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g. ABC Energy Ltd"
+                        value={verifyOrgNameInput}
+                        onChange={(e) => setVerifyOrgNameInput(e.target.value)}
+                        style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
+                      />
+                    </div>
+
+                    {/* Org Email */}
+                    <div className="form-group" style={{ marginBottom: '1.75rem' }}>
+                      <label className="form-label" htmlFor="verify-email-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Email</label>
+                      <input
+                        id="verify-email-input"
+                        type="email"
+                        className="form-input"
+                        placeholder="name@organization.com"
+                        value={verifyOrgEmailInput}
+                        onChange={(e) => setVerifyOrgEmailInput(e.target.value)}
+                        style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="submit-btn"
+                      style={{
+                        background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                        border: '1px solid #D4AF37',
+                        color: '#000',
+                        fontWeight: 700,
+                        borderRadius: '6px',
+                        padding: '0.875rem'
+                      }}
+                    >
+                      Continue <ArrowRight size={16} />
+                    </button>
+                  </form>
+
+                  {/* Form Footer */}
+                  <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
+                    Already have an account? <span onClick={() => setActiveRoute('signin')} style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>Sign In</span>
+                  </div>
+
+                  <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
+                    Need OYEN GRID? <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>View Plans →</span>
+                  </div>
+                </>
+              )}
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '1.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
