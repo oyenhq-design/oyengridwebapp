@@ -66,6 +66,7 @@ export default function App() {
   const [ownerPassword, setOwnerPassword] = useState('password');
   const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('password');
   const [isAuthorizedOwner, setIsAuthorizedOwner] = useState(false);
+  const [ownerPhoto, setOwnerPhoto] = useState(null); // Base64 or object URL of the owner's profile photo
 
   // Dashboard state
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -718,6 +719,110 @@ export default function App() {
                   </p>
                 </div>
 
+                {/* Profile Photo Upload */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                    Profile Photo
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                    {/* Avatar preview circle */}
+                    <div
+                      onClick={() => document.getElementById('owner-photo-input').click()}
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        backgroundColor: ownerPhoto ? 'transparent' : 'rgba(212,175,55,0.1)',
+                        border: '2px dashed rgba(212,175,55,0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        transition: 'border-color 0.2s ease',
+                        position: 'relative'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = '#D4AF37'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.4)'}
+                    >
+                      {ownerPhoto ? (
+                        <img
+                          src={ownerPhoto}
+                          alt="Profile"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{ textAlign: 'center', color: 'rgba(212,175,55,0.6)' }}>
+                          <User size={28} />
+                          <div style={{ fontSize: '0.6rem', marginTop: '2px', color: 'rgba(255,255,255,0.3)' }}>Photo</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload info & button */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('owner-photo-input').click()}
+                        style={{
+                          background: 'rgba(212,175,55,0.08)',
+                          border: '1px solid rgba(212,175,55,0.35)',
+                          color: '#D4AF37',
+                          borderRadius: '8px',
+                          padding: '0.45rem 1rem',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          marginBottom: '0.4rem',
+                          display: 'block',
+                          transition: 'background 0.2s ease'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(212,175,55,0.15)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(212,175,55,0.08)'}
+                      >
+                        {ownerPhoto ? 'Change Photo' : 'Upload Photo'}
+                      </button>
+                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)' }}>
+                        JPG, PNG up to 5MB
+                      </span>
+                      {ownerPhoto && (
+                        <button
+                          type="button"
+                          onClick={() => setOwnerPhoto(null)}
+                          style={{
+                            display: 'block',
+                            marginTop: '0.25rem',
+                            background: 'none',
+                            border: 'none',
+                            color: 'rgba(239,68,68,0.7)',
+                            fontSize: '0.72rem',
+                            cursor: 'pointer',
+                            padding: 0
+                          }}
+                        >
+                          Remove photo
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Hidden file input */}
+                    <input
+                      id="owner-photo-input"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const url = URL.createObjectURL(file);
+                          setOwnerPhoto(url);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
                 {/* Name fields */}
                 <div className="form-row" style={{ marginBottom: '1rem' }}>
                   <div className="form-group">
@@ -1210,13 +1315,24 @@ export default function App() {
             </button>
             {/* User profile dropdown */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '1.5rem' }}>
-              <img 
-                src="./src/assets/john_doe_avatar.png" 
-                alt="John Doe" 
-                style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(212,175,55,0.3)' }} 
-              />
+              {ownerPhoto ? (
+                <img
+                  src={ownerPhoto}
+                  alt={`${ownerFirstName} ${ownerLastName}`}
+                  style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(212,175,55,0.3)' }}
+                />
+              ) : (
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  backgroundColor: '#D4AF37', color: '#000',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: '0.85rem', flexShrink: 0
+                }}>
+                  {`${ownerFirstName?.[0] || 'J'}${ownerLastName?.[0] || 'D'}`}
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff' }}>John Doe</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff' }}>{ownerFirstName} {ownerLastName}</span>
                 <span style={{ fontSize: '0.7rem', color: '#D4AF37' }}>Organization Owner</span>
               </div>
               <ChevronDown size={14} color="#718096" />
@@ -1303,12 +1419,18 @@ export default function App() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 700,
-                    fontSize: '0.8rem'
+                    fontSize: '0.8rem',
+                    overflow: 'hidden',
+                    flexShrink: 0
                   }}>
-                    JD
+                    {ownerPhoto ? (
+                      <img src={ownerPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      `${ownerFirstName?.[0] || 'J'}${ownerLastName?.[0] || 'D'}`
+                    )}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff' }}>John Doe</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff' }}>{ownerFirstName} {ownerLastName}</span>
                     <span style={{ fontSize: '0.65rem', color: '#a0aec0' }}>Organization Owner</span>
                   </div>
                 </div>
