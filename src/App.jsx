@@ -39,6 +39,16 @@ export default function App() {
   const [invitedTeamRole, setInvitedTeamRole] = useState('Programme Manager');
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
 
+  // Premium Onboarding Step 1 States
+  const [orgLogo, setOrgLogo] = useState(null);
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+  const [orgName, setOrgName] = useState('ABC Energy'); // Prefilled from verified subscription
+  const [orgIndustry, setOrgIndustry] = useState('Energy');
+  const [orgSize, setOrgSize] = useState('11-50');
+  const [orgCountry, setOrgCountry] = useState('United States');
+  const [orgTimezone, setOrgTimezone] = useState('GMT-5 (EST)');
+  const [orgDesc, setOrgDesc] = useState('');
+
   // Dashboard state
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [lockedTabTarget, setLockedTabTarget] = useState(null); 
@@ -182,6 +192,23 @@ export default function App() {
       cancelAnimationFrame(animationFrameId);
     };
   }, [user, theme, activeRoute]);
+
+  const handleCountryChange = (country) => {
+    setOrgCountry(country);
+    const timezoneMap = {
+      'United States': 'GMT-5 (EST)',
+      'United Kingdom': 'GMT+0 (BST)',
+      'Nigeria': 'GMT+1 (WAT)',
+      'Singapore': 'GMT+8 (SGT)',
+      'Canada': 'GMT-5 (EST)',
+      'Germany': 'GMT+1 (CET)',
+      'Australia': 'GMT+10 (AEST)',
+      'India': 'GMT+5:30 (IST)'
+    };
+    if (timezoneMap[country]) {
+      setOrgTimezone(timezoneMap[country]);
+    }
+  };
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -389,28 +416,274 @@ export default function App() {
 
   // Render Post-signup Onboarding Wizard Flow
   if (activeRoute === 'onboarding' && user) {
+    const isStep1 = onboardingStep === 1;
+    
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div className="form-card" style={{ maxWidth: '600px', width: '100%' }}>
+      <div style={{ 
+        display: 'flex', 
+        minHeight: '100vh', 
+        background: isStep1 ? '#09090B' : 'var(--bg-primary)', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        padding: '2rem',
+        transition: 'background-color 0.3s ease'
+      }}>
+        <div className="form-card" style={{ 
+          maxWidth: isStep1 ? '1100px' : '600px', 
+          width: '100%',
+          backgroundColor: isStep1 ? 'rgba(9, 9, 11, 0.95)' : 'var(--bg-card)',
+          borderColor: isStep1 ? 'rgba(255, 255, 255, 0.08)' : 'var(--border-color)',
+          transition: 'all 0.3s ease'
+        }}>
           
           <div className="wizard-steps" style={{ marginBottom: '2.5rem' }}>
             <div className={`wizard-step-node ${onboardingStep >= 1 ? 'completed' : ''} ${onboardingStep === 1 ? 'active' : ''}`}>1</div>
             <div className={`wizard-step-node ${onboardingStep >= 2 ? 'completed' : ''} ${onboardingStep === 2 ? 'active' : ''}`}>2</div>
             <div className={`wizard-step-node ${onboardingStep >= 3 ? 'completed' : ''} ${onboardingStep === 3 ? 'active' : ''}`}>3</div>
             <div className={`wizard-step-node ${onboardingStep >= 4 ? 'completed' : ''} ${onboardingStep === 4 ? 'active' : ''}`}>4</div>
+            <div className={`wizard-step-node ${onboardingStep >= 5 ? 'completed' : ''} ${onboardingStep === 5 ? 'active' : ''}`}>5</div>
           </div>
 
-          {/* STEP 1: Welcome */}
+          {/* STEP 1: Premium Organization Profile */}
           {onboardingStep === 1 && (
-            <div className="animate-fade-in" style={{ textAlign: 'center' }}>
-              <Sparkles size={48} color="var(--primary)" style={{ marginBottom: '1rem', filter: 'drop-shadow(0 0 10px var(--primary-glow))' }} />
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>Welcome to OYEN GRID!</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                Your organization workspace is created successfully. We've customized your initial dashboard with modules suited for your selected primary use case: <strong style={{ textTransform: 'uppercase', color: 'var(--primary)' }}>{activeTemplate}</strong>.
-              </p>
-              <button className="submit-btn" onClick={() => setOnboardingStep(2)}>
-                Let's configure your workspace <ArrowRight size={18} />
-              </button>
+            <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '2.5rem' }}>
+              
+              {/* Form Side */}
+              <div>
+                <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 1 of 5 • Organization Profile</span>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Configure Your Organization</h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                    Let's set up your organization's workspace before inviting your team.
+                  </p>
+                </div>
+
+                {/* Drag-and-drop Logo Zone */}
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label className="form-label" style={{ color: 'var(--text-secondary)' }}>Organization Logo</label>
+                  <div 
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingLogo(true);
+                    }}
+                    onDragLeave={() => setIsDraggingLogo(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingLogo(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        setOrgLogo(URL.createObjectURL(e.dataTransfer.files[0]));
+                      }
+                    }}
+                    style={{
+                      border: isDraggingLogo ? '2px dashed #D4AF37' : '1px dashed rgba(255, 255, 255, 0.15)',
+                      backgroundColor: isDraggingLogo ? 'rgba(212, 175, 55, 0.04)' : 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: '8px',
+                      padding: '1.5rem',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = (e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setOrgLogo(URL.createObjectURL(e.target.files[0]));
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    {orgLogo ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+                        <img src={orgLogo} alt="Logo Preview" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                        <span style={{ fontSize: '0.85rem', color: '#D4AF37', fontWeight: 500 }}>Logo uploaded successfully. Click to replace.</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                          Drag & drop your organization logo here, or <span style={{ color: '#D4AF37', fontWeight: 600 }}>Browse Files</span>
+                        </p>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Supports JPG, PNG up to 2MB</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Organization Name (pre-filled) */}
+                <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                  <label className="form-label" htmlFor="org-config-name" style={{ color: 'var(--text-secondary)' }}>Organization Name</label>
+                  <input
+                    id="org-config-name"
+                    type="text"
+                    className="form-input"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Prefilled from verified subscription</span>
+                </div>
+
+                {/* Industry & Size */}
+                <div className="form-row" style={{ marginBottom: '1.25rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="org-config-industry" style={{ color: 'var(--text-secondary)' }}>Industry</label>
+                    <select
+                      id="org-config-industry"
+                      className="form-input"
+                      value={orgIndustry}
+                      onChange={(e) => setOrgIndustry(e.target.value)}
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    >
+                      {['Energy', 'Technology', 'Education', 'Government', 'Healthcare', 'Manufacturing', 'Finance', 'NGO', 'Other'].map(ind => (
+                        <option key={ind} value={ind} style={{ background: '#09090B' }}>{ind}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="org-config-size" style={{ color: 'var(--text-secondary)' }}>Organization Size</label>
+                    <select
+                      id="org-config-size"
+                      className="form-input"
+                      value={orgSize}
+                      onChange={(e) => setOrgSize(e.target.value)}
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    >
+                      {['1-10', '11-50', '51-200', '201-500', '500+'].map(sz => (
+                        <option key={sz} value={sz} style={{ background: '#09090B' }}>{sz} employees</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Country & Timezone */}
+                <div className="form-row" style={{ marginBottom: '1.25rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="org-config-country" style={{ color: 'var(--text-secondary)' }}>Country</label>
+                    <select
+                      id="org-config-country"
+                      className="form-input"
+                      value={orgCountry}
+                      onChange={(e) => handleCountryChange(e.target.value)}
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    >
+                      {['United States', 'United Kingdom', 'Nigeria', 'Singapore', 'Canada', 'Germany', 'Australia', 'India'].map(c => (
+                        <option key={c} value={c} style={{ background: '#09090B' }}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="org-config-timezone" style={{ color: 'var(--text-secondary)' }}>Timezone</label>
+                    <input
+                      id="org-config-timezone"
+                      type="text"
+                      className="form-input"
+                      value={orgTimezone}
+                      onChange={(e) => setOrgTimezone(e.target.value)}
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="form-group" style={{ marginBottom: '1.75rem' }}>
+                  <label className="form-label" htmlFor="org-config-desc" style={{ color: 'var(--text-secondary)' }}>Organization Description</label>
+                  <textarea
+                    id="org-config-desc"
+                    className="form-input"
+                    rows={3}
+                    placeholder="Briefly describe your organization and its primary operations."
+                    value={orgDesc}
+                    onChange={(e) => setOrgDesc(e.target.value)}
+                    style={{ resize: 'none', height: '80px', paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                  />
+                </div>
+
+                {/* Footer Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem' }}>
+                  <button 
+                    type="button" 
+                    className="secondary-btn" 
+                    onClick={() => {
+                      setUser(null);
+                      setActiveRoute('portal');
+                    }}
+                    style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    type="button" 
+                    className="submit-btn" 
+                    style={{ 
+                      maxWidth: '200px', 
+                      background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)', 
+                      border: '1px solid #D4AF37',
+                      color: '#000',
+                      fontWeight: 700 
+                    }} 
+                    onClick={() => setOnboardingStep(2)}
+                  >
+                    Continue <ArrowRight size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Side Summary Card */}
+              <div style={{ 
+                borderLeft: '1px solid rgba(255,255,255,0.08)', 
+                paddingLeft: '2.5rem', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'center' 
+              }}>
+                <div className="form-card" style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                  borderColor: 'rgba(212, 175, 55, 0.15)',
+                  boxShadow: '0 0 30px rgba(212, 175, 55, 0.03)'
+                }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.25rem' }}>
+                    Workspace Summary
+                  </h4>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Organization:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>{orgName}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Solution:</span>
+                      <span style={{ fontWeight: 600, textTransform: 'capitalize', color: '#fff' }}>
+                        {activeTemplate === 'bootcamp' ? 'Bootcamps & Training' : 
+                         activeTemplate === 'events' ? 'Webinars & Events' : 
+                         activeTemplate === 'education' ? 'Education & Institutions' : 'Enterprise Operations'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Plan:</span>
+                      <span style={{ fontWeight: 600, color: '#D4AF37' }}>Standard</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Status:</span>
+                      <span style={{ color: '#22c55e', fontWeight: 600 }}>Active</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Participants Included:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>50</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Storage:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>10 GB</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>AI Allocation:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>Basic</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           )}
 
@@ -516,8 +789,72 @@ export default function App() {
             </div>
           )}
 
-          {/* STEP 4: Finish Setup */}
+          {/* STEP 4: Workspace Settings */}
           {onboardingStep === 4 && (
+            <div className="animate-fade-in">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Step 4: Workspace Settings</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                Customize default preferences for your new workspace environment.
+              </p>
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="form-label">Active Working Days</label>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                    <span 
+                      key={day} 
+                      style={{ 
+                        padding: '0.4rem 0.8rem', 
+                        borderRadius: '6px', 
+                        backgroundColor: day !== 'Sat' && day !== 'Sun' ? 'var(--primary-glow)' : 'var(--bg-input)', 
+                        border: day !== 'Sat' && day !== 'Sun' ? '1px solid var(--border-focus)' : '1px solid var(--border-color)',
+                        color: day !== 'Sat' && day !== 'Sun' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontSize: '0.8rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      {day}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="work-lang">Default Language</label>
+                  <div className="input-container">
+                    <select id="work-lang" className="form-input" style={{ paddingLeft: '1rem' }}>
+                      <option value="English">English (US)</option>
+                      <option value="French">French</option>
+                      <option value="Spanish">Spanish</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="work-attendance">Attendance Verification</label>
+                  <div className="input-container">
+                    <select id="work-attendance" className="form-input" style={{ paddingLeft: '1rem' }}>
+                      <option value="qr">Automatic QR Check-in</option>
+                      <option value="manual">Manual Roster Logging</option>
+                      <option value="passcode">Unique Session Passcode</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="wizard-footer-buttons">
+                <button className="secondary-btn" onClick={() => setOnboardingStep(3)}>
+                  Back
+                </button>
+                <button className="submit-btn" style={{ maxWidth: '200px' }} onClick={() => setOnboardingStep(5)}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5: Finish Setup */}
+          {onboardingStep === 5 && (
             <div className="animate-fade-in" style={{ textAlign: 'center' }}>
               <ShieldCheck size={48} color="var(--primary)" style={{ marginBottom: '1rem', filter: 'drop-shadow(0 0 10px var(--primary-glow))' }} />
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>Configuration Complete!</h2>
