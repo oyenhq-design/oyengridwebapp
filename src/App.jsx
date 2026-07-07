@@ -16,6 +16,8 @@ import ForgotPasswordForm from './components/ForgotPasswordForm';
 
 export default function App() {
   const [activeRoute, setActiveRoute] = useState('portal'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
   const [theme, setTheme] = useState('dark');
   
   // Auth state
@@ -84,6 +86,13 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Splash screen: fade out after 4.5s, then hide at 5s
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setSplashFading(true), 4500);
+    const hideTimer = setTimeout(() => setShowSplash(false), 5000);
+    return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+  }, []);
 
   // Canvas Animation for Left Brand Panel (Interactive Digital Grid)
   useEffect(() => {
@@ -432,6 +441,122 @@ export default function App() {
     const randCode = `${codePrefix}-${Math.floor(10000 + Math.random() * 90000)}`;
     setGeneratedInviteLink(`https://app.oyengrid.com/invite/${randCode}`);
   };
+
+  // ─── Splash Screen ───────────────────────────────────────────────────────────
+  if (showSplash) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: '#000000',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        opacity: splashFading ? 0 : 1,
+        transition: 'opacity 0.5s ease',
+        overflow: 'hidden',
+      }}>
+        {/* Ambient radial glow */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '600px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(212,175,55,0.07) 0%, transparent 70%)',
+          animation: 'splashPulse 2s ease-in-out infinite',
+          pointerEvents: 'none'
+        }} />
+
+        {/* Logo mark + wordmark */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '1.5rem',
+          animation: 'splashFadeIn 0.8s ease forwards',
+        }}>
+          {/* Hexagon logo */}
+          <div style={{
+            animation: 'splashLogoFloat 3s ease-in-out infinite',
+            filter: 'drop-shadow(0 0 28px rgba(212,175,55,0.45))',
+          }}>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="1.5" fill="rgba(212,175,55,0.08)"/>
+              <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
+          {/* Wordmark */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontSize: '2.4rem',
+              fontWeight: 900,
+              letterSpacing: '0.15em',
+              color: '#ffffff',
+              fontFamily: 'system-ui, sans-serif',
+              lineHeight: 1,
+            }}>
+              OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
+            </div>
+            <div style={{
+              marginTop: '0.5rem',
+              fontSize: '0.72rem',
+              letterSpacing: '0.3em',
+              color: 'rgba(255,255,255,0.35)',
+              textTransform: 'uppercase',
+              fontFamily: 'system-ui, sans-serif',
+            }}>
+              Enterprise Workspace & LMS
+            </div>
+          </div>
+        </div>
+
+        {/* Gold progress bar */}
+        <div style={{
+          position: 'absolute',
+          bottom: '12%',
+          width: '200px',
+          height: '2px',
+          backgroundColor: 'rgba(255,255,255,0.07)',
+          borderRadius: '99px',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%',
+            backgroundColor: '#D4AF37',
+            borderRadius: '99px',
+            animation: 'splashProgress 4.5s linear forwards',
+            boxShadow: '0 0 8px rgba(212,175,55,0.6)',
+          }} />
+        </div>
+
+        {/* Keyframe styles */}
+        <style>{`
+          @keyframes splashPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+          }
+          @keyframes splashFadeIn {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes splashLogoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+          }
+          @keyframes splashProgress {
+            from { width: 0%; }
+            to { width: 100%; }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   // Render Post-signup Onboarding Wizard Flow
   if (activeRoute === 'onboarding' && user) {
