@@ -5,7 +5,7 @@ import {
   Lock, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Play, HelpCircle, 
   Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert,
   ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop,
-  Globe
+  Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones
 } from 'lucide-react';
 import SignInForm from './components/SignInForm';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
@@ -49,7 +49,7 @@ export default function App() {
   // Premium Onboarding Step 1 States
   const [orgLogo, setOrgLogo] = useState(null);
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
-  const [orgName, setOrgName] = useState('ABC Energy'); // Prefilled from verified subscription
+  const [orgName, setOrgName] = useState('abc energy'); // Prefilled from verified subscription
   const [orgIndustry, setOrgIndustry] = useState('Energy');
   const [orgSize, setOrgSize] = useState('11-50');
   const [orgCountry, setOrgCountry] = useState('United States');
@@ -57,14 +57,14 @@ export default function App() {
   const [orgDesc, setOrgDesc] = useState('');
 
   // Onboarding Step 2: Owner states
-  const [ownerFirstName, setOwnerFirstName] = useState('');
-  const [ownerLastName, setOwnerLastName] = useState('');
-  const [ownerPhone, setOwnerPhone] = useState('');
-  const [ownerTitle, setOwnerTitle] = useState('');
-  const [ownerEmail, setOwnerEmail] = useState('');
-  const [ownerPersonalEmail, setOwnerPersonalEmail] = useState('');
-  const [ownerPassword, setOwnerPassword] = useState('');
-  const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('');
+  const [ownerFirstName, setOwnerFirstName] = useState('John');
+  const [ownerLastName, setOwnerLastName] = useState('Doe');
+  const [ownerPhone, setOwnerPhone] = useState('+1 (555) 000-0000');
+  const [ownerTitle, setOwnerTitle] = useState('Chief Executive Officer');
+  const [ownerEmail, setOwnerEmail] = useState('abc@gmail.com');
+  const [ownerPersonalEmail, setOwnerPersonalEmail] = useState('personal@email.com');
+  const [ownerPassword, setOwnerPassword] = useState('password');
+  const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('password');
   const [isAuthorizedOwner, setIsAuthorizedOwner] = useState(false);
 
   // Dashboard state
@@ -857,7 +857,6 @@ export default function App() {
                   <button 
                     type="button" 
                     className="submit-btn" 
-                    disabled={!isAuthorizedOwner || !ownerPassword || ownerPassword !== ownerConfirmPassword}
                     style={{ 
                       maxWidth: '200px', 
                       background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)', 
@@ -865,7 +864,13 @@ export default function App() {
                       color: '#000',
                       fontWeight: 700 
                     }} 
-                    onClick={() => setOnboardingStep(3)}
+                    onClick={() => {
+                      setUser(ownerEmail || 'abc@gmail.com');
+                      setUserRole('Organization Owner');
+                      setOrgName('abc energy');
+                      setActiveRoute('dashboard');
+                      setActiveTab('Dashboard');
+                    }}
                   >
                     Continue <ArrowRight size={18} />
                   </button>
@@ -1106,482 +1111,609 @@ export default function App() {
 
   // Render Dashboard Workspace Preview if Logged In
   if (activeRoute === 'dashboard' && user) {
-    const modules = getWorkspaceModules();
+    const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard';
     
+    // Sidebar list
+    const sidebarItems = [
+      { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
+      { id: 'Getting Started', label: 'Getting Started', icon: <Clock size={18} /> },
+      { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
+      { id: 'Team', label: 'Team', icon: <Users size={18} /> },
+      { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
+      { id: 'Participants', label: 'Participants', icon: <UserCheck size={18} /> },
+      { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
+      { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
+      { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
+    ];
+
     return (
-      <div className="dashboard-layout animate-fade-in" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-        {/* Sidebar Nav */}
-        <aside style={{
-          width: '280px',
-          borderRight: '1px solid var(--border-color)',
-          backgroundColor: 'var(--bg-card)',
-          backdropFilter: 'blur(10px)',
+      <div className="dashboard-root" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        backgroundColor: '#090a0f',
+        color: '#fff',
+        fontFamily: "var(--font-sans)",
+        overflowX: 'hidden'
+      }}>
+        {/* Global Top Header Bar */}
+        <header style={{
+          height: '70px',
+          backgroundColor: '#000000',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '1.5rem',
-          maxHeight: '100vh',
-          overflowY: 'auto'
+          padding: '0 2rem',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100
         }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-              <div style={{ background: 'var(--gradient-brand)', padding: '0.4rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Grid size={20} color="#fff" />
+          {/* Header Left: Hamburger & Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <button style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#a0aec0',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Menu size={20} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* Gold hexagon with bolt logo */}
+              <div style={{
+                background: 'rgba(212, 175, 55, 0.1)',
+                border: '1px solid #D4AF37',
+                padding: '0.35rem',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="2.5" fill="rgba(212, 175, 55, 0.2)"/>
+                  <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <div>
-                <span style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', fontWeight: 800, background: 'var(--gradient-brand)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'block', lineHeight: 1 }}>OYEN GRID</span>
-                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', fontWeight: 700 }}>
-                  {activeTemplate} template
-                </span>
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px', fontFamily: 'var(--font-display)' }}>ABC ENERGY</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#D4AF37', letterSpacing: '0.5px', textTransform: 'uppercase' }}>WORKSPACE</span>
               </div>
             </div>
-            
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              {modules.map((mod) => {
-                const isActive = activeTab === mod.id;
-                
+          </div>
+
+          {/* Header Right: Search, Alerts, Profile */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <button style={{ background: 'transparent', border: 'none', color: '#a0aec0', cursor: 'pointer' }}>
+              <Search size={20} />
+            </button>
+            <button style={{ background: 'transparent', border: 'none', color: '#a0aec0', cursor: 'pointer', position: 'relative' }}>
+              <Bell size={20} />
+              <span style={{
+                position: 'absolute',
+                top: '-5px',
+                right: '-5px',
+                backgroundColor: '#D4AF37',
+                color: '#000000',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                borderRadius: '50%',
+                width: '14px',
+                height: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>3</span>
+            </button>
+            {/* User profile dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '1.5rem' }}>
+              <img 
+                src="./src/assets/john_doe_avatar.png" 
+                alt="John Doe" 
+                style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(212,175,55,0.3)' }} 
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff' }}>John Doe</span>
+                <span style={{ fontSize: '0.7rem', color: '#D4AF37' }}>Organization Owner</span>
+              </div>
+              <ChevronDown size={14} color="#718096" />
+            </div>
+          </div>
+        </header>
+
+        {/* Outer Layout container below header */}
+        <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 70px)' }}>
+          {/* Sidebar Left */}
+          <aside style={{
+            width: '260px',
+            backgroundColor: '#000000',
+            borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: '1.5rem 0',
+            flexShrink: 0
+          }}>
+            {/* Navigation links */}
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              {sidebarItems.map((item) => {
+                const isActive = (item.id === 'Welcome' && isWelcome) || (item.id === activeTab);
                 return (
                   <div 
-                    key={mod.id} 
-                    onClick={() => handleModuleClick(mod)}
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between',
-                      padding: '0.75rem 1rem', 
-                      borderRadius: '8px', 
-                      background: isActive ? 'var(--primary-glow)' : 'transparent', 
-                      color: mod.enabled ? (isActive ? 'var(--primary)' : 'var(--text-secondary)') : 'var(--text-muted)',
-                      cursor: 'pointer', 
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      padding: '0.75rem 1.5rem',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
                       fontWeight: isActive ? 600 : 500,
-                      transition: 'all 0.2s ease',
-                      border: isActive ? '1px solid var(--border-focus)' : '1px solid transparent'
+                      color: isActive ? '#D4AF37' : '#a0aec0',
+                      background: isActive ? 'linear-gradient(90deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.01) 100%)' : 'transparent',
+                      borderLeft: isActive ? '3px solid #D4AF37' : '3px solid transparent',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) e.currentTarget.style.color = '#fff';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) e.currentTarget.style.color = '#a0aec0';
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      {mod.icon}
-                      <span style={{ fontSize: '0.9rem' }}>{mod.label}</span>
-                    </div>
-                    {!mod.enabled && <Lock size={14} color="var(--text-muted)" />}
+                    <span style={{ color: isActive ? '#D4AF37' : '#718096' }}>
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
                   </div>
                 );
               })}
             </nav>
-          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--gradient-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>
-                OG
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{userRole}</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user}</p>
+            {/* Bottom Profile card widget */}
+            <div style={{ padding: '0 1rem', marginTop: 'auto' }}>
+              <div 
+                onClick={handleLogOut}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: '#D4AF37',
+                    color: '#000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '0.8rem'
+                  }}>
+                    JD
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff' }}>John Doe</span>
+                    <span style={{ fontSize: '0.65rem', color: '#a0aec0' }}>Organization Owner</span>
+                  </div>
+                </div>
+                <ChevronDown size={14} color="#718096" />
               </div>
             </div>
-            <button onClick={handleLogOut} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'transparent', color: 'hsl(0, 84%, 60%)', cursor: 'pointer', fontWeight: 600 }}>
-              <LogOut size={16} /> Sign Out
-            </button>
-          </div>
-        </aside>
+          </aside>
 
-        {/* Content Area */}
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
-          {/* Header */}
-          <header style={{ height: '70px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', backgroundColor: 'var(--bg-card)', backdropFilter: 'blur(10px)', flexShrink: 0 }}>
-            <div>
-              <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, textTransform: 'capitalize' }}>{activeTab.replace('locked-', '')} panel</h1>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button onClick={toggleTheme} className="theme-toggle-btn" style={{ position: 'static' }}>
-                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-              <div style={{ padding: '0.25rem 0.75rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid var(--border-focus)', textTransform: 'uppercase' }}>
-                PRO SUBSCRIPTION
-              </div>
-            </div>
-          </header>
-
-          {/* Body content switcher */}
-          <section style={{ padding: '2.5rem', flex: 1 }}>
+          {/* Main Workspace Frame */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#090a0f', overflowY: 'auto' }}>
             
-            {/* LOCKED WORKSPACE OVERLAY SCREEN */}
-            {activeTab.startsWith('locked-') && (
-              <div className="form-card animate-fade-in" style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center' }}>
-                <Lock size={48} color="var(--primary)" style={{ marginBottom: '1rem', filter: 'drop-shadow(0 0 10px var(--primary-glow))' }} />
-                <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Workspace Locked</h2>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                  The <strong>{lockedTabTarget ? lockedTabTarget.toUpperCase() : ''} Workspace</strong> template modules are not enabled on your current subscription plan.
-                </p>
-
-                <div style={{ textAlign: 'left', backgroundColor: 'var(--bg-primary)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Unlocking this template will enable:</h4>
-                  <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <li>Full dashboard module features</li>
-                    <li>Context-aware AI assistance tools</li>
-                    <li>Workspace specific team structures and roles</li>
-                  </ul>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                  <button className="secondary-btn" onClick={() => setActiveTab('Marketplace')}>
-                    Explore Marketplace
-                  </button>
-                  <button className="submit-btn" style={{ maxWidth: '200px' }} onClick={() => toggleTemplateSubscription(lockedTabTarget)}>
-                    Unlock Workspace
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* DASHBOARD TAB */}
-            {activeTab === 'Dashboard' && (
-              <div className="animate-fade-in">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Welcome to OYEN GRID</h2>
-                    <p style={{ color: 'var(--text-secondary)' }}>Workspace Configuration Engine in Sandbox mode</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2.5rem' }}>
-                  {/* Left Column stats */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    <div className="form-card" style={{ padding: '2rem' }}>
-                      <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Active Workspace Overview</h3>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-                        Your OYEN GRID workspace template is currently configured as <strong>{activeTemplate.toUpperCase()}</strong>. The navigation menu has adapted to display specific modules.
-                      </p>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '1.5rem' }}>
-                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem', backgroundColor: 'var(--bg-input)' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Workspace Users</span>
-                          <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>18</p>
-                        </div>
-                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem', backgroundColor: 'var(--bg-input)' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Enabled Modules</span>
-                          <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
-                            {Object.values(enabledTemplates).filter(Boolean).length}
-                          </p>
-                        </div>
-                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem', backgroundColor: 'var(--bg-input)' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Pending Invites</span>
-                          <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>3</p>
-                        </div>
-                      </div>
+            {/* Conditional content based on activeTab */}
+            {isWelcome ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', padding: '2rem' }}>
+                
+                {/* Center Main Panel (Left in main layout) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  {/* Hero welcome banner card */}
+                  <div style={{
+                    borderRadius: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundImage: `linear-gradient(to right, rgba(9, 9, 11, 0.98) 40%, rgba(9, 9, 11, 0.8) 65%, rgba(9, 9, 11, 0.2) 100%), url(./src/assets/abc_energy_building.png)`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    padding: '3rem 2.5rem',
+                    minHeight: '360px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 30px rgba(0,0,0,0.4)'
+                  }}>
+                    {/* Workspace Ready Badge */}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                      color: '#22c55e',
+                      border: '1px solid rgba(34, 197, 94, 0.25)',
+                      borderRadius: '20px',
+                      padding: '0.3rem 0.65rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      alignSelf: 'flex-start',
+                      marginBottom: '1.5rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }}></span>
+                      Workspace Ready
                     </div>
 
-                    <div className="form-card" style={{ padding: '2rem' }}>
-                      <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Team & Invitation Activity</h3>
-                      
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                          <div>
-                            <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>David Lee</p>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>ADM-20483 • Admin Invite</span>
-                          </div>
-                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', backgroundColor: 'rgba(234, 179, 8, 0.1)', color: '#eab308', borderRadius: '4px' }}>Pending Invite</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                          <div>
-                            <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Sarah Kim</p>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>MGR-49211 • Manager Invite</span>
-                          </div>
-                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', borderRadius: '4px' }}>Active</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>John Doe</p>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>FAC-93822 • Facilitator Invite</span>
-                          </div>
-                          <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', borderRadius: '4px' }}>Active</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column AI actions */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    <div className="form-card" style={{ padding: '1.5rem', border: '1px solid var(--border-focus)', background: 'var(--primary-glow)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary)' }}>
-                        <Sparkles size={20} />
-                        <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>AI Workspace Recommendations</h3>
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                        Because you are using the <strong>{activeTemplate} workspace</strong>, OYEN GRID recommends the following AI actions:
-                      </p>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {getAiSuggestions().map((sug, i) => (
-                          <div 
-                            key={i} 
-                            onClick={() => {
-                              setActiveTab('AI Workspace');
-                              setAiPrompt(sug);
-                            }}
-                            style={{ 
-                              padding: '0.75rem', 
-                              backgroundColor: 'var(--bg-input)', 
-                              border: '1px solid var(--border-color)', 
-                              borderRadius: '8px', 
-                              fontSize: '0.85rem', 
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              fontWeight: 500
-                            }}
-                          >
-                            <span>{sug}</span>
-                            <Play size={12} color="var(--primary)" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* AI WORKSPACE TAB */}
-            {activeTab === 'AI Workspace' && (
-              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 200px)' }}>
-                <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {aiResponses.map((res, i) => (
-                    <div 
-                      key={i} 
-                      style={{ 
-                        alignSelf: res.role === 'user' ? 'flex-end' : 'flex-start',
-                        backgroundColor: res.role === 'user' ? 'var(--primary-glow)' : 'var(--bg-card)',
-                        border: res.role === 'user' ? '1px solid var(--border-focus)' : '1px solid var(--border-color)',
-                        borderRadius: '12px',
-                        padding: '1rem',
-                        maxWidth: '70%',
-                        fontSize: '0.95rem'
-                      }}
-                    >
-                      {res.text}
-                    </div>
-                  ))}
-                </div>
-
-                <form onSubmit={handleAiSubmit} style={{ display: 'flex', gap: '1rem' }}>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Type an AI prompt..."
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    style={{ flex: 1, paddingLeft: '1.25rem' }}
-                  />
-                  <button type="submit" className="submit-btn" style={{ width: 'auto', padding: '0 2rem' }}>
-                    Send Prompt
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* MARKETPLACE TAB */}
-            {activeTab === 'Marketplace' && (
-              <div className="animate-fade-in">
-                <div style={{ marginBottom: '2rem' }}>
-                  <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Workspace Marketplace</h2>
-                  <p style={{ color: 'var(--text-secondary)' }}>Add additional workspace template capabilities to your subscription</p>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
-                  {/* Enterprise */}
-                  <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Enterprise Operations</h4>
-                        {enabledTemplates.enterprise && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                        Enables corporate structure modules, employee directories, custom department structures, and corporate compliance audit reporting panels.
-                      </p>
-                    </div>
-                    <button 
-                      className={enabledTemplates.enterprise ? 'secondary-btn' : 'submit-btn'}
-                      onClick={() => toggleTemplateSubscription('enterprise')}
-                    >
-                      {enabledTemplates.enterprise ? 'Disable Workspace' : 'Add to Workspace'}
-                    </button>
-                  </div>
-
-                  {/* Bootcamp */}
-                  <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Bootcamps & Training</h4>
-                        {enabledTemplates.bootcamp && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                        Enables cohort groupings, mentor profiles, daily scheduling timetables, attendee attendance logs, and automatic certificate generation builders.
-                      </p>
-                    </div>
-                    <button 
-                      className={enabledTemplates.bootcamp ? 'secondary-btn' : 'submit-btn'}
-                      onClick={() => toggleTemplateSubscription('bootcamp')}
-                    >
-                      {enabledTemplates.bootcamp ? 'Disable Workspace' : 'Add to Workspace'}
-                    </button>
-                  </div>
-
-                  {/* Education */}
-                  <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Education & Institutions</h4>
-                        {enabledTemplates.education && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                        Enables university faculty modules, custom semester configurations, academic courses databases, lecturer assignment schedules, and semester result grade sheets.
-                      </p>
-                    </div>
-                    <button 
-                      className={enabledTemplates.education ? 'secondary-btn' : 'submit-btn'}
-                      onClick={() => toggleTemplateSubscription('education')}
-                    >
-                      {enabledTemplates.education ? 'Disable Workspace' : 'Add to Workspace'}
-                    </button>
-                  </div>
-
-                  {/* Events */}
-                  <div className="form-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ fontSize: '1.15rem' }}>Webinars & Events</h4>
-                        {enabledTemplates.events && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary-glow)', color: 'var(--primary)', borderRadius: '4px', fontWeight: 600 }}>Active</span>}
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                        Enables event coordination builders, speaker directory indexing, ticket code validation portals, schedules scheduling, and attendee feedback response logs.
-                      </p>
-                    </div>
-                    <button 
-                      className={enabledTemplates.events ? 'secondary-btn' : 'submit-btn'}
-                      onClick={() => toggleTemplateSubscription('events')}
-                    >
-                      {enabledTemplates.events ? 'Disable Workspace' : 'Add to Workspace'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* BILLING & SETTINGS TAB */}
-            {activeTab === 'Billing & Settings' && (
-              <div className="animate-fade-in">
-                <div style={{ marginBottom: '2rem' }}>
-                  <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Billing & Subscription Settings</h2>
-                  <p style={{ color: 'var(--text-secondary)' }}>Manage active templates and switch setups for quick testing.</p>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2.5rem' }}>
-                  <div className="form-card">
-                    <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem' }}>Sandbox Quick Switcher</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                      Test active workspace structures dynamically:
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, lineHeight: 1.15 }}>
+                      Welcome to <br />
+                      <span style={{ color: '#D4AF37' }}>Your Workspace</span>
+                    </h1>
+                    
+                    <p style={{ color: '#a0aec0', fontSize: '0.95rem', marginTop: '1rem', maxWidth: '380px', lineHeight: '1.6' }}>
+                      Your workspace is ready to power impactful learning experiences.
                     </p>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {[
-                        { id: 'enterprise', name: 'Enterprise Operations' },
-                        { id: 'bootcamp', name: 'Bootcamp & Training' },
-                        { id: 'education', name: 'Education & Institutions' },
-                        { id: 'events', name: 'Webinars & Events' }
-                      ].map(temp => {
-                        const isCurrent = activeTemplate === temp.id;
-                        const isSubscribed = enabledTemplates[temp.id];
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                      <button style={{
+                        background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                        border: '1px solid #D4AF37',
+                        color: '#000',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 700,
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px rgba(212,175,55,0.25)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      >
+                        Go to Workspace <ArrowRight size={16} />
+                      </button>
 
-                        return (
+                      <button style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#fff',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                      }}
+                      >
+                        <UserPlus size={16} /> Invite Team
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* "What You Can Do Now" section */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>What You Can Do Now</h3>
+                    
+                    {/* 5 columns of action cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+                      {[
+                        { 
+                          title: 'Programmes', 
+                          desc: 'Create and manage bootcamps, training programmes and cohorts.', 
+                          linkText: 'Manage',
+                          icon: <Grid size={24} color="#D4AF37" />
+                        },
+                        { 
+                          title: 'Participants', 
+                          desc: 'View, manage and track participants across all programmes.', 
+                          linkText: 'View Participants',
+                          icon: <User size={24} color="#D4AF37" />
+                        },
+                        { 
+                          title: 'Sessions', 
+                          desc: 'Schedule, run and manage sessions and events seamlessly.', 
+                          linkText: 'Manage Sessions',
+                          icon: <Calendar size={24} color="#D4AF37" />
+                        },
+                        { 
+                          title: 'Reports', 
+                          desc: 'Access insights and performance analytics in real time.', 
+                          linkText: 'View Reports',
+                          icon: <BarChart3 size={24} color="#D4AF37" />
+                        },
+                        { 
+                          title: 'Settings', 
+                          desc: 'Manage workspace settings, roles, permissions and integrations.', 
+                          linkText: 'Workspace Settings',
+                          icon: <Settings size={24} color="#D4AF37" />
+                        }
+                      ].map((card, i) => (
+                        <div 
+                          key={i}
+                          style={{
+                            backgroundColor: '#0e0f14',
+                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                            borderRadius: '12px',
+                            padding: '1.5rem 1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            minHeight: '220px',
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div style={{ marginBottom: '0.25rem' }}>
+                              {card.icon}
+                            </div>
+                            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', margin: 0 }}>{card.title}</h4>
+                            <p style={{ color: '#718096', fontSize: '0.75rem', lineHeight: '1.4', margin: 0 }}>{card.desc}</p>
+                          </div>
+                          
                           <div 
-                            key={temp.id}
                             style={{ 
                               display: 'flex', 
-                              justifyContent: 'space-between', 
                               alignItems: 'center', 
-                              padding: '1rem', 
-                              border: isCurrent ? '2px solid var(--border-focus)' : '1px solid var(--border-color)',
-                              borderRadius: '8px',
-                              backgroundColor: isCurrent ? 'var(--primary-glow)' : 'var(--bg-input)'
+                              gap: '0.35rem', 
+                              color: '#D4AF37', 
+                              fontSize: '0.75rem', 
+                              fontWeight: 700, 
+                              cursor: 'pointer',
+                              marginTop: '1rem'
                             }}
                           >
-                            <div>
-                              <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>{temp.name}</p>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                {isSubscribed ? 'Subscribed ✅' : 'Trial / Locked 🔒'}
-                              </span>
-                            </div>
-
-                            <button 
-                              className={isCurrent ? 'secondary-btn' : 'submit-btn'}
-                              style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.8rem' }}
-                              disabled={isCurrent}
-                              onClick={() => {
-                                if (!isSubscribed) {
-                                  toggleTemplateSubscription(temp.id);
-                                } else {
-                                  switchActiveTemplate(temp.id);
-                                }
-                              }}
-                            >
-                              {isCurrent ? 'Active' : 'Switch Workspace'}
-                            </button>
+                            <span>{card.linkText}</span>
+                            <ArrowRight size={12} />
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="form-card" style={{ height: 'fit-content' }}>
-                    <h3 style={{ fontSize: '1.15rem', marginBottom: '1rem' }}>Plan Details</h3>
-                    <div style={{ padding: '1rem', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Status Plan</span>
-                      <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>PRO PLAN</p>
-                    </div>
-
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <span>Base price</span>
-                        <span>$199 / mo</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <span>Additional Templates</span>
-                        <span>
-                          {Object.values(enabledTemplates).filter(Boolean).length > 1 ? '+$50/mo' : '$0'}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: 'var(--text-primary)', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
-                        <span>Total Monthly Invoice</span>
-                        <span>
-                          ${Object.values(enabledTemplates).filter(Boolean).length > 1 ? 249 : 199}
-                        </span>
-                      </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* PLACEHOLDER MODULE VIEW FOR VALIDATION */}
-            {activeTab !== 'Dashboard' && activeTab !== 'AI Workspace' && activeTab !== 'Marketplace' && activeTab !== 'Billing & Settings' && !activeTab.startsWith('locked-') && (
-              <div className="form-card animate-fade-in" style={{ maxWidth: '720px', margin: '0 auto' }}>
-                <h3 style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '1rem' }}>{activeTab} Workspace Operations</h3>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                  This is the operational sandbox view for the active module <strong>{activeTab}</strong>. Here, managers, trainers, and administrators configure records, track progress indicators, and generate compliance sheets.
-                </p>
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '1.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Template Hook State</span>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                    Active Workspace Template: <code>{activeTemplate}</code>
+                {/* Right Panel */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'left' }}>
+                  
+                  {/* Card 1: Workspace Summary */}
+                  <div style={{
+                    backgroundColor: '#0e0f14',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                  }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>Workspace Summary</h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: '#718096' }}>Solution</span>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>Bootcamps & Training</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: '#718096' }}>Plan</span>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>Standard</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: '#718096' }}>Status</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#22c55e', fontWeight: 600 }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
+                          Active
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: '#718096' }}>Participants Included</span>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>50</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
+                        <span style={{ color: '#718096' }}>Storage</span>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>10 GB</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#718096' }}>AI Allocation</span>
+                        <span style={{ fontWeight: 600, color: '#fff' }}>Basic</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Next Steps */}
+                  <div style={{
+                    backgroundColor: '#0e0f14',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                  }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>Next Steps</h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {[
+                        { step: 1, label: 'Organization Verified', completed: true },
+                        { step: 2, label: 'Workspace Configured', completed: true },
+                        { step: 3, label: 'Team Invited', completed: true }
+                      ].map((st) => (
+                        <div key={st.step} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: 'rgba(212,175,55,0.15)',
+                            border: '1.5px solid #D4AF37',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#D4AF37'
+                          }}>
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                          <span style={{ fontSize: '0.85rem', color: '#718096', textDecoration: 'line-through' }}>{st.label}</span>
+                        </div>
+                      ))}
+
+                      {/* Active Step 4 */}
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          border: '1.5px solid #D4AF37',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#D4AF37',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          marginTop: '0.1rem',
+                          flexShrink: 0
+                        }}>
+                          4
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                          <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Create Your First Programme</span>
+                          <span style={{ fontSize: '0.75rem', color: '#718096' }}>Kickstart your learning journey.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Need Help */}
+                  <div style={{
+                    backgroundColor: '#0e0f14',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    gap: '1rem',
+                    alignItems: 'flex-start'
+                  }}>
+                    <div style={{
+                      backgroundColor: 'rgba(212,175,55,0.1)',
+                      border: '1px solid rgba(212,175,55,0.2)',
+                      borderRadius: '8px',
+                      padding: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#D4AF37'
+                    }}>
+                      <Headphones size={20} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', margin: 0 }}>Need Help?</h4>
+                      <p style={{ color: '#718096', fontSize: '0.75rem', lineHeight: '1.4', margin: 0 }}>
+                        Our support team is here to help you get started.
+                      </p>
+                      <button style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: '#fff',
+                        borderRadius: '6px',
+                        padding: '0.4rem 0.8rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        alignSelf: 'flex-start',
+                        marginTop: '0.25rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      >
+                        Contact Support <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            ) : (
+              /* Operational View for other tabs */
+              <div style={{ padding: '2.5rem' }}>
+                <div className="form-card animate-fade-in" style={{ maxWidth: '720px', margin: '0 auto', textAlign: 'left' }}>
+                  <h3 style={{ fontSize: '1.4rem', color: '#D4AF37', marginBottom: '1rem' }}>{activeTab} Workspace Operations</h3>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                    This is the operational sandbox view for the active module <strong>{activeTab}</strong>. Here, managers, trainers, and administrators configure records, track progress indicators, and generate compliance sheets.
                   </p>
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '1.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Template Hook State</span>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                      Active Workspace Template: <code>{activeTemplate}</code>
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
-            
-          </section>
-        </main>
+
+            {/* Bottom Footer Section */}
+            <footer style={{
+              marginTop: 'auto',
+              backgroundColor: '#000000',
+              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+              padding: '1.5rem 0',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              backgroundImage: 'radial-gradient(ellipse at bottom, rgba(212, 175, 55, 0.03) 0%, transparent 60%)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)' }}>
+                <span>Powered by</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  {/* Gold small hexagon logo */}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="2.5" fill="none"/>
+                    <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span style={{ fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px' }}>
+                    OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
+                  </span>
+                </div>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                Secure. Scalable. Intelligent.
+              </span>
+            </footer>
+
+          </div>
+        </div>
       </div>
     );
   }
