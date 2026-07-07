@@ -61,6 +61,8 @@ export default function App() {
   const [ownerLastName, setOwnerLastName] = useState('');
   const [ownerPhone, setOwnerPhone] = useState('');
   const [ownerTitle, setOwnerTitle] = useState('');
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [ownerPersonalEmail, setOwnerPersonalEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
   const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('');
   const [isAuthorizedOwner, setIsAuthorizedOwner] = useState(false);
@@ -744,7 +746,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Email & Phone */}
+                {/* Email Fields */}
                 <div className="form-row" style={{ marginBottom: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label" htmlFor="owner-email" style={{ color: 'var(--text-secondary)' }}>Work Email</label>
@@ -752,11 +754,28 @@ export default function App() {
                       id="owner-email"
                       type="email"
                       className="form-input"
-                      value={user || ''}
-                      disabled
-                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', cursor: 'not-allowed' }}
+                      value={ownerEmail !== '' ? ownerEmail : (user || '')}
+                      onChange={(e) => setOwnerEmail(e.target.value)}
+                      placeholder="name@organization.com"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-personal-email" style={{ color: 'var(--text-secondary)' }}>Personal Email (Optional)</label>
+                    <input
+                      id="owner-personal-email"
+                      type="email"
+                      className="form-input"
+                      value={ownerPersonalEmail}
+                      onChange={(e) => setOwnerPersonalEmail(e.target.value)}
+                      placeholder="personal@email.com"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Phone & Job Title */}
+                <div className="form-row" style={{ marginBottom: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label" htmlFor="owner-phone" style={{ color: 'var(--text-secondary)' }}>Work Phone</label>
                     <input
@@ -769,20 +788,18 @@ export default function App() {
                       style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
-                </div>
-
-                {/* Job Title */}
-                <div className="form-group" style={{ marginBottom: '1rem' }}>
-                  <label className="form-label" htmlFor="owner-title" style={{ color: 'var(--text-secondary)' }}>Job Title</label>
-                  <input
-                    id="owner-title"
-                    type="text"
-                    className="form-input"
-                    value={ownerTitle}
-                    onChange={(e) => setOwnerTitle(e.target.value)}
-                    placeholder="e.g. Chief Executive Officer / IT Administrator"
-                    style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
-                  />
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-title" style={{ color: 'var(--text-secondary)' }}>Job Title</label>
+                    <input
+                      id="owner-title"
+                      type="text"
+                      className="form-input"
+                      value={ownerTitle}
+                      onChange={(e) => setOwnerTitle(e.target.value)}
+                      placeholder="e.g. Chief Executive Officer"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
                 </div>
 
                 {/* Passwords */}
