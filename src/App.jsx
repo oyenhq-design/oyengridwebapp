@@ -37,6 +37,11 @@ export default function App() {
   const [firstProgramName, setFirstProgramName] = useState('');
   const [invitedTeamEmail, setInvitedTeamEmail] = useState('');
   const [invitedTeamRole, setInvitedTeamRole] = useState('Programme Manager');
+  // Simulation & Verification inputs
+  const [simulateStatus, setSimulateStatus] = useState('Found'); // 'Found' | 'Not Found'
+  const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
+  const [verifyOrgEmailInput, setVerifyOrgEmailInput] = useState('');
+  const [verifyError, setVerifyError] = useState('');
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
 
   // Premium Onboarding Step 1 States
@@ -1358,29 +1363,50 @@ export default function App() {
   return (
     <div className="auth-container">
       {/* Brand Panel (Left) */}
-      <section className="brand-panel">
-        <canvas ref={canvasRef} className="brand-canvas" />
-        <div className="brand-overlay" />
+      <section className="brand-panel" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div className="brand-overlay" style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'linear-gradient(135deg, rgba(9, 9, 11, 0.4) 0%, rgba(9, 9, 11, 0.85) 100%)',
+          zIndex: 2
+        }} />
+
+        {/* Floating Gold Hexagons Overlay */}
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2, opacity: 0.15 }}>
+          <svg width="100%" height="100%" viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', top: 0, right: 0 }}>
+            <polygon points="350,50 390,120 350,190 270,190 230,120 270,50" stroke="#D4AF37" strokeWidth="1.5" />
+            <polygon points="310,130 350,200 310,270 230,270 190,200 230,130" stroke="#D4AF37" strokeWidth="1" />
+          </svg>
+        </div>
         
-        <header className="brand-header">
-          <div style={{ background: 'var(--gradient-brand)', padding: '0.35rem', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Grid size={18} color="#fff" />
+        <header className="brand-header" style={{ position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ background: '#D4AF37', padding: '0.4rem', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Grid size={16} color="#000" />
           </div>
-          <span className="logo-text">OYEN GRID</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>
+            OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
+          </span>
         </header>
 
-        <div className="brand-content">
-          <h1 className="brand-title">
-            The intelligent <span>enterprise workspace</span>
+        <div className="brand-content" style={{ position: 'relative', zIndex: 3, maxWidth: '480px' }}>
+          <h1 className="brand-title" style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.25, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>
+            Secure portal built to protect <span style={{ color: '#D4AF37' }}>institutional knowledge.</span>
           </h1>
-          <p className="brand-subtitle">
-            Scale your organization's learning programs, workforce directories, chat collaborations, and AI operations inside a single, unified grid ecosystem.
+          <p className="brand-subtitle" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.75rem', fontWeight: 500 }}>
+            End-to-End Encrypted. Inspected. Authorized.
           </p>
         </div>
 
-        <footer className="brand-footer">
-          © {new Date().getFullYear()} OYEN GRID. All rights reserved.
-        </footer>
+        {/* Bottom Progress Slider (3rd Segment Gold) */}
+        <div style={{ display: 'flex', gap: '0.5rem', zIndex: 3, marginBottom: '1rem' }}>
+          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(212,175,55,0.2)' }}></span>
+          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(212,175,55,0.2)' }}></span>
+          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: '#D4AF37' }}></span>
+          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(212,175,55,0.2)' }}></span>
+        </div>
       </section>
 
       {/* Form Panel (Right) */}
@@ -1391,39 +1417,161 @@ export default function App() {
 
         <div className="form-wrapper">
           {activeRoute === 'portal' && (
-            <div className="form-card animate-fade-in">
-              <div className="form-header">
-                <h2 className="form-title">Welcome to OYEN GRID</h2>
-                <p className="form-subtitle">Choose how you'd like to get started</p>
+            <div className="animate-fade-in" style={{ backgroundColor: 'transparent' }}>
+              
+              {/* Language & Simulator Row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span>SIMULATE:</span>
+                  <button 
+                    onClick={() => setSimulateStatus('Found')}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: simulateStatus === 'Found' ? '#D4AF37' : 'rgba(255,255,255,0.4)',
+                      fontWeight: simulateStatus === 'Found' ? 800 : 500,
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    Found
+                  </button>
+                  <span style={{ color: 'rgba(255,255,255,0.1)' }}>|</span>
+                  <button 
+                    onClick={() => setSimulateStatus('Not Found')}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: simulateStatus === 'Not Found' ? '#D4AF37' : 'rgba(255,255,255,0.4)',
+                      fontWeight: simulateStatus === 'Not Found' ? 800 : 500,
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    Not Found
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: '0.4rem 0.8rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px' }}>
+                  <Globe size={14} />
+                  <span>English</span>
+                  <span style={{ fontSize: '0.6rem' }}>▼</span>
+                </div>
               </div>
 
-              <div className="portal-list">
-                {/* Organization Onboarding */}
-                <button className="portal-btn" onClick={() => setActiveRoute('signup')}>
-                  <div className="portal-btn-icon">
-                    <Building2 size={24} />
-                  </div>
-                  <div className="portal-btn-content">
-                    <div className="portal-btn-title">🏢 Create Organization</div>
-                    <div className="portal-btn-desc">Start managing programmes, training, events or institutional operations.</div>
-                  </div>
+              {/* Title Header */}
+              <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Verify your organization</h2>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.5rem', lineHeight: '1.5' }}>
+                  Continue with the email used to subscribe to an OYEN GRID workspace.
+                </p>
+              </div>
+
+              {verifyError && (
+                <div style={{
+                  padding: '0.8rem 1rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: '6px',
+                  color: '#ef4444',
+                  fontSize: '0.8rem',
+                  fontWeight: 500,
+                  marginBottom: '1.5rem',
+                  textAlign: 'left'
+                }}>
+                  ⚠️ {verifyError}
+                </div>
+              )}
+
+              {/* Form Inputs */}
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!verifyOrgEmailInput.trim()) {
+                  setVerifyError('Organization email is required to verify your subscription.');
+                  return;
+                }
+                setVerifyError('');
+
+                if (simulateStatus === 'Found') {
+                  // Simulate subscription matched
+                  const chosenName = verifyOrgNameInput.trim() || 'ABC Energy';
+                  setOrgName(chosenName);
+                  setUser(verifyOrgEmailInput.trim());
+                  setUserRole('Organization Owner');
+                  
+                  // Complete registration and enter onboarding Step 1 directly
+                  handleOrgRegistrationComplete(verifyOrgEmailInput.trim(), 'bootcamp');
+                } else {
+                  // Simulate no subscription
+                  setVerifyError('No active subscription found. Go to Pricing or Use another email.');
+                }
+              }} style={{ textAlign: 'left' }}>
+                
+                {/* Org Name */}
+                <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                  <label className="form-label" htmlFor="verify-name-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Name</label>
+                  <input
+                    id="verify-name-input"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. ABC Energy Ltd"
+                    value={verifyOrgNameInput}
+                    onChange={(e) => setVerifyOrgNameInput(e.target.value)}
+                    style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
+                  />
+                </div>
+
+                {/* Org Email */}
+                <div className="form-group" style={{ marginBottom: '1.75rem' }}>
+                  <label className="form-label" htmlFor="verify-email-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Email</label>
+                  <input
+                    id="verify-email-input"
+                    type="email"
+                    className="form-input"
+                    placeholder="name@organization.com"
+                    value={verifyOrgEmailInput}
+                    onChange={(e) => setVerifyOrgEmailInput(e.target.value)}
+                    style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="submit-btn"
+                  style={{
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                    border: '1px solid #D4AF37',
+                    color: '#000',
+                    fontWeight: 700,
+                    borderRadius: '6px',
+                    padding: '0.875rem'
+                  }}
+                >
+                  Continue <ArrowRight size={16} />
                 </button>
+              </form>
 
-                {/* Join Public Event */}
-                <button className="portal-btn" onClick={() => setActiveRoute('public-event')}>
-                  <div className="portal-btn-icon">
-                    <Ticket size={24} />
-                  </div>
-                  <div className="portal-btn-content">
-                    <div className="portal-btn-title">🎟 Join Public Event</div>
-                    <div className="portal-btn-desc">Register for a webinar, workshop or conference.</div>
-                  </div>
-                </button>
+              {/* Form Footer */}
+              <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
+                Already have an account? <span onClick={() => setActiveRoute('signin')} style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>Sign In</span>
               </div>
 
-              <div style={{ textItems: 'center', marginTop: '1.5rem', textAlign: 'center' }} className="form-subtitle">
-                Already have an account? <span onClick={() => setActiveRoute('signin')}>🔑 Sign In</span>
+              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
+                Need OYEN GRID? <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>View Plans →</span>
               </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '1.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
+                <span>All Systems Operational</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+                <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
+                <span style={{ cursor: 'pointer' }}>Terms</span>
+                <span style={{ cursor: 'pointer' }}>Support</span>
+                <span style={{ cursor: 'pointer' }}>Contact</span>
+              </div>
+
             </div>
           )}
 

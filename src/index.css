@@ -120,7 +120,9 @@ h1, h2, h3, h4, h5, h6 {
 /* Left Brand Panel */
 .brand-panel {
   position: relative;
-  background-color: hsl(230, 25%, 4%);
+  background-image: url('./assets/mountain_bg.png');
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
