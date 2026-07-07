@@ -4,7 +4,8 @@ import {
   MessageSquare, BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
   Lock, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Play, HelpCircle, 
   Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert,
-  ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop
+  ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop,
+  Globe
 } from 'lucide-react';
 import SignInForm from './components/SignInForm';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
