@@ -1330,7 +1330,7 @@ export default function App() {
                   <div style={{
                     borderRadius: '16px',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
-                    backgroundImage: `linear-gradient(to right, rgba(9, 9, 11, 0.98) 40%, rgba(9, 9, 11, 0.8) 65%, rgba(9, 9, 11, 0.2) 100%), url(./src/assets/abc_energy_building.png)`,
+                    backgroundImage: `linear-gradient(to right, rgba(9, 9, 11, 0.98) 40%, rgba(9, 9, 11, 0.8) 65%, rgba(9, 9, 11, 0.2) 100%), url(${orgLogo || './src/assets/abc_energy_building.png'})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     padding: '3rem 2.5rem',
