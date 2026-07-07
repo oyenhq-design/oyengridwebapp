@@ -56,6 +56,15 @@ export default function App() {
   const [orgTimezone, setOrgTimezone] = useState('GMT-5 (EST)');
   const [orgDesc, setOrgDesc] = useState('');
 
+  // Onboarding Step 2: Owner states
+  const [ownerFirstName, setOwnerFirstName] = useState('');
+  const [ownerLastName, setOwnerLastName] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('');
+  const [ownerTitle, setOwnerTitle] = useState('');
+  const [ownerPassword, setOwnerPassword] = useState('');
+  const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('');
+  const [isAuthorizedOwner, setIsAuthorizedOwner] = useState(false);
+
   // Dashboard state
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [lockedTabTarget, setLockedTabTarget] = useState(null); 
@@ -423,23 +432,23 @@ export default function App() {
 
   // Render Post-signup Onboarding Wizard Flow
   if (activeRoute === 'onboarding' && user) {
-    const isStep1 = onboardingStep === 1;
+    const isSplitStep = onboardingStep === 1 || onboardingStep === 2;
     
     return (
       <div style={{ 
         display: 'flex', 
         minHeight: '100vh', 
-        background: isStep1 ? '#09090B' : 'var(--bg-primary)', 
+        background: isSplitStep ? '#09090B' : 'var(--bg-primary)', 
         alignItems: 'center', 
         justifyContent: 'center', 
         padding: '2rem',
         transition: 'background-color 0.3s ease'
       }}>
         <div className="form-card" style={{ 
-          maxWidth: isStep1 ? '1100px' : '600px', 
+          maxWidth: isSplitStep ? '1100px' : '600px', 
           width: '100%',
-          backgroundColor: isStep1 ? 'rgba(9, 9, 11, 0.95)' : 'var(--bg-card)',
-          borderColor: isStep1 ? 'rgba(255, 255, 255, 0.08)' : 'var(--border-color)',
+          backgroundColor: isSplitStep ? 'rgba(9, 9, 11, 0.95)' : 'var(--bg-card)',
+          borderColor: isSplitStep ? 'rgba(255, 255, 255, 0.08)' : 'var(--border-color)',
           transition: 'all 0.3s ease'
         }}>
           
@@ -693,37 +702,236 @@ export default function App() {
 
             </div>
           )}
-
-          {/* STEP 2: Create First Programme */}
+          {/* STEP 2: Create Organization Owner */}
           {onboardingStep === 2 && (
-            <div className="animate-fade-in">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Step 2: Create First Programme</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                Quick-start your workspace by setting up your first cohort, training programme, event, or catalog.
-              </p>
+            <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '2.5rem' }}>
               
-              <div className="form-group">
-                <label className="form-label" htmlFor="prog-name">Programme or Event Name</label>
-                <div className="input-container">
+              {/* Form Side */}
+              <div>
+                <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 2 of 5 • Organization Owner</span>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Create the organization owner account.</h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                    This account will manage your workspace, billing, security, team members and platform settings.
+                  </p>
+                </div>
+
+                {/* Name fields */}
+                <div className="form-row" style={{ marginBottom: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-firstname" style={{ color: 'var(--text-secondary)' }}>First Name</label>
+                    <input
+                      id="owner-firstname"
+                      type="text"
+                      className="form-input"
+                      value={ownerFirstName}
+                      onChange={(e) => setOwnerFirstName(e.target.value)}
+                      placeholder="John"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-lastname" style={{ color: 'var(--text-secondary)' }}>Last Name</label>
+                    <input
+                      id="owner-lastname"
+                      type="text"
+                      className="form-input"
+                      value={ownerLastName}
+                      onChange={(e) => setOwnerLastName(e.target.value)}
+                      placeholder="Doe"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Email & Phone */}
+                <div className="form-row" style={{ marginBottom: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-email" style={{ color: 'var(--text-secondary)' }}>Work Email</label>
+                    <input
+                      id="owner-email"
+                      type="email"
+                      className="form-input"
+                      value={user || ''}
+                      disabled
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', cursor: 'not-allowed' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-phone" style={{ color: 'var(--text-secondary)' }}>Work Phone</label>
+                    <input
+                      id="owner-phone"
+                      type="tel"
+                      className="form-input"
+                      value={ownerPhone}
+                      onChange={(e) => setOwnerPhone(e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Job Title */}
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label className="form-label" htmlFor="owner-title" style={{ color: 'var(--text-secondary)' }}>Job Title</label>
                   <input
-                    id="prog-name"
+                    id="owner-title"
                     type="text"
                     className="form-input"
-                    placeholder="e.g. Graduate Trainee Cohort A"
-                    value={firstProgramName}
-                    onChange={(e) => setFirstProgramName(e.target.value)}
-                    style={{ paddingLeft: '1rem' }}
+                    value={ownerTitle}
+                    onChange={(e) => setOwnerTitle(e.target.value)}
+                    placeholder="e.g. Chief Executive Officer / IT Administrator"
+                    style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
                   />
+                </div>
+
+                {/* Passwords */}
+                <div className="form-row" style={{ marginBottom: '1.25rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-pass" style={{ color: 'var(--text-secondary)' }}>Create Password</label>
+                    <input
+                      id="owner-pass"
+                      type="password"
+                      className="form-input"
+                      value={ownerPassword}
+                      onChange={(e) => setOwnerPassword(e.target.value)}
+                      placeholder="••••••••"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="owner-confirmpass" style={{ color: 'var(--text-secondary)' }}>Confirm Password</label>
+                    <input
+                      id="owner-confirmpass"
+                      type="password"
+                      className="form-input"
+                      value={ownerConfirmPassword}
+                      onChange={(e) => setOwnerConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Authorization check */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.75rem', textAlign: 'left' }}>
+                  <input
+                    id="owner-auth-check"
+                    type="checkbox"
+                    checked={isAuthorizedOwner}
+                    onChange={(e) => setIsAuthorizedOwner(e.target.checked)}
+                    style={{ marginTop: '0.2rem', accentColor: '#D4AF37', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="owner-auth-check" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', cursor: 'pointer', lineHeight: 1.4 }}>
+                    I confirm I am authorized to create this organization's workspace.
+                  </label>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem' }}>
+                  <button 
+                    type="button" 
+                    className="secondary-btn" 
+                    onClick={() => setOnboardingStep(1)}
+                    style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    type="button" 
+                    className="submit-btn" 
+                    disabled={!isAuthorizedOwner || !ownerPassword || ownerPassword !== ownerConfirmPassword}
+                    style={{ 
+                      maxWidth: '200px', 
+                      background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)', 
+                      border: '1px solid #D4AF37',
+                      color: '#000',
+                      fontWeight: 700 
+                    }} 
+                    onClick={() => setOnboardingStep(3)}
+                  >
+                    Continue <ArrowRight size={18} />
+                  </button>
                 </div>
               </div>
 
-              <div className="wizard-footer-buttons">
-                <button className="secondary-btn" onClick={() => setOnboardingStep(1)}>
-                  Back
-                </button>
-                <button className="submit-btn" style={{ maxWidth: '200px' }} onClick={() => setOnboardingStep(3)}>
-                  Continue
-                </button>
+              {/* Sidebar Cards */}
+              <div style={{ 
+                borderLeft: '1px solid rgba(255,255,255,0.08)', 
+                paddingLeft: '2.5rem', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '1.5rem',
+                justifyContent: 'center' 
+              }}>
+                {/* Card 1: Summary */}
+                <div className="form-card" style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                  borderColor: 'rgba(212, 175, 55, 0.15)',
+                  boxShadow: '0 0 30px rgba(212, 175, 55, 0.03)',
+                  padding: '1.5rem'
+                }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.25rem' }}>
+                    Workspace Summary
+                  </h4>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Organization:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>{orgName}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Solution:</span>
+                      <span style={{ fontWeight: 600, textTransform: 'capitalize', color: '#fff' }}>
+                        {activeTemplate === 'bootcamp' ? 'Bootcamps & Training' : 
+                         activeTemplate === 'events' ? 'Webinars & Events' : 
+                         activeTemplate === 'education' ? 'Education & Institutions' : 'Enterprise Operations'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Plan:</span>
+                      <span style={{ fontWeight: 600, color: '#D4AF37' }}>Standard</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Tier:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>Standard</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Participants Included:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>50</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Storage:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>10 GB</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>AI Allocation:</span>
+                      <span style={{ fontWeight: 600, color: '#fff' }}>Basic</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Workspace Status:</span>
+                      <span style={{ color: '#D4AF37', fontWeight: 600 }}>Pending Activation</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2: Features Included */}
+                <div className="form-card" style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                  borderColor: 'rgba(255, 255, 255, 0.05)',
+                  padding: '1.25rem'
+                }}>
+                  <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.875rem' }}>
+                    Included in your plan
+                  </h4>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: 0, margin: 0, textAlign: 'left' }}>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Up to 50 Participants</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> 3 Active Programmes</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Basic AI</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> 10GB Storage</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Invite Team Members Later</li>
+                  </ul>
+                </div>
               </div>
             </div>
           )}
