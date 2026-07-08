@@ -308,23 +308,27 @@ export default function App() {
 
   // Switch Templates from settings/billing easily for user testing
   const switchActiveTemplate = (tempId) => {
-    setActiveTemplate(tempId);
-    setActiveTab('Dashboard');
-    setLockedTabTarget(null);
+    triggerTransition(() => {
+      setActiveTemplate(tempId);
+      setActiveTab('Dashboard');
+      setLockedTabTarget(null);
+    });
   };
 
   // Toggle Template Subscription Status inside Marketplace/Billing
   const toggleTemplateSubscription = (tempId) => {
-    const nextState = !enabledTemplates[tempId];
-    setEnabledTemplates({
-      ...enabledTemplates,
-      [tempId]: nextState
+    triggerTransition(() => {
+      const nextState = !enabledTemplates[tempId];
+      setEnabledTemplates({
+        ...enabledTemplates,
+        [tempId]: nextState
+      });
+      if (nextState) {
+        setActiveTemplate(tempId);
+        setActiveTab('Dashboard');
+        setLockedTabTarget(null);
+      }
     });
-    if (nextState) {
-      setActiveTemplate(tempId);
-      setActiveTab('Dashboard');
-      setLockedTabTarget(null);
-    }
   };
 
   const getWorkspaceModules = () => {
@@ -442,13 +446,15 @@ export default function App() {
   };
 
   const handleModuleClick = (mod) => {
-    if (mod.enabled) {
-      setActiveTab(mod.id);
-      setLockedTabTarget(null);
-    } else {
-      setLockedTabTarget(mod.targetTemplate);
-      setActiveTab(`locked-${mod.targetTemplate}`);
-    }
+    triggerTransition(() => {
+      if (mod.enabled) {
+        setActiveTab(mod.id);
+        setLockedTabTarget(null);
+      } else {
+        setLockedTabTarget(mod.targetTemplate);
+        setActiveTab(`locked-${mod.targetTemplate}`);
+      }
+    });
   };
 
   const generateInviteLink = () => {
@@ -1610,7 +1616,7 @@ export default function App() {
                 return (
                   <div 
                     key={item.id}
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => triggerTransition(() => setActiveTab(item.id))}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1745,49 +1751,53 @@ export default function App() {
                     </p>
 
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                      <button style={{
-                        background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
-                        border: '1px solid #D4AF37',
-                        color: '#000',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        padding: '0.75rem 1.5rem',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 10px rgba(212,175,55,0.25)',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      <button 
+                        onClick={() => triggerTransition(() => setActiveTab('Your Workspace'))}
+                        style={{
+                          background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                          border: '1px solid #D4AF37',
+                          color: '#000',
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: 700,
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 10px rgba(212,175,55,0.25)',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                       >
                         Go to Workspace <ArrowRight size={16} />
                       </button>
 
-                      <button style={{
-                        background: 'transparent',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        color: '#fff',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
-                        padding: '0.75rem 1.5rem',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                      }}
+                      <button 
+                        onClick={() => triggerTransition(() => setActiveTab('Team'))}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          color: '#fff',
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: 600,
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                        }}
                       >
                         <UserPlus size={16} /> Invite Team
                       </button>
@@ -1855,6 +1865,7 @@ export default function App() {
                           </div>
                           
                           <div 
+                            onClick={() => triggerTransition(() => setActiveTab(card.title))}
                             style={{ 
                               display: 'flex', 
                               alignItems: 'center', 
