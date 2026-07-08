@@ -552,7 +552,7 @@ export default function App() {
             textTransform: 'uppercase',
             fontFamily: 'system-ui, sans-serif',
           }}>
-            OYEN GROUP
+            OYEN GRID
           </div>
         </div>
 
