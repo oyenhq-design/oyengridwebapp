@@ -18,6 +18,8 @@ export default function App() {
   const [activeRoute, setActiveRoute] = useState('portal'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
   const [showSplash, setShowSplash] = useState(true);
   const [splashFading, setSplashFading] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
+  const [transitionFading, setTransitionFading] = useState(false);
   const [theme, setTheme] = useState('dark');
   
   // Auth state
@@ -243,43 +245,65 @@ export default function App() {
   };
 
   const handleAuthSuccess = (email, role = 'Workspace Super Admin') => {
-    setUser(email);
-    setUserRole(role);
-    setActiveRoute('dashboard');
-    setActiveTab('Dashboard');
-    setLockedTabTarget(null);
+    triggerTransition(() => {
+      setUser(email);
+      setUserRole(role);
+      setActiveRoute('dashboard');
+      setActiveTab('Dashboard');
+      setLockedTabTarget(null);
+    });
   };
 
   const handleOrgRegistrationComplete = (email, template) => {
-    // Save template choices
-    setActiveTemplate(template);
-    
-    // Enable the selected template specifically
-    const templates = { enterprise: false, bootcamp: false, education: false, events: false };
-    templates[template] = true;
-    setEnabledTemplates(templates);
+    triggerTransition(() => {
+      // Save template choices
+      setActiveTemplate(template);
+      
+      // Enable the selected template specifically
+      const templates = { enterprise: false, bootcamp: false, education: false, events: false };
+      templates[template] = true;
+      setEnabledTemplates(templates);
 
-    // Save auth email
-    setUser(email);
-    setUserRole('Organization Owner');
+      // Save auth email
+      setUser(email);
+      setUserRole('Organization Owner');
 
-    // Route to Onboarding Walkthrough
-    setOnboardingStep(1);
-    setActiveRoute('onboarding');
+      // Route to Onboarding Walkthrough
+      setOnboardingStep(1);
+      setActiveRoute('onboarding');
+    });
   };
 
   const handleInviteAcceptanceComplete = (email, role) => {
-    setUser(email);
-    setUserRole(role);
-    // Switch active template depending on role or default
-    setActiveRoute('dashboard');
-    setActiveTab('Dashboard');
-    setLockedTabTarget(null);
+    triggerTransition(() => {
+      setUser(email);
+      setUserRole(role);
+      // Switch active template depending on role or default
+      setActiveRoute('dashboard');
+      setActiveTab('Dashboard');
+      setLockedTabTarget(null);
+    });
   };
 
   const handleLogOut = () => {
-    setUser(null);
-    setActiveRoute('portal');
+    triggerTransition(() => {
+      setUser(null);
+      setActiveRoute('portal');
+    });
+  };
+
+  // ─── Page Transition Helper ──────────────────────────────────────────────────
+  // Shows the branded overlay for ~1.5s then runs the callback
+  const triggerTransition = (callback, delay = 1500) => {
+    setTransitionFading(false);
+    setShowTransition(true);
+    // Start fading out 300ms before the callback fires
+    setTimeout(() => setTransitionFading(true), delay - 300);
+    setTimeout(() => {
+      setShowTransition(false);
+      setTransitionFading(false);
+      callback();
+    }, delay);
   };
 
   // Switch Templates from settings/billing easily for user testing
@@ -441,6 +465,107 @@ export default function App() {
     const randCode = `${codePrefix}-${Math.floor(10000 + Math.random() * 90000)}`;
     setGeneratedInviteLink(`https://app.oyengrid.com/invite/${randCode}`);
   };
+
+  // ─── Page Transition Overlay (every button click) ────────────────────────────
+  if (showTransition) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: '#0a0a0a',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000,
+        opacity: transitionFading ? 0 : 1,
+        transition: 'opacity 0.3s ease',
+      }}>
+        {/* Outer spinning arc ring */}
+        <div style={{ position: 'relative', width: '140px', height: '140px' }}>
+          {/* Rotating SVG arc */}
+          <svg
+            width="140" height="140"
+            viewBox="0 0 140 140"
+            style={{
+              position: 'absolute',
+              top: 0, left: 0,
+              animation: 'transitionSpin 1.2s linear infinite',
+            }}
+          >
+            <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(212,175,55,0.1)" strokeWidth="3" />
+            <circle
+              cx="70" cy="70" r="62"
+              fill="none"
+              stroke="#D4AF37"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="280"
+              strokeDashoffset="180"
+            />
+          </svg>
+
+          {/* Center logo circle */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '88px',
+            height: '88px',
+            borderRadius: '50%',
+            backgroundColor: '#111111',
+            border: '1px solid rgba(212,175,55,0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px',
+          }}>
+            {/* OYEN hexagon icon */}
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+              style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.5))' }}>
+              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="1.5" fill="rgba(212,175,55,0.08)"/>
+              <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {/* OYEN wordmark */}
+            <span style={{
+              fontSize: '0.6rem',
+              fontWeight: 800,
+              letterSpacing: '0.12em',
+              color: '#D4AF37',
+              fontFamily: 'system-ui, sans-serif',
+              lineHeight: 1,
+            }}>OYEN</span>
+          </div>
+        </div>
+
+        {/* Brand name below */}
+        <div style={{
+          marginTop: '1.75rem',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            letterSpacing: '0.35em',
+            color: 'rgba(255,255,255,0.55)',
+            textTransform: 'uppercase',
+            fontFamily: 'system-ui, sans-serif',
+          }}>
+            OYEN GROUP
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes transitionSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   // ─── Splash Screen ───────────────────────────────────────────────────────────
   if (showSplash) {
@@ -749,10 +874,10 @@ export default function App() {
                   <button 
                     type="button" 
                     className="secondary-btn" 
-                    onClick={() => {
+                    onClick={() => triggerTransition(() => {
                       setUser(null);
                       setActiveRoute('portal');
-                    }}
+                    })}
                     style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}
                   >
                     Back
@@ -767,7 +892,7 @@ export default function App() {
                       color: '#000',
                       fontWeight: 700 
                     }} 
-                    onClick={() => setOnboardingStep(2)}
+                    onClick={() => triggerTransition(() => setOnboardingStep(2))}
                   >
                     Continue <ArrowRight size={18} />
                   </button>
@@ -1079,7 +1204,7 @@ export default function App() {
                   <button 
                     type="button" 
                     className="secondary-btn" 
-                    onClick={() => setOnboardingStep(1)}
+                    onClick={() => triggerTransition(() => setOnboardingStep(1))}
                     style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}
                   >
                     Back
@@ -1094,13 +1219,13 @@ export default function App() {
                       color: '#000',
                       fontWeight: 700 
                     }} 
-                    onClick={() => {
+                    onClick={() => triggerTransition(() => {
                       setUser(ownerEmail || 'abc@gmail.com');
                       setUserRole('Organization Owner');
                       setOrgName('abc energy');
                       setActiveRoute('dashboard');
                       setActiveTab('Dashboard');
-                    }}
+                    })}
                   >
                     Continue <ArrowRight size={18} />
                   </button>
@@ -2110,12 +2235,12 @@ export default function App() {
                       borderRadius: '6px',
                       padding: '0.875rem'
                     }}
-                    onClick={() => {
+                    onClick={() => triggerTransition(() => {
                       setOrgName(verifyOrgNameInput.trim() || 'ABC Energy Ltd');
                       setUser(verifyOrgEmailInput.trim());
                       setUserRole('Organization Owner');
                       handleOrgRegistrationComplete(verifyOrgEmailInput.trim(), 'bootcamp');
-                    }}
+                    })}
                   >
                     Continue Setup <ArrowRight size={16} />
                   </button>
@@ -2240,11 +2365,13 @@ export default function App() {
                     }
                     setVerifyError('');
 
-                    if (simulateStatus === 'Found') {
-                      setVerificationResult('found');
-                    } else {
-                      setVerificationResult('not-found');
-                    }
+                    triggerTransition(() => {
+                      if (simulateStatus === 'Found') {
+                        setVerificationResult('found');
+                      } else {
+                        setVerificationResult('not-found');
+                      }
+                    });
                   }} style={{ textAlign: 'left' }}>
                     
                     {/* Org Name */}
