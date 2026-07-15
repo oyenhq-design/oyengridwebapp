@@ -5,13 +5,12 @@ import {
   Lock, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Play, HelpCircle, 
   Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert,
   ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop,
-  Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones
+  Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
+  Shield, Rocket, FileText, Mail
 } from 'lucide-react';
-import SignInForm from './components/SignInForm';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
 import InvitationAcceptance from './components/InvitationAcceptance';
-import ForgotPasswordForm from './components/ForgotPasswordForm';
 
 
 export default function App() {
@@ -2003,30 +2002,115 @@ export default function App() {
           </svg>
         </div>
         
-        <header className="brand-header" style={{ position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ background: '#D4AF37', padding: '0.4rem', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Grid size={16} color="#000" />
+        <header className="brand-header" style={{ position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ background: '#D4AF37', padding: '0.45rem', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Grid size={18} color="#000" />
           </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>
-            OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.35rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', lineHeight: 1.1 }}>
+              OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
+            </span>
+            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500, letterSpacing: '0.2px', marginTop: '0.15rem' }}>
+              Enterprise Programme Operating System
+            </span>
+          </div>
         </header>
 
-        <div className="brand-content" style={{ position: 'relative', zIndex: 3, maxWidth: '480px' }}>
-          <h1 className="brand-title" style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.25, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>
-            Secure portal built to protect <span style={{ color: '#D4AF37' }}>institutional knowledge.</span>
-          </h1>
-          <p className="brand-subtitle" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.75rem', fontWeight: 500 }}>
-            End-to-End Encrypted. Inspected. Authorized.
-          </p>
+        <div className="brand-content" style={{ position: 'relative', zIndex: 3, width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '2.5rem', marginBottom: '2.5rem' }}>
+          <div>
+            <h1 className="brand-title" style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.25, color: '#fff', fontFamily: "'Outfit', sans-serif", marginBottom: '0.75rem' }}>
+              Secure portal built to protect <span style={{ color: '#D4AF37' }}>institutional knowledge.</span>
+            </h1>
+            <p className="brand-subtitle" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
+              End-to-End Encrypted. Inspected. Authorized.
+            </p>
+          </div>
+
+          {/* Feature List (Mockup Image 1) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {[
+              {
+                icon: <Shield size={18} color="#D4AF37" />,
+                title: "Enterprise Security",
+                desc: "Bank-level encryption and zero trust architecture."
+              },
+              {
+                icon: <Building2 size={18} color="#D4AF37" />,
+                title: "Workspace Verification",
+                desc: "We verify your subscription to provision access."
+              },
+              {
+                icon: <Lock size={18} color="#D4AF37" />,
+                title: "Zero Trust Access",
+                desc: "Only authorized organizations can activate workspaces."
+              },
+              {
+                icon: <Sparkles size={18} color="#D4AF37" />,
+                title: "Powered by OYEN AI",
+                desc: "Intelligent systems that help you run, manage and scale programs."
+              }
+            ].map((f, i) => (
+              <div 
+                key={i} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)', 
+                  border: '1px solid rgba(255, 255, 255, 0.05)', 
+                  borderRadius: '10px', 
+                  padding: '0.85rem 1.15rem',
+                  transition: 'all 0.2s ease',
+                  cursor: 'default'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.25)';
+                  e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                }}
+              >
+                <div style={{ 
+                  backgroundColor: 'rgba(212, 175, 55, 0.08)', 
+                  border: '1px solid rgba(212, 175, 55, 0.2)', 
+                  borderRadius: '6px', 
+                  width: '34px', 
+                  height: '34px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {f.icon}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{f.title}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.45)', lineHeight: 1.35 }}>{f.desc}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Bottom Progress Slider (3rd Segment Gold) */}
-        <div style={{ display: 'flex', gap: '0.5rem', zIndex: 3, marginBottom: '1rem' }}>
-          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(212,175,55,0.2)' }}></span>
-          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(212,175,55,0.2)' }}></span>
-          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: '#D4AF37' }}></span>
-          <span style={{ width: '40px', height: '3px', borderRadius: '1.5px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(212,175,55,0.2)' }}></span>
+        {/* Trusted Alert Card */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.65rem',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          borderRadius: '8px',
+          padding: '0.75rem 1rem',
+          fontSize: '0.75rem',
+          color: 'rgba(255, 255, 255, 0.55)',
+          marginTop: 'auto',
+          zIndex: 3,
+          position: 'relative'
+        }}>
+          <ShieldCheck size={16} color="#22c55e" style={{ flexShrink: 0 }} />
+          <span>Trusted by organizations across training, education, enterprise and government.</span>
         </div>
       </section>
 
@@ -2040,43 +2124,12 @@ export default function App() {
           {activeRoute === 'portal' && (
             <div className="animate-fade-in" style={{ backgroundColor: 'transparent' }}>
               
-              {/* Language & Simulator Row */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span>SIMULATE:</span>
-                  <button 
-                    onClick={() => setSimulateStatus('Found')}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: simulateStatus === 'Found' ? '#D4AF37' : 'rgba(255,255,255,0.4)',
-                      fontWeight: simulateStatus === 'Found' ? 800 : 500,
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    Found
-                  </button>
-                  <span style={{ color: 'rgba(255,255,255,0.1)' }}>|</span>
-                  <button 
-                    onClick={() => setSimulateStatus('Not Found')}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: simulateStatus === 'Not Found' ? '#D4AF37' : 'rgba(255,255,255,0.4)',
-                      fontWeight: simulateStatus === 'Not Found' ? 800 : 500,
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    Not Found
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: '0.4rem 0.8rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px' }}>
-                  <Globe size={14} />
+              {/* Language & Theme Row (No SIMULATE row) */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '2.5rem', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '0.4rem 0.8rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)' }} onClick={() => alert('Language options: English')}>
+                  <Globe size={14} color="#D4AF37" />
                   <span>English</span>
-                  <span style={{ fontSize: '0.6rem' }}>▼</span>
+                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>▼</span>
                 </div>
               </div>
 
@@ -2223,10 +2276,12 @@ export default function App() {
               {verificationResult === null && (
                 <>
                   {/* Title Header */}
-                  <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
-                    <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Verify your organization</h2>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.5rem', lineHeight: '1.5' }}>
-                      Continue with the email used to subscribe to an OYEN GRID workspace.
+                  <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+                    <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>
+                      Verify your <span style={{ color: '#D4AF37' }}>organization</span>
+                    </h2>
+                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: '1.5' }}>
+                      Enter the organization name and work email used during your OYEN GRID subscription. We'll locate your licensed workspace and continue the setup.
                     </p>
                   </div>
 
@@ -2250,99 +2305,221 @@ export default function App() {
                   <form onSubmit={(e) => {
                     e.preventDefault();
                     if (!verifyOrgEmailInput.trim()) {
-                      setVerifyError('Organization email is required to verify your subscription.');
+                      setVerifyError('Work email is required to verify your subscription.');
                       return;
                     }
                     setVerifyError('');
 
                     triggerTransition(() => {
-                      if (simulateStatus === 'Found') {
-                        setVerificationResult('found');
-                      } else {
-                        setVerificationResult('not-found');
-                      }
+                      // Simulated found logic
+                      setVerificationResult('found');
                     });
                   }} style={{ textAlign: 'left' }}>
                     
                     {/* Org Name */}
                     <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                      <label className="form-label" htmlFor="verify-name-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Name</label>
-                      <input
-                        id="verify-name-input"
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. ABC Energy Ltd"
-                        value={verifyOrgNameInput}
-                        onChange={(e) => setVerifyOrgNameInput(e.target.value)}
-                        style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
-                      />
+                      <label className="form-label" htmlFor="verify-name-input" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Name</label>
+                      <div style={{ position: 'relative' }}>
+                        <Building2 size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                        <input
+                          id="verify-name-input"
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. ABC Energy Ltd"
+                          value={verifyOrgNameInput}
+                          onChange={(e) => setVerifyOrgNameInput(e.target.value)}
+                          style={{ paddingLeft: '2.5rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
+                        />
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.35rem', display: 'block' }}>Enter your organization or company name.</span>
                     </div>
 
                     {/* Org Email */}
                     <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-                      <label className="form-label" htmlFor="verify-email-input" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.8rem' }}>Organization Email</label>
-                      <input
-                        id="verify-email-input"
-                        type="email"
-                        className="form-input"
-                        placeholder="name@organization.com"
-                        value={verifyOrgEmailInput}
-                        onChange={(e) => setVerifyOrgEmailInput(e.target.value)}
-                        style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
-                      />
+                      <label className="form-label" htmlFor="verify-email-input" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.8rem' }}>Official Work Email</label>
+                      <div style={{ position: 'relative' }}>
+                        <Mail size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                        <input
+                          id="verify-email-input"
+                          type="email"
+                          className="form-input"
+                          placeholder="name@organization.com"
+                          value={verifyOrgEmailInput}
+                          onChange={(e) => setVerifyOrgEmailInput(e.target.value)}
+                          style={{ paddingLeft: '2.5rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
+                        />
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.35rem', display: 'block' }}>Use the work email used during your OYEN GRID subscription.</span>
                     </div>
 
+                    {/* Verify Button */}
                     <button 
                       type="submit" 
                       className="submit-btn"
                       style={{
-                        background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
+                        background: '#D4AF37',
                         border: '1px solid #D4AF37',
                         color: '#000',
                         fontWeight: 700,
                         borderRadius: '6px',
-                        padding: '0.875rem'
+                        padding: '0.875rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        width: '100%',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      Continue <ArrowRight size={16} />
+                      <ShieldCheck size={18} />
+                      <span>Verify Organization</span>
+                      <ArrowRight size={16} style={{ marginLeft: 'auto' }} />
                     </button>
                   </form>
 
-                  {/* Form Footer */}
-                  <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)' }}>
-                    Already have an account? <span onClick={() => setActiveRoute('signin')} style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>Sign In</span>
+                  {/* OR Separator */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.75rem 0', color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', fontWeight: 600 }}>
+                    <span style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }}></span>
+                    <span>OR</span>
+                    <span style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }}></span>
                   </div>
 
-                  <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-                    Need OYEN GRID? <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}>View Plans →</span>
+                  {/* Sign In Button Block */}
+                  <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', display: 'block', marginBottom: '0.75rem', fontWeight: 500 }}>
+                      Already activated your workspace?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => alert('Sign-in redirect simulation.')}
+                      style={{
+                        background: 'rgba(255,255,255,0.01)',
+                        border: '1px solid rgba(212, 175, 55, 0.4)',
+                        color: '#D4AF37',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        padding: '0.75rem 1.5rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        width: '100%'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)';
+                      }}
+                    >
+                      <User size={16} />
+                      <span>Sign In</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+
+                  {/* Subscription Promotion Card */}
+                  <div style={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.01)', 
+                    border: '1px solid rgba(255, 255, 255, 0.05)', 
+                    borderRadius: '8px', 
+                    padding: '1.25rem',
+                    textAlign: 'left',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div>
+                      <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', margin: 0 }}>Don't have a subscription yet?</h4>
+                      <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.45)', margin: '0.25rem 0 0 0', lineHeight: 1.35 }}>
+                        Explore plans designed for training teams, educators and enterprises.
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <button
+                        onClick={() => alert('Navigating to pricing catalog...')}
+                        style={{
+                          flex: 1,
+                          backgroundColor: 'rgba(255,255,255,0.01)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#fff',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          padding: '0.6rem 0.8rem',
+                          fontSize: '0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.4rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
+                      >
+                        <FileText size={14} color="#D4AF37" />
+                        <span>View Plans</span>
+                      </button>
+                      <button
+                        onClick={() => alert('Starting free trial registration...')}
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#D4AF37',
+                          border: '1px solid #D4AF37',
+                          color: '#000',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          padding: '0.6rem 0.8rem',
+                          fontSize: '0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.4rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                      >
+                        <Rocket size={14} />
+                        <span>Start Free Trial</span>
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '1.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+              {/* Status and Footer Links */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
                 <span>All Systems Operational</span>
+                <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+                <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('View Status: All systems fully operational.')}>View Status →</span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
-                <span style={{ cursor: 'pointer' }}>Privacy Policy</span>
-                <span style={{ cursor: 'pointer' }}>Terms</span>
-                <span style={{ cursor: 'pointer' }}>Support</span>
-                <span style={{ cursor: 'pointer' }}>Contact</span>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginTop: '2rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Privacy Policy...')}>
+                  <Lock size={12} color="#D4AF37" /> Privacy Policy
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Terms...')}>
+                  <FileText size={12} color="#D4AF37" /> Terms of Service
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Support...')}>
+                  <Headphones size={12} color="#D4AF37" /> Support
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Contact Us...')}>
+                  <Mail size={12} color="#D4AF37" /> Contact Us
+                </span>
               </div>
 
             </div>
           )}
 
-          {activeRoute === 'signin' && (
-            <SignInForm 
-              onSwitchForm={(route) => {
-                if (route === 'portal') setActiveRoute('signup');
-                else setActiveRoute(route);
-              }} 
-              onAuthSuccess={(email) => handleAuthSuccess(email, 'Workspace Owner')} 
-            />
-          )}
+
 
           {activeRoute === 'signup' && (
             <OrgRegistrationForm 
@@ -2364,11 +2541,7 @@ export default function App() {
             />
           )}
 
-          {activeRoute === 'forgot-password' && (
-            <ForgotPasswordForm 
-              onSwitchForm={(route) => setActiveRoute(route === 'signin' ? 'signin' : 'portal')} 
-            />
-          )}
+
         </div>
       </main>
     </div>
