@@ -2271,7 +2271,7 @@ export default function App() {
                         borderRadius: '6px',
                         padding: '0.875rem'
                       }}
-                      onClick={() => alert('Navigating to pricing catalog...')}
+                      onClick={() => window.open('https://oyengridlanding.vercel.app/pricing', '_blank')}
                     >
                       View Plans
                     </button>
@@ -2466,7 +2466,7 @@ export default function App() {
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                       <button
-                        onClick={() => alert('Navigating to pricing catalog...')}
+                        onClick={() => window.open('https://oyengridlanding.vercel.app/pricing', '_blank')}
                         style={{
                           flex: 1,
                           backgroundColor: 'rgba(255,255,255,0.01)',
