@@ -2160,49 +2160,150 @@ export default function App() {
 
               {/* CASE 1: Subscription Found */}
               {verificationResult === 'found' && (
-                <div className="animate-fade-in" style={{ textAlign: 'left' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Verify your organization</span>
-                  <h2 style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Subscription Found</h2>
-                  
-                  <div className="form-card" style={{ 
-                    marginTop: '1.5rem', 
-                    marginBottom: '2rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.01)',
-                    borderColor: 'rgba(212, 175, 55, 0.15)',
-                    boxShadow: '0 0 30px rgba(212, 175, 55, 0.03)',
-                    padding: '1.5rem'
-                  }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', fontSize: '0.9rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Organization:</span>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>{verifyOrgNameInput.trim() || 'ABC Energy Ltd'}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Plan:</span>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>Bootcamps & Training</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Tier:</span>
-                        <span style={{ fontWeight: 600, color: '#D4AF37' }}>Standard</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Status:</span>
-                        <span style={{ color: '#22c55e', fontWeight: 600 }}>Active</span>
+                <div className="animate-fade-in" style={{ textAlign: 'center' }}>
+
+                  {/* Green checkmark hero */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem' }}>
+                    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+                      {/* Outer glow ring */}
+                      <div style={{
+                        position: 'absolute',
+                        width: '90px',
+                        height: '90px',
+                        borderRadius: '50%',
+                        background: 'radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%)',
+                        animation: 'pulse 2s ease-in-out infinite'
+                      }} />
+                      {/* Sparkle dots */}
+                      {[
+                        { top: '-10px', left: '50%', size: '4px' },
+                        { top: '10px', right: '-12px', size: '3px' },
+                        { bottom: '-8px', right: '10px', size: '3px' },
+                        { bottom: '5px', left: '-12px', size: '4px' },
+                        { top: '25px', left: '-14px', size: '3px' },
+                      ].map((s, i) => (
+                        <span key={i} style={{
+                          position: 'absolute',
+                          width: s.size,
+                          height: s.size,
+                          borderRadius: '50%',
+                          backgroundColor: '#22c55e',
+                          opacity: 0.6,
+                          top: s.top,
+                          left: s.left,
+                          right: s.right,
+                          bottom: s.bottom,
+                        }} />
+                      ))}
+                      {/* Circle badge */}
+                      <div style={{
+                        width: '68px',
+                        height: '68px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 0 30px rgba(34, 197, 94, 0.4), 0 0 60px rgba(34, 197, 94, 0.15)',
+                        position: 'relative',
+                        zIndex: 1
+                      }}>
+                        <CheckCircle2 size={32} color="#fff" strokeWidth={2.5} />
                       </div>
                     </div>
+
+                    {/* Label and title */}
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '0.5rem' }}>
+                      Verify Your Organization
+                    </span>
+                    <h2 style={{ fontSize: '1.9rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif", margin: 0 }}>
+                      Subscription Found
+                    </h2>
+                    <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', marginTop: '0.5rem', lineHeight: 1.5, maxWidth: '320px' }}>
+                      We've verified your subscription details. Let's set up your workspace and get you started.
+                    </p>
                   </div>
 
-                  <button 
-                    type="button" 
-                    className="submit-btn"
+                  {/* Details card */}
+                  <div style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    borderRadius: '10px',
+                    padding: '0.25rem 0',
+                    marginBottom: '1.75rem',
+                    textAlign: 'left'
+                  }}>
+                    {[
+                      {
+                        icon: <Building2 size={15} color="rgba(255,255,255,0.5)" />,
+                        label: 'Organization',
+                        value: verifyOrgNameInput.trim() || 'abc energy',
+                        valueStyle: { color: '#fff', fontWeight: 600 }
+                      },
+                      {
+                        icon: <FileText size={15} color="rgba(255,255,255,0.5)" />,
+                        label: 'Plan',
+                        value: 'Bootcamps & Training',
+                        valueStyle: { color: '#fff', fontWeight: 600 }
+                      },
+                      {
+                        icon: <Award size={15} color="rgba(255,255,255,0.5)" />,
+                        label: 'Tier',
+                        value: 'Standard',
+                        valueStyle: { color: '#D4AF37', fontWeight: 700 }
+                      },
+                      {
+                        icon: <Sparkles size={15} color="rgba(255,255,255,0.5)" />,
+                        label: 'Status',
+                        value: 'Active',
+                        valueStyle: { color: '#22c55e', fontWeight: 700 }
+                      },
+                      {
+                        icon: <BrainCircuit size={15} color="rgba(255,255,255,0.5)" />,
+                        label: 'AI Allocation',
+                        value: 'Basic',
+                        valueStyle: { color: '#fff', fontWeight: 600 }
+                      }
+                    ].map((row, i, arr) => (
+                      <div key={i} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.85rem 1.25rem',
+                        borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                        fontSize: '0.875rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>
+                          {row.icon}
+                          <span>{row.label}</span>
+                        </div>
+                        <span style={row.valueStyle}>{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Continue Setup button */}
+                  <button
+                    type="button"
                     style={{
-                      background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
-                      border: '1px solid #D4AF37',
+                      width: '100%',
+                      background: 'linear-gradient(135deg, #D4AF37 0%, #C49A2A 100%)',
+                      border: 'none',
                       color: '#000',
                       fontWeight: 700,
-                      borderRadius: '6px',
-                      padding: '0.875rem'
+                      fontSize: '0.95rem',
+                      borderRadius: '8px',
+                      padding: '0.95rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.92'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                     onClick={() => triggerTransition(() => {
                       setOrgName(verifyOrgNameInput.trim() || 'ABC Energy Ltd');
                       setUser(verifyOrgEmailInput.trim());
@@ -2210,26 +2311,60 @@ export default function App() {
                       handleOrgRegistrationComplete(verifyOrgEmailInput.trim(), 'bootcamp');
                     })}
                   >
-                    Continue Setup <ArrowRight size={16} />
+                    <span>Continue Setup</span>
+                    <ArrowRight size={17} />
                   </button>
 
-                  <button 
+                  {/* Back link */}
+                  <button
                     type="button"
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: 'rgba(255,255,255,0.4)',
+                      color: 'rgba(255,255,255,0.38)',
                       cursor: 'pointer',
-                      fontSize: '0.85rem',
+                      fontSize: '0.82rem',
                       width: '100%',
                       textAlign: 'center',
-                      marginTop: '1.25rem',
-                      fontWeight: 500
+                      marginTop: '1.1rem',
+                      fontWeight: 500,
+                      transition: 'color 0.2s ease'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.38)'}
                     onClick={() => setVerificationResult(null)}
                   >
                     ← Use different details
                   </button>
+
+                  {/* Status row */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e', flexShrink: 0 }}></span>
+                    <span>All Systems Operational</span>
+                    <span
+                      style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}
+                      onClick={() => alert('View Status: All systems fully operational.')}
+                    >
+                      View Status →
+                    </span>
+                  </div>
+
+                  {/* Footer links */}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1.1rem', marginTop: '1.25rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                      <Lock size={11} color="#D4AF37" /> Privacy Policy
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                      <FileText size={11} color="#D4AF37" /> Terms of Service
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                      <Headphones size={11} color="#D4AF37" /> Support
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                      <Mail size={11} color="#D4AF37" /> Contact Us
+                    </span>
+                  </div>
+
                 </div>
               )}
 
