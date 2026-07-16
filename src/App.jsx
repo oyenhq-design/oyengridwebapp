@@ -11,6 +11,7 @@ import {
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
 import InvitationAcceptance from './components/InvitationAcceptance';
+import SignInForm from './components/SignInForm';
 
 
 export default function App() {
@@ -2019,16 +2020,40 @@ export default function App() {
         <div className="brand-content" style={{ position: 'relative', zIndex: 3, width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '2.5rem', marginBottom: '2.5rem' }}>
           <div>
             <h1 className="brand-title" style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.25, color: '#fff', fontFamily: "'Outfit', sans-serif", marginBottom: '0.75rem' }}>
-              Secure portal built to protect <span style={{ color: '#D4AF37' }}>institutional knowledge.</span>
+              {activeRoute === 'signin' ? (
+                <>Secure <span style={{ color: '#00f0ff' }}>access</span> for every OYEN GRID workspace.</>
+              ) : (
+                <>Secure portal built to protect <span style={{ color: '#D4AF37' }}>institutional knowledge.</span></>
+              )}
             </h1>
             <p className="brand-subtitle" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
-              End-to-End Encrypted. Inspected. Authorized.
+              {activeRoute === 'signin' ? (
+                "End-to-end workspace access. Verified. Authorized."
+              ) : (
+                "End-to-End Encrypted. Inspected. Authorized."
+              )}
             </p>
           </div>
 
           {/* Feature List (Mockup Image 1) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {[
+            {(activeRoute === 'signin' ? [
+              {
+                icon: <Shield size={18} color="#D4AF37" />,
+                title: "Workspace Security",
+                desc: "Bank-level encryption and zero trust architecture."
+              },
+              {
+                icon: <Users size={18} color="#D4AF37" />,
+                title: "Role-Based Access",
+                desc: "Granular access control for your entire organization."
+              },
+              {
+                icon: <Sparkles size={18} color="#D4AF37" />,
+                title: "Powered by OYEN AI",
+                desc: "Intelligent systems that help you run, manage and scale programs."
+              }
+            ] : [
               {
                 icon: <Shield size={18} color="#D4AF37" />,
                 title: "Enterprise Security",
@@ -2049,7 +2074,7 @@ export default function App() {
                 title: "Powered by OYEN AI",
                 desc: "Intelligent systems that help you run, manage and scale programs."
               }
-            ].map((f, i) => (
+            ]).map((f, i) => (
               <div 
                 key={i} 
                 style={{ 
@@ -2392,7 +2417,7 @@ export default function App() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => alert('Sign-in redirect simulation.')}
+                      onClick={() => setActiveRoute('signin')}
                       style={{
                         background: 'rgba(255,255,255,0.01)',
                         border: '1px solid rgba(212, 175, 55, 0.4)',
@@ -2520,6 +2545,13 @@ export default function App() {
           )}
 
 
+
+          {activeRoute === 'signin' && (
+            <SignInForm 
+              onSwitchForm={setActiveRoute} 
+              onAuthSuccess={handleAuthSuccess} 
+            />
+          )}
 
           {activeRoute === 'signup' && (
             <OrgRegistrationForm 
