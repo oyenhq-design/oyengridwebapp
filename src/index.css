@@ -228,6 +228,21 @@ h1, h2, h3, h4, h5, h6 {
   min-height: 100vh;
 }
 
+/* Auth portal right panel always stays dark — all inline styles use white-based colours */
+.auth-container .form-panel {
+  background: #0a0c12 !important;
+}
+
+/* Light mode overrides for the auth portal right panel */
+:root:not([data-theme="dark"]) .auth-container .theme-toggle-btn {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+:root:not([data-theme="dark"]) .auth-container .theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .theme-toggle-btn {
   position: absolute;
   top: 2rem;

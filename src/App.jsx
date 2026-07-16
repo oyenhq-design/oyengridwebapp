@@ -2653,28 +2653,31 @@ export default function App() {
                 </>
               )}
 
-              {/* Status and Footer Links */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
-                <span>All Systems Operational</span>
-                <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-                <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('View Status: All systems fully operational.')}>View Status →</span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginTop: '2rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Privacy Policy...')}>
-                  <Lock size={12} color="#D4AF37" /> Privacy Policy
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Terms...')}>
-                  <FileText size={12} color="#D4AF37" /> Terms of Service
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Support...')}>
-                  <Headphones size={12} color="#D4AF37" /> Support
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Contact Us...')}>
-                  <Mail size={12} color="#D4AF37" /> Contact Us
-                </span>
-              </div>
+              {/* Status and Footer Links — only show on default input form */}
+              {verificationResult === null && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
+                    <span>All Systems Operational</span>
+                    <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+                    <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('View Status: All systems fully operational.')}>View Status →</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginTop: '2rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Privacy Policy...')}>
+                      <Lock size={12} color="#D4AF37" /> Privacy Policy
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Terms...')}>
+                      <FileText size={12} color="#D4AF37" /> Terms of Service
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Support...')}>
+                      <Headphones size={12} color="#D4AF37" /> Support
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Contact Us...')}>
+                      <Mail size={12} color="#D4AF37" /> Contact Us
+                    </span>
+                  </div>
+                </>
+              )}
 
             </div>
           )}
