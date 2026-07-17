@@ -1928,29 +1928,27 @@ export default function App() {
               /* ── Team Management Page ── */
               (() => {
                 const teamMembers = [
-                  { initials: 'JD', color: '#D4AF37', name: 'John Doe', isYou: true,  email: 'john.doe@abcenergy.com',         role: 'Organization Owner', roleColor: '#D4AF37', status: 'Active',    joined: 'May 22, 2025' },
-                  { initials: 'SA', color: '#7c3aed', name: 'Sarah Ahmed',             email: 'sarah.ahmed@abcenergy.com',      role: 'Admin',              roleColor: '#3b82f6', status: 'Active',    joined: 'May 21, 2025' },
-                  { initials: 'MI', color: '#16a34a', name: 'Michael Ibrahim',         email: 'michael.ibrahim@abcenergy.com',  role: 'Program Manager',    roleColor: '#8b5cf6', status: 'Active',    joined: 'May 20, 2025' },
-                  { initials: 'FA', color: '#0284c7', name: 'Fatima Aliyu',            email: 'fatima.aliyu@abcenergy.com',     role: 'Facilitator',        roleColor: '#0284c7', status: 'Active',    joined: 'May 18, 2025' },
-                  { initials: 'NK', color: '#b45309', name: 'Ngozi Kalu',              email: 'ngozi.kalu@abcenergy.com',       role: 'Viewer',             roleColor: '#b45309', status: 'Pending',   joined: 'May 22, 2025' },
-                  { initials: 'OT', color: '#0f766e', name: 'Oluwatobi Taiwo',         email: 'oluwatobi.taiwo@abcenergy.com',  role: 'Team Member',        roleColor: '#16a34a', status: 'Pending',   joined: 'May 22, 2025' },
-                  { img: true,     name: 'David Okafor',                               email: 'david.okafor@abcenergy.com',     role: 'Facilitator',        roleColor: '#0284c7', status: 'Active',    joined: 'May 19, 2025' },
-                  { img: true,     name: 'Blessing Udo',                               email: 'blessing.udo@abcenergy.com',     role: 'Program Manager',    roleColor: '#8b5cf6', status: 'Suspended', joined: 'May 15, 2025' },
+                  { initials: 'JD', color: '#D4AF37', name: 'John Doe', isYou: true, email: 'john.doe@abcenergy.com',        role: 'Organization Owner', roleColor: '#D4AF37', status: 'Active',  joined: 'May 22, 2025' },
+                  { initials: 'SA', color: '#7c3aed', name: 'Sarah Ahmed',            email: 'sarah.ahmed@abcenergy.com',     role: 'Admin',              roleColor: '#3b82f6', status: 'Active',  joined: 'May 21, 2025' },
+                  { initials: 'MI', color: '#16a34a', name: 'Michael Ibrahim',        email: 'michael.ibrahim@abcenergy.com', role: 'Program Manager',    roleColor: '#8b5cf6', status: 'Active',  joined: 'May 20, 2025' },
+                  { initials: 'FA', color: '#0284c7', name: 'Fatima Aliyu',           email: 'fatima.aliyu@abcenergy.com',    role: 'Facilitator',        roleColor: '#0284c7', status: 'Active',  joined: 'May 18, 2025' },
+                  { initials: 'NK', color: '#b45309', name: 'Ngozi Kalu',             email: 'ngozi.kalu@abcenergy.com',      role: 'Viewer',             roleColor: '#b45309', status: 'Pending', joined: 'May 22, 2025' },
                 ];
                 const statusColor = { Active: '#22c55e', Pending: '#D4AF37', Declined: '#ef4444', Suspended: '#6b7280' };
+                const activeCount  = teamMembers.filter(m => m.status === 'Active').length;
+                const pendingCount = teamMembers.filter(m => m.status === 'Pending').length;
                 const inviteMethods = [
-                  { icon: <Mail size={22} color="#D4AF37" />, title: 'Invite by Email',    desc: 'Send email invitations to team members' },
-                  { icon: <Link2 size={22} color="#22c55e" />, title: 'Invite with Link', desc: 'Share a link for anyone to join your workspace' },
-                  { icon: <FileText size={22} color="#8b5cf6" />, title: 'Import from CSV',  desc: 'Upload a CSV file to add multiple members' },
-                  { icon: <UserPlus size={22} color="#3b82f6" />, title: 'Add Manually',     desc: 'Add team members one by one' },
+                  { icon: <Mail size={22} color="#D4AF37" />,     title: 'Invite by Email',   desc: 'Send email invitations to team members' },
+                  { icon: <Link2 size={22} color="#22c55e" />,   title: 'Invite with Link',  desc: 'Share a link for anyone to join your workspace' },
+                  { icon: <FileText size={22} color="#8b5cf6" />, title: 'Import from CSV',   desc: 'Upload a CSV file to add multiple members' },
+                  { icon: <UserPlus size={22} color="#3b82f6" />, title: 'Add Manually',      desc: 'Add team members one by one' },
                 ];
                 const rolesData = [
                   { label: 'Organization Owner', icon: <ShieldCheck size={14} color="#D4AF37" />, count: 1 },
-                  { label: 'Admin',              icon: <ShieldCheck size={14} color="#ef4444"  />, count: 2 },
-                  { label: 'Program Manager',    icon: <Users size={14}      color="#8b5cf6"  />, count: 4 },
-                  { label: 'Facilitator',        icon: <User size={14}       color="#3b82f6"  />, count: 7 },
-                  { label: 'Team Member',        icon: <User size={14}       color="#22c55e"  />, count: 6 },
-                  { label: 'Viewer',             icon: <User size={14}       color="#6b7280"  />, count: 3 },
+                  { label: 'Admin (max 2)',       icon: <ShieldCheck size={14} color="#ef4444"  />, count: 1 },
+                  { label: 'Program Manager',    icon: <Users size={14}      color="#8b5cf6"  />, count: 1 },
+                  { label: 'Facilitator',        icon: <User size={14}       color="#3b82f6"  />, count: 1 },
+                  { label: 'Viewer',             icon: <User size={14}       color="#6b7280"  />, count: 1 },
                 ];
                 return (
                   <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
@@ -2009,7 +2007,7 @@ export default function App() {
                         {/* Table header bar */}
                         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
                           <div style={{ display: 'flex', gap: '0', fontSize: '0.8rem', fontWeight: 600 }}>
-                            {[['All Members','23','#D4AF37'],['Active','18','#22c55e'],['Pending','4','#D4AF37'],['Declined','1','#ef4444'],['Suspended','0','#6b7280']].map(([label, count, color], i) => (
+                            {[['All Members', String(teamMembers.length), '#D4AF37'],['Active', String(activeCount), '#22c55e'],['Pending', String(pendingCount), '#D4AF37'],['Declined','0','#ef4444'],['Suspended','0','#6b7280']].map(([label, count, color], i) => (
                               <div key={i} style={{
                                 padding: '0.4rem 0.85rem',
                                 color: i === 0 ? '#D4AF37' : 'rgba(255,255,255,0.5)',
@@ -2070,20 +2068,20 @@ export default function App() {
                           </div>
                         ))}
 
-                        {/* Pagination */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
-                          <span>Showing 1 to 8 of 23 members</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <button style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
-                            {[1,2,3].map(n => (
-                              <button key={n} style={{ background: n === 1 ? '#D4AF37' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: n === 1 ? '#000' : 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', fontWeight: n === 1 ? 700 : 400, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem' }}>{n}</button>
-                            ))}
-                            <button style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
-                            <select style={{ background: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', marginLeft: '0.5rem' }}>
-                              <option>10 / page</option><option>25 / page</option><option>50 / page</option>
-                            </select>
+                        {/* Pagination — only shown when members exceed 5 */}
+                        {teamMembers.length > 5 && (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                            <span>Showing 1 to {teamMembers.length} of {teamMembers.length} members</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <button style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+                              <button style={{ background: '#D4AF37', border: '1px solid rgba(255,255,255,0.08)', color: '#000', borderRadius: '5px', width: '28px', height: '28px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem' }}>1</button>
+                              <button style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+                              <select style={{ background: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', marginLeft: '0.5rem' }}>
+                                <option>10 / page</option><option>25 / page</option><option>50 / page</option>
+                              </select>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
@@ -2097,19 +2095,15 @@ export default function App() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', position: 'relative' }}>
                           <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
                             <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="14" />
-                            {/* Active 18/23 ≈ 78% */}
-                            <circle cx="50" cy="50" r="38" fill="none" stroke="#22c55e" strokeWidth="14" strokeDasharray={`${(18/23)*238.76} ${238.76}`} strokeLinecap="butt" />
-                            {/* Pending 4/23 ≈ 17% */}
-                            <circle cx="50" cy="50" r="38" fill="none" stroke="#D4AF37" strokeWidth="14" strokeDasharray={`${(4/23)*238.76} ${238.76}`} strokeDashoffset={`-${(18/23)*238.76}`} strokeLinecap="butt" />
-                            {/* Declined 1/23 ≈ 5% */}
-                            <circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" strokeWidth="14" strokeDasharray={`${(1/23)*238.76} ${238.76}`} strokeDashoffset={`-${((18+4)/23)*238.76}`} strokeLinecap="butt" />
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="#22c55e" strokeWidth="14" strokeDasharray={`${(activeCount/teamMembers.length)*238.76} ${238.76}`} strokeLinecap="butt" />
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="#D4AF37" strokeWidth="14" strokeDasharray={`${(pendingCount/teamMembers.length)*238.76} ${238.76}`} strokeDashoffset={`-${(activeCount/teamMembers.length)*238.76}`} strokeLinecap="butt" />
                           </svg>
                           <div style={{ position: 'absolute', textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>23</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{teamMembers.length}</div>
                             <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.3 }}>Total<br/>Members</div>
                           </div>
                         </div>
-                        {[['#22c55e','18','Active'],['#D4AF37','4','Pending'],['#ef4444','1','Declined'],['#6b7280','0','Suspended']].map(([color, count, label]) => (
+                        {[['#22c55e', String(activeCount), 'Active'],['#D4AF37', String(pendingCount), 'Pending'],['#ef4444','0','Declined'],['#6b7280','0','Suspended']].map(([color, count, label]) => (
                           <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.4rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'rgba(255,255,255,0.55)' }}>
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color, flexShrink: 0 }}></span>
