@@ -83,6 +83,38 @@ export default function App() {
 
   const canvasRef = useRef(null);
 
+  // Header Search & Notification States
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: 'Sarah Ahmed accepted your team invitation', time: '2 minutes ago', read: false },
+    { id: 2, text: 'New program created', time: 'Today', read: false },
+    { id: 3, text: 'Your weekly program report is ready', time: 'Yesterday', read: false }
+  ]);
+
+  const searchItems = [
+    { name: 'John Doe', type: 'Team Member', detail: 'Organization Owner' },
+    { name: 'Sarah Ahmed', type: 'Team Member', detail: 'Admin' },
+    { name: 'Michael Ibrahim', type: 'Team Member', detail: 'Program Manager' },
+    { name: 'Fatima Aliyu', type: 'Team Member', detail: 'Facilitator' },
+    { name: 'Ngozi Kalu', type: 'Team Member', detail: 'Viewer (Pending)' },
+    { name: "John's Leadership Program", type: 'Program', detail: 'Enterprise track' },
+    { name: 'Product Management Accelerator', type: 'Program', detail: 'Bootcamp track' },
+    { name: 'Jane Smith', type: 'Learner', detail: 'janesmith@abcenergy.com' },
+    { name: 'Alex Johnson', type: 'Learner', detail: 'alex@abcenergy.com' },
+    { name: 'Kickoff & Strategy Alignment', type: 'Session', detail: 'Scheduled for Friday' },
+    { name: 'Mid-term Skills Assessment', type: 'Session', detail: 'Completed last week' },
+    { name: 'Q2 Engagement Report', type: 'Report', detail: 'PDF document ready' },
+    { name: 'Annual Performance Metrics', type: 'Report', detail: 'Draft version' }
+  ];
+
+  const searchResults = searchQuery.trim()
+    ? searchItems.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.type.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
+
+  const unreadNotificationCount = notifications.filter(n => !n.read).length;
+
   // Initialize and update theme attributes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -1427,28 +1459,170 @@ export default function App() {
           </div>
 
           {/* Header Right: Search, Alerts, Profile */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <button style={{ background: 'transparent', border: 'none', color: '#a0aec0', cursor: 'pointer' }}>
-              <Search size={20} />
-            </button>
-            <button style={{ background: 'transparent', border: 'none', color: '#a0aec0', cursor: 'pointer', position: 'relative' }}>
-              <Bell size={20} />
-              <span style={{
-                position: 'absolute',
-                top: '-5px',
-                right: '-5px',
-                backgroundColor: '#D4AF37',
-                color: '#000000',
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                borderRadius: '50%',
-                width: '14px',
-                height: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>3</span>
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', position: 'relative' }}>
+            
+            {/* Expandable Search */}
+            <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+              {searchExpanded ? (
+                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.35rem 0.75rem', width: '260px', animation: 'scaleUp 0.15s ease' }}>
+                  <Search size={16} color="rgba(255,255,255,0.4)" style={{ marginRight: '0.5rem' }} />
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Search workspace..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.82rem', outline: 'none', width: '100%', padding: 0 }}
+                  />
+                  <button 
+                    onClick={() => { setSearchExpanded(false); setSearchQuery(''); }}
+                    style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0 0 0 0.4rem', fontSize: '0.8rem' }}
+                  >
+                    ✕
+                  </button>
+
+                  {/* Search Results Dropdown */}
+                  {searchQuery.trim() && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', width: '280px', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 1100, overflow: 'hidden', padding: '0.5rem 0' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', padding: '0.25rem 0.85rem 0.5rem 0.85rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
+                        Search Results
+                      </div>
+                      <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                        {searchResults.length > 0 ? (
+                          searchResults.map((item, idx) => (
+                            <div 
+                              key={idx} 
+                              onClick={() => {
+                                if (item.type === 'Team Member') {
+                                  triggerTransition(() => setActiveTab('Team'));
+                                } else if (item.type === 'Program') {
+                                  triggerTransition(() => setActiveTab('Programs'));
+                                }
+                                setSearchExpanded(false);
+                                setSearchQuery('');
+                              }}
+                              style={{ padding: '0.6rem 0.85rem', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', gap: '0.1rem', textAlign: 'left' }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              <span style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 600 }}>{item.name}</span>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)' }}>
+                                <span>{item.detail}</span>
+                                <span style={{ color: '#D4AF37', fontWeight: 700 }}>{item.type}</span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: '1rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
+                            No results found for "{searchQuery}"
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setSearchExpanded(true)}
+                  style={{ background: 'transparent', border: 'none', color: '#a0aec0', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <Search size={20} />
+                </button>
+              )}
+            </div>
+
+            {/* Notification Bell with Dropdown */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                style={{ background: 'transparent', border: 'none', color: showNotifications ? '#fff' : '#a0aec0', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center' }}
+              >
+                <Bell size={20} />
+                {unreadNotificationCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    backgroundColor: '#D4AF37',
+                    color: '#000000',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    borderRadius: '50%',
+                    width: '14px',
+                    height: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>{unreadNotificationCount}</span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '1.2rem', width: '360px', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', boxShadow: '0 15px 45px rgba(0,0,0,0.6)', zIndex: 1200, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Notifications</span>
+                    {unreadNotificationCount > 0 && (
+                      <button 
+                        onClick={() => {
+                          setNotifications(notifications.map(n => ({ ...n, read: true })));
+                        }}
+                        style={{ background: 'transparent', border: 'none', color: '#D4AF37', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                    {notifications.length > 0 ? (
+                      notifications.map(n => (
+                        <div 
+                          key={n.id} 
+                          onClick={() => {
+                            setNotifications(notifications.map(item => item.id === n.id ? { ...item, read: true } : item));
+                          }}
+                          style={{
+                            padding: '1rem 1.25rem',
+                            borderBottom: '1px solid rgba(255,255,255,0.02)',
+                            backgroundColor: n.read ? 'transparent' : 'rgba(212,175,55,0.02)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.25rem',
+                            transition: 'background 0.2s',
+                            textAlign: 'left'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = n.read ? 'transparent' : 'rgba(212,175,55,0.02)'}
+                        >
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                            {!n.read && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D4AF37', marginTop: '0.35rem', flexShrink: 0 }} />}
+                            <span style={{ fontSize: '0.8rem', color: n.read ? 'rgba(255,255,255,0.65)' : '#fff', fontWeight: n.read ? 500 : 600, lineHeight: 1.4 }}>
+                              {n.text}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginLeft: n.read ? 0 : '0.8rem' }}>{n.time}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                        No notifications yet
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ padding: '0.85rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.01)', textAlign: 'center' }}>
+                    <button 
+                      onClick={() => setShowNotifications(false)}
+                      style={{ background: 'transparent', border: 'none', color: '#D4AF37', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                    >
+                      View all notifications <ArrowRight size={12} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* User profile dropdown */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '1.5rem' }}>
               {ownerPhoto ? (
