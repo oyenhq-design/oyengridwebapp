@@ -1938,10 +1938,9 @@ export default function App() {
                 const activeCount  = teamMembers.filter(m => m.status === 'Active').length;
                 const pendingCount = teamMembers.filter(m => m.status === 'Pending').length;
                 const inviteMethods = [
-                  { icon: <Mail size={22} color="#D4AF37" />,     title: 'Invite by Email',   desc: 'Send email invitations to team members' },
-                  { icon: <Link2 size={22} color="#22c55e" />,   title: 'Invite with Link',  desc: 'Share a link for anyone to join your workspace' },
-                  { icon: <FileText size={22} color="#8b5cf6" />, title: 'Import from CSV',   desc: 'Upload a CSV file to add multiple members' },
-                  { icon: <UserPlus size={22} color="#3b82f6" />, title: 'Add Manually',      desc: 'Add team members one by one' },
+                  { icon: <Mail size={22} color="#D4AF37" />,     title: 'Invite by Email',  desc: 'Send email invitations to team members' },
+                  { icon: <Link2 size={22} color="#22c55e" />,    title: 'Invite with Link', desc: 'Share a link for anyone to join your workspace' },
+                  { icon: <UserPlus size={22} color="#3b82f6" />, title: 'Add Manually',     desc: 'Add team members one by one' },
                 ];
                 const rolesData = [
                   { label: 'Organization Owner', icon: <ShieldCheck size={14} color="#D4AF37" />, count: 1 },
@@ -1981,7 +1980,7 @@ export default function App() {
                       </div>
 
                       {/* Invite Method Cards */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1rem' }}>
                         {inviteMethods.map((m, i) => (
                           <div key={i} onClick={() => alert(`${m.title} — coming soon`)} style={{
                             backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)',
