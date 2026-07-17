@@ -1961,22 +1961,10 @@ export default function App() {
                           <span>›</span><span style={{ cursor: 'pointer' }}>Team</span>
                           <span>›</span><span style={{ color: 'rgba(255,255,255,0.7)' }}>Team Management</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div>
+                        <div>
                             <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Team Management</h2>
                             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>Manage your team members and their roles in this workspace.</p>
                           </div>
-                          <button style={{
-                            background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
-                            border: 'none', color: '#000', fontWeight: 700,
-                            fontSize: '0.85rem', borderRadius: '8px',
-                            padding: '0.7rem 1.25rem', display: 'flex', alignItems: 'center',
-                            gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
-                            boxShadow: '0 4px 15px rgba(212,175,55,0.3)'
-                          }}>
-                            <UserPlus size={15} /> Invite Team Member
-                          </button>
-                        </div>
                       </div>
 
                       {/* Invite Method Cards */}
