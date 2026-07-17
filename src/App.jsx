@@ -6,7 +6,7 @@ import {
   Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert,
   ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop,
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
-  Shield, Rocket, FileText, Mail
+  Shield, Rocket, FileText, Mail, Link2
 } from 'lucide-react';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
@@ -1924,6 +1924,240 @@ export default function App() {
                 </div>
 
               </div>
+            ) : activeTab === 'Team' ? (
+              /* ── Team Management Page ── */
+              (() => {
+                const teamMembers = [
+                  { initials: 'JD', color: '#D4AF37', name: 'John Doe', isYou: true,  email: 'john.doe@abcenergy.com',         role: 'Organization Owner', roleColor: '#D4AF37', status: 'Active',    joined: 'May 22, 2025' },
+                  { initials: 'SA', color: '#7c3aed', name: 'Sarah Ahmed',             email: 'sarah.ahmed@abcenergy.com',      role: 'Admin',              roleColor: '#3b82f6', status: 'Active',    joined: 'May 21, 2025' },
+                  { initials: 'MI', color: '#16a34a', name: 'Michael Ibrahim',         email: 'michael.ibrahim@abcenergy.com',  role: 'Program Manager',    roleColor: '#8b5cf6', status: 'Active',    joined: 'May 20, 2025' },
+                  { initials: 'FA', color: '#0284c7', name: 'Fatima Aliyu',            email: 'fatima.aliyu@abcenergy.com',     role: 'Facilitator',        roleColor: '#0284c7', status: 'Active',    joined: 'May 18, 2025' },
+                  { initials: 'NK', color: '#b45309', name: 'Ngozi Kalu',              email: 'ngozi.kalu@abcenergy.com',       role: 'Viewer',             roleColor: '#b45309', status: 'Pending',   joined: 'May 22, 2025' },
+                  { initials: 'OT', color: '#0f766e', name: 'Oluwatobi Taiwo',         email: 'oluwatobi.taiwo@abcenergy.com',  role: 'Team Member',        roleColor: '#16a34a', status: 'Pending',   joined: 'May 22, 2025' },
+                  { img: true,     name: 'David Okafor',                               email: 'david.okafor@abcenergy.com',     role: 'Facilitator',        roleColor: '#0284c7', status: 'Active',    joined: 'May 19, 2025' },
+                  { img: true,     name: 'Blessing Udo',                               email: 'blessing.udo@abcenergy.com',     role: 'Program Manager',    roleColor: '#8b5cf6', status: 'Suspended', joined: 'May 15, 2025' },
+                ];
+                const statusColor = { Active: '#22c55e', Pending: '#D4AF37', Declined: '#ef4444', Suspended: '#6b7280' };
+                const inviteMethods = [
+                  { icon: <Mail size={22} color="#D4AF37" />, title: 'Invite by Email',    desc: 'Send email invitations to team members' },
+                  { icon: <Link2 size={22} color="#22c55e" />, title: 'Invite with Link', desc: 'Share a link for anyone to join your workspace' },
+                  { icon: <FileText size={22} color="#8b5cf6" />, title: 'Import from CSV',  desc: 'Upload a CSV file to add multiple members' },
+                  { icon: <UserPlus size={22} color="#3b82f6" />, title: 'Add Manually',     desc: 'Add team members one by one' },
+                ];
+                const rolesData = [
+                  { label: 'Organization Owner', icon: <ShieldCheck size={14} color="#D4AF37" />, count: 1 },
+                  { label: 'Admin',              icon: <ShieldCheck size={14} color="#ef4444"  />, count: 2 },
+                  { label: 'Program Manager',    icon: <Users size={14}      color="#8b5cf6"  />, count: 4 },
+                  { label: 'Facilitator',        icon: <User size={14}       color="#3b82f6"  />, count: 7 },
+                  { label: 'Team Member',        icon: <User size={14}       color="#22c55e"  />, count: 6 },
+                  { label: 'Viewer',             icon: <User size={14}       color="#6b7280"  />, count: 3 },
+                ];
+                return (
+                  <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+                    {/* Main Column */}
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                      {/* Breadcrumb + Title */}
+                      <div>
+                        <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ cursor: 'pointer' }} onClick={() => triggerTransition(() => setActiveTab('Welcome'))}>Home</span>
+                          <span>›</span><span style={{ cursor: 'pointer' }}>Team</span>
+                          <span>›</span><span style={{ color: 'rgba(255,255,255,0.7)' }}>Team Management</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Team Management</h2>
+                            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>Manage your team members and their roles in this workspace.</p>
+                          </div>
+                          <button style={{
+                            background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
+                            border: 'none', color: '#000', fontWeight: 700,
+                            fontSize: '0.85rem', borderRadius: '8px',
+                            padding: '0.7rem 1.25rem', display: 'flex', alignItems: 'center',
+                            gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                            boxShadow: '0 4px 15px rgba(212,175,55,0.3)'
+                          }}>
+                            <UserPlus size={15} /> Invite Team Member
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Invite Method Cards */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1rem' }}>
+                        {inviteMethods.map((m, i) => (
+                          <div key={i} onClick={() => alert(`${m.title} — coming soon`)} style={{
+                            backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)',
+                            borderRadius: '10px', padding: '1.1rem', cursor: 'pointer',
+                            transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '0.6rem'
+                          }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; e.currentTarget.style.backgroundColor = '#13141a'; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.backgroundColor = '#0e0f14'; }}
+                          >
+                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {m.icon}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '0.2rem' }}>{m.title}</div>
+                              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>{m.desc}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Member Table */}
+                      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
+                        {/* Table header bar */}
+                        <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                          <div style={{ display: 'flex', gap: '0', fontSize: '0.8rem', fontWeight: 600 }}>
+                            {[['All Members','23','#D4AF37'],['Active','18','#22c55e'],['Pending','4','#D4AF37'],['Declined','1','#ef4444'],['Suspended','0','#6b7280']].map(([label, count, color], i) => (
+                              <div key={i} style={{
+                                padding: '0.4rem 0.85rem',
+                                color: i === 0 ? '#D4AF37' : 'rgba(255,255,255,0.5)',
+                                borderBottom: i === 0 ? '2px solid #D4AF37' : '2px solid transparent',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap'
+                              }}>
+                                {label} <span style={{ backgroundColor: i === 0 ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.06)', color: color, borderRadius: '10px', padding: '0.1rem 0.45rem', fontSize: '0.7rem', fontWeight: 700 }}>{count}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '7px', padding: '0.4rem 0.75rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                              <Search size={13} /> Search members...
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '7px', padding: '0.4rem 0.75rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+                              <Settings size={13} /> Filter
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Column headers */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2.2fr 1.4fr 1fr 1.1fr 0.4fr', padding: '0.6rem 1.25rem', fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                          <span>Name</span><span>Email</span><span>Role</span><span>Status</span><span>Joined On</span><span></span>
+                        </div>
+
+                        {/* Rows */}
+                        {teamMembers.map((m, i) => (
+                          <div key={i} style={{
+                            display: 'grid', gridTemplateColumns: '2fr 2.2fr 1.4fr 1fr 1.1fr 0.4fr',
+                            padding: '0.85rem 1.25rem', alignItems: 'center',
+                            borderBottom: i < teamMembers.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                            fontSize: '0.82rem', transition: 'background 0.15s ease'
+                          }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.015)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            {/* Name */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: m.color || '#4a5568', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                                {m.initials || m.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+                              </div>
+                              <span style={{ color: '#fff', fontWeight: 600 }}>{m.name}</span>
+                              {m.isYou && <span style={{ fontSize: '0.65rem', backgroundColor: 'rgba(212,175,55,0.15)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '4px', padding: '0.05rem 0.35rem', fontWeight: 700 }}>You</span>}
+                            </div>
+                            {/* Email */}
+                            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>{m.email}</span>
+                            {/* Role badge */}
+                            <span style={{ backgroundColor: `${m.roleColor}18`, color: m.roleColor, border: `1px solid ${m.roleColor}40`, borderRadius: '5px', padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 700, display: 'inline-block' }}>{m.role}</span>
+                            {/* Status */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: statusColor[m.status], fontSize: '0.78rem', fontWeight: 600 }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: statusColor[m.status], flexShrink: 0 }}></span>
+                              {m.status}
+                            </div>
+                            {/* Joined */}
+                            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{m.joined}</span>
+                            {/* Actions */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: '1.1rem', letterSpacing: '2px' }}>···</div>
+                          </div>
+                        ))}
+
+                        {/* Pagination */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                          <span>Showing 1 to 8 of 23 members</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <button style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+                            {[1,2,3].map(n => (
+                              <button key={n} style={{ background: n === 1 ? '#D4AF37' : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: n === 1 ? '#000' : 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', fontWeight: n === 1 ? 700 : 400, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem' }}>{n}</button>
+                            ))}
+                            <button style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+                            <select style={{ background: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', borderRadius: '5px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer', marginLeft: '0.5rem' }}>
+                              <option>10 / page</option><option>25 / page</option><option>50 / page</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Sidebar */}
+                    <div style={{ width: '220px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+                      {/* Team Overview */}
+                      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>Team Overview</h4>
+                        {/* Donut chart (SVG) */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', position: 'relative' }}>
+                          <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="14" />
+                            {/* Active 18/23 ≈ 78% */}
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="#22c55e" strokeWidth="14" strokeDasharray={`${(18/23)*238.76} ${238.76}`} strokeLinecap="butt" />
+                            {/* Pending 4/23 ≈ 17% */}
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="#D4AF37" strokeWidth="14" strokeDasharray={`${(4/23)*238.76} ${238.76}`} strokeDashoffset={`-${(18/23)*238.76}`} strokeLinecap="butt" />
+                            {/* Declined 1/23 ≈ 5% */}
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="#ef4444" strokeWidth="14" strokeDasharray={`${(1/23)*238.76} ${238.76}`} strokeDashoffset={`-${((18+4)/23)*238.76}`} strokeLinecap="butt" />
+                          </svg>
+                          <div style={{ position: 'absolute', textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>23</div>
+                            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.3 }}>Total<br/>Members</div>
+                          </div>
+                        </div>
+                        {[['#22c55e','18','Active'],['#D4AF37','4','Pending'],['#ef4444','1','Declined'],['#6b7280','0','Suspended']].map(([color, count, label]) => (
+                          <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'rgba(255,255,255,0.55)' }}>
+                              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color, flexShrink: 0 }}></span>
+                              {label}
+                            </div>
+                            <span style={{ fontWeight: 700, color: '#fff' }}>{count}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Roles in Workspace */}
+                      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '0.9rem' }}>Roles in Workspace</h4>
+                        {rolesData.map((r, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem', fontSize: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'rgba(255,255,255,0.6)' }}>
+                              {r.icon} {r.label}
+                            </div>
+                            <span style={{ fontWeight: 700, color: '#fff' }}>{r.count}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Quick Tips */}
+                      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '0.9rem' }}>Quick Tips</h4>
+                        {[
+                          { icon: <UserCheck size={13} color="#D4AF37" />, title: 'Assign the right role', desc: 'Roles help control access and responsibilities.' },
+                          { icon: <Users size={13} color="#D4AF37" />,     title: 'Use groups',            desc: 'Organize your team into groups for better collaboration.' },
+                          { icon: <Lock size={13} color="#D4AF37" />,      title: 'Review permissions',   desc: 'Ensure members have the right access to do their work.' },
+                        ].map((tip, i) => (
+                          <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', alignItems: 'flex-start' }}>
+                            <div style={{ marginTop: '0.1rem', flexShrink: 0 }}>{tip.icon}</div>
+                            <div>
+                              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff', marginBottom: '0.1rem' }}>{tip.title}</div>
+                              <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>{tip.desc}</div>
+                            </div>
+                          </div>
+                        ))}
+                        <div style={{ fontSize: '0.75rem', color: '#D4AF37', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.25rem' }}>
+                          View all tips <ArrowRight size={11} />
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })()
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>
