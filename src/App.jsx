@@ -15,6 +15,7 @@ import SignInForm from './components/SignInForm';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
+import SessionsTab from './components/SessionsTab';
 
 
 export default function App() {
@@ -2124,6 +2125,14 @@ export default function App() {
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
                 setLearners={setWsLearners}
+                onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
+              />
+            ) : activeTab === 'Sessions' ? (
+              /* Sessions Tab Component */
+              <SessionsTab
+                programs={wsPrograms}
+                setPrograms={setWsPrograms}
+                learners={wsLearners}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
               />
             ) : (
