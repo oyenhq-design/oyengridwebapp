@@ -201,7 +201,8 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
       name: newResourceName.trim(),
       type: newResourceType,
       fileName: newResourceFile ? newResourceFile.name : `${newResourceName.trim()}.${newResourceType.toLowerCase()}`,
-      fileSize: newResourceFile ? `${Math.round(newResourceFile.size / 1024)} KB` : '120 KB'
+      fileSize: newResourceFile ? `${Math.round(newResourceFile.size / 1024)} KB` : '120 KB',
+      sizeInBytes: newResourceFile ? newResourceFile.size : 120 * 1024
     };
 
     updateCurrentProgram(p => {
@@ -220,6 +221,25 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
 
     setNewResourceName('');
     setNewResourceFile(null);
+  };
+
+  /* Delete Session Resource */
+  const handleDeleteSessionResource = (resId, resName) => {
+    if (window.confirm(`Are you sure you want to delete "${resName}"?`)) {
+      updateCurrentProgram(p => {
+        const updatedSessions = p.sessions.map(s => {
+          if (s.id === selectedSessionId) {
+            return {
+              ...s,
+              resources: (s.resources || []).filter(r => r.id !== resId)
+            };
+          }
+          return s;
+        });
+        const updatedProg = { ...p, sessions: updatedSessions };
+        return logActivity(`Resource "${resName}" deleted from session "${currentSession.title}"`, updatedProg);
+      });
+    }
   };
 
   /* Download Attendance report */
@@ -763,9 +783,19 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                           <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.1rem' }}>{res.fileName} · {res.fileSize}</div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#fff', backgroundColor: 'rgba(255,255,255,0.06)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
-                        {res.type}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#fff', backgroundColor: 'rgba(255,255,255,0.06)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                          {res.type}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteSessionResource(res.id, res.name)}
+                          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', display: 'flex', padding: '0.2rem', transition: 'color 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

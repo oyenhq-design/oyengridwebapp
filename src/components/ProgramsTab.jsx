@@ -68,6 +68,32 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
 
   const totalLearners = learners.length;
 
+  /* Live workspace-wide storage calculation */
+  const calculateTotalStorage = () => {
+    let totalBytes = 0;
+    programs.forEach(p => {
+      // Sum program-wide resources
+      (p.resources || []).forEach(r => {
+        totalBytes += r.sizeInBytes || 0;
+      });
+      // Sum session-specific resources
+      (p.sessions || []).forEach(s => {
+        (s.resources || []).forEach(sr => {
+          totalBytes += sr.sizeInBytes || 0;
+        });
+      });
+    });
+
+    if (totalBytes === 0) return '0.00 MB / 10 GB';
+    const GB = 1024 * 1024 * 1024;
+    const MB = 1024 * 1024;
+    if (totalBytes >= GB) {
+      return `${(totalBytes / GB).toFixed(2)} GB / 10 GB`;
+    } else {
+      return `${(totalBytes / MB).toFixed(2)} MB / 10 GB`;
+    }
+  };
+
   /* ── If a program is selected, show its detail view ── */
   const selectedProgram = programs.find(p => p.id === selectedProgramId);
   if (selectedProgram) {
@@ -143,7 +169,7 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
           </div>
           <div>
             <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>0 GB / 10 GB</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>{calculateTotalStorage()}</div>
           </div>
         </div>
       </div>
