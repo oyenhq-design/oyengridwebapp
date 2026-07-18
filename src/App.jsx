@@ -14,6 +14,7 @@ import InvitationAcceptance from './components/InvitationAcceptance';
 import SignInForm from './components/SignInForm';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
+import LearnersTab from './components/LearnersTab';
 
 
 export default function App() {
@@ -1394,7 +1395,7 @@ export default function App() {
       { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
       { id: 'Team', label: 'Team', icon: <Users size={18} /> },
       { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
-      { id: 'Participants', label: 'Participants', icon: <UserCheck size={18} /> },
+      { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
       { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
       { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
       { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
@@ -1873,9 +1874,9 @@ export default function App() {
                           icon: <Grid size={24} color="#D4AF37" />
                         },
                         { 
-                          title: 'Participants', 
-                          desc: 'View, manage and track participants across all programmes.', 
-                          linkText: 'View Participants',
+                          title: 'Learners', 
+                          desc: 'View and manage all learners enrolled in your programs.', 
+                          linkText: 'View Learners',
                           icon: <User size={24} color="#D4AF37" />
                         },
                         { 
@@ -2104,8 +2105,11 @@ export default function App() {
               /* Ã¢â€â‚¬Ã¢â€â‚¬ Team Management Component Ã¢â€â‚¬Ã¢â€â‚¬ */
               <TeamManagement onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))} />
             ) : activeTab === 'Programmes' ? (
-              /* Programs Tab Component */
+              /* Programmes Tab Component */
               <ProgramsTab />
+            ) : activeTab === 'Learners' ? (
+              /* Learners Tab Component */
+              <LearnersTab />
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>
