@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   ArrowLeft, Users, Calendar, FileText, ClipboardList,
   Plus, CheckCircle2, Circle, Clock, BookOpen,
   X, ChevronDown, Upload, BarChart3, Activity,
-  UserPlus, CalendarPlus, FolderUp, ClipboardPlus
+  UserPlus, CalendarPlus, FolderUp, ClipboardPlus, File, AlertTriangle
 } from 'lucide-react';
 
 /* ── shared styles ── */
@@ -28,6 +28,14 @@ const modalBox = {
   boxShadow: '0 30px 70px rgba(0,0,0,0.7)',
 };
 
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 function ModalHeader({ title, subtitle, onClose }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
@@ -42,24 +50,27 @@ function ModalHeader({ title, subtitle, onClose }) {
   );
 }
 
-function FormActions({ onCancel, submitLabel }) {
+function FormActions({ onCancel, submitLabel, disabled = false }) {
   return (
     <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
       <button type="button" onClick={onCancel} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Cancel</button>
-      <button type="submit" style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>{submitLabel}</button>
+      <button
+        type="submit"
+        disabled={disabled}
+        style={{
+          flex: 2, padding: '0.75rem',
+          background: disabled ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg,#D4AF37,#C49A2A)',
+          border: 'none', color: disabled ? 'rgba(255,255,255,0.3)' : '#000',
+          borderRadius: '8px', cursor: disabled ? 'not-allowed' : 'pointer',
+          fontWeight: 700, fontSize: '0.85rem'
+        }}
+      >
+        {submitLabel}
+      </button>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════
-   PROGRAM DETAIL COMPONENT
-   Props:
-     program             – the full program object
-     setPrograms         – workspace setter
-     programLearners     – learners already in this program (filtered)
-     setLearners         – workspace learners setter
-     onBack              – () => void  navigate back to Programs list
-════════════════════════════════════════════════════════════ */
 export default function ProgramDetail({ program, setPrograms, programLearners = [], setLearners, onBack }) {
 
   /* modal visibility */
@@ -68,8 +79,13 @@ export default function ProgramDetail({ program, setPrograms, programLearners = 
   /* form state */
   const [learnerForm, setLearnerForm]         = useState({ firstName: '', lastName: '', email: '' });
   const [sessionForm, setSessionForm]         = useState({ name: '', date: '', time: '', duration: '' });
-  const [resourceForm, setResourceForm]       = useState({ name: '', type: 'Document', description: '' });
+  const [resourceForm, setResourceForm]       = useState({ name: '', type: 'PDF', description: '' });
   const [assessmentForm, setAssessmentForm]   = useState({ name: '', type: 'Quiz', passingScore: '' });
+
+  /* file upload states */
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileError, setFileError]       = useState('');
+  const fileInputRef                    = useRef(null);
 
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const now   = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' · ' + today;
@@ -107,14 +123,58 @@ export default function ProgramDetail({ program, setPrograms, programLearners = 
     setModal(null);
   };
 
+  /* ── File Selection ── */
+  const handleFileChange = (file) => {
+    if (!file) return;
+    setFileError('');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const allowed = ['pdf', 'docx', 'pptx', 'xlsx', 'mp4'];
+    if (!allowed.includes(ext)) {
+      setFileError('Unsupported file format. Please upload PDF, DOCX, PPTX, XLSX, or MP4.');
+      return;
+    }
+    setSelectedFile({
+      name: file.name,
+      size: file.size,
+      raw: file
+    });
+
+    // Auto fill Resource Name if empty
+    if (!resourceForm.name) {
+      const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      setResourceForm(prev => ({ ...prev, name: baseName }));
+    }
+    // Auto set Resource Type based on extension
+    let autoType = 'PDF';
+    if (ext === 'docx') autoType = 'Document';
+    else if (ext === 'pptx') autoType = 'Presentation';
+    else if (ext === 'xlsx') autoType = 'Spreadsheet';
+    else if (ext === 'mp4') autoType = 'Video';
+    setResourceForm(prev => ({ ...prev, type: autoType }));
+  };
+
   /* ── Upload Resource ── */
   const handleAddResource = (e) => {
     e.preventDefault();
-    const resource = { id: Date.now(), ...resourceForm };
-    updateProgram(p => pushActivity(`Resource "${resource.name}" uploaded`, {
+    if (!selectedFile || !resourceForm.name.trim()) return;
+
+    const resource = {
+      id: Date.now(),
+      name: resourceForm.name.trim(),
+      type: resourceForm.type,
+      description: resourceForm.description.trim(),
+      fileName: selectedFile.name,
+      fileSize: formatBytes(selectedFile.size)
+    };
+
+    updateProgram(p => pushActivity(`Resource "${resource.name}" uploaded (${resource.fileName})`, {
       ...p, resources: [...(p.resources || []), resource],
     }));
-    setResourceForm({ name: '', type: 'Document', description: '' });
+
+    // Reset
+    setResourceForm({ name: '', type: 'PDF', description: '' });
+    setSelectedFile(null);
+    setFileError('');
     setModal(null);
   };
 
@@ -162,7 +222,13 @@ export default function ProgramDetail({ program, setPrograms, programLearners = 
                     : program.status === 'Draft'   ? { color: '#6b7280', bg: 'rgba(107,114,128,0.1)' }
                     : { color: '#D4AF37', bg: 'rgba(212,175,55,0.1)' };
 
-  const closeModal = () => setModal(null);
+  const closeModal = () => {
+    setModal(null);
+    setSelectedFile(null);
+    setFileError('');
+  };
+
+  const isResourceSubmitDisabled = !selectedFile || !resourceForm.name.trim();
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -375,30 +441,121 @@ export default function ProgramDetail({ program, setPrograms, programLearners = 
       {modal === 'resource' && (
         <div style={modalOverlay} onClick={closeModal}>
           <div style={modalBox} onClick={e => e.stopPropagation()}>
-            <ModalHeader title="Upload Resource" subtitle={`Add a resource to ${program.name}`} onClose={closeModal} />
+            <ModalHeader title="Upload Resource" subtitle={`Add an instructional resource file to ${program.name}`} onClose={closeModal} />
             <form onSubmit={handleAddResource} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              
+              {/* File Upload / Dropzone area */}
+              <div>
+                <label style={labelStyle}>Resource File</label>
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      handleFileChange(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    border: '2px dashed rgba(212,175,55,0.25)',
+                    borderRadius: '10px',
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: 'rgba(255,255,255,0.01)',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.45)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.25)'}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,.pptx,.xlsx,.mp4"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileChange(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  
+                  {selectedFile ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <File size={26} color="#D4AF37" />
+                      <div style={{ textAlign: 'left', maxWidth: '280px', overflow: 'hidden' }}>
+                        <div style={{ color: '#fff', fontSize: '0.82rem', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {selectedFile.name}
+                        </div>
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', marginTop: '0.1rem' }}>
+                          {formatBytes(selectedFile.size)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFile(null);
+                          setFileError('');
+                        }}
+                        style={{
+                          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                          color: '#f87171', fontSize: '0.7rem', fontWeight: 700, borderRadius: '5px',
+                          padding: '0.2rem 0.5rem', cursor: 'pointer', marginLeft: '0.5rem'
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <FolderUp size={24} color="#D4AF37" style={{ marginBottom: '0.5rem' }} />
+                      <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>
+                        Drag & drop file here or <span style={{ color: '#D4AF37', textDecoration: 'underline' }}>Browse Files</span>
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', marginTop: '0.25rem' }}>
+                        Supported formats: .PDF, .DOCX, .PPTX, .XLSX, .MP4
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {fileError && (
+                  <div style={{ marginTop: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f87171', fontSize: '0.75rem' }}>
+                    <AlertTriangle size={12} /> {fileError}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label style={labelStyle}>Resource Name</label>
                 <input required type="text" placeholder="e.g. Module 1 Slides" value={resourceForm.name}
                   onChange={e => setResourceForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
               </div>
+              
               <div>
                 <label style={labelStyle}>Resource Type</label>
                 <div style={{ position: 'relative' }}>
                   <select value={resourceForm.type} onChange={e => setResourceForm(p => ({ ...p, type: e.target.value }))}
                     style={{ ...inputStyle, appearance: 'none', paddingRight: '2rem', cursor: 'pointer' }}>
-                    {['Document', 'Video', 'Presentation', 'Spreadsheet', 'PDF', 'Link', 'Other'].map(t => <option key={t}>{t}</option>)}
+                    {['PDF', 'Document', 'Presentation', 'Spreadsheet', 'Video', 'Other'].map(t => <option key={t}>{t}</option>)}
                   </select>
                   <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
                 </div>
               </div>
+              
               <div>
                 <label style={labelStyle}>Description <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.6 }}>(optional)</span></label>
                 <textarea rows={3} placeholder="Brief description of this resource..." value={resourceForm.description}
                   onChange={e => setResourceForm(p => ({ ...p, description: e.target.value }))}
                   style={{ ...inputStyle, resize: 'none' }} />
               </div>
-              <FormActions onCancel={closeModal} submitLabel="Add Resource" />
+
+              <FormActions
+                onCancel={closeModal}
+                submitLabel="Upload Resource"
+                disabled={isResourceSubmitDisabled}
+              />
             </form>
           </div>
         </div>

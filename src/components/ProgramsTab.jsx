@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Users, HardDrive, Plus, Play, X, ArrowRight } from 'lucide-react';
+import { BookOpen, Users, HardDrive, Plus, Play, X, ArrowRight, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import ProgramDetail from './ProgramDetail';
 
 const PROGRAM_LIMIT = 3;
@@ -10,6 +10,11 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
   const [newProgDesc, setNewProgDesc]           = useState('');
   const [selectedProgramId, setSelectedProgramId] = useState(null);
 
+  // Card action menu / modals state
+  const [activeMenuProgramId, setActiveMenuProgramId] = useState(null);
+  const [renameProgramId, setRenameProgramId]         = useState(null);
+  const [renameName, setRenameName]                   = useState('');
+  const [deleteProgramId, setDeleteProgramId]         = useState(null);
 
   const handleCreate = (e) => {
     e.preventDefault();
@@ -19,7 +24,7 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
       {
         id:          Date.now(),
         name:        newProgName.trim(),
-        desc:        newProgDesc.trim() || 'No description provided.',
+        desc:      newProgDesc.trim() || 'No description provided.',
         status:      'Active',
         sessions:    [],
         resources:   [],
@@ -30,6 +35,31 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
     setNewProgName('');
     setNewProgDesc('');
     setShowCreateModal(false);
+  };
+
+  const handleRenameSubmit = (e) => {
+    e.preventDefault();
+    if (!renameName.trim()) return;
+    const oldProg = programs.find(p => p.id === renameProgramId);
+    if (oldProg) {
+      // Update program name
+      setPrograms(prev => prev.map(p => p.id === renameProgramId ? { ...p, name: renameName.trim() } : p));
+      // Update all assigned learners to the new program name
+      setLearners(prev => prev.map(l => l.program === oldProg.name ? { ...l, program: renameName.trim() } : l));
+    }
+    setRenameProgramId(null);
+    setRenameName('');
+  };
+
+  const handleDeleteConfirm = () => {
+    const progToDelete = programs.find(p => p.id === deleteProgramId);
+    if (progToDelete) {
+      // Remove program
+      setPrograms(prev => prev.filter(p => p.id !== deleteProgramId));
+      // Permanently remove all assigned learners from this program
+      setLearners(prev => prev.filter(l => l.program !== progToDelete.name));
+    }
+    setDeleteProgramId(null);
   };
 
   /* Live learner count per program */
@@ -128,11 +158,68 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
             {programs.map((p) => (
               <div key={p.id}
-                style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', transition: 'border-color 0.2s' }}
+                style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', transition: 'border-color 0.2s', position: 'relative' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                {/* Action Menu (Three Dots) */}
+                <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMenuProgramId(activeMenuProgramId === p.id ? null : p.id);
+                    }}
+                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+
+                  {activeMenuProgramId === p.id && (
+                    <>
+                      <div
+                        onClick={() => setActiveMenuProgramId(null)}
+                        style={{ position: 'fixed', inset: 0, zIndex: 90 }}
+                      />
+                      <div style={{
+                        position: 'absolute', right: 0, marginTop: '0.35rem',
+                        backgroundColor: '#161822', border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                        width: '150px', zIndex: 100, overflow: 'hidden'
+                      }}>
+                        <button
+                          onClick={() => {
+                            setActiveMenuProgramId(null);
+                            setSelectedProgramId(p.id);
+                          }}
+                          style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                        >
+                          <Play size={13} fill="#fff" /> Open Program
+                        </button>
+                        <button
+                          onClick={() => {
+                            setActiveMenuProgramId(null);
+                            setRenameProgramId(p.id);
+                            setRenameName(p.name);
+                          }}
+                          style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                        >
+                          <Edit2 size={13} /> Rename Program
+                        </button>
+                        <button
+                          onClick={() => {
+                            setActiveMenuProgramId(null);
+                            setDeleteProgramId(p.id);
+                          }}
+                          style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                        >
+                          <Trash2 size={13} /> Delete Program
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: '1.5rem' }}>
                   <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, flex: 1, paddingRight: '0.5rem' }}>{p.name}</h4>
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.2rem 0.5rem', borderRadius: '5px', flexShrink: 0 }}>
                     {p.status}
@@ -265,6 +352,79 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
           </div>
         </div>
       )}
+
+      {/* Rename Modal */}
+      {renameProgramId !== null && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(5px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '2rem', width: '100%', maxWidth: '440px', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Rename Program</h3>
+              <button onClick={() => setRenameProgramId(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={15} />
+              </button>
+            </div>
+            <form onSubmit={handleRenameSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Program Name</label>
+                <input
+                  required autoFocus type="text"
+                  value={renameName}
+                  onChange={e => setRenameName(e.target.value)}
+                  style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button type="button" onClick={() => setRenameProgramId(null)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}
+                >
+                  Rename Program
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteProgramId !== null && (() => {
+        const prog = programs.find(p => p.id === deleteProgramId);
+        return (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(239,110,110,0.2)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '480px', boxShadow: '0 30px 70px rgba(0,0,0,0.7)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ef4444', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Delete Program</h3>
+                <button onClick={() => setDeleteProgramId(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={15} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <p style={{ color: '#fff', fontSize: '0.9rem', margin: 0, lineHeight: '1.5' }}>
+                  Are you sure you want to delete <strong style={{ color: '#D4AF37' }}>{prog?.name}</strong>?
+                </p>
+                <div style={{ backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '0.9rem 1.1rem', fontSize: '0.82rem', color: '#fca5a5', lineHeight: '1.5' }}>
+                  <strong>Warning:</strong> This will permanently delete the program and remove all program-related data, including all sessions, resources, assessments, and any assigned learners. This action cannot be undone.
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button type="button" onClick={() => setDeleteProgramId(null)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteConfirm}
+                    style={{ flex: 1, padding: '0.75rem', background: '#ef4444', border: 'none', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}
+                  >
+                    Delete Program
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
