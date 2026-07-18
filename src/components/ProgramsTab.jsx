@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { BookOpen, Users, HardDrive, Plus, Play, X } from 'lucide-react';
+import { BookOpen, Users, HardDrive, Plus, Play, X, ArrowRight } from 'lucide-react';
+import ProgramDetail from './ProgramDetail';
 
 const PROGRAM_LIMIT = 3;
 
-export default function ProgramsTab({ programs, setPrograms, learners = [] }) {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProgName, setNewProgName]         = useState('');
-  const [newProgDesc, setNewProgDesc]         = useState('');
+export default function ProgramsTab({ programs, setPrograms, learners = [], setLearners }) {
+  const [showCreateModal, setShowCreateModal]   = useState(false);
+  const [newProgName, setNewProgName]           = useState('');
+  const [newProgDesc, setNewProgDesc]           = useState('');
+  const [selectedProgramId, setSelectedProgramId] = useState(null);
+
 
   const handleCreate = (e) => {
     e.preventDefault();
@@ -14,13 +17,14 @@ export default function ProgramsTab({ programs, setPrograms, learners = [] }) {
     setPrograms(prev => [
       ...prev,
       {
-        id:        Date.now(),
-        name:      newProgName.trim(),
-        desc:      newProgDesc.trim() || 'No description provided.',
-        status:    'Active',
-        learners:  0,
-        sessions:  0,
-        resources: 0,
+        id:          Date.now(),
+        name:        newProgName.trim(),
+        desc:        newProgDesc.trim() || 'No description provided.',
+        status:      'Active',
+        sessions:    [],
+        resources:   [],
+        assessments: [],
+        activity:    [],
       }
     ]);
     setNewProgName('');
@@ -28,11 +32,25 @@ export default function ProgramsTab({ programs, setPrograms, learners = [] }) {
     setShowCreateModal(false);
   };
 
-  /* Derive learner count per program from shared learners list */
+  /* Live learner count per program */
   const getLearnerCount = (progName) =>
     learners.filter(l => l.program === progName).length;
 
   const totalLearners = learners.length;
+
+  /* ── If a program is selected, show its detail view ── */
+  const selectedProgram = programs.find(p => p.id === selectedProgramId);
+  if (selectedProgram) {
+    return (
+      <ProgramDetail
+        program={selectedProgram}
+        setPrograms={setPrograms}
+        programLearners={learners.filter(l => l.program === selectedProgram.name)}
+        setLearners={setLearners}
+        onBack={() => setSelectedProgramId(null)}
+      />
+    );
+  }
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -115,8 +133,8 @@ export default function ProgramsTab({ programs, setPrograms, learners = [] }) {
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>{p.name}</h4>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.2rem 0.5rem', borderRadius: '5px' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, flex: 1, paddingRight: '0.5rem' }}>{p.name}</h4>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.2rem 0.5rem', borderRadius: '5px', flexShrink: 0 }}>
                     {p.status}
                   </span>
                 </div>
@@ -126,12 +144,12 @@ export default function ProgramsTab({ programs, setPrograms, learners = [] }) {
                 <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                   <span>{getLearnerCount(p.name)} Learners</span>
                   <span>·</span>
-                  <span>{p.sessions} Sessions</span>
+                  <span>{(p.sessions || []).length} Sessions</span>
                   <span>·</span>
-                  <span>{p.resources} Resources</span>
+                  <span>{(p.resources || []).length} Resources</span>
                 </div>
                 <button
-                  onClick={() => alert(`Opening workspace for: ${p.name}`)}
+                  onClick={() => setSelectedProgramId(p.id)}
                   style={{
                     marginTop: '0.5rem', width: '100%', padding: '0.55rem',
                     background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
@@ -142,13 +160,12 @@ export default function ProgramsTab({ programs, setPrograms, learners = [] }) {
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(212,175,55,0.1)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
                 >
-                  Open Program <Play size={10} fill="#D4AF37" />
+                  Open Program <ArrowRight size={12} />
                 </button>
               </div>
             ))}
           </div>
         ) : (
-          /* Empty State */
           <div style={{
             backgroundColor: '#0e0f14', border: '1px dotted rgba(255,255,255,0.15)',
             borderRadius: '12px', padding: '3.5rem 2rem', textAlign: 'center',

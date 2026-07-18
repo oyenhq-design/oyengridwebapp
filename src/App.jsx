@@ -2115,6 +2115,7 @@ export default function App() {
                 programs={wsPrograms}
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
+                setLearners={setWsLearners}
               />
             ) : activeTab === 'Learners' ? (
               /* Learners Tab Component */
