@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
-import { BookOpen, Users, HardDrive, Plus, Play, Calendar, FileText, X } from 'lucide-react';
+import { BookOpen, Users, HardDrive, Plus, Play, X } from 'lucide-react';
 
-export default function ProgramsTab() {
-  const [programs, setPrograms] = useState([]);
+const PROGRAM_LIMIT = 3;
+
+export default function ProgramsTab({ programs, setPrograms, learners = [] }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProgName, setNewProgName] = useState('');
-  const [newProgDesc, setNewProgDesc] = useState('');
+  const [newProgName, setNewProgName]         = useState('');
+  const [newProgDesc, setNewProgDesc]         = useState('');
 
   const handleCreate = (e) => {
     e.preventDefault();
-    if (!newProgName.trim() || programs.length >= 3) return;
-
-    setPrograms([
-      ...programs,
+    if (!newProgName.trim() || programs.length >= PROGRAM_LIMIT) return;
+    setPrograms(prev => [
+      ...prev,
       {
-        id: Date.now(),
-        name: newProgName.trim(),
-        desc: newProgDesc.trim() || 'No description provided.',
-        status: 'Active',
-        learners: 0,
-        sessions: 0,
-        resources: 0
+        id:        Date.now(),
+        name:      newProgName.trim(),
+        desc:      newProgDesc.trim() || 'No description provided.',
+        status:    'Active',
+        learners:  0,
+        sessions:  0,
+        resources: 0,
       }
     ]);
     setNewProgName('');
@@ -28,11 +28,15 @@ export default function ProgramsTab() {
     setShowCreateModal(false);
   };
 
-  const currentLearners = programs.reduce((acc, curr) => acc + curr.learners, 0);
+  /* Derive learner count per program from shared learners list */
+  const getLearnerCount = (progName) =>
+    learners.filter(l => l.program === progName).length;
+
+  const totalLearners = learners.length;
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
-      
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -43,7 +47,7 @@ export default function ProgramsTab() {
         </div>
         <button
           onClick={() => {
-            if (programs.length >= 3) {
+            if (programs.length >= PROGRAM_LIMIT) {
               alert('Program limit reached for Standard workspace plan (Max 3). Upgrade to add more.');
             } else {
               setShowCreateModal(true);
@@ -81,7 +85,7 @@ export default function ProgramsTab() {
           </div>
           <div>
             <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Learners</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>{currentLearners} / 50</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>{totalLearners} / 50</div>
           </div>
         </div>
 
@@ -105,7 +109,8 @@ export default function ProgramsTab() {
         {programs.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
             {programs.map((p) => (
-              <div key={p.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', transition: 'border-color 0.2s' }}
+              <div key={p.id}
+                style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', transition: 'border-color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
               >
@@ -119,7 +124,7 @@ export default function ProgramsTab() {
                   {p.desc}
                 </p>
                 <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
-                  <span>{p.learners} Learners</span>
+                  <span>{getLearnerCount(p.name)} Learners</span>
                   <span>·</span>
                   <span>{p.sessions} Sessions</span>
                   <span>·</span>

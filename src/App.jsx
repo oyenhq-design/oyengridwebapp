@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sun, Moon, Grid, ShieldCheck, LogOut, LayoutDashboard, Users, BookOpen, 
   MessageSquare, BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
@@ -75,7 +75,12 @@ export default function App() {
 
   // Dashboard state
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [lockedTabTarget, setLockedTabTarget] = useState(null); 
+  const [lockedTabTarget, setLockedTabTarget] = useState(null);
+
+  // Shared workspace data — lifted so Programs + Learners stay in sync
+  const [wsPrograms, setWsPrograms] = useState([]);
+  const [wsLearners, setWsLearners] = useState([]);
+
 
   // AI Assistant Chat Mock
   const [aiPrompt, setAiPrompt] = useState('');
@@ -2106,10 +2111,20 @@ export default function App() {
               <TeamManagement onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))} />
             ) : activeTab === 'Programmes' ? (
               /* Programmes Tab Component */
-              <ProgramsTab />
+              <ProgramsTab
+                programs={wsPrograms}
+                setPrograms={setWsPrograms}
+                learners={wsLearners}
+              />
             ) : activeTab === 'Learners' ? (
               /* Learners Tab Component */
-              <LearnersTab />
+              <LearnersTab
+                programs={wsPrograms}
+                setPrograms={setWsPrograms}
+                learners={wsLearners}
+                setLearners={setWsLearners}
+                onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
+              />
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>
