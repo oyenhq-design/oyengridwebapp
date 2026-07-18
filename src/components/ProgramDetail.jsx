@@ -8,7 +8,10 @@ export default function ProgramDetail({ program, programLearners = [], onBack })
 
   /* ── derived counts ── */
   const sessionCount    = (program.sessions    || []).length;
-  const resourceCount   = (program.resources   || []).length;
+  // Sum program-level resources and session-level resources
+  const programResourceCount = (program.resources || []).length;
+  const sessionResourceCount = (program.sessions || []).reduce((acc, s) => acc + (s.resources || []).length, 0);
+  const resourceCount   = programResourceCount + sessionResourceCount;
   const assessmentCount = (program.assessments || []).length;
   const learnerCount    = programLearners.length;
   const activityLog     = program.activity || [];
