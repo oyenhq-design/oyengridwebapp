@@ -1497,7 +1497,7 @@ export default function App() {
                                 if (item.type === 'Team Member') {
                                   triggerTransition(() => setActiveTab('Team'));
                                 } else if (item.type === 'Program') {
-                                  triggerTransition(() => setActiveTab('Programs'));
+                                  triggerTransition(() => setActiveTab('Programmes'));
                                 }
                                 setSearchExpanded(false);
                                 setSearchQuery('');
@@ -2103,7 +2103,7 @@ export default function App() {
             ) : activeTab === 'Team' ? (
               /* Ã¢â€â‚¬Ã¢â€â‚¬ Team Management Component Ã¢â€â‚¬Ã¢â€â‚¬ */
               <TeamManagement onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))} />
-            ) : activeTab === 'Programs' ? (
+            ) : activeTab === 'Programmes' ? (
               /* Programs Tab Component */
               <ProgramsTab />
             ) : (
