@@ -510,7 +510,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                     <label style={labelStyle}>Session Type</label>
                     <div style={{ position: 'relative' }}>
                       <select value={sessionForm.type} onChange={e => setSessionForm(p => ({ ...p, type: e.target.value }))} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                        {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t}>{t}</option>)}
+                        {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
                       </select>
                       <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
                     </div>
@@ -789,7 +789,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                   <label style={labelStyle}>Material Type</label>
                   <div style={{ position: 'relative' }}>
                     <select value={newResourceType} onChange={e => setNewResourceType(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                      {['PDF', 'Document', 'Presentation', 'Spreadsheet', 'Video', 'ZIP', 'Other'].map(t => <option key={t}>{t}</option>)}
+                      {['PDF', 'Document', 'Presentation', 'Spreadsheet', 'Video', 'ZIP', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
                     </select>
                     <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
                   </div>

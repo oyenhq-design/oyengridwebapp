@@ -197,8 +197,8 @@ export default function LearnersTab({
     <div style={{ position: 'relative' }}>
       <select value={value} onChange={onChange}
         style={{ ...inputStyle, appearance: 'none', paddingRight: '2rem', cursor: 'pointer' }}>
-        <option value="">{placeholder}</option>
-        {programs.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
+        <option value="" style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{placeholder}</option>
+        {programs.map(p => <option key={p.id} value={String(p.id)} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{p.name}</option>)}
       </select>
       <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
     </div>
