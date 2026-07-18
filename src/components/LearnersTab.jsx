@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Users, BookOpen, Upload, Plus, Search, X, ChevronDown, Download, AlertTriangle, CheckCircle, ArrowRight, Trash2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const LEARNER_LIMIT = 50;
 
@@ -16,17 +17,46 @@ const STATUS_COLORS = {
   Inactive: { color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
 };
 
-function parseCSV(text) {
+/* ── Parse CSV text into row objects ── */
+function parseCSVText(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
+  // Detect header row and find column indices
+  const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+  const nameIdx    = header.findIndex(h => h.includes('name'));
+  const emailIdx   = header.findIndex(h => h.includes('email') || h.includes('e-mail'));
+  const programIdx = header.findIndex(h => h.includes('program') || h.includes('programme'));
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-    if (cols[0] || cols[1]) {
-      rows.push({ name: cols[0] || '', email: cols[1] || '', program: cols[2] || '' });
-    }
+    const name  = nameIdx  >= 0 ? (cols[nameIdx]  || '') : (cols[0] || '');
+    const email = emailIdx >= 0 ? (cols[emailIdx] || '') : (cols[1] || '');
+    const prog  = programIdx >= 0 ? (cols[programIdx] || '') : (cols[2] || '');
+    if (name || email) rows.push({ name, email, program: prog });
   }
   return rows;
+}
+
+/* ── Parse an XLSX/XLS workbook ArrayBuffer into row objects ── */
+function parseWorkbook(arrayBuffer) {
+  const workbook  = XLSX.read(arrayBuffer, { type: 'array' });
+  const sheetName = workbook.SheetNames[0];
+  const sheet     = workbook.Sheets[sheetName];
+  // Convert sheet to JSON with header row
+  const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  return json.map(row => {
+    // Case-insensitive column matching
+    const keys = Object.keys(row);
+    const find = (...candidates) => {
+      const key = keys.find(k => candidates.some(c => k.toLowerCase().includes(c)));
+      return key ? String(row[key]).trim() : '';
+    };
+    return {
+      name:    find('name'),
+      email:   find('email', 'e-mail', 'mail'),
+      program: find('program', 'programme', 'course'),
+    };
+  }).filter(r => r.name || r.email);
 }
 
 /* ── Reusable input style ── */
@@ -89,15 +119,42 @@ export default function LearnersTab() {
       setImportError('Unsupported file format. Please upload a .CSV or .XLSX file.');
       return;
     }
+
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const rows = parseCSV(ev.target.result);
-      if (rows.length === 0) { setImportError('No valid learner rows found. Check your file format.'); return; }
-      setImportedRows(rows);
-      setImportStep(2);
-    };
-    reader.readAsText(file);
+
+    if (ext === 'csv') {
+      /* ── CSV: read as plain text ── */
+      reader.onload = (ev) => {
+        const rows = parseCSVText(ev.target.result);
+        if (rows.length === 0) {
+          setImportError('No valid learner rows found. Make sure your CSV has Name and Email columns.');
+          return;
+        }
+        setImportedRows(rows);
+        setImportStep(2);
+      };
+      reader.onerror = () => setImportError('Failed to read CSV file. Please try again.');
+      reader.readAsText(file, 'UTF-8');
+    } else {
+      /* ── Excel (.xlsx / .xls): read as ArrayBuffer, parse with SheetJS ── */
+      reader.onload = (ev) => {
+        try {
+          const rows = parseWorkbook(ev.target.result);
+          if (rows.length === 0) {
+            setImportError('No valid learner rows found. Make sure your sheet has Name and Email columns.');
+            return;
+          }
+          setImportedRows(rows);
+          setImportStep(2);
+        } catch (err) {
+          setImportError('Failed to parse Excel file. Please check the file is not corrupted and try again.');
+        }
+      };
+      reader.onerror = () => setImportError('Failed to read Excel file. Please try again.');
+      reader.readAsArrayBuffer(file);
+    }
   };
+
 
   const handleDrop = (e) => {
     e.preventDefault();
