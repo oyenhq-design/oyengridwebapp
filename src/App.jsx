@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sun, Moon, Grid, ShieldCheck, LogOut, LayoutDashboard, Users, BookOpen, 
   MessageSquare, BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
@@ -13,6 +13,7 @@ import PublicEventForm from './components/PublicEventForm';
 import InvitationAcceptance from './components/InvitationAcceptance';
 import SignInForm from './components/SignInForm';
 import TeamManagement from './components/TeamManagement';
+import ProgramsTab from './components/ProgramsTab';
 
 
 export default function App() {
@@ -318,7 +319,7 @@ export default function App() {
     });
   };
 
-  // â”€â”€â”€ Page Transition Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // Shows the branded overlay for ~1.5s then runs the callback
   const triggerTransition = (callback, delay = 1500) => {
     setTransitionFading(false);
@@ -498,7 +499,7 @@ export default function App() {
     setGeneratedInviteLink(`https://app.oyengrid.com/invite/${randCode}`);
   };
 
-  // â”€â”€â”€ Page Transition Overlay (every button click) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Overlay (every button click) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   if (showTransition) {
     return (
       <div style={{
@@ -638,7 +639,7 @@ export default function App() {
               {/* Form Side */}
               <div>
                 <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 1 of 5 â€¢ Organization Profile</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 1 of 5 Ã¢â‚¬Â¢ Organization Profile</span>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Configure Your Organization</h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
                     Let's set up your organization's workspace before inviting your team.
@@ -880,7 +881,7 @@ export default function App() {
               {/* Form Side */}
               <div>
                 <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 2 of 5 â€¢ Organization Owner</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 2 of 5 Ã¢â‚¬Â¢ Organization Owner</span>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Create the organization owner account.</h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
                     This account will manage your workspace, billing, security, team members and platform settings.
@@ -1085,7 +1086,7 @@ export default function App() {
                       className="form-input"
                       value={ownerPassword}
                       onChange={(e) => setOwnerPassword(e.target.value)}
-                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                      placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
                       style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
@@ -1097,7 +1098,7 @@ export default function App() {
                       className="form-input"
                       value={ownerConfirmPassword}
                       onChange={(e) => setOwnerConfirmPassword(e.target.value)}
-                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                      placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
                       style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
@@ -1220,11 +1221,11 @@ export default function App() {
                     Included in your plan
                   </h4>
                   <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: 0, margin: 0, textAlign: 'left' }}>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> Up to 50 Participants</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> 3 Active Programmes</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> Basic AI</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> 10GB Storage</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> Invite Team Members Later</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> Up to 50 Participants</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> 3 Active Programmes</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> Basic AI</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> 10GB Storage</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> Invite Team Members Later</li>
                   </ul>
                 </div>
               </div>
@@ -1478,7 +1479,7 @@ export default function App() {
                     onClick={() => { setSearchExpanded(false); setSearchQuery(''); }}
                     style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0 0 0 0.4rem', fontSize: '0.8rem' }}
                   >
-                    ✕
+                    âœ•
                   </button>
 
                   {/* Search Results Dropdown */}
@@ -2100,8 +2101,11 @@ export default function App() {
 
               </div>
             ) : activeTab === 'Team' ? (
-              /* â”€â”€ Team Management Component â”€â”€ */
+              /* Ã¢â€â‚¬Ã¢â€â‚¬ Team Management Component Ã¢â€â‚¬Ã¢â€â‚¬ */
               <TeamManagement onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))} />
+            ) : activeTab === 'Programs' ? (
+              /* Programs Tab Component */
+              <ProgramsTab />
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>
@@ -2332,7 +2336,7 @@ export default function App() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '0.4rem 0.8rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)' }} onClick={() => alert('Language options: English')}>
                   <Globe size={14} color="#D4AF37" />
                   <span>English</span>
-                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>â–¼</span>
+                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>Ã¢â€“Â¼</span>
                 </div>
               </div>
 
@@ -2512,7 +2516,7 @@ export default function App() {
                     onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.38)'}
                     onClick={() => setVerificationResult(null)}
                   >
-                    â† Use different details
+                    Ã¢â€ Â Use different details
                   </button>
 
                   {/* Status row */}
@@ -2523,7 +2527,7 @@ export default function App() {
                       style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}
                       onClick={() => alert('View Status: All systems fully operational.')}
                     >
-                      View Status â†’
+                      View Status Ã¢â€ â€™
                     </span>
                   </div>
 
@@ -2605,7 +2609,7 @@ export default function App() {
                     }}
                     onClick={() => setVerificationResult(null)}
                   >
-                    â† Go back to verify
+                    Ã¢â€ Â Go back to verify
                   </button>
                 </div>
               )}
@@ -2635,7 +2639,7 @@ export default function App() {
                       marginBottom: '1.5rem',
                       textAlign: 'left'
                     }}>
-                      âš ï¸ {verifyError}
+                      Ã¢Å¡Â Ã¯Â¸Â {verifyError}
                     </div>
                   )}
 
@@ -2831,14 +2835,14 @@ export default function App() {
                 </>
               )}
 
-              {/* Status and Footer Links â€” only show on default input form */}
+              {/* Status and Footer Links Ã¢â‚¬â€ only show on default input form */}
               {verificationResult === null && (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
                     <span>All Systems Operational</span>
                     <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-                    <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('View Status: All systems fully operational.')}>View Status â†’</span>
+                    <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('View Status: All systems fully operational.')}>View Status Ã¢â€ â€™</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginTop: '2rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Privacy Policy...')}>
