@@ -16,6 +16,7 @@ import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
 import SessionsTab from './components/SessionsTab';
+import ReportsTab from './components/ReportsTab';
 
 
 export default function App() {
@@ -2249,6 +2250,12 @@ export default function App() {
                 learners={wsLearners}
                 addNotification={addNotification}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
+              />
+            ) : activeTab === 'Reports' ? (
+              /* Reports Tab Component */
+              <ReportsTab
+                programs={wsPrograms}
+                learners={wsLearners}
               />
             ) : activeTab === 'Your Workspace' ? (
               /* Global Workspace Dashboard */
