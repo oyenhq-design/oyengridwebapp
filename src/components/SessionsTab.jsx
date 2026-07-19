@@ -43,7 +43,9 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
     enableOyenLive: false,
     externalMeetingLink: '',
     location: 'Virtual',
-    trainer: 'Lead Instructor'
+    trainer: 'Lead Instructor',
+    facilitatorName: '',
+    facilitatorEmail: ''
   });
 
   /* Form states */
@@ -57,7 +59,9 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
     enableOyenLive: false,
     externalMeetingLink: '',
     location: 'Virtual',
-    trainer: 'Lead Instructor'
+    trainer: 'Lead Instructor',
+    facilitatorName: '',
+    facilitatorEmail: ''
   });
 
   /* Session detail tabs state */
@@ -109,6 +113,8 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
       externalMeetingLink: sessionForm.externalMeetingLink.trim(),
       location: sessionForm.location,
       trainer: sessionForm.trainer,
+      facilitatorName: sessionForm.facilitatorName.trim(),
+      facilitatorEmail: sessionForm.facilitatorEmail.trim(),
       resources: [],
       notes: '',
       announcements: [],
@@ -137,7 +143,9 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
       enableOyenLive: false,
       externalMeetingLink: '',
       location: 'Virtual',
-      trainer: 'Lead Instructor'
+      trainer: 'Lead Instructor',
+      facilitatorName: '',
+      facilitatorEmail: ''
     });
     setShowScheduleModal(false);
   };
@@ -161,7 +169,9 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
             enableOyenLive: editForm.enableOyenLive,
             externalMeetingLink: editForm.externalMeetingLink.trim(),
             location: editForm.location,
-            trainer: editForm.trainer
+            trainer: editForm.trainer,
+            facilitatorName: editForm.facilitatorName.trim(),
+            facilitatorEmail: editForm.facilitatorEmail.trim()
           };
         }
         return s;
@@ -546,7 +556,9 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                                     enableOyenLive: s.enableOyenLive || false,
                                     externalMeetingLink: s.externalMeetingLink || '',
                                     location: s.location || 'Virtual',
-                                    trainer: s.trainer || 'Lead Instructor'
+                                    trainer: s.trainer || 'Lead Instructor',
+                                    facilitatorName: s.facilitatorName || '',
+                                    facilitatorEmail: s.facilitatorEmail || ''
                                   });
                                   setShowEditModal(true);
                                 }}
@@ -675,6 +687,17 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                   </div>
                 </div>
 
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Facilitator Name</label>
+                    <input type="text" placeholder="e.g. Dr. Jane" value={sessionForm.facilitatorName} onChange={e => setSessionForm(p => ({ ...p, facilitatorName: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Facilitator Email</label>
+                    <input type="email" placeholder="jane@domain.com" value={sessionForm.facilitatorEmail} onChange={e => setSessionForm(p => ({ ...p, facilitatorEmail: e.target.value }))} style={inputStyle} />
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.5rem' }}>
                   <div>
                     <label style={labelStyle}>Date</label>
@@ -752,6 +775,17 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                   <div>
                     <label style={labelStyle}>Trainer Name</label>
                     <input type="text" value={editForm.trainer} onChange={e => setEditForm(p => ({ ...p, trainer: e.target.value }))} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Facilitator Name</label>
+                    <input type="text" placeholder="e.g. Dr. Jane" value={editForm.facilitatorName} onChange={e => setEditForm(p => ({ ...p, facilitatorName: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Facilitator Email</label>
+                    <input type="email" placeholder="jane@domain.com" value={editForm.facilitatorEmail} onChange={e => setEditForm(p => ({ ...p, facilitatorEmail: e.target.value }))} style={inputStyle} />
                   </div>
                 </div>
 
