@@ -153,7 +153,7 @@ export default function SettingsTab({
             <form onSubmit={handleSaveOrgSettings} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: '0 0 0.25rem 0', fontFamily: "'Outfit', sans-serif" }}>Organization Profile</h3>
-                <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Configure key identities and branding parameters of your enterprise workspace.</p>
+                <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>View key identities and branding parameters of your enterprise workspace.</p>
               </div>
 
               <div style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.5rem' }} />
@@ -161,22 +161,18 @@ export default function SettingsTab({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Organization Name</label>
-                  <input type="text" value={organizationName} onChange={e => setOrganizationName(e.target.value)} style={inputStyle} required />
+                  <input type="text" value={organizationName} style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} readOnly />
                 </div>
                 <div>
                   <label style={labelStyle}>Tax Registration ID</label>
-                  <input type="text" value={taxId} onChange={e => setTaxId(e.target.value)} style={inputStyle} />
+                  <input type="text" value={taxId} style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} readOnly />
                 </div>
               </div>
 
               <div>
                 <label style={labelStyle}>Administrator Contact Email</label>
-                <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} style={inputStyle} required />
+                <input type="email" value={adminEmail} style={{ ...inputStyle, opacity: 0.7, cursor: 'not-allowed' }} readOnly />
               </div>
-
-              <button type="submit" style={{ alignSelf: 'flex-start', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.8rem', borderRadius: '6px', padding: '0.65rem 1.25rem', cursor: 'pointer', marginTop: '0.5rem' }}>
-                Save Changes
-              </button>
             </form>
           )}
 
