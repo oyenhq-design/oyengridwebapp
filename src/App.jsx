@@ -2251,11 +2251,73 @@ export default function App() {
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
               />
             ) : activeTab === 'Your Workspace' ? (
-              /* Global Workspace Recent Activity */
-              <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'left' }}>
+              /* Global Workspace Dashboard */
+              <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
                 <div>
-                  <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h2>
+                  <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Your Workspace</h2>
                   <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                    Overview of your organization workspace settings, limits, and records.
+                  </p>
+                </div>
+
+                {/* Workspace Summary Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', maxWidth: '800px' }}>
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(212,175,55,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37' }}>
+                      <BookOpen size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Programs</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>{wsPrograms.length} / 3</div>
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(34,197,94,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
+                      <Users size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Participants</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>{wsLearners.length} / 50</div>
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+                      <HardDrive size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>
+                        {(() => {
+                          let totalBytes = 0;
+                          wsPrograms.forEach(p => {
+                            (p.resources || []).forEach(r => {
+                              totalBytes += r.sizeInBytes || 0;
+                            });
+                            (p.sessions || []).forEach(s => {
+                              (s.resources || []).forEach(sr => {
+                                totalBytes += sr.sizeInBytes || 0;
+                              });
+                            });
+                          });
+                          if (totalBytes === 0) return '0.00 MB / 10 GB';
+                          const GB = 1024 * 1024 * 1024;
+                          const MB = 1024 * 1024;
+                          if (totalBytes >= GB) {
+                            return `${(totalBytes / GB).toFixed(2)} GB / 10 GB`;
+                          } else {
+                            return `${(totalBytes / MB).toFixed(2)} MB / 10 GB`;
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginTop: '0.2rem' }}>
                     Real-time transaction feed of modifications across all programs in this workspace.
                   </p>
                 </div>
