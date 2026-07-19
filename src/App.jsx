@@ -17,6 +17,7 @@ import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
 import SessionsTab from './components/SessionsTab';
 import ReportsTab from './components/ReportsTab';
+import SettingsTab from './components/SettingsTab';
 
 
 export default function App() {
@@ -2399,6 +2400,25 @@ export default function App() {
                   })()}
                 </div>
               </div>
+            ) : activeTab === 'Settings' ? (
+              /* Settings Tab Component */
+              <SettingsTab
+                programs={wsPrograms}
+                learners={wsLearners}
+                teamMembers={wsTeam}
+                setTeamMembers={setWsTeam}
+                addNotification={addNotification}
+                organizationName={orgName}
+                setOrganizationName={setOrgName}
+                onInviteTeamClick={() => {
+                  const inviteBtn = document.querySelector('[data-testid="invite-team-trigger"]') || document.getElementById('invite-team-btn');
+                  if (inviteBtn) inviteBtn.click();
+                  else {
+                    alert("Invite dialog triggered! Open via sidebar invitation shortcut.");
+                  }
+                }}
+                onLogout={handleLogOut}
+              />
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>
