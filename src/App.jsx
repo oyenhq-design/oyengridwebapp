@@ -6,7 +6,7 @@ import {
   Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert,
   ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop,
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
-  Shield, Rocket, FileText, Mail, Link2
+  Shield, Rocket, FileText, Mail, Link2, HardDrive
 } from 'lucide-react';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
