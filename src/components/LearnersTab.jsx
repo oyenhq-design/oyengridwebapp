@@ -243,32 +243,6 @@ export default function LearnersTab({
         </div>
       </div>
 
-      {/* ── Summary Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.1rem' }}>
-        {[
-          { label: 'Participant Limit', value: LEARNER_LIMIT,    icon: <Users size={20} />,    color: '#D4AF37', bg: 'rgba(212,175,55,0.08)' },
-          { label: 'Active Participants', value: activeLearners,   icon: <Users size={20} />,    color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
-          { label: 'Programs',        value: uniquePrograms,   icon: <BookOpen size={20} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
-        ].map(card => (
-          <div key={card.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: card.color, flexShrink: 0 }}>{card.icon}</div>
-            <div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', marginTop: '0.1rem' }}>{card.value}</div>
-            </div>
-          </div>
-        ))}
-        {/* Limit bar */}
-        <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Used</span>
-            <span style={{ color: '#fff', fontWeight: 600 }}>{learners.length} / {LEARNER_LIMIT}</span>
-          </div>
-          <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${Math.min((learners.length / LEARNER_LIMIT) * 100, 100)}%`, background: 'linear-gradient(90deg,#D4AF37,#C49A2A)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
-          </div>
-        </div>
-      </div>
 
       {/* ── All Participants Table ── */}
       <div>

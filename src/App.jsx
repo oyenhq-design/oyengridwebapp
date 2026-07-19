@@ -2315,6 +2315,62 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Workspace Resource Usage Progress Bars */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', maxWidth: '800px' }}>
+                  {/* Programs limit */}
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Programs Created</span>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>{wsPrograms.length} / 3</span>
+                    </div>
+                    <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min((wsPrograms.length / 3) * 100, 100)}%`, background: 'linear-gradient(90deg,#D4AF37,#C49A2A)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
+                    </div>
+                  </div>
+
+                  {/* Participants limit */}
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Participants Enrolled</span>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>{wsLearners.length} / 50</span>
+                    </div>
+                    <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min((wsLearners.length / 50) * 100, 100)}%`, background: 'linear-gradient(90deg,#22c55e,#16a34a)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
+                    </div>
+                  </div>
+
+                  {/* Storage limit */}
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {(() => {
+                      let totalBytes = 0;
+                      wsPrograms.forEach(p => {
+                        (p.resources || []).forEach(r => {
+                          totalBytes += r.sizeInBytes || 0;
+                        });
+                        (p.sessions || []).forEach(s => {
+                          (s.resources || []).forEach(sr => {
+                            totalBytes += sr.sizeInBytes || 0;
+                          });
+                        });
+                      });
+                      const totalMB = totalBytes / (1024 * 1024);
+                      const limitMB = 10240; // 10 GB
+                      const storagePercent = Math.min((totalMB / limitMB) * 100, 100);
+                      return (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                            <span style={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage Consumed</span>
+                            <span style={{ color: '#fff', fontWeight: 600 }}>{totalMB.toFixed(2)} MB / 10 GB</span>
+                          </div>
+                          <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${storagePercent}%`, background: 'linear-gradient(90deg,#3b82f6,#2563eb)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+
                 <div>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h3>
                   <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginTop: '0.2rem' }}>
