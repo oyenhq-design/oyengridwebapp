@@ -2260,87 +2260,42 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* Workspace Summary Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', maxWidth: '800px' }}>
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(212,175,55,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37' }}>
-                      <BookOpen size={20} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Programs</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>{wsPrograms.length} / 3</div>
-                    </div>
-                  </div>
-
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(34,197,94,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
-                      <Users size={20} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Participants</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>{wsLearners.length} / 50</div>
-                    </div>
-                  </div>
-
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
-                      <HardDrive size={20} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.15rem' }}>
-                        {(() => {
-                          let totalBytes = 0;
-                          wsPrograms.forEach(p => {
-                            (p.resources || []).forEach(r => {
-                              totalBytes += r.sizeInBytes || 0;
-                            });
-                            (p.sessions || []).forEach(s => {
-                              (s.resources || []).forEach(sr => {
-                                totalBytes += sr.sizeInBytes || 0;
-                              });
-                            });
-                          });
-                          if (totalBytes === 0) return '0.00 MB / 10 GB';
-                          const GB = 1024 * 1024 * 1024;
-                          const MB = 1024 * 1024;
-                          if (totalBytes >= GB) {
-                            return `${(totalBytes / GB).toFixed(2)} GB / 10 GB`;
-                          } else {
-                            return `${(totalBytes / MB).toFixed(2)} MB / 10 GB`;
-                          }
-                        })()}
+                {/* Workspace Summary Cards with Integrated Progress Loaders */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', maxWidth: '800px' }}>
+                  {/* Programs Card */}
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(212,175,55,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', flexShrink: 0 }}>
+                        <BookOpen size={20} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Programs</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{wsPrograms.length} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 3 created</span></div>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Workspace Resource Usage Progress Bars */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', maxWidth: '800px' }}>
-                  {/* Programs limit */}
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Programs Created</span>
-                      <span style={{ color: '#fff', fontWeight: 600 }}>{wsPrograms.length} / 3</span>
-                    </div>
-                    <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                    <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${Math.min((wsPrograms.length / 3) * 100, 100)}%`, background: 'linear-gradient(90deg,#D4AF37,#C49A2A)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
                     </div>
                   </div>
 
-                  {/* Participants limit */}
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Participants Enrolled</span>
-                      <span style={{ color: '#fff', fontWeight: 600 }}>{wsLearners.length} / 50</span>
+                  {/* Participants Card */}
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(34,197,94,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e', flexShrink: 0 }}>
+                        <Users size={20} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Participants</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{wsLearners.length} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 50 enrolled</span></div>
+                      </div>
                     </div>
-                    <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                    <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${Math.min((wsLearners.length / 50) * 100, 100)}%`, background: 'linear-gradient(90deg,#22c55e,#16a34a)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
                     </div>
                   </div>
 
-                  {/* Storage limit */}
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {/* Storage Card */}
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {(() => {
                       let totalBytes = 0;
                       wsPrograms.forEach(p => {
@@ -2356,13 +2311,19 @@ export default function App() {
                       const totalMB = totalBytes / (1024 * 1024);
                       const limitMB = 10240; // 10 GB
                       const storagePercent = Math.min((totalMB / limitMB) * 100, 100);
+                      const storageText = totalBytes === 0 ? '0.00 MB' : totalBytes >= 1024*1024*1024 ? `${(totalBytes / (1024*1024*1024)).toFixed(2)} GB` : `${totalMB.toFixed(2)} MB`;
                       return (
                         <>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                            <span style={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage Consumed</span>
-                            <span style={{ color: '#fff', fontWeight: 600 }}>{totalMB.toFixed(2)} MB / 10 GB</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}>
+                              <HardDrive size={20} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage</div>
+                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{storageText} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 10 GB limit</span></div>
+                            </div>
                           </div>
-                          <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                          <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${storagePercent}%`, background: 'linear-gradient(90deg,#3b82f6,#2563eb)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
                           </div>
                         </>
