@@ -23,7 +23,7 @@ export default function ProgramDetail({ program, programLearners = [], onBack })
 
   const checklist = [
     { label: 'Program created',      done: true },
-    { label: 'Learners added',       done: hasLearners },
+    { label: 'Participants added',   done: hasLearners },
     { label: 'Session scheduled',    done: hasSession,   optional: true },
     { label: 'Resources uploaded',   done: hasResource,  optional: true },
     { label: 'Assessment created',   done: hasAssessment,optional: true },
@@ -65,7 +65,7 @@ export default function ProgramDetail({ program, programLearners = [], onBack })
       {/* Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
         {[
-          { label: 'Learners',    value: learnerCount,    icon: <Users size={20} />,         color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+          { label: 'Participants', value: learnerCount,    icon: <Users size={20} />,         color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
           { label: 'Sessions',    value: sessionCount,    icon: <Calendar size={20} />,      color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
           { label: 'Resources',   value: resourceCount,   icon: <FileText size={20} />,      color: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
           { label: 'Assessments', value: assessmentCount, icon: <ClipboardList size={20} />, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },

@@ -62,13 +62,7 @@ const labelStyle = {
 };
 
 /* ════════════════════════════════════════════════════════════
-   LearnersTab
-   Props:
-     programs            – shared workspace programs array
-     setPrograms         – setter (not needed here but kept for symmetry)
-     learners            – shared workspace learners array
-     setLearners         – setter
-     onNavigateToPrograms – () => void  — navigates to Programs tab
+   LearnersTab (User-Facing: Participants)
 ════════════════════════════════════════════════════════════ */
 export default function LearnersTab({
   programs = [],
@@ -82,7 +76,7 @@ export default function LearnersTab({
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImport, setShowImport]     = useState(false);
 
-  /* Add Learner form */
+  /* Add Participant form */
   const [addForm, setAddForm] = useState({ firstName: '', lastName: '', email: '', programId: '' });
 
   /* Import flow */
@@ -101,7 +95,7 @@ export default function LearnersTab({
   );
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  /* ── Add Learner (single) ── */
+  /* ── Add Participant (single) ── */
   const handleAdd = (e) => {
     e.preventDefault();
     if (learners.length >= LEARNER_LIMIT) return;
@@ -111,7 +105,7 @@ export default function LearnersTab({
       id: Date.now(), name, email: addForm.email.trim(),
       program: programLabel, status: 'Active', joined: today,
     }]);
-    addNotification?.(`Learner "${name}" added to ${programLabel}`);
+    addNotification?.(`Participant "${name}" added to ${programLabel}`);
     setAddForm({ firstName: '', lastName: '', email: '', programId: '' });
     setShowAddModal(false);
   };
@@ -168,7 +162,7 @@ export default function LearnersTab({
     }));
 
     setLearners(prev => [...prev, ...newLearners]);
-    addNotification?.(`Imported ${newLearners.length} learners from "${importFileName}"`);
+    addNotification?.(`Imported ${newLearners.length} participants from "${importFileName}"`);
     closeImport();
   };
 
@@ -187,7 +181,7 @@ export default function LearnersTab({
     const blob = new Blob([csv], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = 'oyen_learners_template.csv'; a.click();
+    a.href = url; a.download = 'oyen_participants_template.csv'; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -198,28 +192,23 @@ export default function LearnersTab({
   /* ── Program dropdown options ── */
   const ProgramSelect = ({ value, onChange, placeholder = '— Select Program —' }) => (
     <div style={{ position: 'relative' }}>
-      <select value={value} onChange={onChange}
-        style={{ ...inputStyle, appearance: 'none', paddingRight: '2rem', cursor: 'pointer' }}>
-        <option value="" style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{placeholder}</option>
-        {programs.map(p => <option key={p.id} value={String(p.id)} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{p.name}</option>)}
+      <select required value={value} onChange={onChange}
+        style={{ ...inputStyle, appearance: 'none', paddingRight: '2.5rem', cursor: 'pointer' }}>
+        <option value="" style={{ backgroundColor: '#0e0f14', color: 'rgba(255,255,255,0.4)' }}>{placeholder}</option>
+        {programs.map(p => (
+          <option key={p.id} value={p.id} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>
+            {p.name}
+          </option>
+        ))}
       </select>
-      <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
+      <ChevronDown size={14} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
     </div>
   );
 
-  /* ── "No programs" notice used in import step 3 ── */
   const NoProgramsNotice = () => (
-    <div style={{ padding: '2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem', backgroundColor: 'rgba(212,175,55,0.03)', border: '1px dashed rgba(212,175,55,0.2)', borderRadius: '10px' }}>
-      <BookOpen size={28} color="rgba(212,175,55,0.5)" />
-      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', margin: 0 }}>
-        No programs available. Create a program first.
-      </p>
-      <button
-        onClick={() => { closeImport(); onNavigateToPrograms?.(); }}
-        style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.8rem', borderRadius: '8px', padding: '0.55rem 1.1rem', cursor: 'pointer' }}
-      >
-        Create a Program
-      </button>
+    <div style={{ padding: '0.85rem 1rem', backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '8px', fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <AlertTriangle size={15} color="#ef4444" />
+      <span>No active programs found. Create a program first to assign participants.</span>
     </div>
   );
 
@@ -229,9 +218,9 @@ export default function LearnersTab({
       {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Learners</h2>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Participants</h2>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-            Manage learners enrolled in your programs.
+            Manage participants enrolled in your programs.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -241,15 +230,15 @@ export default function LearnersTab({
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.4)'; e.currentTarget.style.color = '#D4AF37'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff'; }}
           >
-            <Upload size={15} /> Import Learners
+            <Upload size={15} /> Import Participants
           </button>
           <button
-            onClick={() => { if (learners.length >= LEARNER_LIMIT) return alert(`Learner limit reached (${LEARNER_LIMIT}). Upgrade your plan to add more.`); setShowAddModal(true); }}
+            onClick={() => { if (learners.length >= LEARNER_LIMIT) return alert(`Participant limit reached (${LEARNER_LIMIT}). Upgrade your plan to add more.`); setShowAddModal(true); }}
             style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.82rem', borderRadius: '8px', padding: '0.65rem 1.1rem', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,175,55,0.25)', transition: 'opacity 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            <Plus size={15} /> Add Learner
+            <Plus size={15} /> Add Participant
           </button>
         </div>
       </div>
@@ -257,8 +246,8 @@ export default function LearnersTab({
       {/* ── Summary Cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.1rem' }}>
         {[
-          { label: 'Learner Limit',   value: LEARNER_LIMIT,    icon: <Users size={20} />,    color: '#D4AF37', bg: 'rgba(212,175,55,0.08)' },
-          { label: 'Active Learners', value: activeLearners,   icon: <Users size={20} />,    color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+          { label: 'Participant Limit', value: LEARNER_LIMIT,    icon: <Users size={20} />,    color: '#D4AF37', bg: 'rgba(212,175,55,0.08)' },
+          { label: 'Active Participants', value: activeLearners,   icon: <Users size={20} />,    color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
           { label: 'Programs',        value: uniquePrograms,   icon: <BookOpen size={20} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
         ].map(card => (
           <div key={card.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
@@ -281,70 +270,72 @@ export default function LearnersTab({
         </div>
       </div>
 
-      {/* ── All Learners Table ── */}
+      {/* ── All Participants Table ── */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>All Learners</h3>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>All Participants</h3>
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)' }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search learners..."
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search participants..."
               style={{ ...inputStyle, paddingLeft: '2.2rem', width: '220px' }} />
           </div>
         </div>
 
         <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 1fr 1fr auto', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-            <span>Learner</span><span>Email</span><span>Program</span><span>Status</span><span>Joined</span><span></span>
+            <span>Participant</span><span>Email</span><span>Program</span><span>Status</span><span>Joined</span><span></span>
           </div>
 
           {filtered.length > 0 ? filtered.map(l => (
-            <div key={l.id}
-              style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 1fr 1fr auto', gap: '0.5rem', padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', alignItems: 'center', fontSize: '0.82rem', transition: 'background 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <span style={{ color: '#fff', fontWeight: 600 }}>{l.name}</span>
-              <span style={{ color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.email}</span>
-              <span style={{ color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.program}</span>
-              <span>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: STATUS_COLORS[l.status]?.color || '#fff', backgroundColor: STATUS_COLORS[l.status]?.bg, padding: '0.18rem 0.5rem', borderRadius: '5px' }}>{l.status}</span>
-              </span>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>{l.joined}</span>
-              <button onClick={() => setLearners(prev => prev.filter(x => x.id !== l.id))}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', padding: '0.2rem', display: 'flex', transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
-              ><Trash2 size={14} /></button>
+            <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 1fr 1fr auto', gap: '0.5rem', padding: '0.95rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', alignItems: 'center', color: 'rgba(255,255,255,0.85)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', fontWeight: 700, fontSize: '0.78rem' }}>
+                  {l.name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0,2)}
+                </div>
+                <span style={{ fontWeight: 600, color: '#fff' }}>{l.name}</span>
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.5)' }}>{l.email}</span>
+              <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{l.program}</span>
+              <div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: STATUS_COLORS[l.status]?.color || '#fff', backgroundColor: STATUS_COLORS[l.status]?.bg || 'transparent', padding: '0.15rem 0.55rem', borderRadius: '4px' }}>
+                  {l.status}
+                </span>
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{l.joined}</span>
+              <div>
+                <button onClick={() => setLearners(prev => prev.filter(x => x.id !== l.id))}
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', transition: 'color 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
             </div>
           )) : (
-            <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37' }}>
-                <Users size={22} />
-              </div>
+            <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+              <Users size={28} color="rgba(255,255,255,0.15)" />
               <div>
-                <p style={{ color: '#fff', fontWeight: 700, margin: 0, fontSize: '0.95rem' }}>No learners yet</p>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.3rem' }}>Learners added to your programs will appear here.</p>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#fff', margin: 0 }}>No participants found</h4>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.3rem' }}>Participants added to your programs will appear here.</p>
               </div>
-              <button onClick={() => setShowAddModal(true)}
-                style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.8rem', borderRadius: '8px', padding: '0.6rem 1.25rem', cursor: 'pointer', marginTop: '0.25rem' }}>
-                Add Learner
+              <button
+                onClick={() => setShowAddModal(true)}
+                style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.8rem', borderRadius: '8px', padding: '0.55rem 1.25rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,175,55,0.2)' }}
+              >
+                Add Participant
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* ════════════════════════════════════════
-          ADD LEARNER MODAL
-      ════════════════════════════════════════ */}
+      {/* ── MODAL: Add Participant (single) ── */}
       {showAddModal && (
-        <div onClick={() => setShowAddModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(5px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '2rem', width: '100%', maxWidth: '460px', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', zIndex: 1400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setShowAddModal(false)}>
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '480px', boxShadow: '0 30px 70px rgba(0,0,0,0.7)', textAlign: 'left' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Add Learner</h3>
-                <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Enrol a new learner into your workspace.</p>
-              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Add Participant</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={15} />
               </button>
@@ -354,109 +345,104 @@ export default function LearnersTab({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
                   <label style={labelStyle}>First Name</label>
-                  <input required type="text" placeholder="John" value={addForm.firstName} onChange={e => setAddForm(p => ({ ...p, firstName: e.target.value }))} style={inputStyle} />
+                  <input required type="text" placeholder="e.g. John" value={addForm.firstName} onChange={e => setAddForm(p => ({ ...p, firstName: e.target.value }))} style={inputStyle} />
                 </div>
                 <div>
                   <label style={labelStyle}>Last Name</label>
-                  <input required type="text" placeholder="Doe" value={addForm.lastName} onChange={e => setAddForm(p => ({ ...p, lastName: e.target.value }))} style={inputStyle} />
+                  <input required type="text" placeholder="e.g. Doe" value={addForm.lastName} onChange={e => setAddForm(p => ({ ...p, lastName: e.target.value }))} style={inputStyle} />
                 </div>
               </div>
               <div>
                 <label style={labelStyle}>Email Address</label>
-                <input required type="email" placeholder="john@company.com" value={addForm.email} onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} style={inputStyle} />
+                <input required type="email" placeholder="e.g. john@email.com" value={addForm.email} onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} style={inputStyle} />
               </div>
               <div>
-                <label style={labelStyle}>Assign to Program</label>
+                <label style={labelStyle}>Assign Program</label>
                 {programs.length > 0 ? (
                   <ProgramSelect value={addForm.programId} onChange={e => setAddForm(p => ({ ...p, programId: e.target.value }))} />
                 ) : (
-                  <div style={{ padding: '0.7rem 0.9rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>No programs available</span>
-                    <button type="button" onClick={() => { setShowAddModal(false); onNavigateToPrograms?.(); }}
-                      style={{ background: 'none', border: 'none', color: '#D4AF37', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}>
-                      Create a Program →
-                    </button>
-                  </div>
+                  <NoProgramsNotice />
                 )}
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
                 <button type="button" onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Cancel</button>
-                <button type="submit" style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>Add Learner</button>
+                <button type="submit" disabled={programs.length === 0} style={{ flex: 2, padding: '0.75rem', background: programs.length === 0 ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: programs.length === 0 ? 'rgba(255,255,255,0.2)' : '#000', borderRadius: '8px', cursor: programs.length === 0 ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>Add Participant</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* ════════════════════════════════════════
-          IMPORT LEARNERS MODAL  (3 steps)
-      ════════════════════════════════════════ */}
+      {/* ── MODAL: Import Participants ── */}
       {showImport && (
-        <div onClick={closeImport} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '520px', boxShadow: '0 30px 70px rgba(0,0,0,0.7)' }}>
-
-            {/* Step indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem' }}>
-              {[1, 2, 3].map((s, i) => (
-                <React.Fragment key={s}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, backgroundColor: importStep >= s ? '#D4AF37' : 'rgba(255,255,255,0.06)', color: importStep >= s ? '#000' : 'rgba(255,255,255,0.3)', transition: 'all 0.3s' }}>{s}</div>
-                  {i < 2 && <div style={{ flex: 1, height: '2px', borderRadius: '99px', backgroundColor: importStep > s ? '#D4AF37' : 'rgba(255,255,255,0.06)', transition: 'background 0.3s' }} />}
-                </React.Fragment>
-              ))}
-              <button onClick={closeImport} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', zIndex: 1400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={closeImport}>
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 30px 70px rgba(0,0,0,0.7)', textAlign: 'left' }} onClick={e => e.stopPropagation()}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', fontFamily: "'Outfit', sans-serif" }}>Import Participants</h3>
+                <span style={{ fontSize: '0.72rem', color: '#D4AF37', fontWeight: 600 }}>Step {importStep} of 3</span>
+              </div>
+              <button onClick={closeImport} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={15} />
               </button>
             </div>
 
-            {/* ── STEP 1: Upload ── */}
+            {/* ── STEP 1: Upload File ── */}
             {importStep === 1 && (
-              <>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', fontFamily: "'Outfit', sans-serif" }}>Import Learners</h3>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>Upload your learner list to quickly add multiple learners to your workspace.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', margin: 0, lineHeight: 1.45 }}>
+                  Import participants in bulk using a standard spreadsheet file. Format should include columns for <strong style={{ color: '#fff' }}>Name</strong> and <strong style={{ color: '#fff' }}>Email Address</strong>.
+                </p>
 
+                {/* Dropzone */}
                 <div
-                  onDrop={handleDrop} onDragOver={e => e.preventDefault()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  style={{ border: '2px dashed rgba(212,175,55,0.25)', borderRadius: '12px', padding: '2.5rem 1.5rem', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', backgroundColor: 'rgba(212,175,55,0.02)' }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'}
+                  style={{ border: '2px dashed rgba(212,175,55,0.25)', borderRadius: '12px', padding: '2.5rem 1.5rem', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s', backgroundColor: 'rgba(255,255,255,0.01)' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#D4AF37'}
                   onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.25)'}
                 >
-                  <Upload size={28} color="#D4AF37" style={{ marginBottom: '0.75rem' }} />
-                  <p style={{ color: '#fff', fontWeight: 600, margin: '0 0 0.3rem', fontSize: '0.9rem' }}>{importFileName || 'Upload CSV or Excel file'}</p>
-                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', margin: 0 }}>Drag & drop or click to browse · .CSV, .XLSX</p>
-                  <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+                  <input type="file" ref={fileInputRef} onChange={e => handleFile(e.target.files[0])} accept=".csv, .xlsx, .xls" style={{ display: 'none' }} />
+                  <Upload size={28} color="#D4AF37" style={{ marginBottom: '0.75rem', opacity: 0.8 }} />
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', margin: '0 0 0.25rem' }}>Drag & drop your file here</h4>
+                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>Supports CSV, XLSX, XLS up to 5MB</span>
                 </div>
 
                 {importError && (
-                  <div style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.78rem', backgroundColor: 'rgba(239,68,68,0.08)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>
-                    <AlertTriangle size={14} /> {importError}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.75rem', backgroundColor: 'rgba(239,68,68,0.06)', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.15)' }}>
+                    <AlertTriangle size={14} /> <span>{importError}</span>
                   </div>
                 )}
 
-                <button onClick={downloadSample} style={{ marginTop: '1rem', width: '100%', background: 'none', border: 'none', color: '#D4AF37', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', padding: '0.35rem' }}>
-                  <Download size={13} /> Download sample template
-                </button>
-              </>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                  <button onClick={downloadSample} style={{ background: 'none', border: 'none', color: '#D4AF37', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Download size={14} /> Download template CSV
+                  </button>
+                  <button onClick={closeImport} style={{ padding: '0.55rem 1.1rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>Cancel</button>
+                </div>
+              </div>
             )}
 
-            {/* ── STEP 2: Review ── */}
+            {/* ── STEP 2: Review Participants ── */}
             {importStep === 2 && (
               <>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', fontFamily: "'Outfit', sans-serif" }}>Review Learners</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', fontFamily: "'Outfit', sans-serif" }}>Review Participants</h3>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
-                  <strong style={{ color: '#D4AF37' }}>{importedRows.length}</strong> learner{importedRows.length !== 1 ? 's' : ''} found in <span style={{ color: 'rgba(255,255,255,0.6)' }}>{importFileName}</span>
+                  We found <strong style={{ color: '#fff' }}>{importedRows.length}</strong> record{importedRows.length !== 1 ? 's' : ''} in <span style={{ color: '#D4AF37' }}>{importFileName}</span>.
                 </p>
 
                 {overLimit && (
-                  <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem', color: '#f59e0b', fontSize: '0.78rem', backgroundColor: 'rgba(245,158,11,0.08)', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.2)' }}>
-                    <AlertTriangle size={14} style={{ marginTop: '0.1rem', flexShrink: 0 }} />
-                    <span>You are trying to import <strong>{importedRows.length}</strong> learners. Your Standard plan allows <strong>{LEARNER_LIMIT}</strong> total. Only the first <strong>{allowedCount}</strong> will be imported, or upgrade your plan.</span>
+                  <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(184,115,9,0.06)', border: '1px solid rgba(184,115,9,0.2)', borderRadius: '10px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+                    <AlertTriangle size={16} color="#D4AF37" style={{ flexShrink: 0 }} />
+                    <span>Your current plan allows importing only {available} more participant{available !== 1 ? 's' : ''}. Extra rows will be ignored.</span>
                   </div>
                 )}
 
-                <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', overflow: 'hidden', maxHeight: '220px', overflowY: 'auto' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr', padding: '0.6rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.68rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                    <span>Name</span><span>Email</span><span>Program</span>
+                <div style={{ backgroundColor: '#090a0f', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', maxHeight: '200px', overflowY: 'auto' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr', padding: '0.55rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: '0.68rem', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
+                    <span>Name</span><span>Email</span><span>Program Info</span>
                   </div>
                   {importedRows.slice(0, allowedCount).map((r, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr', padding: '0.6rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.78rem', alignItems: 'center' }}>
@@ -481,7 +467,7 @@ export default function LearnersTab({
               <>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: '0 0 0.3rem', fontFamily: "'Outfit', sans-serif" }}>Assign to Program</h3>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>
-                  Learners without a program in the file will be assigned to the one you select below.
+                  Participants without a program in the file will be assigned to the one you select below.
                 </p>
 
                 <div style={{ marginBottom: '1.25rem' }}>
@@ -494,10 +480,10 @@ export default function LearnersTab({
                 </div>
 
                 {programs.length > 0 && (
-                  <div style={{ padding: '0.85rem 1rem', backgroundColor: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
+                  <div style={{ padding: '0.85rem 1rem', backgroundColor: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
                     <CheckCircle size={16} color="#22c55e" />
                     <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)' }}>
-                      <strong style={{ color: '#fff' }}>{allowedCount}</strong> learner{allowedCount !== 1 ? 's' : ''} ready to import
+                      <strong style={{ color: '#fff' }}>{allowedCount}</strong> participant{allowedCount !== 1 ? 's' : ''} ready to import
                     </span>
                   </div>
                 )}
@@ -509,7 +495,7 @@ export default function LearnersTab({
                     disabled={programs.length === 0}
                     style={{ flex: 2, padding: '0.75rem', background: programs.length === 0 ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: programs.length === 0 ? 'rgba(255,255,255,0.3)' : '#000', borderRadius: '8px', cursor: programs.length === 0 ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
                   >
-                    <Upload size={14} /> Import Learners
+                    <Upload size={14} /> Import Participants
                   </button>
                 </div>
               </>

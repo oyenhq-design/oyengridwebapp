@@ -249,7 +249,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
   const downloadAttendanceReport = () => {
     if (!currentSession) return;
     const rows = [
-      ['Learner Name', 'Email Address', 'Status', 'Session Date']
+      ['Participant Name', 'Email Address', 'Status', 'Session Date']
     ];
     programLearners.forEach(l => {
       const status = currentSession.attendance?.[l.id] || 'Present';
@@ -300,7 +300,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                     {p.desc}
                   </p>
                   <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
-                    <span>{learnersCount} Learners</span>
+                    <span>{learnersCount} Participants</span>
                     <span>·</span>
                     <span>{sessionsCount} Session{sessionsCount !== 1 ? 's' : ''}</span>
                   </div>
@@ -762,7 +762,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'rgba(255,255,255,0.3)', fontSize: '0.82rem' }}>
-                No learners enrolled in this program yet. Learners added to this program will appear here.
+                No participants enrolled in this program yet. Participants added to this program will appear here.
               </div>
             )}
           </div>
