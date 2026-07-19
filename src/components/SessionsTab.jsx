@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   BookOpen, Users, Calendar, Plus, X, ChevronDown, Video, FileText, CheckCircle2,
-  Circle, ArrowRight, ArrowLeft, MoreHorizontal, Download, Clock, Info, ExternalLink, Play, Trash2
+  Circle, ArrowRight, ArrowLeft, MoreHorizontal, MoreVertical, Edit, Download, Clock, Info, ExternalLink, Play, Trash2
 } from 'lucide-react';
 
 /* ── Shared styles ── */
@@ -30,6 +30,21 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
   const [selectedProgId, setSelectedProgId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [activeMenuSessionId, setActiveMenuSessionId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    type: 'Live Training',
+    date: '',
+    startTime: '',
+    endTime: '',
+    description: '',
+    enableOyenLive: false,
+    externalMeetingLink: '',
+    location: 'Virtual',
+    trainer: 'Lead Instructor'
+  });
 
   /* Form states */
   const [sessionForm, setSessionForm] = useState({
@@ -125,6 +140,51 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
       trainer: 'Lead Instructor'
     });
     setShowScheduleModal(false);
+  };
+
+  /* Edit Session Details Submit */
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    if (!editForm.title.trim() || !editingSessionId) return;
+
+    updateCurrentProgram(p => {
+      const updatedSessions = (p.sessions || []).map(s => {
+        if (s.id === editingSessionId) {
+          return {
+            ...s,
+            title: editForm.title.trim(),
+            type: editForm.type,
+            date: editForm.date,
+            startTime: editForm.startTime,
+            endTime: editForm.endTime,
+            description: editForm.description.trim(),
+            enableOyenLive: editForm.enableOyenLive,
+            externalMeetingLink: editForm.externalMeetingLink.trim(),
+            location: editForm.location,
+            trainer: editForm.trainer
+          };
+        }
+        return s;
+      });
+      const updatedProg = { ...p, sessions: updatedSessions };
+      return logActivity(`Session "${editForm.title.trim()}" details updated`, updatedProg);
+    });
+
+    addNotification?.(`Session "${editForm.title.trim()}" details updated`);
+    setShowEditModal(false);
+    setEditingSessionId(null);
+  };
+
+  /* Delete Session */
+  const handleDeleteSession = (sessionId, sessionTitle) => {
+    if (window.confirm(`Are you sure you want to permanently delete session "${sessionTitle}"?`)) {
+      updateCurrentProgram(p => {
+        const updatedSessions = (p.sessions || []).filter(s => s.id !== sessionId);
+        const updatedProg = { ...p, sessions: updatedSessions };
+        return logActivity(`Session "${sessionTitle}" deleted`, updatedProg);
+      });
+      addNotification?.(`Session "${sessionTitle}" deleted`);
+    }
   };
 
   /* Toggle Attendance status */
@@ -429,11 +489,84 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                   <div key={s.id}
                     style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', position: 'relative' }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, paddingRight: '1rem' }}>{s.title}</h4>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: isUpcoming ? '#3b82f6' : '#22c55e', backgroundColor: isUpcoming ? 'rgba(59,130,246,0.1)' : 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px', flexShrink: 0 }}>
-                        {isUpcoming ? 'Upcoming' : 'Completed'}
-                      </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative' }}>
+                      <div style={{ flex: 1, minWidth: 0, paddingRight: '1.5rem' }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>{s.title}</h4>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: isUpcoming ? '#3b82f6' : '#22c55e', backgroundColor: isUpcoming ? 'rgba(59,130,246,0.1)' : 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px', display: 'inline-block', marginTop: '0.35rem' }}>
+                          {isUpcoming ? 'Upcoming' : 'Completed'}
+                        </span>
+                      </div>
+
+                      {/* Three dot action menu */}
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuSessionId(activeMenuSessionId === s.id ? null : s.id);
+                          }}
+                          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <MoreVertical size={18} />
+                        </button>
+
+                        {activeMenuSessionId === s.id && (
+                          <>
+                            <div
+                              onClick={() => setActiveMenuSessionId(null)}
+                              style={{ position: 'fixed', inset: 0, zIndex: 90 }}
+                            />
+                            <div style={{
+                              position: 'absolute', right: 0, marginTop: '0.35rem',
+                              backgroundColor: '#161822', border: '1px solid rgba(255,255,255,0.08)',
+                              borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                              width: '180px', zIndex: 100, overflow: 'hidden'
+                            }}>
+                              <button
+                                onClick={() => {
+                                  setActiveMenuSessionId(null);
+                                  setSelectedSessionId(s.id);
+                                  setNewNoteText(s.notes || '');
+                                  setActiveSessionTab('Overview');
+                                }}
+                                style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                              >
+                                <Play size={13} fill="#fff" /> Open Workspace
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setActiveMenuSessionId(null);
+                                  setEditingSessionId(s.id);
+                                  setEditForm({
+                                    title: s.title,
+                                    type: s.type || 'Live Training',
+                                    date: s.date || '',
+                                    startTime: s.startTime || '',
+                                    endTime: s.endTime || '',
+                                    description: s.description || '',
+                                    enableOyenLive: s.enableOyenLive || false,
+                                    externalMeetingLink: s.externalMeetingLink || '',
+                                    location: s.location || 'Virtual',
+                                    trainer: s.trainer || 'Lead Instructor'
+                                  });
+                                  setShowEditModal(true);
+                                }}
+                                style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                              >
+                                <Edit size={13} color="#D4AF37" /> Edit Details
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setActiveMenuSessionId(null);
+                                  handleDeleteSession(s.id, s.title);
+                                }}
+                                style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}
+                              >
+                                <Trash2 size={13} color="#ef4444" /> Delete Session
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
@@ -579,6 +712,98 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                   <button type="button" onClick={() => setShowScheduleModal(false)} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
                   <button type="submit" style={{ flex: 2, padding: '0.7rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>Schedule Session</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Session Modal */}
+        {showEditModal && (
+          <div style={modalOverlay} onClick={() => { setShowEditModal(false); setEditingSessionId(null); }}>
+            <div style={modalBox} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Edit Session Details</h3>
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>Modify properties for this training meeting</p>
+                </div>
+                <button onClick={() => { setShowEditModal(false); setEditingSessionId(null); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={14} />
+                </button>
+              </div>
+
+              <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+                <div>
+                  <label style={labelStyle}>Session Title</label>
+                  <input required autoFocus type="text" placeholder="e.g. Orientation & Onboarding" value={editForm.title}
+                    onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} style={inputStyle} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Session Type</label>
+                    <div style={{ position: 'relative' }}>
+                      <select value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                        {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
+                      </select>
+                      <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Trainer Name</label>
+                    <input type="text" value={editForm.trainer} onChange={e => setEditForm(p => ({ ...p, trainer: e.target.value }))} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <label style={labelStyle}>Date</label>
+                    <input required type="date" value={editForm.date} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} style={{ ...inputStyle, padding: '0.65rem 0.5rem' }} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Starts</label>
+                    <input required type="time" value={editForm.startTime} onChange={e => setEditForm(p => ({ ...p, startTime: e.target.value }))} style={{ ...inputStyle, padding: '0.65rem 0.5rem' }} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Ends</label>
+                    <input required type="time" value={editForm.endTime} onChange={e => setEditForm(p => ({ ...p, endTime: e.target.value }))} style={{ ...inputStyle, padding: '0.65rem 0.5rem' }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Location Method</label>
+                    <div style={{ position: 'relative' }}>
+                      <select value={editForm.location} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                        {['Virtual', 'On-site', 'Hybrid'].map(l => <option key={l} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{l}</option>)}
+                      </select>
+                      <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Meeting Link / Room</label>
+                    <input type="text" placeholder="e.g. Room 4B or Zoom link" value={editForm.externalMeetingLink}
+                      onChange={e => setEditForm(p => ({ ...p, externalMeetingLink: e.target.value }))} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={editForm.enableOyenLive} onChange={e => setEditForm(p => ({ ...p, enableOyenLive: e.target.checked }))} style={{ cursor: 'pointer' }} />
+                    Enable OYEN LIVE digital session workspace
+                  </label>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Short Description</label>
+                  <textarea placeholder="Topics, pre-reads, instructions..." value={editForm.description}
+                    onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
+                    style={{ ...inputStyle, height: '70px', resize: 'none' }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button type="button" onClick={() => { setShowEditModal(false); setEditingSessionId(null); }} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Cancel</button>
+                  <button type="submit" style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>Save Changes</button>
                 </div>
               </form>
             </div>
