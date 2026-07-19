@@ -2250,6 +2250,69 @@ export default function App() {
                 addNotification={addNotification}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
               />
+            ) : activeTab === 'Your Workspace' ? (
+              /* Global Workspace Recent Activity */
+              <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'left' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h2>
+                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                    Real-time transaction feed of modifications across all programs in this workspace.
+                  </p>
+                </div>
+
+                <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '2rem', maxWidth: '800px' }}>
+                  {/* Merge and sort program activities */}
+                  {(() => {
+                    const allActivities = [];
+                    wsPrograms.forEach(p => {
+                      (p.activity || []).forEach(act => {
+                        allActivities.push({
+                          ...act,
+                          programName: p.name
+                        });
+                      });
+                    });
+                    
+                    // Sort descending by id
+                    allActivities.sort((a, b) => b.id - a.id);
+
+                    if (allActivities.length > 0) {
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                          {allActivities.slice(0, 20).map((entry, i) => (
+                            <div key={entry.id} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '0.9rem 0', borderBottom: i < allActivities.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#D4AF37', marginTop: '0.45rem', flexShrink: 0 }} />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                    {entry.programName}
+                                  </span>
+                                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)' }}>{entry.time}</span>
+                                </div>
+                                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)', margin: '0.35rem 0 0 0' }}>{entry.text}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2">
+                          <path d="M12 20h9M3 20v-8a2 2 0 012-2h4l2-3h4l2 3h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                        </svg>
+                        <div>
+                          <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#fff', margin: 0 }}>No recent activity</h4>
+                          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.3rem' }}>
+                            Activity entries from programs, sessions, and uploads in this workspace will populate here.
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>

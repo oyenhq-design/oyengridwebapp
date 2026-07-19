@@ -82,56 +82,26 @@ export default function ProgramDetail({ program, programLearners = [], onBack })
         ))}
       </div>
 
-      {/* Program Status & Recent Activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '1.5rem', alignItems: 'start' }}>
-        {/* Program Status */}
-        <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Status</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {checklist.map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  {item.done
-                    ? <CheckCircle2 size={18} color="#22c55e" />
-                    : <Circle size={18} color="rgba(255,255,255,0.2)" />
-                  }
-                  <div>
-                    <span style={{ fontSize: '0.82rem', color: item.done ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: item.done ? 600 : 400 }}>{item.label}</span>
-                    {item.optional && !item.done && (
-                      <span style={{ marginLeft: '0.4rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>optional</span>
-                    )}
-                  </div>
+      {/* Program Status */}
+      <div style={{ maxWidth: '500px', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Status</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {checklist.map((item, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                {item.done
+                  ? <CheckCircle2 size={18} color="#22c55e" />
+                  : <Circle size={18} color="rgba(255,255,255,0.2)" />
+                }
+                <div>
+                  <span style={{ fontSize: '0.82rem', color: item.done ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: item.done ? 600 : 400 }}>{item.label}</span>
+                  {item.optional && !item.done && (
+                    <span style={{ marginLeft: '0.4rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>optional</span>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.1rem' }}>
-            <Activity size={16} color="#D4AF37" />
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h3>
-          </div>
-          {activityLog.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {activityLog.slice(0, 10).map((entry, i) => (
-                <div key={entry.id} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', padding: '0.75rem 0', borderBottom: i < Math.min(activityLog.length, 10) - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#D4AF37', marginTop: '0.35rem', flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.8)' }}>{entry.text}</span>
-                    <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.15rem' }}>{entry.time}</div>
-                  </div>
-                </div>
-              ))}
             </div>
-          ) : (
-            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
-              <Activity size={28} color="rgba(255,255,255,0.1)" />
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.82rem', margin: 0 }}>No activity yet</p>
-              <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', margin: 0 }}>Activity will appear here as the program records are updated in your workspace.</p>
-            </div>
-          )}
+          ))}
         </div>
       </div>
 
