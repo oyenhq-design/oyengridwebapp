@@ -1,19 +1,29 @@
 import React, { useState } from 'react';
 import { 
   BarChart3, Users, BookOpen, Calendar, Percent, ArrowLeft, ArrowUpRight, 
-  Download, FileSpreadsheet, Search, CheckCircle2, AlertTriangle, ShieldAlert
+  Download, FileSpreadsheet, Search, CheckCircle2, AlertTriangle, ShieldAlert,
+  Settings, Play, FileText, Activity, HelpCircle, ChevronRight, X
 } from 'lucide-react';
 
 export default function ReportsTab({ programs = [], learners = [] }) {
-  const [selectedProgramId, setSelectedProgramId] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedReport, setSelectedReport] = useState(null);
+  
+  // Generator flow state
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [reportType, setReportType] = useState('Program Performance');
+  const [targetProgram, setTargetProgram] = useState('All Programs');
+  const [dateRange, setDateRange] = useState('Last 30 Days');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
-  // 1. Calculations & Metrics
+  // Generated reports state (mock database stored in local react state)
+  const [generatedReports, setGeneratedReports] = useState([]);
+
+  // 1. Live Workspace Metrics Calculations
   const activeProgramsCount = programs.length;
   const totalLearnersCount = learners.length;
-
-  // Find completed sessions across all programs
   const today = new Date().setHours(0, 0, 0, 0);
+
   let totalCompletedSessions = 0;
   let totalAttendanceOpportunities = 0;
   let totalPresentCount = 0;
@@ -39,10 +49,11 @@ export default function ReportsTab({ programs = [], learners = [] }) {
     ? `${Math.round((totalPresentCount / totalAttendanceOpportunities) * 100)}%`
     : '—';
 
-  // 2. Engagement statistics
+  // Learner engagement live calculation
   let activeLearners = 0;
   let inactiveLearners = 0;
   let atRiskLearners = 0;
+  let hasEngagementData = false;
 
   learners.forEach(l => {
     const hasProgram = l.program && l.program !== 'None';
@@ -52,7 +63,6 @@ export default function ReportsTab({ programs = [], learners = [] }) {
     }
     activeLearners++;
 
-    // Calculate individual attendance for at-risk (if there are completed sessions in their program)
     const prog = programs.find(p => p.name === l.program);
     if (prog) {
       let completedInProg = 0;
@@ -61,6 +71,7 @@ export default function ReportsTab({ programs = [], learners = [] }) {
         const isCompleted = s.date && new Date(s.date) < today;
         if (isCompleted) {
           completedInProg++;
+          hasEngagementData = true;
           if ((s.attendance?.[l.id] || 'Present') === 'Present') {
             presentInProg++;
           }
@@ -75,96 +86,168 @@ export default function ReportsTab({ programs = [], learners = [] }) {
     }
   });
 
-  // Export functions (CSV Generation)
-  const exportCSV = (type, dataList) => {
-    let headers = [];
-    let rows = [];
-    let filename = 'report.csv';
+  // 2. Report Generation Logic
+  const handleGenerateSubmit = (e) => {
+    e.preventDefault();
 
-    if (type === 'Workspace Overview') {
-      filename = 'workspace_overview_report.csv';
-      headers = ['Metric', 'Value'];
-      rows = [
-        ['Total Learners', totalLearnersCount],
-        ['Active Programs', activeProgramsCount],
-        ['Sessions Completed', totalCompletedSessions],
-        ['Average Attendance', averageAttendance]
-      ];
-    } else if (type === 'Program Performance') {
-      filename = 'program_performance_report.csv';
-      headers = ['Program Name', 'Learners Count', 'Total Sessions', 'Completed Sessions', 'Attendance Rate'];
-      programs.forEach(p => {
-        const pLearners = learners.filter(l => l.program === p.name);
-        const pSessions = p.sessions || [];
-        const pCompleted = pSessions.filter(s => s.date && new Date(s.date) < today);
-        let opps = 0;
-        let pres = 0;
-        pCompleted.forEach(s => {
-          pLearners.forEach(l => {
-            opps++;
-            if ((s.attendance?.[l.id] || 'Present') === 'Present') pres++;
-          });
-        });
-        const rate = opps > 0 ? `${Math.round((pres / opps) * 100)}%` : '—';
-        rows.push([p.name, pLearners.length, pSessions.length, pCompleted.length, rate]);
-      });
-    } else if (type === 'Learner Engagement') {
-      filename = 'learner_engagement_report.csv';
-      headers = ['Name', 'Email', 'Program', 'Completed Sessions', 'Attended', 'Attendance Rate', 'Engagement Status'];
-      learners.forEach(l => {
-        const prog = programs.find(p => p.name === l.program);
-        let completed = 0;
-        let present = 0;
-        if (prog) {
-          (prog.sessions || []).forEach(s => {
-            if (s.date && new Date(s.date) < today) {
-              completed++;
-              if ((s.attendance?.[l.id] || 'Present') === 'Present') present++;
-            }
-          });
-        }
-        const rate = completed > 0 ? (present / completed) : 1;
-        const rateText = completed > 0 ? `${Math.round(rate * 100)}%` : '—';
-        let status = 'Active';
-        if (!l.program || l.program === 'None') status = 'Inactive';
-        else if (completed > 0 && rate < 0.75) status = 'At Risk';
+    // Determine date boundaries
+    let startBoundary = null;
+    let endBoundary = new Date();
 
-        rows.push([l.name, l.email, l.program || 'None', completed, present, rateText, status]);
-      });
+    if (dateRange === 'Last 7 Days') {
+      startBoundary = new Date();
+      startBoundary.setDate(startBoundary.getDate() - 7);
+    } else if (dateRange === 'Last 30 Days') {
+      startBoundary = new Date();
+      startBoundary.setDate(startBoundary.getDate() - 30);
+    } else if (dateRange === 'Last 90 Days') {
+      startBoundary = new Date();
+      startBoundary.setDate(startBoundary.getDate() - 90);
+    } else if (dateRange === 'Custom Range') {
+      if (customStartDate) startBoundary = new Date(customStartDate);
+      if (customEndDate) endBoundary = new Date(customEndDate);
     }
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Filter relevant programs
+    const filteredProgs = targetProgram === 'All Programs' 
+      ? programs 
+      : programs.filter(p => p.name === targetProgram);
+
+    // Calculate metrics
+    const reportResults = {
+      generatedAt: new Date().toLocaleString(),
+      totalProgramsScanned: filteredProgs.length,
+      insufficientData: false,
+      missingFields: [],
+      programSummaries: [],
+      learnerMetrics: [],
+      attendanceRate: '—',
+      healthScore: '—',
+      healthStatus: 'Unknown',
+      recommendations: []
+    };
+
+    let totalOpps = 0;
+    let totalPres = 0;
+    let totalSessionsScanned = 0;
+    let completedSessionsScanned = 0;
+    let totalResourcesCount = 0;
+    let totalAssessmentsCount = 0;
+
+    filteredProgs.forEach(p => {
+      const pLearners = learners.filter(l => l.program === p.name);
+      const pSessions = p.sessions || [];
+      totalResourcesCount += (p.resources || []).length;
+      totalAssessmentsCount += (p.assessments || []).length;
+
+      // Filter sessions by date range
+      const inRangeSessions = pSessions.filter(s => {
+        if (!s.date) return false;
+        const sDate = new Date(s.date);
+        if (startBoundary && sDate < startBoundary) return false;
+        if (endBoundary && sDate > endBoundary) return false;
+        return true;
+      });
+
+      totalSessionsScanned += inRangeSessions.length;
+
+      const completedSessions = inRangeSessions.filter(s => new Date(s.date) < today);
+      completedSessionsScanned += completedSessions.length;
+
+      let progOpps = 0;
+      let progPres = 0;
+
+      completedSessions.forEach(s => {
+        pLearners.forEach(l => {
+          progOpps++;
+          totalOpps++;
+          if ((s.attendance?.[l.id] || 'Present') === 'Present') {
+            progPres++;
+            totalPres++;
+          }
+        });
+      });
+
+      const progRate = progOpps > 0 ? `${Math.round((progPres / progOpps) * 100)}%` : '—';
+
+      reportResults.programSummaries.push({
+        name: p.name,
+        learnersCount: pLearners.length,
+        totalSessions: inRangeSessions.length,
+        completedSessions: completedSessions.length,
+        attendanceRate: progRate,
+        resourcesCount: (p.resources || []).length,
+        assessmentsCount: (p.assessments || []).length
+      });
+    });
+
+    if (totalOpps > 0) {
+      reportResults.attendanceRate = `${Math.round((totalPres / totalOpps) * 100)}%`;
+    }
+
+    // Health Score calculation (if health report type)
+    if (reportType === 'Program Health' || reportType === 'Operational Insights') {
+      if (completedSessionsScanned === 0) {
+        reportResults.insufficientData = true;
+        reportResults.missingFields.push('Completed session attendance history in the selected range');
+      } else {
+        const rateVal = totalPres / totalOpps;
+        let score = Math.round(rateVal * 100);
+        reportResults.healthScore = `${score}%`;
+        if (score >= 85) {
+          reportResults.healthStatus = 'Healthy';
+          reportResults.recommendations.push('Keep up the strong engagement. Learner turnout is excellent.');
+        } else if (score >= 70) {
+          reportResults.healthStatus = 'Needs Attention';
+          reportResults.recommendations.push('Consider sending session reminders to learners. Turnout is average.');
+        } else {
+          reportResults.healthStatus = 'Critical Risk';
+          reportResults.recommendations.push('Urgent: Attendance is critically low. Review facilitator feedback and session timings.');
+        }
+
+        if (totalResourcesCount === 0) {
+          reportResults.recommendations.push('Resource availability is zero. Upload course materials to enhance learner interaction.');
+        }
+      }
+    }
+
+    if (reportType === 'Attendance' && completedSessionsScanned === 0) {
+      reportResults.insufficientData = true;
+      reportResults.missingFields.push('Completed sessions');
+    }
+
+    if (reportType === 'Engagement' && totalLearnersCount === 0) {
+      reportResults.insufficientData = true;
+      reportResults.missingFields.push('Registered learners');
+    }
+
+    // Construct final report object
+    const newReport = {
+      id: Date.now(),
+      name: `${targetProgram === 'All Programs' ? 'Workspace' : targetProgram} ${reportType} Report`,
+      type: reportType,
+      program: targetProgram,
+      dateRange: dateRange === 'Custom Range' ? `${customStartDate} to ${customEndDate}` : dateRange,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      results: reportResults
+    };
+
+    setGeneratedReports(p => [newReport, ...p]);
+    setShowConfigModal(false);
+    setSelectedReport(newReport);
   };
 
-  // If a program details report is selected
-  const selectedProgram = programs.find(p => p.id === selectedProgramId);
-  const selectedProgramLearners = selectedProgram ? learners.filter(l => l.program === selectedProgram.name) : [];
-  const selectedProgramSessions = selectedProgram ? (selectedProgram.sessions || []) : [];
-  const completedSessionsInProg = selectedProgramSessions.filter(s => s.date && new Date(s.date) < today);
-
-  let progOpps = 0;
-  let progPres = 0;
-  completedSessionsInProg.forEach(s => {
-    selectedProgramLearners.forEach(l => {
-      progOpps++;
-      if ((s.attendance?.[l.id] || 'Present') === 'Present') progPres++;
-    });
-  });
-  const progAttendanceRate = progOpps > 0 ? `${Math.round((progPres / progOpps) * 100)}%` : '—';
+  const triggerGenerateWithProgram = (progName) => {
+    setTargetProgram(progName);
+    setReportType('Program Performance');
+    setDateRange('Last 30 Days');
+    setShowConfigModal(true);
+  };
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
       
-      {/* Header title */}
+      {/* Header Title */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Reports</h2>
@@ -172,25 +255,25 @@ export default function ReportsTab({ programs = [], learners = [] }) {
             Understand program performance, learner engagement, and operational activity across your workspace.
           </p>
         </div>
-        {selectedProgram && (
+        {selectedReport && (
           <button 
-            onClick={() => setSelectedProgramId(null)}
+            onClick={() => setSelectedReport(null)}
             style={{ 
               backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
               color: '#fff', padding: '0.55rem 1rem', borderRadius: '8px', fontSize: '0.82rem',
               fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer' 
             }}
           >
-            <ArrowLeft size={14} /> Back to Overview
+            <ArrowLeft size={14} /> Back to Dashboard
           </button>
         )}
       </div>
 
-      {!selectedProgram ? (
+      {!selectedReport ? (
         <>
-          {/* Workspace Overview Section */}
+          {/* 1. Live Workspace Overview */}
           <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '1rem', fontFamily: "'Outfit', sans-serif" }}>Workspace Overview</h3>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '1.1rem', fontFamily: "'Outfit', sans-serif" }}>Workspace Overview</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
               {[
                 { label: 'Total Learners', value: totalLearnersCount, icon: <Users size={20} />, color: '#D4AF37', bg: 'rgba(212,175,55,0.08)' },
@@ -211,7 +294,7 @@ export default function ReportsTab({ programs = [], learners = [] }) {
             </div>
           </div>
 
-          {/* Program Performance & Learner Engagement side-by-side */}
+          {/* 2. & 3. Program Performance & Learner Engagement side-by-side */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
             
             {/* Program Performance */}
@@ -224,15 +307,6 @@ export default function ReportsTab({ programs = [], learners = [] }) {
                     const pLearners = learners.filter(l => l.program === p.name);
                     const pSessions = p.sessions || [];
                     const pCompleted = pSessions.filter(s => s.date && new Date(s.date) < today);
-                    let opps = 0;
-                    let pres = 0;
-                    pCompleted.forEach(s => {
-                      pLearners.forEach(l => {
-                        opps++;
-                        if ((s.attendance?.[l.id] || 'Present') === 'Present') pres++;
-                      });
-                    });
-                    const rate = opps > 0 ? `${Math.round((pres / opps) * 100)}%` : '—';
 
                     return (
                       <div key={p.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -244,32 +318,34 @@ export default function ReportsTab({ programs = [], learners = [] }) {
                             </span>
                           </div>
                           <button 
-                            onClick={() => setSelectedProgramId(p.id)}
+                            onClick={() => triggerGenerateWithProgram(p.name)}
                             style={{ 
                               backgroundColor: 'transparent', border: 'none', color: '#D4AF37', 
                               fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', 
                               gap: '0.2rem', cursor: 'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' 
                             }}
                           >
-                            View Report <ArrowUpRight size={13} />
+                            Generate Report <ArrowUpRight size={13} />
                           </button>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.85rem' }}>
                           <div>
                             <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Attendance</div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginTop: '0.15rem' }}>{rate}</div>
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Engagement</div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginTop: '0.15rem' }}>
-                              {opps > 0 ? (pres / opps >= 0.85 ? 'High' : 'Medium') : '—'}
+                            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>
+                              {pCompleted.length > 0 ? 'Data loaded' : 'No attendance data yet'}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Progress</div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginTop: '0.15rem' }}>
-                              {pSessions.length > 0 ? `${Math.round((pCompleted.length / pSessions.length) * 100)}%` : '—'}
+                            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Engagement</div>
+                            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>
+                              {pCompleted.length > 0 ? 'Data loaded' : 'No engagement data yet'}
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Performance</div>
+                            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>
+                              {pCompleted.length > 0 ? 'Data loaded' : 'No performance data yet'}
                             </div>
                           </div>
                         </div>
@@ -284,51 +360,55 @@ export default function ReportsTab({ programs = [], learners = [] }) {
               )}
             </div>
 
-            {/* Learner Engagement Overview */}
+            {/* Learner Engagement */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Learner Engagement</h3>
               <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Engagement Overview</div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Active Learners</span>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#22c55e' }}>{activeLearners}</span>
+                {hasEngagementData ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Active Learners</span>
+                      <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#22c55e' }}>{activeLearners}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>At Risk Learners</span>
+                      <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#eab308' }}>{atRiskLearners}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Inactive Learners</span>
+                      <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>{inactiveLearners}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>At Risk (Low Attendance)</span>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#eab308' }}>{atRiskLearners}</span>
+                ) : (
+                  <div style={{ padding: '1rem 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
+                    <AlertTriangle size={24} color="rgba(255,255,255,0.15)" />
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0, textAlign: 'center' }}>
+                      Engagement data will appear after program activity begins.
+                    </p>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Inactive Learners</span>
-                    <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>{inactiveLearners}</span>
-                  </div>
-                </div>
-
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>
-                  At-risk status triggers when a participant's attendance drops below 75% across all completed classes.
-                </div>
+                )}
               </div>
             </div>
 
           </div>
 
-          {/* Attendance Overview & Reports Export */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+          {/* 4. & 5. Attendance Overview & Generate a Report */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
             
-            {/* Attendance Analytics */}
+            {/* Attendance Overview */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Attendance Overview</h3>
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
                 {totalCompletedSessions > 0 ? (
-                  <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Average attendance rate</span>
+                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Workspace turnout average</span>
                       <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{averageAttendance}</span>
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff', textTransform: 'uppercase', fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)' }}>Average Attendance per Program</div>
                       {programs.map(p => {
                         const pLearners = learners.filter(l => l.program === p.name);
                         const pCompleted = (p.sessions || []).filter(s => s.date && new Date(s.date) < today);
@@ -341,12 +421,11 @@ export default function ReportsTab({ programs = [], learners = [] }) {
                           });
                         });
                         const rate = opps > 0 ? Math.round((pres / opps) * 100) : 0;
-                        const rateText = opps > 0 ? `${rate}%` : '—';
                         return (
                           <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
                               <span style={{ color: 'rgba(255,255,255,0.8)' }}>{p.name}</span>
-                              <span style={{ color: '#fff', fontWeight: 600 }}>{rateText}</span>
+                              <span style={{ color: '#fff', fontWeight: 600 }}>{opps > 0 ? `${rate}%` : 'No completed sessions'}</span>
                             </div>
                             {opps > 0 && (
                               <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
@@ -357,172 +436,320 @@ export default function ReportsTab({ programs = [], learners = [] }) {
                         );
                       })}
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  <div style={{ padding: '2rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
-                    <Percent size={28} color="rgba(255,255,255,0.15)" />
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0 }}>Attendance data will appear after sessions are completed.</p>
+                  <div style={{ padding: '2rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>No attendance data yet</div>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', margin: 0 }}>
+                      Attendance insights will appear after your first session is completed.
+                    </p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Reports and Export */}
+            {/* Generate a Report Config */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Reports & Exports</h3>
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Generate a Report</h3>
+              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
                 <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
-                  Download verified tabular data from your workspace modules to generate custom compliance charts.
+                  Analyse your actual program and workspace data.
                 </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {[
-                    { label: 'Workspace Overview Report', type: 'Workspace Overview' },
-                    { label: 'Program Performance Report', type: 'Program Performance' },
-                    { label: 'Learner Engagement & Status', type: 'Learner Engagement' }
-                  ].map(rep => (
-                    <button 
-                      key={rep.label}
-                      onClick={() => exportCSV(rep.type)}
-                      style={{ 
-                        width: '100%', padding: '0.7rem 0.95rem', backgroundColor: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: '#fff',
-                        fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center',
-                        justifyContent: 'space-between', cursor: 'pointer', transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FileSpreadsheet size={15} color="#22c55e" /> {rep.label}
-                      </span>
-                      <Download size={14} color="rgba(255,255,255,0.4)" />
-                    </button>
-                  ))}
-                </div>
+                <button 
+                  onClick={() => setShowConfigModal(true)}
+                  style={{ 
+                    width: '100%', padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
+                    border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer',
+                    fontWeight: 700, fontSize: '0.82rem', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: '0.45rem'
+                  }}
+                >
+                  <FileText size={16} /> Generate Report
+                </button>
               </div>
             </div>
 
+          </div>
+
+          {/* 7. Recent Reports */}
+          <div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '1.1rem', fontFamily: "'Outfit', sans-serif" }}>Recent Reports</h3>
+            {generatedReports.length > 0 ? (
+              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1.5fr 1fr auto', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
+                  <span>Report Name</span>
+                  <span>Report Type</span>
+                  <span>Target Program</span>
+                  <span>Date Range</span>
+                  <span></span>
+                </div>
+                {generatedReports.map(rep => (
+                  <div key={rep.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1.5fr 1fr auto', gap: '0.5rem', padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>{rep.name}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>Generated on {rep.date}</span>
+                    </div>
+                    <span style={{ color: 'rgba(255,255,255,0.7)' }}>{rep.type}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.7)' }}>{rep.program}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.7)' }}>{rep.dateRange}</span>
+                    <button 
+                      onClick={() => setSelectedReport(rep)}
+                      style={{ background: 'none', border: 'none', color: '#D4AF37', fontWeight: 600, cursor: 'pointer', fontSize: '0.78rem' }}
+                    >
+                      View Report
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '2.5rem 1.5rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>No reports generated yet</div>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.3rem', marginBottom: 0 }}>
+                  Generate a report to analyse your workspace activity.
+                </p>
+              </div>
+            )}
           </div>
         </>
       ) : (
-        /* Detailed Program Specific Performance Report View */
+        /* 6. Dynamic Generated Report Details View */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>{selectedProgram.name}</h3>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginTop: '0.2rem' }}>
-              Program Details: <strong>{selectedProgram.status || 'Active'}</strong> · Created on {selectedProgram.createdAt ? new Date(selectedProgram.createdAt).toLocaleDateString() : 'N/A'}
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Enrolled Participants</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{selectedProgramLearners.length}</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>{selectedReport.name}</h3>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginTop: '0.2rem' }}>
+                  Type: <strong>{selectedReport.type}</strong> · Date Range: <strong>{selectedReport.dateRange}</strong> · Generated on {selectedReport.date}
+                </p>
               </div>
-              <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Sessions</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{selectedProgramSessions.length}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Completed Sessions</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{completedSessionsInProg.length}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Average Attendance</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e', marginTop: '0.15rem' }}>{progAttendanceRate}</div>
-              </div>
+              <button 
+                onClick={() => exportCSV(selectedReport.type)}
+                style={{ 
+                  backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '6px', color: '#fff', padding: '0.45rem 0.85rem', fontSize: '0.78rem',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' 
+                }}
+              >
+                <Download size={14} /> Export CSV
+              </button>
             </div>
-          </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-            
-            {/* Participants list & individual attendance */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Participants Attendance Roll</h4>
-              
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
-                  <span>Participant</span>
-                  <span>Joined Date</span>
-                  <span style={{ textAlign: 'right' }}>Attended</span>
+            {selectedReport.results.insufficientData ? (
+              <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)', borderRadius: '8px', padding: '1.1rem', display: 'flex', gap: '0.75rem' }}>
+                <AlertTriangle size={18} color="#eab308" style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                <div>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', margin: 0 }}>Insufficient Workspace Data</h4>
+                  <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.3rem', margin: '0.3rem 0 0 0', lineHeight: 1.45 }}>
+                    We could not generate full analysis metrics because the following data is missing for your selection:
+                  </p>
+                  <ul style={{ margin: '0.4rem 0 0 0', paddingLeft: '1.1rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
+                    {selectedReport.results.missingFields.map((field, i) => (
+                      <li key={i}>{field}</li>
+                    ))}
+                  </ul>
                 </div>
-
-                {selectedProgramLearners.length > 0 ? (
-                  selectedProgramLearners.map(l => {
-                    let present = 0;
-                    completedSessionsInProg.forEach(s => {
-                      if ((s.attendance?.[l.id] || 'Present') === 'Present') present++;
-                    });
-                    const rate = completedSessionsInProg.length > 0 ? `${Math.round((present / completedSessionsInProg.length) * 100)}%` : '—';
-                    return (
-                      <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr', gap: '0.5rem', padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ color: '#fff', fontWeight: 600 }}>{l.name}</span>
-                          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{l.email}</span>
-                        </div>
-                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{l.joinedDate || '—'}</span>
-                        <span style={{ textAlign: 'right', fontWeight: 700, color: completedSessionsInProg.length === 0 ? 'rgba(255,255,255,0.3)' : (present / completedSessionsInProg.length >= 0.75 ? '#22c55e' : '#eab308') }}>
-                          {completedSessionsInProg.length > 0 ? `${present}/${completedSessionsInProg.length} (${rate})` : '—'}
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div style={{ padding: '2rem 1.25rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
-                    No participants enrolled in this program.
-                  </div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '1.25rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Programs Scanned</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{selectedReport.results.totalProgramsScanned}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Attendance Rate</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e', marginTop: '0.15rem' }}>{selectedReport.results.attendanceRate}</div>
+                </div>
+                {(selectedReport.type === 'Program Health' || selectedReport.type === 'Operational Insights') && (
+                  <>
+                    <div>
+                      <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Health Score</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#a855f7', marginTop: '0.15rem' }}>{selectedReport.results.healthScore}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Status</div>
+                      <span style={{ 
+                        display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, 
+                        color: selectedReport.results.healthStatus === 'Healthy' ? '#22c55e' : '#eab308', 
+                        backgroundColor: selectedReport.results.healthStatus === 'Healthy' ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)', 
+                        padding: '0.2rem 0.5rem', borderRadius: '4px', marginTop: '0.35rem' 
+                      }}>
+                        {selectedReport.results.healthStatus}
+                      </span>
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
-
-            {/* Sessions list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Sessions List</h4>
-              
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
-                  <span>Session Title</span>
-                  <span>Schedule</span>
-                  <span style={{ textAlign: 'right' }}>Status</span>
-                </div>
-
-                {selectedProgramSessions.length > 0 ? (
-                  selectedProgramSessions.map(s => {
-                    const isCompleted = s.date && new Date(s.date) < today;
-                    let present = 0;
-                    if (isCompleted) {
-                      selectedProgramLearners.forEach(l => {
-                        if ((s.attendance?.[l.id] || 'Present') === 'Present') present++;
-                      });
-                    }
-                    const dayText = s.date ? new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—';
-                    return (
-                      <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr', gap: '0.5rem', padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ color: '#fff', fontWeight: 600 }}>{s.title}</span>
-                          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{s.type || 'Live'}</span>
-                        </div>
-                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{dayText} {s.startTime ? `@ ${s.startTime}` : ''}</span>
-                        <span style={{ textAlign: 'right', fontWeight: 600, color: isCompleted ? '#22c55e' : '#3b82f6' }}>
-                          {isCompleted ? `Completed (${present}/${selectedProgramLearners.length})` : 'Upcoming'}
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div style={{ padding: '2rem 1.25rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
-                    No sessions scheduled for this program.
-                  </div>
-                )}
-              </div>
-            </div>
-
+            )}
           </div>
 
+          {!selectedReport.results.insufficientData && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+              
+              {/* Table details */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Analysis Roll</h4>
+                <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
+                    <span>Program</span>
+                    <span style={{ textAlign: 'center' }}>Learners</span>
+                    <span style={{ textAlign: 'center' }}>Sessions</span>
+                    <span style={{ textAlign: 'right' }}>Attendance</span>
+                  </div>
+                  {selectedReport.results.programSummaries.map((p, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0.5rem', padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', alignItems: 'center' }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>{p.name}</span>
+                      <span style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)' }}>{p.learnersCount}</span>
+                      <span style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)' }}>{p.totalSessions} ({p.completedSessions} done)</span>
+                      <span style={{ textAlign: 'right', fontWeight: 700, color: '#fff' }}>{p.attendanceRate}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Health Action Items */}
+              {(selectedReport.type === 'Program Health' || selectedReport.type === 'Operational Insights') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Actionable Insights</h4>
+                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {selectedReport.results.recommendations.map((rec, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D4AF37', marginTop: '0.45rem', flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.45 }}>{rec}</span>
+                      </div>
+                    ))}
+                    {selectedReport.results.recommendations.length === 0 && (
+                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>No recommendations needed at this time.</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* 5. Generate Report Configuration Flow Modal */}
+      {showConfigModal && (
+        <div style={modalOverlay} onClick={() => setShowConfigModal(false)}>
+          <div style={modalBox} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Generate a Report</h3>
+                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>Configure report type, data scopes, and parameters</p>
+              </div>
+              <button onClick={() => setShowConfigModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={14} />
+              </button>
+            </div>
+
+            <form onSubmit={handleGenerateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+              <div>
+                <label style={labelStyle}>Report Type</label>
+                <div style={{ position: 'relative' }}>
+                  <select value={reportType} onChange={e => setReportType(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                    {[
+                      'Program Performance',
+                      'Learner Performance',
+                      'Attendance',
+                      'Engagement',
+                      'Program Health',
+                      'Operational Insights'
+                    ].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Program Scope</label>
+                <div style={{ position: 'relative' }}>
+                  <select value={targetProgram} onChange={e => setTargetProgram(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                    <option style={{ backgroundColor: '#0e0f14', color: '#fff' }}>All Programs</option>
+                    {programs.map(p => <option key={p.id} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{p.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Date Range</label>
+                <div style={{ position: 'relative' }}>
+                  <select value={dateRange} onChange={e => setDateRange(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                    {['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom Range'].map(d => <option key={d} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {dateRange === 'Custom Range' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Start Date</label>
+                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} style={inputStyle} required />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>End Date</label>
+                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} style={inputStyle} required />
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="button" onClick={() => setShowConfigModal(false)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Cancel</button>
+                <button type="submit" style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>Run Analysis</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
     </div>
   );
 }
+
+// Visual layout helper objects
+const modalOverlay = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.75)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000
+};
+
+const modalBox = {
+  backgroundColor: '#0c0d12',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  borderRadius: '16px',
+  padding: '2rem',
+  width: '100%',
+  maxWidth: '460px',
+  boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+  textAlign: 'left'
+};
+
+const labelStyle = {
+  display: 'block',
+  fontSize: '0.72rem',
+  fontWeight: 600,
+  color: 'rgba(255,255,255,0.4)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  marginBottom: '0.35rem'
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: '0.7rem 0.9rem',
+  backgroundColor: 'rgba(255,255,255,0.03)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '8px',
+  color: '#fff',
+  fontSize: '0.82rem',
+  outline: 'none',
+  boxSizing: 'border-box'
+};
