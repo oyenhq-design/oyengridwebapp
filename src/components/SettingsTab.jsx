@@ -64,9 +64,6 @@ export default function SettingsTab({
 
   const handleSaveOrgSettings = (e) => {
     e.preventDefault();
-    if (setOrganizationName) {
-      setOrganizationName(orgName);
-    }
     if (addNotification) {
       addNotification('success', 'Organization settings updated successfully');
     }
@@ -164,7 +161,7 @@ export default function SettingsTab({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Organization Name</label>
-                  <input type="text" value={orgName} onChange={e => setOrgName(e.target.value)} style={inputStyle} required />
+                  <input type="text" value={organizationName} onChange={e => setOrganizationName(e.target.value)} style={inputStyle} required />
                 </div>
                 <div>
                   <label style={labelStyle}>Tax Registration ID</label>
