@@ -27,6 +27,7 @@ export default function App() {
   // Auth state
   const [user, setUser] = useState(null); 
   const [userRole, setUserRole] = useState('Workspace Super Admin');
+  const [authLoading, setAuthLoading] = useState(true);
   
   // Workspace Template configuration
   const [activeTemplate, setActiveTemplate] = useState('enterprise'); // 'enterprise' | 'bootcamp' | 'education' | 'events'
@@ -173,6 +174,59 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Restore session token and workspace data on startup
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const token = sessionStorage.getItem('oyen_session_token');
+      if (token) {
+        const storedUser = sessionStorage.getItem('oyen_session_user');
+        if (storedUser) {
+          try {
+            const { email, role, activeTemplate: tpl, enabledTemplates: enabled } = JSON.parse(storedUser);
+            setUser(email);
+            setUserRole(role);
+            setActiveTemplate(tpl || 'enterprise');
+            setEnabledTemplates(enabled || { enterprise: true, bootcamp: false, education: false, events: false });
+            
+            const savedProgs = sessionStorage.getItem('oyen_ws_programs');
+            if (savedProgs) setWsPrograms(JSON.parse(savedProgs));
+            const savedLearners = sessionStorage.getItem('oyen_ws_learners');
+            if (savedLearners) setWsLearners(JSON.parse(savedLearners));
+            const savedTeam = sessionStorage.getItem('oyen_ws_team');
+            if (savedTeam) setWsTeam(JSON.parse(savedTeam));
+            
+            setActiveRoute('dashboard');
+            setActiveTab('Dashboard');
+          } catch (e) {
+            console.error('Error parsing session data', e);
+            setActiveRoute('portal');
+          }
+        } else {
+          setActiveRoute('portal');
+        }
+      } else {
+        setActiveRoute('portal');
+      }
+      setAuthLoading(false);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Save session & workspace changes to sessionStorage in real-time
+  useEffect(() => {
+    if (user) {
+      sessionStorage.setItem('oyen_session_user', JSON.stringify({
+        email: user,
+        role: userRole,
+        activeTemplate,
+        enabledTemplates
+      }));
+      sessionStorage.setItem('oyen_ws_programs', JSON.stringify(wsPrograms));
+      sessionStorage.setItem('oyen_ws_learners', JSON.stringify(wsLearners));
+      sessionStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam));
+    }
+  }, [user, userRole, activeTemplate, enabledTemplates, wsPrograms, wsLearners, wsTeam]);
 
 
 
@@ -325,6 +379,7 @@ export default function App() {
   };
 
   const handleAuthSuccess = (email, role = 'Workspace Super Admin') => {
+    sessionStorage.setItem('oyen_session_token', `oyen_token_${Date.now()}`);
     triggerTransition(() => {
       setUser(email);
       setUserRole(role);
@@ -335,6 +390,7 @@ export default function App() {
   };
 
   const handleOrgRegistrationComplete = (email, template) => {
+    sessionStorage.setItem('oyen_session_token', `oyen_token_${Date.now()}`);
     triggerTransition(() => {
       // Save template choices
       setActiveTemplate(template);
@@ -355,6 +411,7 @@ export default function App() {
   };
 
   const handleInviteAcceptanceComplete = (email, role) => {
+    sessionStorage.setItem('oyen_session_token', `oyen_token_${Date.now()}`);
     triggerTransition(() => {
       setUser(email);
       setUserRole(role);
@@ -368,6 +425,11 @@ export default function App() {
   const handleLogOut = () => {
     triggerTransition(() => {
       setUser(null);
+      sessionStorage.removeItem('oyen_session_token');
+      sessionStorage.removeItem('oyen_session_user');
+      sessionStorage.removeItem('oyen_ws_programs');
+      sessionStorage.removeItem('oyen_ws_learners');
+      sessionStorage.removeItem('oyen_ws_team');
       setActiveRoute('portal');
     });
   };
@@ -2239,6 +2301,41 @@ export default function App() {
               </span>
             </footer>
 
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100vh', backgroundColor: '#090a0f', color: '#fff',
+        fontFamily: "'Outfit', sans-serif"
+      }}>
+        {/* Hexagon gold loading icon */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{
+            background: 'rgba(212, 175, 55, 0.1)',
+            border: '2px solid #D4AF37',
+            padding: '1.25rem',
+            borderRadius: '16px',
+            boxShadow: '0 0 40px rgba(212, 175, 55, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="2.5" fill="none"/>
+              <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px' }}>
+            OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Authorizing Secure Session...
           </div>
         </div>
       </div>
