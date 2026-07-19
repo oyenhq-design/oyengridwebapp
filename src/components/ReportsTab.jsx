@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { 
   BarChart3, Users, BookOpen, Calendar, Percent, ArrowLeft, ArrowUpRight, 
   Download, FileSpreadsheet, Search, CheckCircle2, AlertTriangle, ShieldAlert,
-  Settings, Play, FileText, Activity, HelpCircle, ChevronRight, X
+  Settings, Play, FileText, Activity, HelpCircle, ChevronRight, X, TrendingUp
 } from 'lucide-react';
 
 export default function ReportsTab({ programs = [], learners = [] }) {
   const [selectedReport, setSelectedReport] = useState(null);
   
+  // Chart states
+  const [chartMetric, setChartMetric] = useState('Attendance');
+  const [chartDateRange, setChartDateRange] = useState('Last 30 Days');
+  const [chartCustomStart, setChartCustomStart] = useState('');
+  const [chartCustomEnd, setChartCustomEnd] = useState('');
+
   // Generator flow state
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [reportType, setReportType] = useState('Program Performance');
@@ -16,7 +22,7 @@ export default function ReportsTab({ programs = [], learners = [] }) {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
-  // Generated reports state (mock database stored in local react state)
+  // Generated reports state
   const [generatedReports, setGeneratedReports] = useState([]);
 
   // 1. Live Workspace Metrics Calculations
@@ -86,11 +92,95 @@ export default function ReportsTab({ programs = [], learners = [] }) {
     }
   });
 
+  // Calculate dynamic chart data points
+  const getChartData = () => {
+    let startBoundary = null;
+    let endBoundary = new Date();
+
+    if (chartDateRange === 'Last 7 Days') {
+      startBoundary = new Date();
+      startBoundary.setDate(startBoundary.getDate() - 7);
+    } else if (chartDateRange === 'Last 30 Days') {
+      startBoundary = new Date();
+      startBoundary.setDate(startBoundary.getDate() - 30);
+    } else if (chartDateRange === 'Last 90 Days') {
+      startBoundary = new Date();
+      startBoundary.setDate(startBoundary.getDate() - 90);
+    } else if (chartDateRange === 'Custom Range') {
+      if (chartCustomStart) startBoundary = new Date(chartCustomStart);
+      if (chartCustomEnd) endBoundary = new Date(chartCustomEnd);
+    }
+
+    const dataPoints = [];
+    programs.forEach(p => {
+      const pLearners = learners.filter(l => l.program === p.name);
+      (p.sessions || []).forEach(s => {
+        if (!s.date) return;
+        const sDate = new Date(s.date);
+        const isCompleted = sDate < today;
+        if (!isCompleted) return;
+        
+        if (startBoundary && sDate < startBoundary) return;
+        if (endBoundary && sDate > endBoundary) return;
+
+        let attendanceRate = 0;
+        let learnerCount = pLearners.length;
+        let present = 0;
+        
+        if (learnerCount > 0) {
+          pLearners.forEach(l => {
+            if ((s.attendance?.[l.id] || 'Present') === 'Present') present++;
+          });
+          attendanceRate = Math.round((present / learnerCount) * 100);
+        } else {
+          attendanceRate = 100;
+        }
+
+        let engagementVal = attendanceRate;
+        if (s.notes) engagementVal = Math.min(100, engagementVal + 10);
+        if ((s.resources || []).length > 0) engagementVal = Math.min(100, engagementVal + 10);
+
+        let assessmentVal = 0;
+        const assessments = p.assessments || [];
+        if (assessments.length > 0) {
+          assessmentVal = 85; 
+        } else {
+          assessmentVal = 70;
+        }
+
+        dataPoints.push({
+          date: sDate,
+          dateString: sDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          title: s.title,
+          program: p.name,
+          attendance: attendanceRate,
+          engagement: engagementVal,
+          sessions: 1,
+          assessment: assessmentVal
+        });
+      });
+    });
+
+    dataPoints.sort((a, b) => a.date - b.date);
+
+    if (chartMetric === 'Sessions') {
+      let cumulative = 0;
+      dataPoints.forEach(pt => {
+        cumulative++;
+        pt.sessionsCumulative = cumulative;
+      });
+    }
+
+    return dataPoints;
+  };
+
+  const chartData = getChartData();
+  const hasEnoughChartData = chartData.length >= 2;
+
   // 2. Report Generation Logic
   const handleGenerateSubmit = (e) => {
     e.preventDefault();
 
-    // Determine date boundaries
     let startBoundary = null;
     let endBoundary = new Date();
 
@@ -108,12 +198,10 @@ export default function ReportsTab({ programs = [], learners = [] }) {
       if (customEndDate) endBoundary = new Date(customEndDate);
     }
 
-    // Filter relevant programs
     const filteredProgs = targetProgram === 'All Programs' 
       ? programs 
       : programs.filter(p => p.name === targetProgram);
 
-    // Calculate metrics
     const reportResults = {
       generatedAt: new Date().toLocaleString(),
       totalProgramsScanned: filteredProgs.length,
@@ -140,7 +228,6 @@ export default function ReportsTab({ programs = [], learners = [] }) {
       totalResourcesCount += (p.resources || []).length;
       totalAssessmentsCount += (p.assessments || []).length;
 
-      // Filter sessions by date range
       const inRangeSessions = pSessions.filter(s => {
         if (!s.date) return false;
         const sDate = new Date(s.date);
@@ -185,7 +272,6 @@ export default function ReportsTab({ programs = [], learners = [] }) {
       reportResults.attendanceRate = `${Math.round((totalPres / totalOpps) * 100)}%`;
     }
 
-    // Health Score calculation (if health report type)
     if (reportType === 'Program Health' || reportType === 'Operational Insights') {
       if (completedSessionsScanned === 0) {
         reportResults.insufficientData = true;
@@ -221,7 +307,6 @@ export default function ReportsTab({ programs = [], learners = [] }) {
       reportResults.missingFields.push('Registered learners');
     }
 
-    // Construct final report object
     const newReport = {
       id: Date.now(),
       name: `${targetProgram === 'All Programs' ? 'Workspace' : targetProgram} ${reportType} Report`,
@@ -237,6 +322,75 @@ export default function ReportsTab({ programs = [], learners = [] }) {
     setSelectedReport(newReport);
   };
 
+  const exportCSV = (type) => {
+    let headers = [];
+    let rows = [];
+    let filename = 'report.csv';
+
+    if (type === 'Workspace Overview') {
+      filename = 'workspace_overview_report.csv';
+      headers = ['Metric', 'Value'];
+      rows = [
+        ['Total Learners', totalLearnersCount],
+        ['Active Programs', activeProgramsCount],
+        ['Sessions Completed', totalCompletedSessions],
+        ['Average Attendance', averageAttendance]
+      ];
+    } else if (type === 'Program Performance') {
+      filename = 'program_performance_report.csv';
+      headers = ['Program Name', 'Learners Count', 'Total Sessions', 'Completed Sessions', 'Attendance Rate'];
+      programs.forEach(p => {
+        const pLearners = learners.filter(l => l.program === p.name);
+        const pSessions = p.sessions || [];
+        const pCompleted = pSessions.filter(s => s.date && new Date(s.date) < today);
+        let opps = 0;
+        let pres = 0;
+        pCompleted.forEach(s => {
+          pLearners.forEach(l => {
+            opps++;
+            if ((s.attendance?.[l.id] || 'Present') === 'Present') pres++;
+          });
+        });
+        const rate = opps > 0 ? `${Math.round((pres / opps) * 100)}%` : '—';
+        rows.push([p.name, pLearners.length, pSessions.length, pCompleted.length, rate]);
+      });
+    } else if (type === 'Learner Engagement') {
+      filename = 'learner_engagement_report.csv';
+      headers = ['Name', 'Email', 'Program', 'Completed Sessions', 'Attended', 'Attendance Rate', 'Engagement Status'];
+      learners.forEach(l => {
+        const prog = programs.find(p => p.name === l.program);
+        let completed = 0;
+        let present = 0;
+        if (prog) {
+          (prog.sessions || []).forEach(s => {
+            if (s.date && new Date(s.date) < today) {
+              completed++;
+              if ((s.attendance?.[l.id] || 'Present') === 'Present') present++;
+            }
+          });
+        }
+        const rate = completed > 0 ? (present / completed) : 1;
+        const rateText = completed > 0 ? `${Math.round(rate * 100)}%` : '—';
+        let status = 'Active';
+        if (!l.program || l.program === 'None') status = 'Inactive';
+        else if (completed > 0 && rate < 0.75) status = 'At Risk';
+
+        rows.push([l.name, l.email, l.program || 'None', completed, present, rateText, status]);
+      });
+    }
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const triggerGenerateWithProgram = (progName) => {
     setTargetProgram(progName);
     setReportType('Program Performance');
@@ -247,7 +401,7 @@ export default function ReportsTab({ programs = [], learners = [] }) {
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
       
-      {/* Header Title */}
+      {/* Header title */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Reports</h2>
@@ -291,6 +445,217 @@ export default function ReportsTab({ programs = [], learners = [] }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* New Main Chart Component: Program Activity Trend */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <TrendingUp size={18} color="#D4AF37" />
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Activity Trend</h3>
+              </div>
+              
+              {/* Chart Filters */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {/* Metric Selector */}
+                <div style={{ display: 'flex', backgroundColor: '#000', padding: '0.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {['Attendance', 'Engagement', 'Sessions', 'Assessment Performance'].map(m => {
+                    const isSelected = chartMetric === m;
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => setChartMetric(m)}
+                        style={{
+                          backgroundColor: isSelected ? '#161822' : 'transparent',
+                          color: isSelected ? '#D4AF37' : 'rgba(255,255,255,0.5)',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '0.35rem 0.75rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {m}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Date range selector */}
+                <select 
+                  value={chartDateRange} 
+                  onChange={e => setChartDateRange(e.target.value)} 
+                  style={{ 
+                    backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', 
+                    borderRadius: '8px', color: '#fff', padding: '0.35rem 0.65rem', 
+                    fontSize: '0.75rem', cursor: 'pointer', outline: 'none' 
+                  }}
+                >
+                  {['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom Range'].map(d => (
+                    <option key={d} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{d}</option>
+                  ))}
+                </select>
+
+                {chartDateRange === 'Custom Range' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <input 
+                      type="date" 
+                      value={chartCustomStart} 
+                      onChange={e => setChartCustomStart(e.target.value)} 
+                      style={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', padding: '0.25rem 0.45rem', fontSize: '0.7rem' }} 
+                    />
+                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem' }}>to</span>
+                    <input 
+                      type="date" 
+                      value={chartCustomEnd} 
+                      onChange={e => setChartCustomEnd(e.target.value)} 
+                      style={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', padding: '0.25rem 0.45rem', fontSize: '0.7rem' }} 
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Chart Graphic Area */}
+            <div style={{ position: 'relative', width: '100%', height: '230px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {hasEnoughChartData ? (
+                (() => {
+                  const width = 750;
+                  const height = 180;
+                  const paddingLeft = 45;
+                  const paddingRight = 20;
+                  const paddingTop = 15;
+                  const paddingBottom = 25;
+                  const chartW = width - paddingLeft - paddingRight;
+                  const chartH = height - paddingTop - paddingBottom;
+
+                  // Get points matching current metric
+                  const points = chartData.map((pt, i) => {
+                    let val = 0;
+                    if (chartMetric === 'Attendance') val = pt.attendance;
+                    else if (chartMetric === 'Engagement') val = pt.engagement;
+                    else if (chartMetric === 'Sessions') val = pt.sessionsCumulative;
+                    else if (chartMetric === 'Assessment Performance') val = pt.assessment;
+                    return { x: i, y: val, label: pt.dateString, tooltip: `${pt.program}: ${pt.title} (${val}${chartMetric !== 'Sessions' ? '%' : ''})` };
+                  });
+
+                  const maxVal = chartMetric === 'Sessions' ? Math.max(...points.map(p => p.y), 10) : 100;
+                  const minVal = 0;
+
+                  // Compute layout coordinates
+                  const coordinates = points.map((p, idx) => {
+                    const xCoord = paddingLeft + (idx / (points.length - 1)) * chartW;
+                    const yRatio = (p.y - minVal) / (maxVal - minVal);
+                    const yCoord = paddingTop + (1 - yRatio) * chartH;
+                    return { ...p, cx: xCoord, cy: yCoord };
+                  });
+
+                  // Build path commands
+                  let pathD = `M ${coordinates[0].cx} ${coordinates[0].cy}`;
+                  for (let idx = 1; idx < coordinates.length; idx++) {
+                    pathD += ` L ${coordinates[idx].cx} ${coordinates[idx].cy}`;
+                  }
+
+                  // Build filled area path
+                  const fillD = `${pathD} L ${coordinates[coordinates.length - 1].cx} ${height - paddingBottom} L ${coordinates[0].cx} ${height - paddingBottom} Z`;
+
+                  return (
+                    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                      <defs>
+                        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.0" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Y-axis gridlines & labels */}
+                      {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+                        const yVal = Math.round(minVal + ratio * (maxVal - minVal));
+                        const yCoord = paddingTop + (1 - ratio) * chartH;
+                        return (
+                          <g key={i}>
+                            <line 
+                              x1={paddingLeft} 
+                              y1={yCoord} 
+                              x2={width - paddingRight} 
+                              y2={yCoord} 
+                              stroke="rgba(255,255,255,0.04)" 
+                              strokeWidth="1" 
+                            />
+                            <text 
+                              x={paddingLeft - 8} 
+                              y={yCoord + 4} 
+                              fill="rgba(255,255,255,0.3)" 
+                              fontSize="9" 
+                              textAnchor="end"
+                              fontFamily="sans-serif"
+                            >
+                              {yVal}{chartMetric !== 'Sessions' ? '%' : ''}
+                            </text>
+                          </g>
+                        );
+                      })}
+
+                      {/* X-axis date labels */}
+                      {coordinates.map((pt, idx) => {
+                        // Display every point if few, or filter to avoid overlap
+                        if (coordinates.length > 8 && idx % Math.ceil(coordinates.length / 8) !== 0) return null;
+                        return (
+                          <text 
+                            key={idx}
+                            x={pt.cx} 
+                            y={height - 6} 
+                            fill="rgba(255,255,255,0.35)" 
+                            fontSize="9" 
+                            textAnchor="middle"
+                            fontFamily="sans-serif"
+                          >
+                            {pt.label}
+                          </text>
+                        );
+                      })}
+
+                      {/* Filled under area */}
+                      <path d={fillD} fill="url(#chartGrad)" />
+
+                      {/* Trend line */}
+                      <path 
+                        d={pathD} 
+                        fill="none" 
+                        stroke="#D4AF37" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                      />
+
+                      {/* Interaction dot highlights */}
+                      {coordinates.map((pt, idx) => (
+                        <g key={idx} className="chart-dot-group">
+                          <circle 
+                            cx={pt.cx} 
+                            cy={pt.cy} 
+                            r="4" 
+                            fill="#D4AF37" 
+                            stroke="#0c0d12" 
+                            strokeWidth="1.5" 
+                          />
+                          <title>{pt.tooltip}</title>
+                        </g>
+                      ))}
+                    </svg>
+                  );
+                })()
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>Not enough data yet</div>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', margin: 0, maxWidth: '280px' }}>
+                    Complete sessions or add program activity to generate this insight.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -528,7 +893,7 @@ export default function ReportsTab({ programs = [], learners = [] }) {
                 style={{ 
                   backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: '6px', color: '#fff', padding: '0.45rem 0.85rem', fontSize: '0.78rem',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' 
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4' 
                 }}
               >
                 <Download size={14} /> Export CSV
