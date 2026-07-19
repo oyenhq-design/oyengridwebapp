@@ -26,7 +26,7 @@ const modalBox = {
   boxShadow: '0 30px 70px rgba(0,0,0,0.7)',
 };
 
-export default function SessionsTab({ programs = [], setPrograms, learners = [], onNavigateToPrograms }) {
+export default function SessionsTab({ programs = [], setPrograms, learners = [], addNotification, onNavigateToPrograms }) {
   const [selectedProgId, setSelectedProgId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -110,6 +110,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
       };
       return logActivity(`Session "${newSession.title}" scheduled for ${newSession.date}`, updated);
     });
+    addNotification?.(`Session "${newSession.title}" scheduled for ${newSession.date} in ${currentProgram.name}`);
 
     setSessionForm({
       title: '',
@@ -218,6 +219,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
       const updatedProg = { ...p, sessions: updatedSessions };
       return logActivity(`Resource "${resource.name}" uploaded to session "${currentSession.title}"`, updatedProg);
     });
+    addNotification?.(`Resource "${resource.name}" uploaded to session "${currentSession.title}"`);
 
     setNewResourceName('');
     setNewResourceFile(null);
@@ -239,6 +241,7 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
         const updatedProg = { ...p, sessions: updatedSessions };
         return logActivity(`Resource "${resName}" deleted from session "${currentSession.title}"`, updatedProg);
       });
+      addNotification?.(`Resource "${resName}" deleted from session "${currentSession.title}"`);
     }
   };
 

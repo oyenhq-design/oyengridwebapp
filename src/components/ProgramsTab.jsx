@@ -4,7 +4,7 @@ import ProgramDetail from './ProgramDetail';
 
 const PROGRAM_LIMIT = 3;
 
-export default function ProgramsTab({ programs, setPrograms, learners = [], setLearners }) {
+export default function ProgramsTab({ programs, setPrograms, learners = [], setLearners, addNotification }) {
   const [showCreateModal, setShowCreateModal]   = useState(false);
   const [newProgName, setNewProgName]           = useState('');
   const [newProgDesc, setNewProgDesc]           = useState('');
@@ -19,11 +19,12 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
   const handleCreate = (e) => {
     e.preventDefault();
     if (!newProgName.trim() || programs.length >= PROGRAM_LIMIT) return;
+    const cleanName = newProgName.trim();
     setPrograms(prev => [
       ...prev,
       {
         id:          Date.now(),
-        name:        newProgName.trim(),
+        name:        cleanName,
         desc:      newProgDesc.trim() || 'No description provided.',
         status:      'Active',
         sessions:    [],
@@ -32,6 +33,7 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
         activity:    [],
       }
     ]);
+    addNotification?.(`New program "${cleanName}" created`);
     setNewProgName('');
     setNewProgDesc('');
     setShowCreateModal(false);
@@ -42,10 +44,12 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
     if (!renameName.trim()) return;
     const oldProg = programs.find(p => p.id === renameProgramId);
     if (oldProg) {
+      const cleanNewName = renameName.trim();
       // Update program name
-      setPrograms(prev => prev.map(p => p.id === renameProgramId ? { ...p, name: renameName.trim() } : p));
+      setPrograms(prev => prev.map(p => p.id === renameProgramId ? { ...p, name: cleanNewName } : p));
       // Update all assigned learners to the new program name
-      setLearners(prev => prev.map(l => l.program === oldProg.name ? { ...l, program: renameName.trim() } : l));
+      setLearners(prev => prev.map(l => l.program === oldProg.name ? { ...l, program: cleanNewName } : l));
+      addNotification?.(`Program "${oldProg.name}" renamed to "${cleanNewName}"`);
     }
     setRenameProgramId(null);
     setRenameName('');
@@ -58,6 +62,7 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
       setPrograms(prev => prev.filter(p => p.id !== deleteProgramId));
       // Permanently remove all assigned learners from this program
       setLearners(prev => prev.filter(l => l.program !== progToDelete.name));
+      addNotification?.(`Program "${progToDelete.name}" deleted permanently`);
     }
     setDeleteProgramId(null);
   };

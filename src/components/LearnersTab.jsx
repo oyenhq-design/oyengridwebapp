@@ -75,6 +75,7 @@ export default function LearnersTab({
   setPrograms,
   learners = [],
   setLearners,
+  addNotification,
   onNavigateToPrograms,
 }) {
   const [search, setSearch]             = useState('');
@@ -110,6 +111,7 @@ export default function LearnersTab({
       id: Date.now(), name, email: addForm.email.trim(),
       program: programLabel, status: 'Active', joined: today,
     }]);
+    addNotification?.(`Learner "${name}" added to ${programLabel}`);
     setAddForm({ firstName: '', lastName: '', email: '', programId: '' });
     setShowAddModal(false);
   };
@@ -166,6 +168,7 @@ export default function LearnersTab({
     }));
 
     setLearners(prev => [...prev, ...newLearners]);
+    addNotification?.(`Imported ${newLearners.length} learners from "${importFileName}"`);
     closeImport();
   };
 

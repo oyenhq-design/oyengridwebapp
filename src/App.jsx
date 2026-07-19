@@ -81,7 +81,13 @@ export default function App() {
   // Shared workspace data — lifted so Programs + Learners stay in sync
   const [wsPrograms, setWsPrograms] = useState([]);
   const [wsLearners, setWsLearners] = useState([]);
-
+  const [wsTeam, setWsTeam]         = useState([
+    { initials: 'JD', color: '#D4AF37', name: 'John Doe',        isYou: true, email: 'john.doe@abcenergy.com',        role: 'Organization Owner', status: 'Active',  joined: 'May 22, 2025' },
+    { initials: 'SA', color: '#7c3aed', name: 'Sarah Ahmed',                  email: 'sarah.ahmed@abcenergy.com',     role: 'Admin',              status: 'Active',  joined: 'May 21, 2025' },
+    { initials: 'MI', color: '#16a34a', name: 'Michael Ibrahim',              email: 'michael.ibrahim@abcenergy.com', role: 'Program Manager',    status: 'Active',  joined: 'May 20, 2025' },
+    { initials: 'FA', color: '#0284c7', name: 'Fatima Aliyu',                 email: 'fatima.aliyu@abcenergy.com',    role: 'Facilitator',        status: 'Active',  joined: 'May 18, 2025' },
+    { initials: 'NK', color: '#b45309', name: 'Ngozi Kalu',                   email: 'ngozi.kalu@abcenergy.com',      role: 'Viewer',             status: 'Pending', joined: 'May 22, 2025' },
+  ]);
 
   // AI Assistant Chat Mock
   const [aiPrompt, setAiPrompt] = useState('');
@@ -101,24 +107,64 @@ export default function App() {
     { id: 3, text: 'Your weekly program report is ready', time: 'Yesterday', read: false }
   ]);
 
-  const searchItems = [
-    { name: 'John Doe', type: 'Team Member', detail: 'Organization Owner' },
-    { name: 'Sarah Ahmed', type: 'Team Member', detail: 'Admin' },
-    { name: 'Michael Ibrahim', type: 'Team Member', detail: 'Program Manager' },
-    { name: 'Fatima Aliyu', type: 'Team Member', detail: 'Facilitator' },
-    { name: 'Ngozi Kalu', type: 'Team Member', detail: 'Viewer (Pending)' },
-    { name: "John's Leadership Program", type: 'Program', detail: 'Enterprise track' },
-    { name: 'Product Management Accelerator', type: 'Program', detail: 'Bootcamp track' },
-    { name: 'Jane Smith', type: 'Learner', detail: 'janesmith@abcenergy.com' },
-    { name: 'Alex Johnson', type: 'Learner', detail: 'alex@abcenergy.com' },
-    { name: 'Kickoff & Strategy Alignment', type: 'Session', detail: 'Scheduled for Friday' },
-    { name: 'Mid-term Skills Assessment', type: 'Session', detail: 'Completed last week' },
-    { name: 'Q2 Engagement Report', type: 'Report', detail: 'PDF document ready' },
-    { name: 'Annual Performance Metrics', type: 'Report', detail: 'Draft version' }
-  ];
+  // Helper to push a notification globally
+  const addNotification = (text) => {
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const nowTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' · ' + today;
+    setNotifications(prev => [
+      { id: Date.now(), text, time: nowTime, read: false },
+      ...prev
+    ]);
+  };
+
+  // Compile search results dynamically from all workspace items
+  const getDynamicSearchItems = () => {
+    const items = [];
+
+    // Add team members
+    wsTeam.forEach(m => {
+      items.push({ name: m.name, type: 'Team Member', detail: m.role, tab: 'Team' });
+    });
+
+    // Add programs
+    wsPrograms.forEach(p => {
+      items.push({ name: p.name, type: 'Program', detail: p.desc || 'Training program', tab: 'Programmes' });
+
+      // Add program resources
+      (p.resources || []).forEach(r => {
+        items.push({ name: r.name, type: 'Resource', detail: `Program file: ${r.fileName}`, tab: 'Programmes' });
+      });
+
+      // Add program assessments
+      (p.assessments || []).forEach(a => {
+        items.push({ name: a.name, type: 'Assessment', detail: `${a.type} assessment`, tab: 'Programmes' });
+      });
+
+      // Add sessions
+      (p.sessions || []).forEach(s => {
+        items.push({ name: s.title, type: 'Session', detail: `Session on ${s.date}`, tab: 'Sessions' });
+
+        // Add session resources
+        (s.resources || []).forEach(sr => {
+          items.push({ name: sr.name, type: 'Resource', detail: `Session file: ${sr.fileName}`, tab: 'Sessions' });
+        });
+      });
+    });
+
+    // Add learners
+    wsLearners.forEach(l => {
+      items.push({ name: l.name, type: 'Learner', detail: l.email, tab: 'Learners' });
+    });
+
+    return items;
+  };
 
   const searchResults = searchQuery.trim()
-    ? searchItems.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.type.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? getDynamicSearchItems().filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.detail.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     : [];
 
   const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -2109,7 +2155,12 @@ export default function App() {
               </div>
             ) : activeTab === 'Team' ? (
               /* Ã¢â€â‚¬Ã¢â€â‚¬ Team Management Component Ã¢â€â‚¬Ã¢â€â‚¬ */
-              <TeamManagement onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))} />
+              <TeamManagement
+                members={wsTeam}
+                setMembers={setWsTeam}
+                addNotification={addNotification}
+                onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))}
+              />
             ) : activeTab === 'Programmes' ? (
               /* Programmes Tab Component */
               <ProgramsTab
@@ -2117,6 +2168,7 @@ export default function App() {
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
                 setLearners={setWsLearners}
+                addNotification={addNotification}
               />
             ) : activeTab === 'Learners' ? (
               /* Learners Tab Component */
@@ -2125,6 +2177,7 @@ export default function App() {
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
                 setLearners={setWsLearners}
+                addNotification={addNotification}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
               />
             ) : activeTab === 'Sessions' ? (
@@ -2133,6 +2186,7 @@ export default function App() {
                 programs={wsPrograms}
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
+                addNotification={addNotification}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
               />
             ) : (

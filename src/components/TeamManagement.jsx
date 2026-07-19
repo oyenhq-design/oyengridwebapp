@@ -393,8 +393,7 @@ function Toast({ message, type = 'success', onDismiss }) {
 /* ═══════════════════════════════════════════
    Main TeamManagement export
 ═══════════════════════════════════════════ */
-export default function TeamManagement({ onNavigateHome }) {
-  const [members,     setMembers]     = useState(INITIAL_MEMBERS);
+export default function TeamManagement({ members, setMembers, addNotification, onNavigateHome }) {
   const [pending,     setPending]     = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [toast,       setToast]       = useState(null);
@@ -413,9 +412,10 @@ export default function TeamManagement({ onNavigateHome }) {
     const fmt      = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     setPending(prev => [...prev, { email, role, initials, color, invitedAt: fmt(today), expiresAt: fmt(expires), status: 'Pending' }]);
     showToast(`Invitation sent to ${email}`);
+    addNotification?.(`Invitation sent to ${email} as ${role}`);
   };
 
-  /* Add manually → pending, not active */
+  /* Add manually */
   const handleAddManually = ({ name, email, role }) => {
     const parts    = name.split(' ');
     const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
@@ -425,6 +425,7 @@ export default function TeamManagement({ onNavigateHome }) {
     const fmt      = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     setPending(prev => [...prev, { name, email, role, initials, color, invitedAt: fmt(today), expiresAt: fmt(expires), status: 'Pending' }]);
     showToast(`Invitation sent to ${name}`);
+    addNotification?.(`Team member ${name} added (${email})`);
   };
 
   /* Regenerate link */
@@ -432,6 +433,7 @@ export default function TeamManagement({ onNavigateHome }) {
     const id = Math.random().toString(36).slice(2, 9);
     setInviteLink(`https://oyengrid.com/join/${id}`);
     showToast('Invite link regenerated');
+    addNotification?.('Workspace invite link regenerated');
   };
 
   /* Derived counts */
@@ -458,7 +460,7 @@ export default function TeamManagement({ onNavigateHome }) {
     <>
       {/* Modals */}
       {activeModal === 'email'  && <InviteEmailModal onClose={closeModal} onSend={handleInviteEmail} />}
-      {activeModal === 'link'   && <InviteLinkModal  onClose={closeModal} inviteLink={inviteLink} onRegenerate={handleRegenerate} linkEnabled={linkEnabled} onToggleLink={() => { setLinkEnabled(v => !v); showToast(linkEnabled ? 'Invite link disabled' : 'Invite link enabled'); }} />}
+      {activeModal === 'link'   && <InviteLinkModal  onClose={closeModal} inviteLink={inviteLink} onRegenerate={handleRegenerate} linkEnabled={linkEnabled} onToggleLink={() => { setLinkEnabled(v => !v); showToast(linkEnabled ? 'Invite link disabled' : 'Invite link enabled'); addNotification?.(linkEnabled ? 'Workspace invite link disabled' : 'Workspace invite link enabled'); }} />}
       {activeModal === 'manual' && <AddManuallyModal onClose={closeModal} onAdd={handleAddManually} />}
 
       {/* Toast */}
