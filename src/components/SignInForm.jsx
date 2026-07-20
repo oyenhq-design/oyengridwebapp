@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Globe, User, ChevronDown, Shield, ShieldCheck } from 'lucide-react';
 
-export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = [], setTeamMembers, programs = [] }) {
+export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = [], setTeamMembers, programs = [], invitations = [], setInvitations }) {
   // Step flow state: 'login' | 'verify-email' | 'create-account'
   const [flowStep, setFlowStep] = useState('login');
 
@@ -49,9 +49,15 @@ export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = 
       setIsLoading(false);
       // In Oyen Grid, facilitators or admins can login
       // Let's accept default admin or any valid team member credentials
+      // Or check temporary facilitator credentials
       const matchingMember = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
       
-      if (email === 'admin@oyengrid.com' && password !== 'password123') {
+      if (email.toLowerCase() === 'facilitator@oyengrid.test' && password === 'Oyen@1234') {
+        setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
+        if (onAuthSuccess) {
+          setTimeout(() => onAuthSuccess(email, 'Facilitator'), 1000);
+        }
+      } else if (email === 'admin@oyengrid.com' && password !== 'password123') {
         setStatusMessage({ 
           type: 'error', 
           text: 'Invalid credentials. Hint: use admin@oyengrid.com / password123' 
@@ -68,11 +74,34 @@ export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = 
 
   // Step 1: Verify Access Code
   const handleVerifyAccessCode = () => {
-    if (accessCode.trim() !== 'OYEN-FAC-2026') {
-      setErrors({ accessCode: 'Invalid organization access code.' });
+    if (!accessCode.trim()) {
+      setErrors({ accessCode: 'Access code is required' });
       return;
     }
+
+    const codeUpper = accessCode.trim().toUpperCase();
+    const invite = invitations.find(i => i.accessCode.toUpperCase() === codeUpper);
+
+    if (!invite) {
+      setErrors({ accessCode: 'Invalid organization access code' });
+      return;
+    }
+
+    if (invite.used) {
+      setErrors({ accessCode: 'This access code has already been used' });
+      return;
+    }
+
+    if (invite.expiresAt) {
+      const expiryDate = new Date(invite.expiresAt);
+      if (expiryDate < new Date()) {
+        setErrors({ accessCode: 'This facilitator invitation has expired' });
+        return;
+      }
+    }
+
     setErrors({});
+    setVerifiedEmail(invite.email);
     setFlowStep('verify-email');
   };
 
@@ -84,11 +113,12 @@ export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = 
       return;
     }
 
-    // Check if email has an invitation in wsTeam, or is listed in any program sessions
-    const hasInvite = teamMembers.some(m => m.email.toLowerCase() === verifiedEmail.toLowerCase()) || 
-                      programs.some(p => (p.sessions || []).some(s => s.facilitatorEmail?.toLowerCase() === verifiedEmail.toLowerCase()));
+    const invite = invitations.find(
+      i => i.email.toLowerCase() === verifiedEmail.toLowerCase() && 
+      i.accessCode.toUpperCase() === accessCode.trim().toUpperCase()
+    );
 
-    if (!hasInvite) {
+    if (!invite) {
       setErrors({ verifiedEmail: "We couldn't find a facilitator invitation for this email." });
       return;
     }
@@ -113,13 +143,21 @@ export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = 
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      
+      // Mark code as used
+      if (setInvitations) {
+        setInvitations(prev => prev.map(i => i.accessCode.toUpperCase() === accessCode.trim().toUpperCase() ? { ...i, used: true, status: 'Active' } : i));
+      }
+
       // Register facilitator in team list if not already there
       if (setTeamMembers) {
         setTeamMembers(prev => {
           if (prev.some(m => m.email.toLowerCase() === verifiedEmail.toLowerCase())) {
-            return prev.map(m => m.email.toLowerCase() === verifiedEmail.toLowerCase() ? { ...m, name: fullName, role: 'Facilitator' } : m);
+            return prev.map(m => m.email.toLowerCase() === verifiedEmail.toLowerCase() ? { ...m, name: fullName, role: 'Facilitator', status: 'Active' } : m);
           }
-          return [...prev, { name: fullName, email: verifiedEmail, role: 'Facilitator' }];
+          const parts = fullName.split(' ');
+          const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
+          return [...prev, { name: fullName, email: verifiedEmail, role: 'Facilitator', status: 'Active', initials, color: '#0284c7' }];
         });
       }
 

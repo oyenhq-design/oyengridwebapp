@@ -92,6 +92,19 @@ export default function App() {
     { initials: 'NK', color: '#b45309', name: 'Ngozi Kalu',                   email: 'ngozi.kalu@abcenergy.com',      role: 'Viewer',             status: 'Pending', joined: 'May 22, 2025' },
   ]);
 
+  const [wsInvitations, setWsInvitations] = useState([
+    {
+      name: 'Test Facilitator',
+      email: 'facilitator@oyengrid.test',
+      accessCode: 'OYEN-FAC-7K4M9Q',
+      role: 'Facilitator',
+      status: 'Pending',
+      used: false,
+      invitedAt: '19 Jul 2026',
+      expiresAt: '27 Jul 2026'
+    }
+  ]);
+
   // AI Assistant Chat Mock
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiResponses, setAiResponses] = useState([
@@ -2397,6 +2410,8 @@ export default function App() {
               <TeamManagement
                 members={wsTeam}
                 setMembers={setWsTeam}
+                pending={wsInvitations}
+                setPending={setWsInvitations}
                 addNotification={addNotification}
                 onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))}
               />
@@ -3397,6 +3412,8 @@ export default function App() {
               teamMembers={wsTeam}
               setTeamMembers={setWsTeam}
               programs={wsPrograms}
+              invitations={wsInvitations}
+              setInvitations={setWsInvitations}
             />
           )}
 

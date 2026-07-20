@@ -393,8 +393,11 @@ function Toast({ message, type = 'success', onDismiss }) {
 /* ═══════════════════════════════════════════
    Main TeamManagement export
 ═══════════════════════════════════════════ */
-export default function TeamManagement({ members, setMembers, addNotification, onNavigateHome }) {
-  const [pending,     setPending]     = useState([]);
+export default function TeamManagement({ members, setMembers, pending: propsPending, setPending: propsSetPending, addNotification, onNavigateHome }) {
+  const [localPending, setLocalPending] = useState([]);
+  const pending = propsPending || localPending;
+  const setPending = propsSetPending || setLocalPending;
+
   const [activeModal, setActiveModal] = useState(null);
   const [toast,       setToast]       = useState(null);
   const [inviteLink,  setInviteLink]  = useState('https://oyengrid.com/join/abc123');
@@ -403,6 +406,15 @@ export default function TeamManagement({ members, setMembers, addNotification, o
   const closeModal = useCallback(() => setActiveModal(null), []);
   const showToast  = useCallback((message, type = 'success') => setToast({ message, type }), []);
 
+  const generateAccessCode = () => {
+    const chars = '0123456789ABCDEFGHJKLMNOPQRSTUVWXYZ';
+    let code = 'OYEN-FAC-';
+    for (let i = 0; i < 6; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return code;
+  };
+
   /* Invite by email */
   const handleInviteEmail = ({ email, role }) => {
     const initials = email.slice(0, 2).toUpperCase();
@@ -410,9 +422,10 @@ export default function TeamManagement({ members, setMembers, addNotification, o
     const today    = new Date();
     const expires  = new Date(today.getTime() + 7 * 86400000);
     const fmt      = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    setPending(prev => [...prev, { email, role, initials, color, invitedAt: fmt(today), expiresAt: fmt(expires), status: 'Pending' }]);
+    const code     = generateAccessCode();
+    setPending(prev => [...prev, { email, role, initials, color, invitedAt: fmt(today), expiresAt: fmt(expires), status: 'Pending', accessCode: code, used: false }]);
     showToast(`Invitation sent to ${email}`);
-    addNotification?.(`Invitation sent to ${email} as ${role}`);
+    addNotification?.(`Invitation sent to ${email} as ${role}. Code: ${code}`);
   };
 
   /* Add manually */
@@ -423,9 +436,10 @@ export default function TeamManagement({ members, setMembers, addNotification, o
     const today    = new Date();
     const expires  = new Date(today.getTime() + 7 * 86400000);
     const fmt      = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    setPending(prev => [...prev, { name, email, role, initials, color, invitedAt: fmt(today), expiresAt: fmt(expires), status: 'Pending' }]);
+    const code     = generateAccessCode();
+    setPending(prev => [...prev, { name, email, role, initials, color, invitedAt: fmt(today), expiresAt: fmt(expires), status: 'Pending', accessCode: code, used: false }]);
     showToast(`Invitation sent to ${name}`);
-    addNotification?.(`Team member ${name} added (${email})`);
+    addNotification?.(`Team member ${name} added (${email}). Code: ${code}`);
   };
 
   /* Regenerate link */
@@ -568,7 +582,12 @@ export default function TeamManagement({ members, setMembers, addNotification, o
                   <span style={{ color: p.name ? '#fff' : 'rgba(255,255,255,0.55)', fontWeight: 600 }}>{p.name || p.email}</span>
                   <span style={{ fontSize: '0.62rem', backgroundColor: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '4px', padding: '0.05rem 0.3rem', fontWeight: 700 }}>Invited</span>
                 </div>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>{p.email}</span>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>{p.email}</span>
+                  {p.accessCode && (
+                    <span style={{ color: '#D4AF37', fontSize: '0.72rem', fontWeight: 600 }}>Code: {p.accessCode}</span>
+                  )}
+                </div>
                 <span style={{ backgroundColor: `${ROLE_COLORS[p.role] ?? '#888'}18`, color: ROLE_COLORS[p.role] ?? '#888', border: `1px solid ${ROLE_COLORS[p.role] ?? '#888'}40`, borderRadius: '5px', padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 700, display: 'inline-block' }}>{p.role}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#D4AF37', fontSize: '0.78rem', fontWeight: 600 }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D4AF37' }} />Pending
