@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Building2, Users, HardDrive, Bell, CreditCard, Shield, Trash2, 
-  UserPlus, ShieldAlert, Key, LogOut, Check, AlertTriangle, Image, Eye
+  UserPlus, ShieldAlert, Key, AlertTriangle, Image
 } from 'lucide-react';
 
 export default function SettingsTab({ 
@@ -12,8 +12,7 @@ export default function SettingsTab({
   addNotification,
   organizationName = 'ABC ENERGY',
   setOrganizationName,
-  onInviteTeamClick,
-  onLogout
+  onInviteTeamClick
 }) {
   const [activeSection, setActiveSection] = useState('Organization');
 
@@ -214,8 +213,12 @@ export default function SettingsTab({
               <div>
                 <label style={labelStyle}>Organization Logo</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: '8px', backgroundColor: '#0A0A0A', border: `1px solid ${themeBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)' }}>
-                    <Image size={24} />
+                  <div style={{ width: '60px', height: '60px', borderRadius: '8px', backgroundColor: '#0A0A0A', border: `1px solid ${themeBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', overflow: 'hidden' }}>
+                    {orgLogo ? (
+                      <img src={orgLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Image size={24} />
+                    )}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <input 

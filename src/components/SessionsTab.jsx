@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  BookOpen, Users, Calendar, Plus, X, ChevronDown, Video, FileText, CheckCircle2,
-  Circle, ArrowRight, ArrowLeft, MoreHorizontal, MoreVertical, Edit, Download, Clock, Info, ExternalLink, Play, Trash2
+  Calendar, Plus, X, ChevronDown, Video, FileText, CheckCircle2,
+  ArrowRight, ArrowLeft, MoreVertical, Edit, Download, Clock, ExternalLink, Play, Trash2
 } from 'lucide-react';
 
 /* ── Shared styles ── */

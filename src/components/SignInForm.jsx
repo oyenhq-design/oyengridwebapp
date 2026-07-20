@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Globe, User, ChevronDown, Shield, ShieldCheck } from 'lucide-react';
 
-export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = [], setTeamMembers, programs = [], invitations = [], setInvitations }) {
+export default function SignInForm({ onSwitchForm, onAuthSuccess, teamMembers = [], setTeamMembers, invitations = [], setInvitations }) {
   // Step flow state: 'login' | 'verify-email' | 'create-account'
   const [flowStep, setFlowStep] = useState('login');
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Building2, Phone, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { User, Mail, Building2, Phone, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function PublicEventForm({ onSwitchForm }) {
   const [fullName, setFullName] = useState('');

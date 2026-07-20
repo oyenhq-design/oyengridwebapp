@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Globe, Mail, Phone, ShieldCheck, ArrowRight, ArrowLeft, Lock, FileText, Users, User, Check, Copy } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, ShieldCheck, ArrowRight, ArrowLeft, Lock, Users, User, Check, Copy } from 'lucide-react';
 
 export default function OrgRegistrationForm({ onSwitchForm, onComplete }) {
   const [step, setStep] = useState(1);

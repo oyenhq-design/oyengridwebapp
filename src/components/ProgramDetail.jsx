@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ArrowLeft, Users, Calendar, FileText, ClipboardList,
-  CheckCircle2, Circle, Activity
+  CheckCircle2, Circle
 } from 'lucide-react';
 
 export default function ProgramDetail({ program, programLearners = [], onBack }) {
@@ -14,7 +14,6 @@ export default function ProgramDetail({ program, programLearners = [], onBack })
   const resourceCount   = programResourceCount + sessionResourceCount;
   const assessmentCount = (program.assessments || []).length;
   const learnerCount    = programLearners.length;
-  const activityLog     = program.activity || [];
 
   const hasLearners     = learnerCount > 0;
   const hasSession      = sessionCount > 0;

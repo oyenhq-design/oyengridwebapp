@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Users, HardDrive, Plus, Play, X, ArrowRight, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { BookOpen, Plus, Play, X, ArrowRight, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import ProgramDetail from './ProgramDetail';
 
 const PROGRAM_LIMIT = 3;
@@ -70,34 +70,6 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
   /* Live learner count per program */
   const getLearnerCount = (progName) =>
     learners.filter(l => l.program === progName).length;
-
-  const totalLearners = learners.length;
-
-  /* Live workspace-wide storage calculation */
-  const calculateTotalStorage = () => {
-    let totalBytes = 0;
-    programs.forEach(p => {
-      // Sum program-wide resources
-      (p.resources || []).forEach(r => {
-        totalBytes += r.sizeInBytes || 0;
-      });
-      // Sum session-specific resources
-      (p.sessions || []).forEach(s => {
-        (s.resources || []).forEach(sr => {
-          totalBytes += sr.sizeInBytes || 0;
-        });
-      });
-    });
-
-    if (totalBytes === 0) return '0.00 MB / 10 GB';
-    const GB = 1024 * 1024 * 1024;
-    const MB = 1024 * 1024;
-    if (totalBytes >= GB) {
-      return `${(totalBytes / GB).toFixed(2)} GB / 10 GB`;
-    } else {
-      return `${(totalBytes / MB).toFixed(2)} MB / 10 GB`;
-    }
-  };
 
   /* ── If a program is selected, show its detail view ── */
   const selectedProgram = programs.find(p => p.id === selectedProgramId);

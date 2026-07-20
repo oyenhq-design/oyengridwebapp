@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Sun, Moon, Grid, ShieldCheck, LogOut, LayoutDashboard, Users, BookOpen, 
-  MessageSquare, BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
-  Lock, CheckCircle2, AlertCircle, ShoppingBag, Sparkles, Play, HelpCircle, 
-  Layers, Landmark, Calendar, Award, RefreshCw, FileSpreadsheet, ShieldAlert,
-  ArrowRight, ArrowLeft, Plus, Check, Ticket, UserPlus, ClipboardList, Laptop,
+  Sun, Moon, Grid, ShieldCheck, LogOut, Users, BookOpen, 
+  BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
+  Lock, CheckCircle2, Sparkles, 
+  Calendar, Award, 
+  ArrowRight, Check, UserPlus, 
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
-  Shield, Rocket, FileText, Mail, Link2, HardDrive
+  Shield, Rocket, FileText, Mail, HardDrive
 } from 'lucide-react';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
@@ -44,11 +44,9 @@ export default function App() {
 
   // Onboarding wizard internal step
   const [onboardingStep, setOnboardingStep] = useState(1);
-  const [firstProgramName, setFirstProgramName] = useState('');
   const [invitedTeamEmail, setInvitedTeamEmail] = useState('');
   const [invitedTeamRole, setInvitedTeamRole] = useState('Programme Manager');
   // Simulation & Verification inputs
-  const [simulateStatus, setSimulateStatus] = useState('Found'); // 'Found' | 'Not Found'
   const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
   const [verifyOrgEmailInput, setVerifyOrgEmailInput] = useState('');
   const [verifyError, setVerifyError] = useState('');
@@ -77,9 +75,7 @@ export default function App() {
   const [isAuthorizedOwner, setIsAuthorizedOwner] = useState(false);
   const [ownerPhoto, setOwnerPhoto] = useState(null); // Base64 or object URL of the owner's profile photo
 
-  // Dashboard state
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [lockedTabTarget, setLockedTabTarget] = useState(null);
 
   // Shared workspace data — lifted so Programs + Learners stay in sync
   const [wsPrograms, setWsPrograms] = useState([]);
@@ -106,10 +102,7 @@ export default function App() {
   ]);
 
   // AI Assistant Chat Mock
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiResponses, setAiResponses] = useState([
-    { role: 'assistant', text: 'Welcome to OYEN GRID AI Workspace. How can I assist you with your organization today?' }
-  ]);
+
 
   const canvasRef = useRef(null);
 
@@ -147,7 +140,7 @@ export default function App() {
     };
   }, []);
 
-  const [showProfileModal, setShowProfileModal] = useState(false);
+
 
   const getLoggedInUserInfo = () => {
     if (!user) {
@@ -467,7 +460,6 @@ export default function App() {
       setUserRole(role);
       setActiveRoute('dashboard');
       setActiveTab('Dashboard');
-      setLockedTabTarget(null);
     });
   };
 
@@ -500,7 +492,6 @@ export default function App() {
       // Switch active template depending on role or default
       setActiveRoute('dashboard');
       setActiveTab('Dashboard');
-      setLockedTabTarget(null);
     });
   };
 
@@ -529,156 +520,7 @@ export default function App() {
     }, delay);
   };
 
-  // Switch Templates from settings/billing easily for user testing
-  const switchActiveTemplate = (tempId) => {
-    triggerTransition(() => {
-      setActiveTemplate(tempId);
-      setActiveTab('Dashboard');
-      setLockedTabTarget(null);
-    });
-  };
 
-  // Toggle Template Subscription Status inside Marketplace/Billing
-  const toggleTemplateSubscription = (tempId) => {
-    triggerTransition(() => {
-      const nextState = !enabledTemplates[tempId];
-      setEnabledTemplates({
-        ...enabledTemplates,
-        [tempId]: nextState
-      });
-      if (nextState) {
-        setActiveTemplate(tempId);
-        setActiveTab('Dashboard');
-        setLockedTabTarget(null);
-      }
-    });
-  };
-
-  const getWorkspaceModules = () => {
-    const modules = [
-      { id: 'Dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, enabled: true }
-    ];
-
-    if (activeTemplate === 'enterprise') {
-      modules.push(
-        { id: 'Employees', label: 'Employees', icon: <Users size={18} />, enabled: true },
-        { id: 'Departments', label: 'Departments', icon: <Layers size={18} />, enabled: true },
-        { id: 'Programs', label: 'Programs', icon: <BookOpen size={18} />, enabled: true },
-        { id: 'Compliance', label: 'Compliance', icon: <ShieldAlert size={18} />, enabled: true },
-        { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} />, enabled: true }
-      );
-    } else if (activeTemplate === 'bootcamp') {
-      modules.push(
-        { id: 'Cohorts', label: 'Cohorts', icon: <Layers size={18} />, enabled: true },
-        { id: 'Mentors', label: 'Mentors', icon: <Users size={18} />, enabled: true },
-        { id: 'Programs', label: 'Programs', icon: <BookOpen size={18} />, enabled: true },
-        { id: 'Attendance', label: 'Attendance', icon: <CheckCircle2 size={18} />, enabled: true },
-        { id: 'Certificates', label: 'Certificates', icon: <Award size={18} />, enabled: true }
-      );
-    } else if (activeTemplate === 'education') {
-      modules.push(
-        { id: 'Students', label: 'Students', icon: <Users size={18} />, enabled: true },
-        { id: 'Courses', label: 'Courses', icon: <BookOpen size={18} />, enabled: true },
-        { id: 'Faculties', label: 'Faculties', icon: <Landmark size={18} />, enabled: true },
-        { id: 'Semesters', label: 'Semesters', icon: <Calendar size={18} />, enabled: true },
-        { id: 'Results', label: 'Results', icon: <FileSpreadsheet size={18} />, enabled: true }
-      );
-    } else if (activeTemplate === 'events') {
-      modules.push(
-        { id: 'Speakers', label: 'Speakers', icon: <Users size={18} />, enabled: true },
-        { id: 'Sessions', label: 'Sessions', icon: <Layers size={18} />, enabled: true },
-        { id: 'Registration', label: 'Registration', icon: <ClipboardList size={18} />, enabled: true },
-        { id: 'Check-in', label: 'Check-in', icon: <Ticket size={18} />, enabled: true },
-        { id: 'Certificates', label: 'Certificates', icon: <Award size={18} />, enabled: true }
-      );
-    }
-
-    // Append platform level modules
-    modules.push(
-      { id: 'AI Workspace', label: 'AI Workspace', icon: <BrainCircuit size={18} />, enabled: true },
-      { id: 'Marketplace', label: 'Marketplace', icon: <ShoppingBag size={18} />, enabled: true },
-      { id: 'Billing & Settings', label: 'Billing & Settings', icon: <Settings size={18} />, enabled: true }
-    );
-
-    const allTemplates = [
-      { id: 'enterprise', label: 'Enterprise Operations', icon: <Building2 size={18} /> },
-      { id: 'bootcamp', label: 'Bootcamp Workspace', icon: <Laptop size={18} /> },
-      { id: 'education', label: 'Education Workspace', icon: <BookOpen size={18} /> },
-      { id: 'events', label: 'Events & Conferences', icon: <Calendar size={18} /> }
-    ];
-
-    allTemplates.forEach(t => {
-      if (!enabledTemplates[t.id]) {
-        modules.push({ id: `lock-${t.id}`, label: t.label, icon: t.icon, enabled: false, targetTemplate: t.id });
-      }
-    });
-
-    return modules;
-  };
-
-  const getAiSuggestions = () => {
-    if (activeTemplate === 'enterprise') {
-      return [
-        'Generate compliance training report',
-        'Outline department skill gaps policy',
-        'Draft corporate code of conduct'
-      ];
-    } else if (activeTemplate === 'bootcamp') {
-      return [
-        'Create a 12-week software engineering bootcamp',
-        'Generate Week 4 technical timetable schedule',
-        'Draft graduation certificate templates'
-      ];
-    } else if (activeTemplate === 'education') {
-      return [
-        'Generate semester course grading thresholds',
-        'Outline student faculty allocation guidelines',
-        'Compile results grade spreadsheet template'
-      ];
-    } else if (activeTemplate === 'events') {
-      return [
-        'Generate masterclass speaker session templates',
-        'Draft check-in confirmation correspondence',
-        'Outline virtual webinar agendas'
-      ];
-    }
-    return [];
-  };
-
-  const handleAiSubmit = (e) => {
-    e.preventDefault();
-    if (!aiPrompt.trim()) return;
-
-    const userText = aiPrompt;
-    setAiPrompt('');
-    setAiResponses(prev => [...prev, { role: 'user', text: userText }]);
-
-    setTimeout(() => {
-      let responseText = '';
-      if (activeTemplate === 'bootcamp') {
-        responseText = `Based on your Bootcamp Workspace, I have drafted the technical curriculum timeline. This template designates cohorts, mentors, curriculum content modules, and check-in attendance slots.`;
-      } else if (activeTemplate === 'enterprise') {
-        responseText = `I have compiled the compliance checkups report. This tags active employee records and flags any compliance gaps inside departments.`;
-      } else if (activeTemplate === 'education') {
-        responseText = `For your Education Workspace, I have mapped out course schedules across active Semesters. Let me know if you would like me to output this into student gradebook indexes.`;
-      } else {
-        responseText = `I have structured your virtual events session check-in logs. Confirmation links have been created for attendees.`;
-      }
-      setAiResponses(prev => [...prev, { role: 'assistant', text: responseText }]);
-    }, 1000);
-  };
-
-  const handleModuleClick = (mod) => {
-    triggerTransition(() => {
-      if (mod.enabled) {
-        setActiveTab(mod.id);
-        setLockedTabTarget(null);
-      } else {
-        setLockedTabTarget(mod.targetTemplate);
-        setActiveTab(`locked-${mod.targetTemplate}`);
-      }
-    });
-  };
 
   const generateInviteLink = () => {
     if (!invitedTeamEmail.trim()) return;
@@ -3481,7 +3323,7 @@ export default function App() {
   );
 }
 
-function ProfileTab({ currentUser, info, onSaveName, addNotification }) {
+function ProfileTab({ info, onSaveName, addNotification }) {
   const [name, setName] = useState(info.fullName);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

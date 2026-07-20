@@ -66,11 +66,9 @@ const labelStyle = {
 ════════════════════════════════════════════════════════════ */
 export default function LearnersTab({
   programs = [],
-  setPrograms,
   learners = [],
   setLearners,
   addNotification,
-  onNavigateToPrograms,
   userRole,
 }) {
   const [search, setSearch]             = useState('');

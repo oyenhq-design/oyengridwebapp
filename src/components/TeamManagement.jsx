@@ -18,13 +18,7 @@ const ROLE_COLORS = {
 
 const STATUS_COLOR = { Active: '#22c55e', Pending: '#D4AF37', Declined: '#ef4444', Suspended: '#6b7280' };
 
-const INITIAL_MEMBERS = [
-  { initials: 'JD', color: '#D4AF37', name: 'John Doe',        isYou: true, email: 'john.doe@abcenergy.com',        role: 'Organization Owner', status: 'Active',  joined: 'May 22, 2025' },
-  { initials: 'SA', color: '#7c3aed', name: 'Sarah Ahmed',                  email: 'sarah.ahmed@abcenergy.com',     role: 'Admin',              status: 'Active',  joined: 'May 21, 2025' },
-  { initials: 'MI', color: '#16a34a', name: 'Michael Ibrahim',              email: 'michael.ibrahim@abcenergy.com', role: 'Program Manager',    status: 'Active',  joined: 'May 20, 2025' },
-  { initials: 'FA', color: '#0284c7', name: 'Fatima Aliyu',                 email: 'fatima.aliyu@abcenergy.com',    role: 'Facilitator',        status: 'Active',  joined: 'May 18, 2025' },
-  { initials: 'NK', color: '#b45309', name: 'Ngozi Kalu',                   email: 'ngozi.kalu@abcenergy.com',      role: 'Viewer',             status: 'Pending', joined: 'May 22, 2025' },
-];
+
 
 const MEMBER_COLORS = ['#7c3aed','#0f766e','#b45309','#0284c7','#16a34a','#dc2626','#0369a1'];
 
@@ -393,7 +387,7 @@ function Toast({ message, type = 'success', onDismiss }) {
 /* ═══════════════════════════════════════════
    Main TeamManagement export
 ═══════════════════════════════════════════ */
-export default function TeamManagement({ members, setMembers, pending: propsPending, setPending: propsSetPending, addNotification, onNavigateHome }) {
+export default function TeamManagement({ members, pending: propsPending, setPending: propsSetPending, addNotification, onNavigateHome }) {
   const [localPending, setLocalPending] = useState([]);
   const pending = propsPending || localPending;
   const setPending = propsSetPending || setLocalPending;

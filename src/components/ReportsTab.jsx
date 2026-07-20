@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  BarChart3, Users, BookOpen, Calendar, Percent, ArrowLeft, ArrowUpRight, 
-  Download, FileSpreadsheet, Search, CheckCircle2, AlertTriangle, ShieldAlert,
-  Settings, Play, FileText, Activity, HelpCircle, ChevronRight, X, TrendingUp
+  Users, BookOpen, Calendar, Percent, ArrowLeft, ArrowUpRight, 
+  Download, AlertTriangle, FileText, X, TrendingUp
 } from 'lucide-react';
 
 export default function ReportsTab({ programs = [], learners = [] }) {
