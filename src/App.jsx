@@ -104,11 +104,79 @@ export default function App() {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'Sarah Ahmed accepted your team invitation', time: '2 minutes ago', read: false },
     { id: 2, text: 'New program created', time: 'Today', read: false },
     { id: 3, text: 'Your weekly program report is ready', time: 'Yesterday', read: false }
   ]);
+
+  useEffect(() => {
+    const handleCloseDropdowns = (e) => {
+      if (e.key === 'Escape') {
+        setShowProfileDropdown(false);
+        setShowNotifications(false);
+      }
+    };
+    
+    const handleClickOutside = (e) => {
+      const trigger = document.getElementById('user-profile-trigger');
+      if (trigger && !trigger.contains(e.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleCloseDropdowns);
+    window.addEventListener('click', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleCloseDropdowns);
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const getLoggedInUserInfo = () => {
+    if (!user) {
+      return {
+        fullName: 'Guest User',
+        initials: 'GU',
+        role: 'Guest',
+        email: '',
+        photo: null
+      };
+    }
+    if (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com') {
+      return {
+        fullName: `${ownerFirstName} ${ownerLastName}`,
+        initials: `${ownerFirstName?.[0] || 'J'}${ownerLastName?.[0] || 'D'}`,
+        role: userRole || 'Organization Owner',
+        email: user,
+        photo: ownerPhoto
+      };
+    }
+    const member = wsTeam.find(m => m.email?.toLowerCase() === user?.toLowerCase());
+    if (member) {
+      const names = (member.name || '').split(' ');
+      const init = names.length >= 2 
+        ? `${names[0]?.[0] || ''}${names[1]?.[0] || ''}` 
+        : `${names[0]?.[0] || ''}${names[0]?.[1] || ''}`;
+      return {
+        fullName: member.name || user,
+        initials: init.toUpperCase() || 'U',
+        role: member.role || userRole || 'Team Member',
+        email: user,
+        photo: null
+      };
+    }
+    return {
+      fullName: user.split('@')[0],
+      initials: (user?.[0] || 'U').toUpperCase(),
+      role: userRole || 'Workspace Facilitator',
+      email: user,
+      photo: null
+    };
+  };
 
   // Helper to push a notification globally
   const addNotification = (text) => {
@@ -1755,28 +1823,122 @@ export default function App() {
             </div>
 
             {/* User profile dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '1.5rem' }}>
-              {ownerPhoto ? (
-                <img
-                  src={ownerPhoto}
-                  alt={`${ownerFirstName} ${ownerLastName}`}
-                  style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(212,175,55,0.3)' }}
-                />
-              ) : (
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '50%',
-                  backgroundColor: '#D4AF37', color: '#000',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 700, fontSize: '0.85rem', flexShrink: 0
-                }}>
-                  {`${ownerFirstName?.[0] || 'J'}${ownerLastName?.[0] || 'D'}`}
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff' }}>{ownerFirstName} {ownerLastName}</span>
-                <span style={{ fontSize: '0.7rem', color: '#D4AF37' }}>Organization Owner</span>
-              </div>
-              <ChevronDown size={14} color="#718096" />
+            <div 
+              id="user-profile-trigger"
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.75rem', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '1.5rem', cursor: 'pointer', userSelect: 'none' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileDropdown(!showProfileDropdown);
+              }}
+            >
+              {(() => {
+                const info = getLoggedInUserInfo();
+                return (
+                  <>
+                    {info.photo ? (
+                      <img
+                        src={info.photo}
+                        alt={info.fullName}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(245,215,110,0.3)' }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '36px', height: '36px', borderRadius: '50%',
+                        backgroundColor: '#F5D76E', color: '#000',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700, fontSize: '0.85rem', flexShrink: 0
+                      }}>
+                        {info.initials}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ffffff' }}>{info.fullName}</span>
+                      <span style={{ fontSize: '0.7rem', color: '#F5D76E' }}>{info.role}</span>
+                    </div>
+                    <ChevronDown size={14} color="#718096" />
+
+                    {/* Profile Dropdown Menu */}
+                    {showProfileDropdown && (
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          position: 'absolute',
+                          top: '48px',
+                          right: 0,
+                          width: '220px',
+                          backgroundColor: '#111111',
+                          border: '1px solid #1F1F1F',
+                          borderRadius: '8px',
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                          padding: '0.75rem 0',
+                          zIndex: 1000,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div style={{ padding: '0.5rem 1rem 0.75rem 1rem', borderBottom: '1px solid #1F1F1F' }}>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{info.fullName}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{info.email}</div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false);
+                            setShowProfileModal(true);
+                          }}
+                          style={{
+                            background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)',
+                            padding: '0.6rem 1rem', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: '0.5rem', textAlign: 'left',
+                            width: '100%'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          Profile
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false);
+                            alert("OYEN GRID Support desk simulation. For assistant, contact support@oyengrid.com.");
+                          }}
+                          style={{
+                            background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)',
+                            padding: '0.6rem 1rem', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: '0.5rem', textAlign: 'left',
+                            width: '100%'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          Help & Support
+                        </button>
+
+                        <div style={{ height: '1px', backgroundColor: '#1F1F1F', margin: '0.4rem 0' }} />
+
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false);
+                            handleLogOut();
+                          }}
+                          style={{
+                            background: 'none', border: 'none', color: '#ef4444',
+                            padding: '0.6rem 1rem', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: '0.5rem', textAlign: 'left',
+                            width: '100%'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.05)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <LogOut size={13} /> Sign out
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </header>
@@ -3258,9 +3420,107 @@ export default function App() {
             />
           )}
 
+          {showProfileModal && (() => {
+            const info = getLoggedInUserInfo();
+            return (
+              <ProfileModal 
+                info={info} 
+                onClose={() => setShowProfileModal(false)} 
+                onSave={(newName, newPhoto) => {
+                  if (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com') {
+                    const parts = newName.trim().split(' ');
+                    setOwnerFirstName(parts[0] || '');
+                    setOwnerLastName(parts.slice(1).join(' ') || '');
+                    if (newPhoto) setOwnerPhoto(newPhoto);
+                  } else {
+                    setWsTeam(prev => prev.map(m => m.email.toLowerCase() === user.toLowerCase() ? { ...m, name: newName } : m));
+                  }
+                  addNotification('Profile updated successfully');
+                  setShowProfileModal(false);
+                }}
+              />
+            );
+          })()}
 
         </div>
       </main>
+    </div>
+  );
+}
+
+function ProfileModal({ info, onClose, onSave }) {
+  const [name, setName] = useState(info.fullName);
+  const [photo, setPhoto] = useState(info.photo || '');
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)', display: 'flex',
+      alignItems: 'center', justifyContent: 'center', zIndex: 2000
+    }} onClick={onClose}>
+      <div style={{
+        backgroundColor: '#111111', border: '1px solid #1F1F1F',
+        borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '400px',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.6)', textAlign: 'left'
+      }} onClick={e => e.stopPropagation()}>
+        
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: '0 0 1rem 0', fontFamily: "'Outfit', sans-serif" }}>Edit Profile</h3>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {photo ? (
+              <img src={photo} alt={name} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #F5D76E' }} />
+            ) : (
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#F5D76E', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.3rem' }}>
+                {info.initials}
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <label style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Profile Image</label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={e => {
+                  if (e.target.files?.[0]) {
+                    setPhoto(URL.createObjectURL(e.target.files[0]));
+                  }
+                }}
+                style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Full Name</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              style={{ width: '100%', padding: '0.7rem 0.9rem', backgroundColor: '#0A0A0A', border: '1px solid #1F1F1F', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+              required 
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Email Address</label>
+            <input 
+              type="email" 
+              value={info.email} 
+              style={{ width: '100%', padding: '0.7rem 0.9rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F1F1F', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
+              readOnly 
+            />
+            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.25rem', display: 'block' }}>Email address cannot be changed.</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid #1F1F1F', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
+            <button type="button" onClick={() => onSave(name, photo)} style={{ flex: 1.5, padding: '0.7rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>Save Changes</button>
+          </div>
+
+        </div>
+
+      </div>
     </div>
   );
 }
