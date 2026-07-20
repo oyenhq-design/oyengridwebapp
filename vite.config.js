@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
                   }
                   const data = JSON.parse(body);
                   console.log('Parsed request body data:', data);
-                  const apiKey = env.RESEND_API_KEY || process.env.RESEND_API_KEY;
+                  const apiKey = env.RESEND_API_KEY || process.env.RESEND_API_KEY || 're_azNFdLrr_LimeNnz9M4dFDHEQ5SmfJLWF';
                   if (!apiKey) {
                     console.error('RESEND_API_KEY is missing');
                     res.statusCode = 500;

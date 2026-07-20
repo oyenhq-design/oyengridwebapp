@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   try {
     const data = req.body;
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = process.env.RESEND_API_KEY || 're_azNFdLrr_LimeNnz9M4dFDHEQ5SmfJLWF';
     
     if (!apiKey) {
       res.statusCode = 500;
