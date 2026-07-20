@@ -2428,7 +2428,7 @@ export default function App() {
                 addNotification={addNotification}
                 onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))}
               />
-            ) : (activeTab === 'Programmes' || activeTab === 'My Programs') ? (
+            ) : (activeTab === 'Programmes' || activeTab === 'Programs' || activeTab === 'My Programs') ? (
               /* Programmes Tab Component */
               <ProgramsTab
                 programs={displayPrograms}
