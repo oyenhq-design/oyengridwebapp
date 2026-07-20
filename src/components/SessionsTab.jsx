@@ -671,19 +671,13 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                     onChange={e => setSessionForm(p => ({ ...p, title: e.target.value }))} style={inputStyle} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label style={labelStyle}>Session Type</label>
-                    <div style={{ position: 'relative' }}>
-                      <select value={sessionForm.type} onChange={e => setSessionForm(p => ({ ...p, type: e.target.value }))} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                        {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
-                      </select>
-                      <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Trainer Name</label>
-                    <input type="text" value={sessionForm.trainer} onChange={e => setSessionForm(p => ({ ...p, trainer: e.target.value }))} style={inputStyle} />
+                <div>
+                  <label style={labelStyle}>Session Type</label>
+                  <div style={{ position: 'relative' }}>
+                    <select value={sessionForm.type} onChange={e => setSessionForm(p => ({ ...p, type: e.target.value }))} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                      {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
+                    </select>
+                    <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
                   </div>
                 </div>
 
@@ -762,19 +756,13 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                     onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} style={inputStyle} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label style={labelStyle}>Session Type</label>
-                    <div style={{ position: 'relative' }}>
-                      <select value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                        {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
-                      </select>
-                      <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Trainer Name</label>
-                    <input type="text" value={editForm.trainer} onChange={e => setEditForm(p => ({ ...p, trainer: e.target.value }))} style={inputStyle} />
+                <div>
+                  <label style={labelStyle}>Session Type</label>
+                  <div style={{ position: 'relative' }}>
+                    <select value={editForm.type} onChange={e => setEditForm(p => ({ ...p, type: e.target.value }))} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                      {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
+                    </select>
+                    <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
                   </div>
                 </div>
 
