@@ -387,15 +387,16 @@ function Toast({ message, type = 'success', onDismiss }) {
 /* ═══════════════════════════════════════════
    Main TeamManagement export
 ═══════════════════════════════════════════ */
-export default function TeamManagement({ members, pending: propsPending, setPending: propsSetPending, addNotification, onNavigateHome }) {
+export default function TeamManagement({ members, setMembers, pending: propsPending, setPending: propsSetPending, addNotification, onNavigateHome }) {
   const [localPending, setLocalPending] = useState([]);
   const pending = propsPending || localPending;
   const setPending = propsSetPending || setLocalPending;
 
   const [activeModal, setActiveModal] = useState(null);
   const [toast,       setToast]       = useState(null);
-  const [inviteLink,  setInviteLink]  = useState('https://oyengrid.com/join/abc123');
+  const [inviteLink,  setInviteLink]  = useState(`${window.location.origin}/?code=EMP-${Math.floor(10000 + Math.random() * 90000)}`);
   const [linkEnabled, setLinkEnabled] = useState(true);
+  const [activeActionMenu, setActiveActionMenu] = useState(null); // { type: 'active' | 'pending', index: number }
 
   const closeModal = useCallback(() => setActiveModal(null), []);
   const showToast  = useCallback((message, type = 'success') => setToast({ message, type }), []);
@@ -409,21 +410,82 @@ export default function TeamManagement({ members, pending: propsPending, setPend
     return code;
   };
 
-  /* Invite by email */
-  const handleInviteEmail = ({ email, role }) => {
-    const initials = email.slice(0, 2).toUpperCase();
-    const color    = MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
-    const today    = new Date();
-    const expires  = new Date(today.getTime() + 7 * 86400000);
-    const fmt      = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const code     = generateAccessCode();
-    setPending(prev => [...prev, { email, role, initials, color, invitedAt: fmt(today), expiresAt: fmt(expires), status: 'Pending', accessCode: code, used: false }]);
-    showToast(`Invitation sent to ${email}`);
-    addNotification?.(`Invitation sent to ${email} as ${role}. Code: ${code}`);
+  /* Invite by email (Resend Server Integration) */
+  const handleInviteEmail = async ({ email, role }) => {
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      showToast('Invalid email address', 'error');
+      return;
+    }
+
+    const isDuplicate = pending.some(p => p.email?.toLowerCase() === email.toLowerCase());
+    if (isDuplicate) {
+      showToast('A pending invitation already exists for this email', 'error');
+      return;
+    }
+
+    const code = generateAccessCode();
+    const finalInviteLink = `${window.location.origin}/?code=${code}&email=${encodeURIComponent(email)}`;
+
+    showToast('Sending invitation email...', 'info');
+
+    try {
+      const response = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          role,
+          orgName: 'ABC Energy',
+          orgId: 'ORG-43A81Q',
+          inviteCode: code,
+          inviteLink: finalInviteLink
+        })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        const initials = email.slice(0, 2).toUpperCase();
+        const color    = MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
+        const today    = new Date();
+        const expires  = new Date(today.getTime() + 7 * 86400000);
+        const fmt      = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        setPending(prev => [...prev, { 
+          email, 
+          role, 
+          initials, 
+          color, 
+          invitedAt: fmt(today), 
+          expiresAt: fmt(expires), 
+          status: 'Pending', 
+          accessCode: code, 
+          used: false 
+        }]);
+
+        showToast(`Invitation sent successfully to ${email}`);
+        addNotification?.(`Invitation sent to ${email} as ${role}. Code: ${code}`);
+      } else {
+        showToast(result.error || 'Failed to send email via Resend', 'error');
+      }
+    } catch (err) {
+      console.error('Invite error', err);
+      showToast('Network error while sending invitation', 'error');
+    }
   };
 
   /* Add manually */
   const handleAddManually = ({ name, email, role }) => {
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      showToast('Invalid email address', 'error');
+      return;
+    }
+
+    const isDuplicate = pending.some(p => p.email?.toLowerCase() === email.toLowerCase());
+    if (isDuplicate) {
+      showToast('A pending invitation already exists for this email', 'error');
+      return;
+    }
+
     const parts    = name.split(' ');
     const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
     const color    = MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
@@ -438,10 +500,65 @@ export default function TeamManagement({ members, pending: propsPending, setPend
 
   /* Regenerate link */
   const handleRegenerate = () => {
-    const id = Math.random().toString(36).slice(2, 9);
-    setInviteLink(`https://oyengrid.com/join/${id}`);
+    const id = `${Math.floor(10000 + Math.random() * 90000)}`;
+    setInviteLink(`${window.location.origin}/?code=EMP-${id}`);
     showToast('Invite link regenerated');
     addNotification?.('Workspace invite link regenerated');
+  };
+
+  /* Role Change handler */
+  const handleRoleChange = (type, index, newRole) => {
+    if (type === 'active') {
+      const target = members[index];
+      if (target.isYou) {
+        showToast("You cannot change your own role", "error");
+        return;
+      }
+      setMembers(prev => prev.map((m, idx) => idx === index ? { ...m, role: newRole } : m));
+      showToast(`Updated role to ${newRole}`);
+      addNotification?.(`Updated role for ${target.email} to ${newRole}`);
+    } else {
+      const target = pending[index];
+      setPending(prev => prev.map((p, idx) => idx === index ? { ...p, role: newRole } : p));
+      showToast(`Updated invitation role to ${newRole}`);
+      addNotification?.(`Updated invitation role for ${target.email} to ${newRole}`);
+    }
+  };
+
+  /* Suspend / Activate handler */
+  const handleToggleStatus = (index) => {
+    const target = members[index];
+    if (target.isYou) {
+      showToast("You cannot suspend yourself", "error");
+      return;
+    }
+    const nextStatus = target.status === 'Active' ? 'Suspended' : 'Active';
+    setMembers(prev => prev.map((m, idx) => idx === index ? { ...m, status: nextStatus } : m));
+    showToast(`Member status set to ${nextStatus}`);
+    addNotification?.(`Member status set to ${nextStatus} for ${target.email}`);
+  };
+
+  /* Remove / Revoke member handler */
+  const handleRemoveMember = (type, index) => {
+    if (type === 'active') {
+      const target = members[index];
+      if (target.isYou) {
+        showToast("You cannot remove yourself", "error");
+        return;
+      }
+      if (window.confirm(`Are you sure you want to remove ${target.name || target.email}?`)) {
+        setMembers(prev => prev.filter((_, idx) => idx !== index));
+        showToast("Member removed successfully");
+        addNotification?.(`Removed member ${target.email}`);
+      }
+    } else {
+      const target = pending[index];
+      if (window.confirm(`Are you sure you want to revoke invitation for ${target.email}?`)) {
+        setPending(prev => prev.filter((_, idx) => idx !== index));
+        showToast("Invitation revoked successfully");
+        addNotification?.(`Revoked invitation for ${target.email}`);
+      }
+    }
   };
 
   /* Derived counts */
@@ -568,7 +685,52 @@ export default function TeamManagement({ members, pending: propsPending, setPend
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: STATUS_COLOR[m.status] }} />{m.status}
                 </div>
                 <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{m.joined}</span>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>···</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px', position: 'relative' }}
+                     onClick={(e) => { e.stopPropagation(); setActiveActionMenu(activeActionMenu && activeActionMenu.type === 'active' && activeActionMenu.index === i ? null : { type: 'active', index: i }); }}>
+                  ···
+                  {activeActionMenu && activeActionMenu.type === 'active' && activeActionMenu.index === i && (
+                    <>
+                      <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={(e) => { e.stopPropagation(); setActiveActionMenu(null); }} />
+                      <div style={{ position: 'absolute', right: 0, top: '24px', backgroundColor: '#161822', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '160px', zIndex: 100, overflow: 'hidden', textAlign: 'left' }}>
+                        <div style={{ padding: '0.4rem 0.6rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>CHANGE ROLE</div>
+                        {ROLES.map(role => (
+                          <button key={role}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRoleChange('active', i, role);
+                                    setActiveActionMenu(null);
+                                  }}
+                                  style={{ width: '100%', padding: '0.45rem 0.8rem', textAlign: 'left', background: 'none', border: 'none', color: m.role === role ? '#D4AF37' : '#fff', fontSize: '0.75rem', cursor: 'pointer' }}
+                                  onMouseEnter={ev => ev.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+                                  onMouseLeave={ev => ev.currentTarget.style.backgroundColor = 'transparent'}>
+                            {role}
+                          </button>
+                        ))}
+                        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', margin: '0.2rem 0' }} />
+                        <button onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleStatus(i);
+                                  setActiveActionMenu(null);
+                                }}
+                                style={{ width: '100%', padding: '0.5rem 0.8rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.75rem', cursor: 'pointer' }}
+                                onMouseEnter={ev => ev.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+                                onMouseLeave={ev => ev.currentTarget.style.backgroundColor = 'transparent'}>
+                          {m.status === 'Active' ? 'Suspend Member' : 'Activate Member'}
+                        </button>
+                        <button onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveMember('active', i);
+                                  setActiveActionMenu(null);
+                                }}
+                                style={{ width: '100%', padding: '0.5rem 0.8rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                                onMouseEnter={ev => ev.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+                                onMouseLeave={ev => ev.currentTarget.style.backgroundColor = 'transparent'}>
+                          Remove Member
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
 
@@ -595,7 +757,42 @@ export default function TeamManagement({ members, pending: propsPending, setPend
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D4AF37' }} />Pending
                 </div>
                 <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{p.invitedAt}</span>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px' }}>···</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', letterSpacing: '2px', position: 'relative' }}
+                     onClick={(e) => { e.stopPropagation(); setActiveActionMenu(activeActionMenu && activeActionMenu.type === 'pending' && activeActionMenu.index === i ? null : { type: 'pending', index: i }); }}>
+                  ···
+                  {activeActionMenu && activeActionMenu.type === 'pending' && activeActionMenu.index === i && (
+                    <>
+                      <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={(e) => { e.stopPropagation(); setActiveActionMenu(null); }} />
+                      <div style={{ position: 'absolute', right: 0, top: '24px', backgroundColor: '#161822', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '160px', zIndex: 100, overflow: 'hidden', textAlign: 'left' }}>
+                        <div style={{ padding: '0.4rem 0.6rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>CHANGE ROLE</div>
+                        {ROLES.map(role => (
+                          <button key={role}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRoleChange('pending', i, role);
+                                    setActiveActionMenu(null);
+                                  }}
+                                  style={{ width: '100%', padding: '0.45rem 0.8rem', textAlign: 'left', background: 'none', border: 'none', color: p.role === role ? '#D4AF37' : '#fff', fontSize: '0.75rem', cursor: 'pointer' }}
+                                  onMouseEnter={ev => ev.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+                                  onMouseLeave={ev => ev.currentTarget.style.backgroundColor = 'transparent'}>
+                            {role}
+                          </button>
+                        ))}
+                        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', margin: '0.2rem 0' }} />
+                        <button onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveMember('pending', i);
+                                  setActiveActionMenu(null);
+                                }}
+                                style={{ width: '100%', padding: '0.5rem 0.8rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                                onMouseEnter={ev => ev.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+                                onMouseLeave={ev => ev.currentTarget.style.backgroundColor = 'transparent'}>
+                          Revoke Invitation
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
 

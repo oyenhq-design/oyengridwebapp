@@ -9,9 +9,9 @@ export default function InvitationAcceptance({ onSwitchForm, onComplete }) {
 
   // Form Fields State
   const [formData, setFormData] = useState({
-    orgId: '',
-    inviteCode: '',
-    email: '',
+    orgId: sessionStorage.getItem('prefill_orgId') || '',
+    inviteCode: sessionStorage.getItem('prefill_inviteCode') || '',
+    email: sessionStorage.getItem('prefill_email') || '',
     password: '',
     confirmPassword: '',
     mfaToken: ''
@@ -35,8 +35,8 @@ export default function InvitationAcceptance({ onSwitchForm, onComplete }) {
 
     if (!formData.inviteCode.trim()) {
       tempErrors.inviteCode = 'Invitation Code is required';
-    } else if (!/^(ADM|MGR|FAC|TRN|EMP|LRN)-\d{5}$/i.test(formData.inviteCode) && formData.inviteCode !== 'EMP-20483' && formData.inviteCode !== 'FAC-93822' && formData.inviteCode !== 'ADM-20483' && formData.inviteCode !== 'MGR-49211') {
-      tempErrors.inviteCode = 'Enter a valid code (e.g. FAC-93822 or ADM-20483)';
+    } else if (!/^(ADM|MGR|FAC|TRN|EMP|LRN)-[A-Z0-9]{5,6}$/i.test(formData.inviteCode) && !/^OYEN-FAC-[A-Z0-9]{6}$/i.test(formData.inviteCode) && formData.inviteCode !== 'EMP-20483' && formData.inviteCode !== 'FAC-93822' && formData.inviteCode !== 'ADM-20483' && formData.inviteCode !== 'MGR-49211') {
+      tempErrors.inviteCode = 'Enter a valid code (e.g. OYEN-FAC-8D4K2P or ADM-20483)';
     }
 
     if (!formData.email) {

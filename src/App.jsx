@@ -235,6 +235,25 @@ export default function App() {
   // Restore session token and workspace data on startup
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Check for URL invitation params
+      const params = new URLSearchParams(window.location.search);
+      const inviteCode = params.get('inviteCode') || params.get('code');
+      const orgId = params.get('orgId');
+      const email = params.get('email');
+
+      if (inviteCode) {
+        sessionStorage.setItem('prefill_orgId', orgId || '');
+        sessionStorage.setItem('prefill_inviteCode', inviteCode);
+        sessionStorage.setItem('prefill_email', email || '');
+        
+        // Clean URL to not clutter
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        setActiveRoute('accept-invite');
+        setAuthLoading(false);
+        return;
+      }
+
       const token = sessionStorage.getItem('oyen_session_token');
       if (token) {
         const storedUser = sessionStorage.getItem('oyen_session_user');
@@ -250,8 +269,10 @@ export default function App() {
             if (savedProgs) setWsPrograms(JSON.parse(savedProgs));
             const savedLearners = sessionStorage.getItem('oyen_ws_learners');
             if (savedLearners) setWsLearners(JSON.parse(savedLearners));
-            const savedTeam = sessionStorage.getItem('oyen_ws_team');
+            const savedTeam = localStorage.getItem('oyen_ws_team') || sessionStorage.getItem('oyen_ws_team');
             if (savedTeam) setWsTeam(JSON.parse(savedTeam));
+            const savedInvitations = localStorage.getItem('oyen_ws_invitations');
+            if (savedInvitations) setWsInvitations(JSON.parse(savedInvitations));
             
             setActiveRoute('dashboard');
             setActiveTab(role === 'Facilitator' ? 'Overview' : 'Dashboard');
@@ -281,9 +302,11 @@ export default function App() {
       }));
       sessionStorage.setItem('oyen_ws_programs', JSON.stringify(wsPrograms));
       sessionStorage.setItem('oyen_ws_learners', JSON.stringify(wsLearners));
-      sessionStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam));
+      sessionStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam)); // Keep session sync too
+      localStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam));
+      localStorage.setItem('oyen_ws_invitations', JSON.stringify(wsInvitations));
     }
-  }, [user, userRole, activeTemplate, enabledTemplates, wsPrograms, wsLearners, wsTeam]);
+  }, [user, userRole, activeTemplate, enabledTemplates, wsPrograms, wsLearners, wsTeam, wsInvitations]);
 
   // Dynamically ensure only real logged-in owner is active and demo members are excluded
   useEffect(() => {
