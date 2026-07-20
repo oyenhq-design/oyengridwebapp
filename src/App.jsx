@@ -507,12 +507,11 @@ export default function App() {
   const handleLogOut = () => {
     triggerTransition(() => {
       setUser(null);
+      setUserRole(null);
       sessionStorage.removeItem('oyen_session_token');
       sessionStorage.removeItem('oyen_session_user');
-      sessionStorage.removeItem('oyen_ws_programs');
-      sessionStorage.removeItem('oyen_ws_learners');
-      sessionStorage.removeItem('oyen_ws_team');
-      setActiveRoute('portal');
+      setActiveRoute('signin');
+      setActiveTab('Welcome');
     });
   };
 
@@ -1898,7 +1897,7 @@ export default function App() {
                         <button
                           onClick={() => {
                             setShowProfileDropdown(false);
-                            setShowProfileModal(true);
+                            setActiveTab('Profile');
                           }}
                           style={{
                             background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)',
@@ -1915,7 +1914,7 @@ export default function App() {
                         <button
                           onClick={() => {
                             setShowProfileDropdown(false);
-                            alert("OYEN GRID Support desk simulation. For assistant, contact support@oyengrid.com.");
+                            setActiveTab('Help');
                           }}
                           style={{
                             background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)',
@@ -2610,6 +2609,24 @@ export default function App() {
                 }}
                 onLogout={handleLogOut}
               />
+            ) : activeTab === 'Profile' ? (
+              <ProfileTab 
+                currentUser={user} 
+                info={getLoggedInUserInfo()} 
+                onSaveName={(newName) => {
+                  if (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com') {
+                    const parts = newName.trim().split(' ');
+                    setOwnerFirstName(parts[0] || '');
+                    setOwnerLastName(parts.slice(1).join(' ') || '');
+                  } else {
+                    setWsTeam(prev => prev.map(m => m.email.toLowerCase() === user.toLowerCase() ? { ...m, name: newName } : m));
+                  }
+                  addNotification('Profile updated successfully');
+                }}
+                addNotification={addNotification}
+              />
+            ) : activeTab === 'Help' ? (
+              <HelpTab />
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>
@@ -3437,107 +3454,268 @@ export default function App() {
             />
           )}
 
-          {showProfileModal && (() => {
-            const info = getLoggedInUserInfo();
-            return (
-              <ProfileModal 
-                info={info} 
-                onClose={() => setShowProfileModal(false)} 
-                onSave={(newName, newPhoto) => {
-                  if (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com') {
-                    const parts = newName.trim().split(' ');
-                    setOwnerFirstName(parts[0] || '');
-                    setOwnerLastName(parts.slice(1).join(' ') || '');
-                    if (newPhoto) setOwnerPhoto(newPhoto);
-                  } else {
-                    setWsTeam(prev => prev.map(m => m.email.toLowerCase() === user.toLowerCase() ? { ...m, name: newName } : m));
-                  }
-                  addNotification('Profile updated successfully');
-                  setShowProfileModal(false);
-                }}
-              />
-            );
-          })()}
-
         </div>
       </main>
     </div>
   );
 }
 
-function ProfileModal({ info, onClose, onSave }) {
+function ProfileTab({ currentUser, info, onSaveName, addNotification }) {
   const [name, setName] = useState(info.fullName);
-  const [photo, setPhoto] = useState(info.photo || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSaveName(name);
+  };
+
+  const handleSavePassword = (e) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All password fields are required.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+    setPasswordError('');
+    setPasswordSuccess(true);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    addNotification('Password changed successfully');
+    setTimeout(() => setPasswordSuccess(false), 4000);
+  };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', zIndex: 2000
-    }} onClick={onClose}>
-      <div style={{
-        backgroundColor: '#111111', border: '1px solid #1F1F1F',
-        borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '400px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.6)', textAlign: 'left'
-      }} onClick={e => e.stopPropagation()}>
-        
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: '0 0 1rem 0', fontFamily: "'Outfit', sans-serif" }}>Edit Profile</h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {photo ? (
-              <img src={photo} alt={name} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #F5D76E' }} />
-            ) : (
-              <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#F5D76E', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.3rem' }}>
-                {info.initials}
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <label style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Profile Image</label>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={e => {
-                  if (e.target.files?.[0]) {
-                    setPhoto(URL.createObjectURL(e.target.files[0]));
-                  }
-                }}
-                style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}
-              />
-            </div>
-          </div>
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', maxWidth: '600px' }}>
+      <div>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Personal Profile</h2>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+          Manage your personal account details, avatar, and security settings.
+        </p>
+      </div>
 
+      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          {info.photo ? (
+            <img src={info.photo} alt={name} style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #F5D76E' }} />
+          ) : (
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#F5D76E', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.4rem' }}>
+              {info.initials}
+            </div>
+          )}
           <div>
-            <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Full Name</label>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>{info.fullName}</div>
+            <div style={{ fontSize: '0.8rem', color: '#F5D76E', marginTop: '0.15rem' }}>{info.role}</div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Full Name</label>
             <input 
               type="text" 
               value={name} 
               onChange={e => setName(e.target.value)} 
-              style={{ width: '100%', padding: '0.7rem 0.9rem', backgroundColor: '#0A0A0A', border: '1px solid #1F1F1F', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
-              required 
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+              required
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Email Address</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Email Address</label>
             <input 
               type="email" 
               value={info.email} 
-              style={{ width: '100%', padding: '0.7rem 0.9rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F1F1F', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
-              readOnly 
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
+              readOnly
             />
-            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.25rem', display: 'block' }}>Email address cannot be changed.</span>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid #1F1F1F', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
-            <button type="button" onClick={() => onSave(name, photo)} style={{ flex: 1.5, padding: '0.7rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>Save Changes</button>
+          <button 
+            type="submit" 
+            style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}
+          >
+            Save Changes
+          </button>
+        </form>
+
+        <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>Change Password</h3>
+          
+          {passwordSuccess && (
+            <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '6px', color: '#22c55e', fontSize: '0.8rem' }}>
+              Password updated successfully.
+            </div>
+          )}
+
+          {passwordError && (
+            <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '6px', color: '#ef4444', fontSize: '0.8rem' }}>
+              {passwordError}
+            </div>
+          )}
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Current Password</label>
+            <input 
+              type="password" 
+              value={currentPassword} 
+              onChange={e => setCurrentPassword(e.target.value)} 
+              placeholder="Enter current password"
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+            />
           </div>
 
-        </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>New Password</label>
+            <input 
+              type="password" 
+              value={newPassword} 
+              onChange={e => setNewPassword(e.target.value)} 
+              placeholder="Enter new password"
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Confirm New Password</label>
+            <input 
+              type="password" 
+              value={confirmPassword} 
+              onChange={e => setConfirmPassword(e.target.value)} 
+              placeholder="Confirm new password"
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', border: '1px solid #F5D76E', color: '#F5D76E', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}
+          >
+            Change Password
+          </button>
+        </form>
 
       </div>
+    </div>
+  );
+}
+
+function HelpTab() {
+  const [search, setSearch] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const faqs = [
+    { q: 'How do I add a new facilitator?', a: 'Go to the Team tab, click Invite Member, enter their email, choose Facilitator role, and hit send. An invitation with a secure access code will be generated.' },
+    { q: 'How is storage calculated?', a: 'Storage is calculated based on the file sizes of uploaded program resources, session attachments, and participant materials inside your active workspace.' },
+    { q: 'Can I change my subscription plan?', a: 'Plan changes can be managed under Organization Settings (accessible only to Organization Owners).' },
+  ];
+
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    if (!subject.trim() || !message.trim()) return;
+    setIsSubmitted(true);
+    setSubject('');
+    setMessage('');
+    setTimeout(() => setIsSubmitted(false), 5000);
+  };
+
+  const filteredFaqs = faqs.filter(
+    faq => faq.q.toLowerCase().includes(search.toLowerCase()) || 
+           faq.a.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', maxWidth: '700px' }}>
+      <div>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>How can we help?</h2>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+          Search help resources, read FAQs, or get in touch with our support desk.
+        </p>
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <input 
+          type="text" 
+          placeholder="Search help articles & FAQs..." 
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ width: '100%', padding: '0.9rem 1.25rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0 }}>Frequently Asked Questions</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {filteredFaqs.length > 0 ? (
+            filteredFaqs.map((faq, i) => (
+              <div key={i} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '1.25rem' }}>
+                <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.88rem' }}>{faq.q}</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', marginTop: '0.5rem', lineHeight: 1.5 }}>{faq.a}</div>
+              </div>
+            ))
+          ) : (
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', padding: '1rem' }}>No articles match your search query.</div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Contact Support</h3>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', marginTop: '0.2rem' }}>Send a message directly to the OYEN GRID support engineering team.</p>
+        </div>
+
+        {isSubmitted && (
+          <div style={{ padding: '0.85rem 1.25rem', backgroundColor: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', color: '#22c55e', fontSize: '0.85rem', fontWeight: 500 }}>
+            Support ticket submitted successfully! Our team will reply shortly.
+          </div>
+        )}
+
+        <form onSubmit={handleContactSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Subject</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Storage limit question" 
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+              required
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Message</label>
+            <textarea 
+              rows={4}
+              placeholder="Describe your issue or query here..." 
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none', resize: 'vertical' }}
+              required
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}
+          >
+            Send Message
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 }
