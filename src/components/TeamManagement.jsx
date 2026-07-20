@@ -442,7 +442,13 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
         })
       });
 
-      const result = await response.json();
+      let result = {};
+      try {
+        result = await response.json();
+      } catch (parseErr) {
+        console.warn('Response was not JSON', parseErr);
+      }
+
       if (response.ok) {
         const initials = email.slice(0, 2).toUpperCase();
         const color    = MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
@@ -465,7 +471,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
         showToast(`Invitation sent successfully to ${email}`);
         addNotification?.(`Invitation sent to ${email} as ${role}. Code: ${code}`);
       } else {
-        showToast(result.error || 'Failed to send email via Resend', 'error');
+        showToast(result.error || `Failed to send email (Status: ${response.status})`, 'error');
       }
     } catch (err) {
       console.error('Invite error', err);
