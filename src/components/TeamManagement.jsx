@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Mail, Link2, UserPlus, ShieldCheck, Users, User, Lock,
-  Search, Settings, ArrowRight, X, Copy, RefreshCw,
-  CheckCircle2, AlertCircle, Eye, EyeOff, UserCheck
+  Mail, Link2, UserPlus, ShieldCheck, Users, User,
+  Search, Settings, X, Copy, RefreshCw,
+  CheckCircle2, AlertCircle, Eye, EyeOff
 } from 'lucide-react';
 
 const ROLES = ['Admin', 'Program Manager', 'Facilitator', 'Team Member', 'Viewer'];
@@ -445,17 +445,25 @@ export default function TeamManagement({ members, pending: propsPending, setPend
   };
 
   /* Derived counts */
-  const activeCount  = members.filter(m => m.status === 'Active').length;
-  const pendingCount = members.filter(m => m.status === 'Pending').length + pending.length;
-  const totalMembers = members.length + pending.length;
+  const activeCount    = members.filter(m => m.status === 'Active').length;
+  const pendingCount   = members.filter(m => m.status === 'Pending').length + pending.length;
+  const declinedCount  = members.filter(m => m.status === 'Declined').length;
+  const suspendedCount = members.filter(m => m.status === 'Suspended').length;
+  const totalMembers   = members.length + pending.length;
+
+  const getRoleCount = (roleName) => {
+    const activeWithRole = members.filter(m => m.role === roleName).length;
+    const pendingWithRole = pending.filter(p => p.role === roleName).length;
+    return activeWithRole + pendingWithRole;
+  };
 
   const rolesData = [
-    { label: 'Organization Owner', icon: <ShieldCheck size={14} color="#D4AF37" />, count: members.filter(m => m.role === 'Organization Owner').length },
-    { label: 'Admin (max 2)',       icon: <ShieldCheck size={14} color="#ef4444"  />, count: members.filter(m => m.role === 'Admin').length },
-    { label: 'Program Manager',    icon: <Users size={14}       color="#8b5cf6"  />, count: members.filter(m => m.role === 'Program Manager').length },
-    { label: 'Facilitator',        icon: <User size={14}        color="#3b82f6"  />, count: members.filter(m => m.role === 'Facilitator').length },
-    { label: 'Team Member',        icon: <User size={14}        color="#22c55e"  />, count: members.filter(m => m.role === 'Team Member').length },
-    { label: 'Viewer',             icon: <User size={14}        color="#6b7280"  />, count: members.filter(m => m.role === 'Viewer').length },
+    { label: 'Organization Owner', icon: <ShieldCheck size={14} color="#D4AF37" />, count: getRoleCount('Organization Owner') },
+    { label: 'Admin (max 2)',       icon: <ShieldCheck size={14} color="#ef4444"  />, count: getRoleCount('Admin') },
+    { label: 'Program Manager',    icon: <Users size={14}       color="#8b5cf6"  />, count: getRoleCount('Program Manager') },
+    { label: 'Facilitator',        icon: <User size={14}        color="#3b82f6"  />, count: getRoleCount('Facilitator') },
+    { label: 'Team Member',        icon: <User size={14}        color="#22c55e"  />, count: getRoleCount('Team Member') },
+    { label: 'Viewer',             icon: <User size={14}        color="#6b7280"  />, count: getRoleCount('Viewer') },
   ];
 
   const inviteMethods = [
@@ -518,8 +526,8 @@ export default function TeamManagement({ members, pending: propsPending, setPend
                   ['All Members', String(totalMembers), '#D4AF37'],
                   ['Active',      String(activeCount),  '#22c55e'],
                   ['Pending',     String(pendingCount), '#D4AF37'],
-                  ['Declined',    '0',                  '#ef4444'],
-                  ['Suspended',   '0',                  '#6b7280'],
+                  ['Declined',    String(declinedCount), '#ef4444'],
+                  ['Suspended',   String(suspendedCount), '#6b7280'],
                 ].map(([label, count, color], i) => (
                   <div key={i} style={{ padding: '0.4rem 0.85rem', color: i === 0 ? '#D4AF37' : 'rgba(255,255,255,0.5)', borderBottom: i === 0 ? '2px solid #D4AF37' : '2px solid transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
                     {label}
@@ -625,7 +633,7 @@ export default function TeamManagement({ members, pending: propsPending, setPend
                 <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.3 }}>Total<br />Members</div>
               </div>
             </div>
-            {[['#22c55e', activeCount,  'Active'], ['#D4AF37', pendingCount, 'Pending'], ['#ef4444', 0, 'Declined'], ['#6b7280', 0, 'Suspended']].map(([color, count, label]) => (
+            {[['#22c55e', activeCount,  'Active'], ['#D4AF37', pendingCount, 'Pending'], ['#ef4444', declinedCount, 'Declined'], ['#6b7280', suspendedCount, 'Suspended']].map(([color, count, label]) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.4rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'rgba(255,255,255,0.55)' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color, flexShrink: 0 }} />{label}
@@ -646,26 +654,6 @@ export default function TeamManagement({ members, pending: propsPending, setPend
             ))}
           </div>
 
-          {/* Quick Tips */}
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginBottom: '0.9rem' }}>Quick Tips</h4>
-            {[
-              { icon: <UserCheck size={13} color="#D4AF37" />, title: 'Assign the right role',  desc: 'Roles help control access and responsibilities.' },
-              { icon: <Users size={13}     color="#D4AF37" />, title: 'Use groups',              desc: 'Organize your team for better collaboration.' },
-              { icon: <Lock size={13}      color="#D4AF37" />, title: 'Review permissions',     desc: 'Ensure members have the right access.' },
-            ].map((tip, i) => (
-              <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', alignItems: 'flex-start' }}>
-                <div style={{ marginTop: '0.1rem', flexShrink: 0 }}>{tip.icon}</div>
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff', marginBottom: '0.1rem' }}>{tip.title}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>{tip.desc}</div>
-                </div>
-              </div>
-            ))}
-            <div style={{ fontSize: '0.75rem', color: '#D4AF37', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.25rem' }}>
-              View all tips <ArrowRight size={11} />
-            </div>
-          </div>
         </div>
       </div>
     </>

@@ -80,26 +80,8 @@ export default function App() {
   // Shared workspace data — lifted so Programs + Learners stay in sync
   const [wsPrograms, setWsPrograms] = useState([]);
   const [wsLearners, setWsLearners] = useState([]);
-  const [wsTeam, setWsTeam]         = useState([
-    { initials: 'JD', color: '#D4AF37', name: 'John Doe',        isYou: true, email: 'john.doe@abcenergy.com',        role: 'Organization Owner', status: 'Active',  joined: 'May 22, 2025' },
-    { initials: 'SA', color: '#7c3aed', name: 'Sarah Ahmed',                  email: 'sarah.ahmed@abcenergy.com',     role: 'Admin',              status: 'Active',  joined: 'May 21, 2025' },
-    { initials: 'MI', color: '#16a34a', name: 'Michael Ibrahim',              email: 'michael.ibrahim@abcenergy.com', role: 'Program Manager',    status: 'Active',  joined: 'May 20, 2025' },
-    { initials: 'FA', color: '#0284c7', name: 'Fatima Aliyu',                 email: 'fatima.aliyu@abcenergy.com',    role: 'Facilitator',        status: 'Active',  joined: 'May 18, 2025' },
-    { initials: 'NK', color: '#b45309', name: 'Ngozi Kalu',                   email: 'ngozi.kalu@abcenergy.com',      role: 'Viewer',             status: 'Pending', joined: 'May 22, 2025' },
-  ]);
-
-  const [wsInvitations, setWsInvitations] = useState([
-    {
-      name: 'Test Facilitator',
-      email: 'facilitator@oyengrid.test',
-      accessCode: 'OYEN-FAC-7K4M9Q',
-      role: 'Facilitator',
-      status: 'Pending',
-      used: false,
-      invitedAt: '19 Jul 2026',
-      expiresAt: '27 Jul 2026'
-    }
-  ]);
+  const [wsTeam, setWsTeam]         = useState([]);
+  const [wsInvitations, setWsInvitations] = useState([]);
 
   // AI Assistant Chat Mock
 
@@ -302,6 +284,58 @@ export default function App() {
       sessionStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam));
     }
   }, [user, userRole, activeTemplate, enabledTemplates, wsPrograms, wsLearners, wsTeam]);
+
+  // Dynamically ensure only real logged-in owner is active and demo members are excluded
+  useEffect(() => {
+    if (user) {
+      setWsTeam(prev => {
+        const ownerEmailAddr = user;
+        const ownerName = (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com')
+          ? `${ownerFirstName} ${ownerLastName}`
+          : user.split('@')[0];
+        const ownerInitials = (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com')
+          ? `${ownerFirstName?.[0] || 'J'}${ownerLastName?.[0] || 'D'}`
+          : (user?.[0] || 'U').toUpperCase();
+
+        const demoEmails = [
+          'john.doe@abcenergy.com',
+          'sarah.ahmed@abcenergy.com',
+          'michael.ibrahim@abcenergy.com',
+          'fatima.aliyu@abcenergy.com',
+          'ngozi.kalu@abcenergy.com',
+          'facilitator@oyengrid.test'
+        ];
+
+        // Filter out any hardcoded demo emails from the team state
+        const cleaned = prev.filter(m => m.email && !demoEmails.includes(m.email.toLowerCase()));
+
+        const exists = cleaned.some(m => m.email?.toLowerCase() === ownerEmailAddr.toLowerCase());
+        if (exists) {
+          return cleaned.map(m => m.email?.toLowerCase() === ownerEmailAddr.toLowerCase() ? {
+            ...m,
+            name: ownerName,
+            initials: ownerInitials.toUpperCase(),
+            role: userRole || 'Organization Owner',
+            isYou: true
+          } : m);
+        } else {
+          return [
+            {
+              initials: ownerInitials.toUpperCase(),
+              color: '#D4AF37',
+              name: ownerName,
+              isYou: true,
+              email: ownerEmailAddr,
+              role: userRole || 'Organization Owner',
+              status: 'Active',
+              joined: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            },
+            ...cleaned
+          ];
+        }
+      });
+    }
+  }, [user, ownerFirstName, ownerLastName, ownerEmail, userRole]);
 
 
 
