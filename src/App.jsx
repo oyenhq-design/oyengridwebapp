@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
-import InvitationAcceptance from './components/InvitationAcceptance';
 import SignInForm from './components/SignInForm';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
@@ -242,14 +241,64 @@ export default function App() {
       const email = params.get('email');
 
       if (inviteCode) {
-        sessionStorage.setItem('prefill_orgId', orgId || '');
-        sessionStorage.setItem('prefill_inviteCode', inviteCode);
-        sessionStorage.setItem('prefill_email', email || '');
-        
         // Clean URL to not clutter
         window.history.replaceState({}, document.title, window.location.pathname);
 
-        setActiveRoute('accept-invite');
+        const targetEmail = email || 'invitee@oyengrid.com';
+        
+        let assignedRole = 'Participant';
+        const codeUpper = inviteCode.toUpperCase();
+        if (codeUpper.startsWith('ADM')) assignedRole = 'Organization Admin';
+        else if (codeUpper.startsWith('MGR')) assignedRole = 'Programme Manager';
+        else if (codeUpper.startsWith('FAC')) assignedRole = 'Facilitator';
+        else if (codeUpper.startsWith('TRN')) assignedRole = 'Trainer';
+        else if (codeUpper.startsWith('EMP')) assignedRole = 'Employee';
+        else if (codeUpper.startsWith('LRN')) assignedRole = 'Participant';
+
+        // Check if there is an invitation in state
+        let matchedInvite = null;
+        setWsInvitations(prevInv => {
+          return prevInv.map(inv => {
+            if (inv.accessCode === inviteCode || (inv.email && inv.email.toLowerCase() === targetEmail.toLowerCase())) {
+              matchedInvite = inv;
+              return { ...inv, used: true, status: 'Active' };
+            }
+            return inv;
+          });
+        });
+
+        const finalRole = matchedInvite ? matchedInvite.role : assignedRole;
+        const namePart = targetEmail.split('@')[0];
+        const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+
+        // Add to team members list
+        setWsTeam(prevTeam => {
+          const exists = prevTeam.some(m => m.email && m.email.toLowerCase() === targetEmail.toLowerCase());
+          if (exists) {
+            return prevTeam.map(m => m.email && m.email.toLowerCase() === targetEmail.toLowerCase() ? { ...m, status: 'Active', role: finalRole } : m);
+          } else {
+            const initials = (namePart.slice(0, 2) || 'US').toUpperCase();
+            return [
+              ...prevTeam,
+              {
+                initials,
+                color: '#4B7BEC',
+                name: displayName,
+                email: targetEmail,
+                role: finalRole,
+                status: 'Active',
+                joined: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              }
+            ];
+          }
+        });
+
+        // Set session token and log in
+        sessionStorage.setItem('oyen_session_token', `oyen_token_${Date.now()}`);
+        setUser(targetEmail);
+        setUserRole(finalRole);
+        setActiveRoute('dashboard');
+        setActiveTab('Dashboard');
         setAuthLoading(false);
         return;
       }
@@ -3367,12 +3416,7 @@ export default function App() {
             />
           )}
 
-          {activeRoute === 'accept-invite' && (
-            <InvitationAcceptance 
-              onSwitchForm={setActiveRoute} 
-              onComplete={handleInviteAcceptanceComplete} 
-            />
-          )}
+
 
         </div>
       </main>
