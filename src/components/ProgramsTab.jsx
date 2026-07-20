@@ -4,7 +4,7 @@ import ProgramDetail from './ProgramDetail';
 
 const PROGRAM_LIMIT = 3;
 
-export default function ProgramsTab({ programs, setPrograms, learners = [], setLearners, addNotification }) {
+export default function ProgramsTab({ programs = [], setPrograms, learners = [], setLearners, addNotification, userRole }) {
   const [showCreateModal, setShowCreateModal]   = useState(false);
   const [newProgName, setNewProgName]           = useState('');
   const [newProgDesc, setNewProgDesc]           = useState('');
