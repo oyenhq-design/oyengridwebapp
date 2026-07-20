@@ -517,11 +517,11 @@ export default function App() {
 
   // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // Shows the branded overlay for ~1.5s then runs the callback
-  const triggerTransition = (callback, delay = 1500) => {
+  const triggerTransition = (callback, delay = 400) => {
     setTransitionFading(false);
     setShowTransition(true);
-    // Start fading out 300ms before the callback fires
-    setTimeout(() => setTransitionFading(true), delay - 300);
+    // Start fading out 200ms before the callback fires
+    setTimeout(() => setTransitionFading(true), delay - 200);
     setTimeout(() => {
       setShowTransition(false);
       setTransitionFading(false);
