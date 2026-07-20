@@ -1503,8 +1503,18 @@ export default function App() {
   if (activeRoute === 'dashboard' && user) {
     const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard';
     
+    const displayPrograms = userRole === 'Facilitator'
+      ? wsPrograms.map(p => {
+          const facilitatorSessions = (p.sessions || []).filter(s => s.facilitatorEmail?.toLowerCase() === user.toLowerCase());
+          return {
+            ...p,
+            sessions: facilitatorSessions
+          };
+        }).filter(p => p.sessions.length > 0 || p.facilitatorEmail?.toLowerCase() === user.toLowerCase())
+      : wsPrograms;
+
     // Sidebar list
-    const sidebarItems = [
+    const allSidebarItems = [
       { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
       { id: 'Getting Started', label: 'Getting Started', icon: <Clock size={18} /> },
       { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
@@ -1515,6 +1525,10 @@ export default function App() {
       { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
       { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
     ];
+
+    const sidebarItems = userRole === 'Facilitator'
+      ? allSidebarItems.filter(item => item.id !== 'Team' && item.id !== 'Settings')
+      : allSidebarItems;
 
     return (
       <div className="dashboard-root" style={{
@@ -2227,7 +2241,7 @@ export default function App() {
             ) : activeTab === 'Programmes' ? (
               /* Programmes Tab Component */
               <ProgramsTab
-                programs={wsPrograms}
+                programs={displayPrograms}
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
                 setLearners={setWsLearners}
@@ -2236,7 +2250,7 @@ export default function App() {
             ) : activeTab === 'Learners' ? (
               /* Learners Tab Component */
               <LearnersTab
-                programs={wsPrograms}
+                programs={displayPrograms}
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
                 setLearners={setWsLearners}
@@ -2246,7 +2260,7 @@ export default function App() {
             ) : activeTab === 'Sessions' ? (
               /* Sessions Tab Component */
               <SessionsTab
-                programs={wsPrograms}
+                programs={displayPrograms}
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
                 addNotification={addNotification}
@@ -2255,7 +2269,7 @@ export default function App() {
             ) : activeTab === 'Reports' ? (
               /* Reports Tab Component */
               <ReportsTab
-                programs={wsPrograms}
+                programs={displayPrograms}
                 learners={wsLearners}
               />
             ) : activeTab === 'Your Workspace' ? (
@@ -2278,11 +2292,11 @@ export default function App() {
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Programs</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{wsPrograms.length} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 3 created</span></div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{displayPrograms.length} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 3 created</span></div>
                       </div>
                     </div>
                     <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min((wsPrograms.length / 3) * 100, 100)}%`, background: 'linear-gradient(90deg,#D4AF37,#C49A2A)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
+                      <div style={{ height: '100%', width: `${Math.min((displayPrograms.length / 3) * 100, 100)}%`, background: 'linear-gradient(90deg,#D4AF37,#C49A2A)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
                     </div>
                   </div>
 
@@ -2306,7 +2320,7 @@ export default function App() {
                   <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {(() => {
                       let totalBytes = 0;
-                      wsPrograms.forEach(p => {
+                      displayPrograms.forEach(p => {
                         (p.resources || []).forEach(r => {
                           totalBytes += r.sizeInBytes || 0;
                         });
@@ -2351,7 +2365,7 @@ export default function App() {
                   {/* Merge and sort program activities */}
                   {(() => {
                     const allActivities = [];
-                    wsPrograms.forEach(p => {
+                    displayPrograms.forEach(p => {
                       (p.activity || []).forEach(act => {
                         allActivities.push({
                           ...act,
@@ -3217,7 +3231,10 @@ export default function App() {
           {activeRoute === 'signin' && (
             <SignInForm 
               onSwitchForm={setActiveRoute} 
-              onAuthSuccess={handleAuthSuccess} 
+              onAuthSuccess={handleAuthSuccess}
+              teamMembers={wsTeam}
+              setTeamMembers={setWsTeam}
+              programs={wsPrograms}
             />
           )}
 
