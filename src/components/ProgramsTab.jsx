@@ -124,26 +124,28 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
             Manage your training programs and keep everything organized in one place.
           </p>
         </div>
-        <button
-          onClick={() => {
-            if (programs.length >= PROGRAM_LIMIT) {
-              alert('Program limit reached for Standard workspace plan (Max 3). Upgrade to add more.');
-            } else {
-              setShowCreateModal(true);
-            }
-          }}
-          style={{
-            background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
-            border: 'none', color: '#000', fontWeight: 700,
-            fontSize: '0.85rem', borderRadius: '8px',
-            padding: '0.7rem 1.25rem', display: 'flex', alignItems: 'center',
-            gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
-            boxShadow: '0 4px 15px rgba(212,175,55,0.3)',
-            transition: 'opacity 0.2s'
-          }}
-        >
-          <Plus size={16} /> Create Program
-        </button>
+        {userRole !== 'Facilitator' && (
+          <button
+            onClick={() => {
+              if (programs.length >= PROGRAM_LIMIT) {
+                alert('Program limit reached for Standard workspace plan (Max 3). Upgrade to add more.');
+              } else {
+                setShowCreateModal(true);
+              }
+            }}
+            style={{
+              background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
+              border: 'none', color: '#000', fontWeight: 700,
+              fontSize: '0.85rem', borderRadius: '8px',
+              padding: '0.7rem 1.25rem', display: 'flex', alignItems: 'center',
+              gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
+              boxShadow: '0 4px 15px rgba(212,175,55,0.3)',
+              transition: 'opacity 0.2s'
+            }}
+          >
+            <Plus size={16} /> Create Program
+          </button>
+        )}
       </div>
 
 
@@ -163,61 +165,63 @@ export default function ProgramsTab({ programs, setPrograms, learners = [], setL
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
               >
                 {/* Action Menu (Three Dots) */}
-                <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveMenuProgramId(activeMenuProgramId === p.id ? null : p.id);
-                    }}
-                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <MoreVertical size={18} />
-                  </button>
+                {userRole !== 'Facilitator' && (
+                  <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuProgramId(activeMenuProgramId === p.id ? null : p.id);
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <MoreVertical size={18} />
+                    </button>
 
-                  {activeMenuProgramId === p.id && (
-                    <>
-                      <div
-                        onClick={() => setActiveMenuProgramId(null)}
-                        style={{ position: 'fixed', inset: 0, zIndex: 90 }}
-                      />
-                      <div style={{
-                        position: 'absolute', right: 0, marginTop: '0.35rem',
-                        backgroundColor: '#161822', border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                        width: '150px', zIndex: 100, overflow: 'hidden'
-                      }}>
-                        <button
-                          onClick={() => {
-                            setActiveMenuProgramId(null);
-                            setSelectedProgramId(p.id);
-                          }}
-                          style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
-                        >
-                          <Play size={13} fill="#fff" /> Open Program
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveMenuProgramId(null);
-                            setRenameProgramId(p.id);
-                            setRenameName(p.name);
-                          }}
-                          style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
-                        >
-                          <Edit2 size={13} /> Rename Program
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveMenuProgramId(null);
-                            setDeleteProgramId(p.id);
-                          }}
-                          style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
-                        >
-                          <Trash2 size={13} /> Delete Program
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                    {activeMenuProgramId === p.id && (
+                      <>
+                        <div
+                          onClick={() => setActiveMenuProgramId(null)}
+                          style={{ position: 'fixed', inset: 0, zIndex: 90 }}
+                        />
+                        <div style={{
+                          position: 'absolute', right: 0, marginTop: '0.35rem',
+                          backgroundColor: '#161822', border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                          width: '150px', zIndex: 100, overflow: 'hidden'
+                        }}>
+                          <button
+                            onClick={() => {
+                              setActiveMenuProgramId(null);
+                              setSelectedProgramId(p.id);
+                            }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                          >
+                            <Play size={13} fill="#fff" /> Open Program
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveMenuProgramId(null);
+                              setRenameProgramId(p.id);
+                              setRenameName(p.name);
+                            }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                          >
+                            <Edit2 size={13} /> Rename Program
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveMenuProgramId(null);
+                              setDeleteProgramId(p.id);
+                            }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                          >
+                            <Trash2 size={13} /> Delete Program
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: '1.5rem' }}>
                   <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, flex: 1, paddingRight: '0.5rem' }}>{p.name}</h4>

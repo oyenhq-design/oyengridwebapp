@@ -71,6 +71,7 @@ export default function LearnersTab({
   setLearners,
   addNotification,
   onNavigateToPrograms,
+  userRole,
 }) {
   const [search, setSearch]             = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -223,24 +224,26 @@ export default function LearnersTab({
             Manage participants enrolled in your programs.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => { setShowImport(true); setImportStep(1); }}
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontWeight: 600, fontSize: '0.82rem', borderRadius: '8px', padding: '0.65rem 1.1rem', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.4)'; e.currentTarget.style.color = '#D4AF37'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff'; }}
-          >
-            <Upload size={15} /> Import Participants
-          </button>
-          <button
-            onClick={() => { if (learners.length >= LEARNER_LIMIT) return alert(`Participant limit reached (${LEARNER_LIMIT}). Upgrade your plan to add more.`); setShowAddModal(true); }}
-            style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.82rem', borderRadius: '8px', padding: '0.65rem 1.1rem', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,175,55,0.25)', transition: 'opacity 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            <Plus size={15} /> Add Participant
-          </button>
-        </div>
+        {userRole !== 'Facilitator' && (
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => { setShowImport(true); setImportStep(1); }}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontWeight: 600, fontSize: '0.82rem', borderRadius: '8px', padding: '0.65rem 1.1rem', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.4)'; e.currentTarget.style.color = '#D4AF37'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff'; }}
+            >
+              <Upload size={15} /> Import Participants
+            </button>
+            <button
+              onClick={() => { if (learners.length >= LEARNER_LIMIT) return alert(`Participant limit reached (${LEARNER_LIMIT}). Upgrade your plan to add more.`); setShowAddModal(true); }}
+              style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.82rem', borderRadius: '8px', padding: '0.65rem 1.1rem', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,175,55,0.25)', transition: 'opacity 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              <Plus size={15} /> Add Participant
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Summary Cards ── */}
@@ -302,15 +305,17 @@ export default function LearnersTab({
                 </span>
               </div>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>{l.joined}</span>
-              <div>
-                <button onClick={() => setLearners(prev => prev.filter(x => x.id !== l.id))}
-                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', transition: 'color 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
+              {userRole !== 'Facilitator' && (
+                <div>
+                  <button onClick={() => setLearners(prev => prev.filter(x => x.id !== l.id))}
+                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', transition: 'color 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              )}
             </div>
           )) : (
             <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>

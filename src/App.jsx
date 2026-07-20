@@ -279,7 +279,7 @@ export default function App() {
             if (savedTeam) setWsTeam(JSON.parse(savedTeam));
             
             setActiveRoute('dashboard');
-            setActiveTab('Dashboard');
+            setActiveTab(role === 'Facilitator' ? 'Overview' : 'Dashboard');
           } catch (e) {
             console.error('Error parsing session data', e);
             setActiveRoute('portal');
@@ -1581,19 +1581,9 @@ export default function App() {
 
   // Render Dashboard Workspace Preview if Logged In
   if (activeRoute === 'dashboard' && user) {
-    const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard';
-    
-    const displayPrograms = userRole === 'Facilitator'
-      ? wsPrograms.map(p => {
-          const facilitatorSessions = (p.sessions || []).filter(s => s.facilitatorEmail?.toLowerCase() === user.toLowerCase());
-          return {
-            ...p,
-            sessions: facilitatorSessions
-          };
-        }).filter(p => p.sessions.length > 0 || p.facilitatorEmail?.toLowerCase() === user.toLowerCase())
-      : wsPrograms;
+    const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard' || activeTab === 'Overview';
+    const showFacilitatorOverview = userRole === 'Facilitator' && isWelcome;
 
-    // Sidebar list
     const allSidebarItems = [
       { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
       { id: 'Getting Started', label: 'Getting Started', icon: <Clock size={18} /> },
@@ -1607,8 +1597,25 @@ export default function App() {
     ];
 
     const sidebarItems = userRole === 'Facilitator'
-      ? allSidebarItems.filter(item => item.id !== 'Team' && item.id !== 'Settings')
+      ? [
+          { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
+          { id: 'My Programs', label: 'My Programs', icon: <BookOpen size={18} /> },
+          { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
+          { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
+          { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
+          { id: 'Session Notes', label: 'Session Notes', icon: <FileText size={18} /> }
+        ]
       : allSidebarItems;
+
+    const displayPrograms = userRole === 'Facilitator'
+      ? wsPrograms.map(p => {
+          const facilitatorSessions = (p.sessions || []).filter(s => s.facilitatorEmail?.toLowerCase() === user.toLowerCase());
+          return {
+            ...p,
+            sessions: facilitatorSessions
+          };
+        }).filter(p => p.sessions.length > 0 || p.facilitatorEmail?.toLowerCase() === user.toLowerCase())
+      : wsPrograms;
 
     return (
       <div className="dashboard-root" style={{
@@ -2058,7 +2065,14 @@ export default function App() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#090a0f', overflowY: 'auto' }}>
             
             {/* Conditional content based on activeTab */}
-            {isWelcome ? (
+            {showFacilitatorOverview ? (
+              <FacilitatorOverview 
+                info={getLoggedInUserInfo()} 
+                programs={displayPrograms} 
+                onNavigate={setActiveTab} 
+                addNotification={addNotification}
+              />
+            ) : isWelcome ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', padding: '2rem' }}>
                 
                 {/* Center Main Panel (Left in main layout) */}
@@ -2414,7 +2428,7 @@ export default function App() {
                 addNotification={addNotification}
                 onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))}
               />
-            ) : activeTab === 'Programmes' ? (
+            ) : (activeTab === 'Programmes' || activeTab === 'My Programs') ? (
               /* Programmes Tab Component */
               <ProgramsTab
                 programs={displayPrograms}
@@ -2422,8 +2436,9 @@ export default function App() {
                 learners={wsLearners}
                 setLearners={setWsLearners}
                 addNotification={addNotification}
+                userRole={userRole}
               />
-            ) : activeTab === 'Learners' ? (
+            ) : (activeTab === 'Learners' || activeTab === 'Participants') ? (
               /* Learners Tab Component */
               <LearnersTab
                 programs={displayPrograms}
@@ -2432,6 +2447,7 @@ export default function App() {
                 setLearners={setWsLearners}
                 addNotification={addNotification}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
+                userRole={userRole}
               />
             ) : activeTab === 'Sessions' ? (
               /* Sessions Tab Component */
@@ -2441,6 +2457,7 @@ export default function App() {
                 learners={wsLearners}
                 addNotification={addNotification}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
+                userRole={userRole}
               />
             ) : activeTab === 'Reports' ? (
               /* Reports Tab Component */
@@ -2627,6 +2644,10 @@ export default function App() {
               />
             ) : activeTab === 'Help' ? (
               <HelpTab />
+            ) : activeTab === 'Resources' ? (
+              <ResourcesTab programs={displayPrograms} addNotification={addNotification} />
+            ) : activeTab === 'Session Notes' ? (
+              <SessionNotesTab programs={displayPrograms} addNotification={addNotification} />
             ) : (
               /* Operational View for other tabs */
               <div style={{ padding: '2.5rem' }}>
@@ -3716,6 +3737,453 @@ function HelpTab() {
         </form>
       </div>
 
+    </div>
+  );
+}
+
+function FacilitatorOverview({ info, programs = [], onNavigate, addNotification }) {
+  const allSessions = [];
+  programs.forEach(p => {
+    (p.sessions || []).forEach(s => {
+      allSessions.push({
+        ...s,
+        programName: p.name,
+        programId: p.id
+      });
+    });
+  });
+
+  const todaySession = allSessions.find(s => s.status === 'Today' || s.date?.toLowerCase().includes('today') || s.date?.toLowerCase().includes('30 may'));
+  const nextSession = todaySession || allSessions[0];
+
+  const handleJoin = (title) => {
+    alert(`Joining live training session: "${title}"... Redirecting to virtual classroom...`);
+    addNotification?.(`Joined live training session: "${title}"`);
+  };
+
+  const handleStartSession = () => {
+    if (nextSession) {
+      handleJoin(nextSession.title);
+    } else {
+      alert("No active session to start right now.");
+    }
+  };
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+            Good morning, {info.fullName} 👋
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+            Here's what's happening across your assigned programs.
+          </p>
+        </div>
+        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
+          Friday, 30 May 2025
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem' }}>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', color: '#F5D76E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#F5D76E' }}></span>
+                Next Session
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '1rem' }}>···</span>
+            </div>
+
+            {nextSession ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: 'rgba(245,215,110,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F5D76E' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(245,215,110,0.1)', color: '#F5D76E', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>Today</span>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', margin: '0.35rem 0 0.15rem 0' }}>{nextSession.title}</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{nextSession.programName} Program</p>
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.50rem', flexWrap: 'wrap' }}>
+                      <span>📅 Today, 30 May 2025</span>
+                      <span>⏰ {nextSession.time || '10:00 AM - 11:30 AM'}</span>
+                      <span>👥 {nextSession.learnersCount || '24 Learners'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <button 
+                    onClick={() => handleJoin(nextSession.title)}
+                    style={{ padding: '0.65rem 1.25rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', transition: 'opacity 0.2s' }}
+                  >
+                    🎥 Join Session
+                  </button>
+                  <button 
+                    onClick={() => onNavigate('Sessions')}
+                    style={{ padding: '0.65rem 1.25rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    👁️ View Session
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: '1rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                No upcoming sessions. Your assigned programs are currently up to date.
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>My Programs</h3>
+              <span onClick={() => onNavigate('My Programs')} style={{ color: '#F5D76E', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>View all programs</span>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.1rem' }}>
+              {programs.map((p, idx) => (
+                <div key={p.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: idx === 0 ? 'rgba(34,197,94,0.08)' : idx === 1 ? 'rgba(139,92,246,0.08)' : 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: idx === 0 ? '#22c55e' : idx === 1 ? '#8b5cf6' : '#3b82f6' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>Active</span>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>{p.name}</h4>
+                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.45rem' }}>
+                      {idx === 0 ? '24' : idx === 1 ? '18' : '31'} Learners · {idx === 0 ? '3' : '2'} Upcoming Sessions
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.25rem' }}>
+                      <span>Progress</span>
+                      <span>{idx === 0 ? '65%' : idx === 1 ? '42%' : '78%'}</span>
+                    </div>
+                    <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: idx === 0 ? '65%' : idx === 1 ? '42%' : '78%', backgroundColor: '#F5D76E', borderRadius: '99px' }}></div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      onNavigate('My Programs');
+                    }}
+                    style={{ width: '100%', padding: '0.55rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
+                  >
+                    Open Program →
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '1rem', fontFamily: "'Outfit', sans-serif" }}>Upcoming Sessions</h3>
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+                    <th style={{ padding: '0.9rem 1.25rem' }}>Session</th>
+                    <th style={{ padding: '0.9rem 1.25rem' }}>Program</th>
+                    <th style={{ padding: '0.9rem 1.25rem' }}>Date & Time</th>
+                    <th style={{ padding: '0.9rem 1.25rem' }}>Learners</th>
+                    <th style={{ padding: '0.9rem 1.25rem' }}>Status</th>
+                    <th style={{ padding: '0.9rem 1.25rem', textAlign: 'right' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { title: 'Leadership Fundamentals', program: 'Leadership Development', dateTime: '30 May 2025, 10:00 AM', learners: '24', status: 'Today', isToday: true },
+                    { title: 'Emotional Intelligence', program: 'Leadership Development', dateTime: '2 Jun 2025, 2:00 PM', learners: '24', status: 'Upcoming' },
+                    { title: 'Team Building Strategies', program: 'Project Management', dateTime: '3 Jun 2025, 10:00 AM', learners: '31', status: 'Upcoming' }
+                  ].map((s, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: '#fff' }}>
+                      <td style={{ padding: '0.9rem 1.25rem', fontWeight: 600 }}>{s.title}</td>
+                      <td style={{ padding: '0.9rem 1.25rem', color: 'rgba(255,255,255,0.5)' }}>{s.program}</td>
+                      <td style={{ padding: '0.9rem 1.25rem', color: 'rgba(255,255,255,0.5)' }}>{s.dateTime}</td>
+                      <td style={{ padding: '0.9rem 1.25rem', color: 'rgba(255,255,255,0.5)' }}>{s.learners}</td>
+                      <td style={{ padding: '0.9rem 1.25rem' }}>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '0.15rem 0.45rem', borderRadius: '4px', backgroundColor: s.isToday ? 'rgba(245,215,110,0.1)' : 'rgba(255,255,255,0.03)', color: s.isToday ? '#F5D76E' : 'rgba(255,255,255,0.5)' }}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.9rem 1.25rem', textAlign: 'right' }}>
+                        <button 
+                          onClick={() => handleJoin(s.title)}
+                          style={{ padding: '0.35rem 0.75rem', backgroundColor: s.isToday ? '#F5D76E' : 'transparent', border: s.isToday ? 'none' : '1px solid rgba(255,255,255,0.1)', color: s.isToday ? '#000' : '#fff', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          {s.isToday ? 'Join' : 'View'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Quick Access</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {[
+                { label: 'Start Next Session', icon: '▶️', action: handleStartSession },
+                { label: 'View Learners', icon: '👥', action: () => onNavigate('Learners') },
+                { label: 'Upload Resource', icon: '📤', action: () => onNavigate('Resources') },
+                { label: 'View Session Notes', icon: '📝', action: () => onNavigate('Session Notes') }
+              ].map(opt => (
+                <div 
+                  key={opt.label}
+                  onClick={opt.action}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(245,215,110,0.2)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>{opt.icon}</span>
+                    <span>{opt.label}</span>
+                  </span>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>→</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Today's Activity</h3>
+              <span style={{ fontSize: '0.75rem', color: '#F5D76E', cursor: 'pointer', fontWeight: 600 }}>View all</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
+              
+              {[
+                { title: 'Session scheduled', detail: 'Leadership Fundamentals', time: '9:00 AM', icon: '📅', color: 'rgba(245,215,110,0.1)', textCol: '#F5D76E' },
+                { title: 'Learner joined a session', detail: 'David Johnson joined the session', time: '9:15 AM', icon: '👤', color: 'rgba(34,197,94,0.1)', textCol: '#22c55e' },
+                { title: 'Resource uploaded', detail: 'Leadership Slides.pdf', time: '9:30 AM', icon: '📄', color: 'rgba(59,130,246,0.1)', textCol: '#3b82f6' },
+                { title: 'Session completed', detail: 'Effective Communication', time: '11:00 AM', icon: '✅', color: 'rgba(16,185,129,0.1)', textCol: '#10b981' },
+                { title: 'Session notes added', detail: 'Leadership Fundamentals', time: '11:15 AM', icon: '📝', color: 'rgba(139,92,246,0.1)', textCol: '#8b5cf6' }
+              ].map((act, index) => (
+                <div key={index} style={{ display: 'flex', gap: '1rem', position: 'relative' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: act.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0, zIndex: 2 }}>
+                    {act.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>{act.title}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>{act.time}</span>
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', margin: '0.15rem 0 0 0' }}>{act.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.85rem', textAlign: 'center' }}>
+              <span onClick={() => alert("Activity history is fully up to date.")} style={{ color: '#F5D76E', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}>View all activity →</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+      
+      <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', marginTop: '1rem' }}>
+        © 2025 OYEN GRID. All rights reserved.
+      </div>
+    </div>
+  );
+}
+
+function ResourcesTab({ programs = [], addNotification }) {
+  const [search, setSearch] = useState('');
+  const [selectedProgId, setSelectedProgId] = useState('');
+  const [fileName, setFileName] = useState('');
+
+  const allResources = [];
+  programs.forEach(p => {
+    (p.resources || []).forEach(r => {
+      allResources.push({
+        ...r,
+        programName: p.name,
+        programId: p.id
+      });
+    });
+  });
+
+  const handleUpload = (e) => {
+    e.preventDefault();
+    if (!fileName.trim() || !selectedProgId) return;
+
+    addNotification(`Resource "${fileName}" uploaded to program`);
+    alert(`Resource file "${fileName}" successfully uploaded.`);
+    setFileName('');
+  };
+
+  const filtered = allResources.filter(r => r.name?.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+      <div>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Resources</h2>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+          Upload and manage training guides, slides, reference links, and handouts.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem' }}>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <input 
+            type="text" 
+            placeholder="Search resources..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+          />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {filtered.length > 0 ? (
+              filtered.map((res, i) => (
+                <div key={i} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '1.3rem' }}>📄</span>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.85rem' }}>{res.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.15rem' }}>
+                        {res.programName} · {res.size || '3.2 MB'}
+                      </div>
+                    </div>
+                  </div>
+                  <span 
+                    onClick={() => alert(`Downloading: ${res.name}...`)}
+                    style={{ fontSize: '0.72rem', color: '#F5D76E', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Download 📥
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
+                No resources match your query. Upload one to get started.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', height: 'fit-content' }}>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Upload Resource</h3>
+          
+          <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>File Name</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Leadership Workbook.pdf" 
+                value={fileName}
+                onChange={e => setFileName(e.target.value)}
+                style={{ width: '100%', padding: '0.65rem 0.85rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.82rem', outline: 'none' }}
+                required
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Program</label>
+              <select 
+                value={selectedProgId}
+                onChange={e => setSelectedProgId(e.target.value)}
+                style={{ width: '100%', padding: '0.65rem 0.85rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.82rem', outline: 'none', cursor: 'pointer' }}
+                required
+              >
+                <option value="">Select a Program</option>
+                {programs.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <button 
+              type="submit"
+              style={{ width: '100%', padding: '0.65rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Upload Material
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function SessionNotesTab({ programs = [], addNotification }) {
+  const [notes, setNotes] = useState({});
+
+  const sessionsList = [];
+  programs.forEach(p => {
+    (p.sessions || []).forEach(s => {
+      sessionsList.push({
+        ...s,
+        programName: p.name,
+        programId: p.id
+      });
+    });
+  });
+
+  const handleSaveNotes = (sid, title) => {
+    addNotification?.(`Session notes added to "${title}"`);
+    alert(`Session notes for "${title}" saved successfully.`);
+  };
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+      <div>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Session Notes</h2>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+          Document summary notes, participant engagement feedback, and takeaway points for each training module.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+        {sessionsList.map((s, i) => (
+          <div key={i} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, backgroundColor: 'rgba(245,215,110,0.1)', color: '#F5D76E', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>Notes Log</span>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: '0.35rem 0 0.15rem 0' }}>{s.title}</h3>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{s.programName}</span>
+            </div>
+
+            <textarea 
+              rows={4}
+              placeholder="Enter notes, milestones, or participant comments..."
+              value={notes[s.id] || ''}
+              onChange={e => setNotes({ ...notes, [s.id]: e.target.value })}
+              style={{ width: '100%', padding: '0.65rem 0.85rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.82rem', outline: 'none', resize: 'vertical' }}
+            />
+
+            <button 
+              onClick={() => handleSaveNotes(s.id, s.title)}
+              style={{ padding: '0.55rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Save Notes
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
