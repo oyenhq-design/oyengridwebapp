@@ -237,17 +237,37 @@ export default function App() {
     const timer = setTimeout(() => {
       // Check for URL invitation params
       const params = new URLSearchParams(window.location.search);
+      const tokenParam = params.get('token');
       const inviteCode = params.get('inviteCode') || params.get('code');
       const orgId = params.get('orgId');
       const email = params.get('email');
 
-      if (inviteCode) {
+      if (tokenParam || inviteCode) {
         // Clean URL to not clutter
         window.history.replaceState({}, document.title, window.location.pathname);
 
+        let savedInvitations = [];
+        try {
+          const stored = localStorage.getItem('oyen_ws_invitations');
+          if (stored) savedInvitations = JSON.parse(stored);
+        } catch (e) {
+          console.error(e);
+        }
+
+        let prefilledEmail = email || '';
+        let prefilledCode = inviteCode || '';
+
+        if (tokenParam) {
+          const matched = savedInvitations.find(i => i.token === tokenParam);
+          if (matched) {
+            prefilledEmail = matched.email;
+            prefilledCode = matched.accessCode;
+          }
+        }
+
         setInvitationPrefill({
-          inviteCode: inviteCode,
-          email: email || '',
+          inviteCode: prefilledCode,
+          email: prefilledEmail,
           orgId: orgId || ''
         });
 
@@ -1503,16 +1523,41 @@ export default function App() {
       { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
     ];
 
-    const sidebarItems = userRole === 'Facilitator'
-      ? [
-          { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
-          { id: 'My Programs', label: 'My Programs', icon: <BookOpen size={18} /> },
-          { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
-          { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
-          { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
-          { id: 'Session Notes', label: 'Session Notes', icon: <FileText size={18} /> }
-        ]
-      : allSidebarItems;
+    let sidebarItems = allSidebarItems;
+    if (userRole === 'Facilitator') {
+      sidebarItems = [
+        { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
+        { id: 'My Programs', label: 'My Programs', icon: <BookOpen size={18} /> },
+        { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
+        { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
+        { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
+        { id: 'Session Notes', label: 'Session Notes', icon: <FileText size={18} /> }
+      ];
+    } else if (userRole === 'Program Manager') {
+      sidebarItems = [
+        { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
+        { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
+        { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
+        { id: 'Learners', label: 'Participants', icon: <UserCheck size={18} /> },
+        { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
+        { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
+        { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
+      ];
+    } else if (userRole === 'Team Member') {
+      sidebarItems = [
+        { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
+        { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
+        { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
+        { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> }
+      ];
+    } else if (userRole === 'Viewer') {
+      sidebarItems = [
+        { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
+        { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
+        { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
+        { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> }
+      ];
+    }
 
     const displayPrograms = userRole === 'Facilitator'
       ? wsPrograms.map(p => {

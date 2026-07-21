@@ -11,54 +11,26 @@ export default function SignInForm({
   invitationPrefill,
   setInvitationPrefill
 }) {
-  // Determine if starting in invitation acceptance mode
-  const isInvited = !!invitationPrefill;
+  // flowStep states: 'login' | 'invite-verify' | 'invite-setup'
+  const [flowStep, setFlowStep] = useState(invitationPrefill ? 'invite-verify' : 'login');
 
-  // Resolve role from invitation code prefix or invitations state
-  const getPredefinedRole = () => {
-    if (!invitationPrefill) return '';
-    const targetCode = invitationPrefill.inviteCode || '';
-    const targetEmail = invitationPrefill.email || '';
-    
-    const invite = invitations.find(i => 
-      (i.accessCode && i.accessCode.toUpperCase() === targetCode.toUpperCase()) ||
-      (i.email && i.email.toLowerCase() === targetEmail.toLowerCase())
-    );
-    if (invite) return invite.role;
-
-    // Fallback based on code prefix
-    const codeUpper = targetCode.toUpperCase();
-    if (codeUpper.startsWith('ADM')) return 'Organization Admin';
-    if (codeUpper.startsWith('MGR')) return 'Programme Manager';
-    if (codeUpper.startsWith('FAC')) return 'Facilitator';
-    if (codeUpper.startsWith('TRN')) return 'Trainer';
-    if (codeUpper.startsWith('EMP')) return 'Employee';
-    if (codeUpper.startsWith('LRN')) return 'Participant';
-    return 'Participant';
-  };
-
-  // Flow step state: 'login' | 'invite-verify' | 'invite-setup' | 'verify-email' | 'create-account'
-  const [flowStep, setFlowStep] = useState(isInvited ? 'invite-verify' : 'login');
-
-  // Input states
+  // Input states for standard login
   const [email, setEmail] = useState(invitationPrefill ? invitationPrefill.email : '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState(invitationPrefill ? getPredefinedRole() : '');
-  const [accessCode, setAccessCode] = useState(invitationPrefill ? invitationPrefill.inviteCode : '');
+  const [role, setRole] = useState('');
 
-  // Setup account states
-  const [verifiedEmail, setVerifiedEmail] = useState(invitationPrefill ? invitationPrefill.email : '');
+  // Input states for invitation flow
+  const [inviteEmail, setInviteEmail] = useState(invitationPrefill ? invitationPrefill.email : '');
+  const [inviteCode, setInviteCode] = useState(invitationPrefill ? invitationPrefill.inviteCode : '');
   const [fullName, setFullName] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
-  const [assignedRole, setAssignedRole] = useState(invitationPrefill ? getPredefinedRole() : '');
 
-  // Facilitator legacy access steps
-  const [legacyAccessCode, setLegacyAccessCode] = useState('');
+  const [matchedInvitation, setMatchedInvitation] = useState(null);
 
-  // Status and loader states
+  // Loader & status states
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
@@ -88,44 +60,77 @@ export default function SignInForm({
 
     setTimeout(() => {
       setIsLoading(false);
-      const matchingMember = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
+      const targetEmail = email.trim().toLowerCase();
       
-      if (email.toLowerCase() === 'facilitator@oyengrid.test' && password === 'Oyen@1234') {
-        setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
-        if (onAuthSuccess) {
-          setTimeout(() => onAuthSuccess(email, 'Facilitator'), 1000);
-        }
-      } else if (email === 'admin@oyengrid.com' && password !== 'password123') {
-        setStatusMessage({ 
-          type: 'error', 
-          text: 'Invalid credentials. Hint: use admin@oyengrid.com / password123' 
+      // 1. Search for the account in the workspace
+      const matchingMember = teamMembers.find(m => m.email.toLowerCase() === targetEmail);
+      const pendingInvite = invitations.find(i => i.email.toLowerCase() === targetEmail && !i.used);
+
+      if (!matchingMember && !pendingInvite) {
+        setStatusMessage({
+          type: 'error',
+          text: 'This account does not exist in this workspace.'
         });
-      } else {
-        // Allow login of active members or admins
-        if (matchingMember && matchingMember.status === 'Suspended') {
-          setStatusMessage({ type: 'error', text: 'Your account access has been suspended by the administrator.' });
-          return;
-        }
-        setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
-        if (onAuthSuccess) {
-          const finalRole = matchingMember ? matchingMember.role : (role || 'Workspace Super Admin');
-          setTimeout(() => onAuthSuccess(email, finalRole), 1000);
-        }
+        return;
+      }
+
+      // 2. Check if the account has not been activated yet
+      if (pendingInvite && (!matchingMember || matchingMember.status === 'Pending')) {
+        setStatusMessage({
+          type: 'error',
+          text: 'Your invitation has not been activated yet. Please complete your invitation before signing in.'
+        });
+        return;
+      }
+
+      // 3. Verify user's assigned role
+      const actualRole = matchingMember.role;
+      if (role && role !== actualRole) {
+        setStatusMessage({
+          type: 'error',
+          text: 'You do not have permission to sign in using this role.'
+        });
+        return;
+      }
+
+      // 4. Verify password
+      // Default credentials fallback for owner (admin@oyengrid.com or initial owner)
+      const isOwnerDefault = (targetEmail === 'admin@oyengrid.com' || actualRole === 'Organization Owner');
+      const expectedPassword = matchingMember.password || (isOwnerDefault ? 'password123' : null);
+
+      if (!expectedPassword || password !== expectedPassword) {
+        setStatusMessage({
+          type: 'error',
+          text: 'Invalid email or password. Please try again.'
+        });
+        return;
+      }
+
+      // 5. Account is Active and credentials are correct
+      setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
+      
+      // Update last login
+      if (setTeamMembers) {
+        setTeamMembers(prev => prev.map(m => m.email.toLowerCase() === targetEmail ? { ...m, lastLogin: new Date().toISOString() } : m));
+      }
+
+      if (onAuthSuccess) {
+        setTimeout(() => onAuthSuccess(targetEmail, actualRole), 1000);
       }
     }, 1200);
   };
 
-  // Step 1: Verify Invitation Access Codes
+  // Step 1: Verify Email and Invitation Code
   const handleVerifyInvite = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
+    if (!inviteEmail) {
+      newErrors.inviteEmail = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(inviteEmail)) {
+      newErrors.inviteEmail = 'Please enter a valid email address';
     }
-    if (!accessCode) {
-      newErrors.accessCode = 'Invitation Code is required';
+    if (!inviteCode) {
+      newErrors.inviteCode = 'Invitation Code is required';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -138,46 +143,40 @@ export default function SignInForm({
 
     setTimeout(() => {
       setIsLoading(false);
-      const codeUpper = accessCode.trim().toUpperCase();
-      const targetEmail = email.trim().toLowerCase();
+      const codeUpper = inviteCode.trim().toUpperCase();
+      const targetEmail = inviteEmail.trim().toLowerCase();
 
-      // Find invitation by code
+      // Find invitation by code (support standard codes and fallback email matching)
       const invite = invitations.find(i => i.accessCode.toUpperCase() === codeUpper);
 
       if (!invite) {
-        setErrors({ accessCode: 'Invalid invitation code' });
+        setErrors({ inviteCode: 'Invalid invitation code.' });
         return;
       }
 
       if (invite.email.toLowerCase() !== targetEmail) {
-        setErrors({ email: 'This email does not match the invitation record' });
-        return;
-      }
-
-      if (invite.role !== role) {
-        setErrors({ role: 'Selected role does not match your invitation' });
+        setErrors({ inviteEmail: 'This email does not match the invitation record.' });
         return;
       }
 
       if (invite.used) {
-        setErrors({ accessCode: 'This invitation has already been accepted/used' });
+        setErrors({ inviteCode: 'This invitation has already been accepted/used.' });
         return;
       }
 
       if (invite.expiresAt) {
         const expiryDate = new Date(invite.expiresAt);
         if (expiryDate < new Date()) {
-          setErrors({ accessCode: 'This invitation has expired' });
+          setErrors({ inviteCode: 'This invitation has expired.' });
           return;
         }
       }
 
-      // Valid invitation! Go to setup step
+      // Valid invitation
       setErrors({});
-      setVerifiedEmail(invite.email);
-      setAssignedRole(invite.role);
+      setMatchedInvitation(invite);
       
-      // Auto-prefill name if present in invite
+      // Pre-fill name from invite if present
       if (invite.name) {
         setFullName(invite.name);
       } else {
@@ -188,7 +187,7 @@ export default function SignInForm({
     }, 1200);
   };
 
-  // Step 2: Account Setup (Register User and Mark Used)
+  // Step 2 & 3: Account Setup and Account Activation
   const handleAccountSetupSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -207,21 +206,35 @@ export default function SignInForm({
 
     setTimeout(() => {
       setIsLoading(false);
-      
+      const targetEmail = matchedInvitation.email;
+      const assignedRole = matchedInvitation.role;
+      const inviteCodeVal = matchedInvitation.accessCode;
+
       // 1. Mark invitation as used
       if (setInvitations) {
         setInvitations(prev => prev.map(i => 
-          i.accessCode.toUpperCase() === accessCode.trim().toUpperCase() ? { ...i, used: true, status: 'Active' } : i
+          i.accessCode.toUpperCase() === inviteCodeVal.toUpperCase() 
+            ? { ...i, used: true, status: 'Active', acceptedAt: new Date().toLocaleDateString('en-GB') } 
+            : i
         ));
       }
 
-      // 2. Add member to team roster
+      // 2. Add/Update member in team roster
       if (setTeamMembers) {
         setTeamMembers(prev => {
-          const exists = prev.some(m => m.email.toLowerCase() === verifiedEmail.toLowerCase());
+          const exists = prev.some(m => m.email.toLowerCase() === targetEmail.toLowerCase());
           if (exists) {
-            return prev.map(m => m.email.toLowerCase() === verifiedEmail.toLowerCase() 
-              ? { ...m, name: fullName, role: assignedRole, status: 'Active' } 
+            return prev.map(m => m.email.toLowerCase() === targetEmail.toLowerCase() 
+              ? { 
+                  ...m, 
+                  name: fullName, 
+                  role: assignedRole, 
+                  status: 'Active', 
+                  password: regPassword, 
+                  acceptedAt: new Date().toLocaleDateString('en-GB'),
+                  lastLogin: new Date().toISOString(),
+                  emailVerified: true
+                } 
               : m
             );
           }
@@ -229,12 +242,16 @@ export default function SignInForm({
           const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
           return [...prev, { 
             name: fullName, 
-            email: verifiedEmail, 
+            email: targetEmail, 
             role: assignedRole, 
             status: 'Active', 
             initials, 
             color: '#4B7BEC',
-            joined: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            password: regPassword,
+            joined: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            acceptedAt: new Date().toLocaleDateString('en-GB'),
+            lastLogin: new Date().toISOString(),
+            emailVerified: true
           }];
         });
       }
@@ -246,45 +263,10 @@ export default function SignInForm({
       
       setTimeout(() => {
         if (onAuthSuccess) {
-          onAuthSuccess(verifiedEmail, assignedRole);
+          onAuthSuccess(targetEmail, assignedRole);
         }
       }, 1000);
     }, 1500);
-  };
-
-  // Legacy Facilitator Verification
-  const handleVerifyLegacyAccessCode = () => {
-    if (!legacyAccessCode.trim()) {
-      setErrors({ legacyAccessCode: 'Access code is required' });
-      return;
-    }
-
-    const codeUpper = legacyAccessCode.trim().toUpperCase();
-    const invite = invitations.find(i => i.accessCode.toUpperCase() === codeUpper);
-
-    if (!invite) {
-      setErrors({ legacyAccessCode: 'Invalid organization access code' });
-      return;
-    }
-
-    if (invite.used) {
-      setErrors({ legacyAccessCode: 'This access code has already been used' });
-      return;
-    }
-
-    if (invite.expiresAt) {
-      const expiryDate = new Date(invite.expiresAt);
-      if (expiryDate < new Date()) {
-        setErrors({ legacyAccessCode: 'This facilitator invitation has expired' });
-        return;
-      }
-    }
-
-    setErrors({});
-    setVerifiedEmail(invite.email);
-    setAssignedRole('Facilitator');
-    setAccessCode(legacyAccessCode);
-    setFlowStep('invite-setup');
   };
 
   return (
@@ -341,7 +323,19 @@ export default function SignInForm({
               textAlign: 'left'
             }}>
               {statusMessage.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
-              <span>{statusMessage.text}</span>
+              <span style={{ flex: 1 }}>{statusMessage.text}</span>
+              {statusMessage.text.includes('activate') && (
+                <button 
+                  onClick={() => {
+                    setInviteEmail(email);
+                    setFlowStep('invite-verify');
+                    setStatusMessage(null);
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#F5D76E', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', padding: 0 }}
+                >
+                  Activate Now
+                </button>
+              )}
             </div>
           )}
 
@@ -500,68 +494,34 @@ export default function SignInForm({
                 }}
               >
                 <option value="" style={{ backgroundColor: '#090a0f', color: 'rgba(255,255,255,0.4)' }}>Select your role</option>
-                <option value="Workspace Super Admin" style={{ backgroundColor: '#090a0f' }}>Workspace Super Admin</option>
                 <option value="Organization Owner" style={{ backgroundColor: '#090a0f' }}>Organization Owner</option>
-                <option value="Programme Manager" style={{ backgroundColor: '#090a0f' }}>Programme Manager</option>
+                <option value="Admin" style={{ backgroundColor: '#090a0f' }}>Admin</option>
+                <option value="Program Manager" style={{ backgroundColor: '#090a0f' }}>Program Manager</option>
                 <option value="Facilitator" style={{ backgroundColor: '#090a0f' }}>Facilitator</option>
                 <option value="Team Member" style={{ backgroundColor: '#090a0f' }}>Team Member</option>
+                <option value="Viewer" style={{ backgroundColor: '#090a0f' }}>Viewer</option>
               </select>
               <ChevronDown size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             </div>
           </div>
 
-          {/* Conditional Flow Step for Facilitator Legacy Onboarding */}
-          {role === 'Facilitator' && (
-            <div className="form-group animate-fade-in" style={{ marginBottom: '1.75rem', textAlign: 'left', marginTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
-              <label className="form-label" htmlFor="access-code-input" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Organization Access Code</label>
-              <div style={{ position: 'relative' }}>
-                <Shield size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                <input
-                  id="access-code-input"
-                  type="text"
-                  className="form-input"
-                  placeholder="Enter organization code for first-time setup"
-                  value={legacyAccessCode}
-                  onChange={(e) => {
-                    setLegacyAccessCode(e.target.value);
-                    if (errors.legacyAccessCode) setErrors({ ...errors, legacyAccessCode: '' });
-                  }}
-                  style={{ paddingLeft: '2.5rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
-                />
-              </div>
-              {errors.legacyAccessCode && (
-                <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#ef4444', fontSize: '0.75rem', marginTop: '0.35rem' }}>
-                  <AlertCircle size={12} /> {errors.legacyAccessCode}
-                </span>
-              )}
-              <button 
-                type="button" 
-                onClick={handleVerifyLegacyAccessCode}
-                style={{ 
-                  marginTop: '1rem', width: '100%', padding: '0.75rem', backgroundColor: 'transparent',
-                  border: '1px solid #F5D76E', color: '#F5D76E', borderRadius: '6px', fontWeight: 600,
-                  fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' 
-                }}
-              >
-                Verify & Onboard Facilitator <ArrowRight size={14} />
-              </button>
-            </div>
-          )}
-
-          {/* Switch to signup / Create Org */}
+          {/* Go to Invitation Verification link */}
           <div style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '0.9rem', marginTop: '1.5rem' }}>
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>New to OYEN GRID? </span>
+            <span style={{ color: 'rgba(255,255,255,0.5)' }}>Received an invitation? </span>
             <span 
-              onClick={() => onSwitchForm('portal')} 
+              onClick={() => {
+                setStatusMessage(null);
+                setFlowStep('invite-verify');
+              }} 
               style={{ color: '#F5D76E', fontWeight: 600, cursor: 'pointer' }}
             >
-              Create an organization →
+              Activate Invitation →
             </span>
           </div>
         </>
       )}
 
-      {/* STEP: Verify Invitation Code, Email, and Selected Role */}
+      {/* STEP: Verify Invitation Code, Email */}
       {flowStep === 'invite-verify' && (
         <>
           <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
@@ -594,7 +554,7 @@ export default function SignInForm({
           )}
 
           <form onSubmit={handleVerifyInvite} noValidate style={{ textAlign: 'left' }}>
-            {/* Work Email Field (Locked/Prefilled) */}
+            {/* Work Email Field */}
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
               <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Work Email</label>
               <div style={{ position: 'relative' }}>
@@ -602,79 +562,50 @@ export default function SignInForm({
                 <input
                   type="email"
                   className="form-input"
-                  value={email}
-                  readOnly
+                  value={inviteEmail}
+                  placeholder="name@organization.com"
+                  onChange={(e) => {
+                    setInviteEmail(e.target.value);
+                    if (errors.inviteEmail) setErrors({ ...errors, inviteEmail: '' });
+                  }}
                   style={{ 
                     paddingLeft: '2.5rem', 
-                    backgroundColor: 'rgba(255,255,255,0.04)', 
+                    backgroundColor: 'rgba(255,255,255,0.02)', 
                     borderColor: 'rgba(255,255,255,0.08)', 
-                    color: 'rgba(255,255,255,0.5)', 
-                    borderRadius: '6px',
-                    cursor: 'not-allowed'
+                    color: '#fff', 
+                    borderRadius: '6px'
                   }}
-                  disabled={true}
+                  disabled={isInvited}
                 />
               </div>
-              {errors.email && (
+              {errors.inviteEmail && (
                 <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#ef4444', fontSize: '0.75rem', marginTop: '0.35rem' }}>
-                  <AlertCircle size={12} /> {errors.email}
+                  <AlertCircle size={12} /> {errors.inviteEmail}
                 </span>
               )}
             </div>
 
-            {/* Invitation Code / Organization Access Code Field */}
+            {/* Invitation Code Field */}
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Invitation Code / Organization Access Code</label>
+              <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Invitation Code / Access Code</label>
               <div style={{ position: 'relative' }}>
                 <Shield size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Enter your invitation code (e.g. ADM-20483)"
-                  value={accessCode}
+                  placeholder="Enter your invitation code (e.g. OYEN-FAC-8K4M9Q)"
+                  value={inviteCode}
                   onChange={(e) => {
-                    setAccessCode(e.target.value);
-                    if (errors.accessCode) setErrors({ ...errors, accessCode: '' });
+                    setInviteCode(e.target.value);
+                    if (errors.inviteCode) setErrors({ ...errors, inviteCode: '' });
                   }}
                   style={{ paddingLeft: '2.5rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
                   disabled={isLoading}
                 />
               </div>
-              {errors.accessCode && (
+              {errors.inviteCode && (
                 <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#ef4444', fontSize: '0.75rem', marginTop: '0.35rem' }}>
-                  <AlertCircle size={12} /> {errors.accessCode}
-                </span>
-              )}
-            </div>
-
-            {/* Role Dropdown Selector (Locked/Prefilled) */}
-            <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
-              <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>Invited Role</label>
-              <div style={{ position: 'relative' }}>
-                <User size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                <select
-                  value={role}
-                  disabled={true}
-                  style={{
-                    width: '100%',
-                    padding: '0.875rem 1rem 0.875rem 2.5rem',
-                    backgroundColor: 'rgba(255,255,255,0.04)',
-                    borderColor: 'rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.5)',
-                    borderRadius: '6px',
-                    appearance: 'none',
-                    cursor: 'not-allowed',
-                    fontSize: '0.9rem',
-                    outline: 'none'
-                  }}
-                >
-                  <option value={role}>{role || 'Select role'}</option>
-                </select>
-                <ChevronDown size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              </div>
-              {errors.role && (
-                <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#ef4444', fontSize: '0.75rem', marginTop: '0.35rem' }}>
-                  <AlertCircle size={12} /> {errors.role}
+                  <AlertCircle size={12} /> {errors.inviteCode}
                 </span>
               )}
             </div>
@@ -726,7 +657,7 @@ export default function SignInForm({
         </>
       )}
 
-      {/* STEP: Account Setup */}
+      {/* STEP: Account Setup (Create Password & Name) */}
       {flowStep === 'invite-setup' && (
         <div className="animate-fade-in" style={{ textAlign: 'left' }}>
           <div style={{ marginBottom: '2rem' }}>
@@ -738,33 +669,13 @@ export default function SignInForm({
             </p>
           </div>
 
-          {statusMessage && (
-            <div style={{
-              padding: '0.8rem 1rem',
-              backgroundColor: 'rgba(34, 197, 94, 0.05)',
-              border: '1px solid rgba(34, 197, 94, 0.2)',
-              borderRadius: '6px',
-              color: '#22c55e',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              marginBottom: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              textAlign: 'left'
-            }}>
-              <CheckCircle2 size={16} />
-              <span>{statusMessage.text}</span>
-            </div>
-          )}
-
           <form onSubmit={handleAccountSetupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             {/* Full Name */}
             <div>
               <label style={{ display: 'block', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.35rem', fontWeight: 600 }}>Full Name</label>
               <input 
                 type="text" 
-                placeholder="e.g. Dr. Ada Lovelace" 
+                placeholder="e.g. Sarah Ahmed" 
                 value={fullName}
                 onChange={e => {
                   setFullName(e.target.value);
@@ -824,7 +735,7 @@ export default function SignInForm({
               style={{ width: '100%', padding: '0.85rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
               disabled={isLoading}
             >
-              {isLoading ? <span className="spinner" /> : <>Create Account & Sign In <ArrowRight size={15} /></>}
+              {isLoading ? <span className="spinner" /> : <>Activate Account & Sign In <ArrowRight size={15} /></>}
             </button>
           </form>
         </div>
