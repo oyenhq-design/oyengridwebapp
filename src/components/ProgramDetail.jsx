@@ -275,7 +275,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   const isOwnerOrAdmin = userRole === 'Organization Owner' || userRole === 'Admin';
   
   const subTabs = userRole === 'Viewer'
-    ? ['Overview', 'Learners', 'Resources', 'Reports', 'Announcements']
+    ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Assessments', 'Reports', 'Announcements']
     : (userRole === 'Team Member'
         ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Announcements', 'Certificates', 'Reports']
         : ['Overview', 'Sessions', 'Learners', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports']);
@@ -438,7 +438,9 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                   </div>
 
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {userRole === 'Team Member' ? (
+                    {userRole === 'Viewer' ? (
+                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>Read Only View</span>
+                    ) : userRole === 'Team Member' ? (
                       <>
                         <button onClick={() => alert(`Logistics checklist prepared!`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}>Prepare Logistics</button>
                         <button onClick={() => alert(`Attendance sheet uploaded!`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Upload Attendance</button>
@@ -640,39 +642,41 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {activeSubTab === 'Assessments' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>Create Assessment</h3>
-            <form onSubmit={handleCreateAssessment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input
-                required
-                type="text"
-                placeholder="Assessment Title..."
-                value={assessmentName}
-                onChange={e => setAssessmentName(e.target.value)}
-                style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
-              />
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <select
-                  value={assessmentType}
-                  onChange={e => setAssessmentType(e.target.value)}
-                  style={{ flex: 1, padding: '0.65rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }}
-                >
-                  <option value="quiz">Quiz</option>
-                  <option value="assignment">Assignment</option>
-                  <option value="exam">Exam</option>
-                </select>
+          {userRole !== 'Viewer' && (
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>Create Assessment</h3>
+              <form onSubmit={handleCreateAssessment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input
-                  type="date"
-                  value={assessmentDeadline}
-                  onChange={e => setAssessmentDeadline(e.target.value)}
-                  style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
+                  required
+                  type="text"
+                  placeholder="Assessment Title..."
+                  value={assessmentName}
+                  onChange={e => setAssessmentName(e.target.value)}
+                  style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
                 />
-              </div>
-              <button type="submit" style={{ padding: '0.65rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>
-                Publish Assessment
-              </button>
-            </form>
-          </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <select
+                    value={assessmentType}
+                    onChange={e => setAssessmentType(e.target.value)}
+                    style={{ flex: 1, padding: '0.65rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }}
+                  >
+                    <option value="quiz">Quiz</option>
+                    <option value="assignment">Assignment</option>
+                    <option value="exam">Exam</option>
+                  </select>
+                  <input
+                    type="date"
+                    value={assessmentDeadline}
+                    onChange={e => setAssessmentDeadline(e.target.value)}
+                    style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <button type="submit" style={{ padding: '0.65rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>
+                  Publish Assessment
+                </button>
+              </form>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
             {(program.assessments || []).map(a => (
@@ -780,7 +784,16 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {activeSubTab === 'Reports' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Operational Analytics</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Operational Analytics</h3>
+            {userRole === 'Viewer' && (
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => alert('Exporting PDF...')} style={{ padding: '0.4rem 0.8rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}><Download size={12} style={{ marginRight: '0.3rem', display: 'inline' }} /> Export PDF</button>
+                <button onClick={() => alert('Exporting Excel...')} style={{ padding: '0.4rem 0.8rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}><Download size={12} style={{ marginRight: '0.3rem', display: 'inline' }} /> Export Excel</button>
+                <button onClick={() => window.print()} style={{ padding: '0.4rem 0.8rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Print Report</button>
+              </div>
+            )}
+          </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
             <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>

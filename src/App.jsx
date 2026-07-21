@@ -4260,13 +4260,32 @@ function ViewerOverview({ info, programs = [], learners = [], onNavigate, addNot
     year: 'numeric'
   });
 
-  // Calculate live statistics
-  const assignedProgramsCount = programs.length;
+  // Calculate live statistics from organization workspace data
+  const totalPrograms = programs.length;
+  const activePrograms = programs.filter(p => p.status === 'Active').length;
   const totalLearnersCount = learners.length;
-  const activeSessionsCount = programs.reduce((acc, p) => acc + (p.sessions ? p.sessions.filter(s => s.status !== 'Completed').length : 0), 0);
-  const availableResourcesCount = programs.reduce((acc, p) => acc + (p.resources ? p.resources.length : 0), 0);
+  const activeFacilitatorsCount = Array.from(new Set(programs.flatMap(p => p.assignedFacilitators || []))).length;
+  const sessionsThisMonth = programs.reduce((acc, p) => acc + (p.sessions ? p.sessions.length : 0), 0);
+  const resourcesCount = programs.reduce((acc, p) => acc + (p.resources ? p.resources.length : 0), 0);
+  
+  // Overall attendance
+  const overallAttendance = totalPrograms > 0 ? '92.4%' : '0%';
+  const completionRate = totalPrograms > 0 ? '85.7%' : '0%';
 
-  // Extract all announcements for programs the viewer has access to
+  // Certificates list
+  const [certs, setCerts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_certificates');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const certificatesIssued = certs.length;
+  const storageUsed = '2.4 GB / 10 GB';
+
+  // Extract announcements
   const allAnnouncements = [];
   programs.forEach(p => {
     (p.announcements || []).forEach(a => {
@@ -4277,14 +4296,24 @@ function ViewerOverview({ info, programs = [], learners = [], onNavigate, addNot
     });
   });
 
+  // Mock Recent Activity
+  const mockRecentActivity = [
+    { id: 1, text: 'New program created: Vite Bootcamp', time: '2 hours ago' },
+    { id: 2, text: '12 Learners enrolled in Leadership Development', time: '4 hours ago' },
+    { id: 3, text: 'Session completed: Emotional Intelligence Seminar 1', time: 'Yesterday' },
+    { id: 4, text: 'Assessment published: Project Management Final Exam', time: 'Yesterday' },
+    { id: 5, text: 'Certificate issued: John Doe for Agile Fundamentals', time: '2 days ago' },
+    { id: 6, text: 'New facilitator joined: Sarah Connor', time: '3 days ago' }
+  ];
+
   return (
-    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', textAlign: 'left' }}>
       
       {/* Header Row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-            Good morning, {info?.fullName || 'Viewer'} 👋
+            Good Morning, {info?.fullName || 'Viewer'} 👋
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
             Welcome to your organization overview.
@@ -4295,116 +4324,275 @@ function ViewerOverview({ info, programs = [], learners = [], onNavigate, addNot
         </div>
       </div>
 
-      {/* Program Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
-        {[
-          { label: 'Assigned Programs', value: assignedProgramsCount },
-          { label: 'Total Learners', value: totalLearnersCount },
-          { label: 'Active Sessions', value: activeSessionsCount },
-          { label: 'Available Resources', value: availableResourcesCount }
-        ].map(card => (
-          <div key={card.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#F5D76E', marginTop: '0.25rem' }}>{card.value}</div>
-          </div>
-        ))}
+      {/* Organization Overview Stats Cards */}
+      <div>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem', fontFamily: "'Outfit', sans-serif" }}>
+          Organization Overview
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
+          {[
+            { label: 'Total Programs', value: totalPrograms },
+            { label: 'Active Programs', value: activePrograms },
+            { label: 'Total Learners', value: totalLearnersCount },
+            { label: 'Active Facilitators', value: activeFacilitatorsCount },
+            { label: 'Sessions This Month', value: sessionsThisMonth },
+            { label: 'Overall Attendance', value: overallAttendance },
+            { label: 'Completion Rate', value: completionRate },
+            { label: 'Resources Uploaded', value: resourcesCount },
+            { label: 'Certificates Issued', value: certificatesIssued },
+            { label: 'Storage Used', value: storageUsed }
+          ].map(card => (
+            <div key={card.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#F5D76E', marginTop: '0.35rem' }}>{card.value}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.1fr', gap: '2rem' }}>
+      {/* Program Performance Grid */}
+      <div>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem', fontFamily: "'Outfit', sans-serif" }}>
+          Program Performance
+        </h3>
+        {programs.length === 0 ? (
+          <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', color: 'rgba(255,255,255,0.4)' }}>
+            No programs have been created yet.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            {programs.map((p, idx) => {
+              const programLearnersCount = learners.filter(l => l.program === p.name).length;
+              const sessionsCount = p.sessions ? p.sessions.length : 0;
+
+              return (
+                <div 
+                  key={p.id || idx} 
+                  style={{ 
+                    backgroundColor: '#0e0f14', 
+                    border: '1px solid rgba(255,255,255,0.06)', 
+                    borderRadius: '14px', 
+                    padding: '1.25rem', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '1rem',
+                    transition: 'border-color 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                      {p.name}
+                    </h4>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                      {p.status}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>👥</span> <strong>{programLearnersCount}</strong> Learners
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>📅</span> <strong>{sessionsCount}</strong> Sessions
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>📊</span> <strong>92.4%</strong> Attendance
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>🎓</span> <strong>85.7%</strong> Completion Rate
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>📈</span> <strong>65%</strong> Progress
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => onNavigate('Programs')}
+                    style={{ 
+                      marginTop: 'auto', 
+                      width: '100%', 
+                      padding: '0.55rem', 
+                      backgroundColor: 'transparent', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      color: '#fff', 
+                      borderRadius: '8px', 
+                      fontSize: '0.78rem', 
+                      fontWeight: 600, 
+                      cursor: 'pointer', 
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.3rem'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
+                  >
+                    View Details →
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Organization Analytics Section */}
+      <div>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem', fontFamily: "'Outfit', sans-serif" }}>
+          Organization Analytics
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+          
+          {/* Program Growth Chart */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Program Growth</h4>
+            <svg viewBox="0 0 300 120" style={{ width: '100%' }}>
+              <path d="M 10 90 L 80 80 L 150 50 L 220 30 L 290 10" fill="none" stroke="#F5D76E" strokeWidth="2" />
+              <circle cx="10" cy="90" r="3" fill="#F5D76E" />
+              <circle cx="80" cy="80" r="3" fill="#F5D76E" />
+              <circle cx="150" cy="50" r="3" fill="#F5D76E" />
+              <circle cx="220" cy="30" r="3" fill="#F5D76E" />
+              <circle cx="290" cy="10" r="3" fill="#F5D76E" />
+            </svg>
+          </div>
+
+          {/* Learner Enrollment Trend */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Learner Enrollment Trend</h4>
+            <div style={{ display: 'flex', alignItems: 'flex-end', height: '120px', gap: '0.75rem', paddingBottom: '10px' }}>
+              {[30, 45, 60, 85, 110, 126].map((val, idx) => (
+                <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ width: '100%', height: `${val}%`, backgroundColor: '#3b82f6', borderRadius: '4px 4px 0 0' }} />
+                  <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>M${idx+1}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Attendance Trend */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Attendance Trend</h4>
+            <svg viewBox="0 0 300 120" style={{ width: '100%' }}>
+              <path d="M 10 30 L 80 25 L 150 28 L 220 20 L 290 22" fill="none" stroke="#22c55e" strokeWidth="2" />
+              <circle cx="10" cy="30" r="3" fill="#22c55e" />
+              <circle cx="80" cy="25" r="3" fill="#22c55e" />
+              <circle cx="150" cy="28" r="3" fill="#22c55e" />
+              <circle cx="220" cy="20" r="3" fill="#22c55e" />
+              <circle cx="290" cy="22" r="3" fill="#22c55e" />
+            </svg>
+          </div>
+
+          {/* Assessment Performance */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Assessment Performance</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', height: '120px', justifyContent: 'center' }}>
+              {[
+                { label: 'Exams', val: 88, color: '#3b82f6' },
+                { label: 'Quizzes', val: 78, color: '#a855f7' },
+                { label: 'Projects', val: 92, color: '#22c55e' }
+              ].map(item => (
+                <div key={item.label}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.2rem' }}>
+                    <span>{item.label}</span>
+                    <span>{item.val}%</span>
+                  </div>
+                  <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${item.val}%`, backgroundColor: item.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Program Completion */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Program Completion</h4>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px' }}>
+              <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%' }}>
+                  <path stroke="rgba(255,255,255,0.04)" strokeWidth="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path stroke="#F5D76E" strokeDasharray="85, 100" strokeWidth="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.85rem', fontWeight: 800 }}>85.7%</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Facilitator Activity */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Facilitator Activity</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', height: '120px', justifyContent: 'center' }}>
+              {[
+                { label: 'Active', val: 75, color: '#22c55e' },
+                { label: 'On Leave', val: 15, color: '#f59e0b' },
+                { label: 'Inactive', val: 10, color: '#6b7280' }
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'rgba(255,255,255,0.6)' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color }} />
+                    <span>{item.label}</span>
+                  </div>
+                  <strong style={{ color: '#fff' }}>{item.val}%</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Resource Upload Trend */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Resource Upload Trend</h4>
+            <div style={{ display: 'flex', alignItems: 'flex-end', height: '120px', gap: '0.75rem', paddingBottom: '10px' }}>
+              {[15, 30, 25, 40, 50, 54].map((val, idx) => (
+                <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ width: '100%', height: `${val * 1.5}%`, backgroundColor: '#a855f7', borderRadius: '4px 4px 0 0' }} />
+                  <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>M${idx+1}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Monthly Engagement */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <h4 style={{ fontSize: '0.85rem', color: '#fff', margin: '0 0 1rem 0' }}>Monthly Engagement</h4>
+            <svg viewBox="0 0 300 120" style={{ width: '100%' }}>
+              <path d="M 10 80 L 80 40 L 150 60 L 220 20 L 290 10" fill="none" stroke="#3b82f6" strokeWidth="2" />
+              <circle cx="10" cy="80" r="3" fill="#3b82f6" />
+              <circle cx="80" cy="40" r="3" fill="#3b82f6" />
+              <circle cx="150" cy="60" r="3" fill="#3b82f6" />
+              <circle cx="220" cy="20" r="3" fill="#3b82f6" />
+              <circle cx="290" cy="10" r="3" fill="#3b82f6" />
+            </svg>
+          </div>
+
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
         
-        {/* Left Column: Program Status Grid */}
+        {/* Left Column: Recent Activity */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-            Program Status
+            Recent Activity
           </h3>
-
-          {programs.length === 0 ? (
-            <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', color: 'rgba(255,255,255,0.4)' }}>
-              No programs have been assigned to you yet.
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-              {programs.map((p, idx) => {
-                const programLearnersCount = learners.filter(l => l.program === p.name).length;
-                const sessionsCount = p.sessions ? p.sessions.length : 0;
-
-                return (
-                  <div 
-                    key={p.id || idx} 
-                    style={{ 
-                      backgroundColor: '#0e0f14', 
-                      border: '1px solid rgba(255,255,255,0.06)', 
-                      borderRadius: '14px', 
-                      padding: '1.25rem', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      gap: '1rem',
-                      transition: 'border-color 0.2s ease'
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,215,110,0.25)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                        {p.name}
-                      </h4>
-                      <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
-                        Active
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span>👥</span> <strong>{programLearnersCount}</strong> Learners
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span>📅</span> <strong>{sessionsCount}</strong> Sessions
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span>📈</span> <strong>65%</strong> Progress
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span>📊</span> <strong>92%</strong> Attendance
-                      </div>
-                    </div>
-
-                    <button 
-                      onClick={() => onNavigate('Programs')}
-                      style={{ 
-                        marginTop: 'auto', 
-                        width: '100%', 
-                        padding: '0.55rem', 
-                        backgroundColor: 'transparent', 
-                        border: '1px solid rgba(255,255,255,0.1)', 
-                        color: '#fff', 
-                        borderRadius: '8px', 
-                        fontSize: '0.78rem', 
-                        fontWeight: 600, 
-                        cursor: 'pointer', 
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.3rem'
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-                    >
-                      View Program →
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {mockRecentActivity.map(a => (
+              <div key={a.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚙️</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: '#fff', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>{a.text}</p>
+                  <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.2rem', display: 'block' }}>{a.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Right Column: Recent Announcements */}
+        {/* Right Column: Announcements */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-            Recent Announcements
+            Announcements
           </h3>
-          
           <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {allAnnouncements.length === 0 ? (
               <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', textAlign: 'center', padding: '2rem 0' }}>
@@ -4417,7 +4605,7 @@ function ViewerOverview({ info, programs = [], learners = [], onNavigate, addNot
                   <div style={{ flex: 1 }}>
                     <h5 style={{ color: '#fff', fontSize: '0.82rem', margin: 0, fontWeight: 700 }}>{a.programName} Announcement</h5>
                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem', margin: '0.2rem 0 0 0', lineHeight: 1.4 }}>{a.text}</p>
-                    <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', display: 'block' }}>Posted: {a.date}</span>
+                    <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', display: 'block' }}>Posted: {a.date} by {a.by || 'Staff'}</span>
                   </div>
                 </div>
               ))
@@ -4433,6 +4621,7 @@ function ViewerOverview({ info, programs = [], learners = [], onNavigate, addNot
     </div>
   );
 }
+
 
 function ResourcesTab({ programs = [], addNotification }) {
   const [search, setSearch] = useState('');
