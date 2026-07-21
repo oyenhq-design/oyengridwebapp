@@ -644,14 +644,14 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
             </div>
 
             {/* Column headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 2.2fr 1.4fr 1fr 1.1fr 0.4fr', padding: '0.6rem 1.25rem', fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <span>Name</span><span>Email</span><span>Role</span><span>Status</span><span>Joined On</span><span />
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1.8fr 1.2fr 1fr 1fr 0.4fr', padding: '0.6rem 1.25rem', fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span>Name</span><span>Email</span><span>Activation Code</span><span>Role</span><span>Status</span><span>Joined On</span><span />
             </div>
 
             {/* Active members */}
             {members.map((m, i) => (
               <div key={i}
-                style={{ display: 'grid', gridTemplateColumns: '2fr 2.2fr 1.4fr 1fr 1.1fr 0.4fr', padding: '0.85rem 1.25rem', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', transition: 'background 0.15s ease' }}
+                style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1.8fr 1.2fr 1fr 1fr 0.4fr', padding: '0.85rem 1.25rem', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', transition: 'background 0.15s ease' }}
                 onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.015)'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
               >
@@ -661,6 +661,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
                   {m.isYou && <span style={{ fontSize: '0.62rem', backgroundColor: 'rgba(212,175,55,0.15)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '4px', padding: '0.05rem 0.3rem', fontWeight: 700 }}>You</span>}
                 </div>
                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>{m.email}</span>
+                <span style={{ color: m.accessCode ? '#D4AF37' : 'rgba(255,255,255,0.35)', fontSize: '0.78rem', fontFamily: 'monospace', fontWeight: m.accessCode ? 600 : 400 }}>{m.accessCode || '-'}</span>
                 <span style={{ backgroundColor: `${ROLE_COLORS[m.role]}18`, color: ROLE_COLORS[m.role], border: `1px solid ${ROLE_COLORS[m.role]}40`, borderRadius: '5px', padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 700, display: 'inline-block' }}>{m.role}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: STATUS_COLOR[m.status], fontSize: '0.78rem', fontWeight: 600 }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: STATUS_COLOR[m.status] }} />{m.status}
@@ -720,21 +721,17 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
               if (p.used) return null;
               return (
                 <div key={`p-${originalIndex}`}
-                  style={{ display: 'grid', gridTemplateColumns: '2fr 2.2fr 1.4fr 1fr 1.1fr 0.4fr', padding: '0.85rem 1.25rem', alignItems: 'center', borderBottom: originalIndex < pending.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', fontSize: '0.82rem', backgroundColor: 'rgba(212,175,55,0.02)', transition: 'background 0.15s ease' }}
+                  style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1.8fr 1.2fr 1fr 1fr 0.4fr', padding: '0.85rem 1.25rem', alignItems: 'center', borderBottom: originalIndex < pending.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', fontSize: '0.82rem', backgroundColor: 'rgba(212,175,55,0.02)', transition: 'background 0.15s ease' }}
                   onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(212,175,55,0.02)'}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: p.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>{p.initials}</div>
-                    <span style={{ color: p.name ? '#fff' : 'rgba(255,255,255,0.55)', fontWeight: 600 }}>{p.name || p.email}</span>
-                    <span style={{ fontSize: '0.62rem', backgroundColor: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '4px', padding: '0.05rem 0.3rem', fontWeight: 700 }}>Invited</span>
+                     <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: p.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>{p.initials}</div>
+                     <span style={{ color: p.name ? '#fff' : 'rgba(255,255,255,0.55)', fontWeight: 600 }}>{p.name || p.email}</span>
+                     <span style={{ fontSize: '0.62rem', backgroundColor: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.25)', borderRadius: '4px', padding: '0.05rem 0.3rem', fontWeight: 700 }}>Invited</span>
                   </div>
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>{p.email}</span>
-                    {p.accessCode && (
-                      <span style={{ color: '#D4AF37', fontSize: '0.72rem', fontWeight: 600 }}>Code: {p.accessCode}</span>
-                    )}
-                  </div>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>{p.email}</span>
+                  <span style={{ color: '#D4AF37', fontSize: '0.78rem', fontFamily: 'monospace', fontWeight: 600 }}>{p.accessCode || '-'}</span>
                   <span style={{ backgroundColor: `${ROLE_COLORS[p.role] ?? '#888'}18`, color: ROLE_COLORS[p.role] ?? '#888', border: `1px solid ${ROLE_COLORS[p.role] ?? '#888'}40`, borderRadius: '5px', padding: '0.2rem 0.55rem', fontSize: '0.72rem', fontWeight: 700, display: 'inline-block' }}>{p.role}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#D4AF37', fontSize: '0.78rem', fontWeight: 600 }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D4AF37' }} />Pending

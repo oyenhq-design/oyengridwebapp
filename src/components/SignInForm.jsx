@@ -250,6 +250,7 @@ export default function SignInForm({
                   role: assignedRole, 
                   status: 'Active', 
                   password: regPassword, 
+                  accessCode: inviteCodeVal,
                   acceptedAt: new Date().toLocaleDateString('en-GB'),
                   lastLogin: new Date().toISOString(),
                   emailVerified: true
@@ -267,6 +268,7 @@ export default function SignInForm({
             initials, 
             color: '#4B7BEC',
             password: regPassword,
+            accessCode: inviteCodeVal,
             joined: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
             acceptedAt: new Date().toLocaleDateString('en-GB'),
             lastLogin: new Date().toISOString(),
