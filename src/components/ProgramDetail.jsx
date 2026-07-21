@@ -42,8 +42,8 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   const assignedEmails = program.assignedFacilitators || [];
   const assignedFacs = teamMembers.filter(m => assignedEmails.includes(m.email));
 
-  // Find all active facilitators in workspace
-  const activeFacilitators = teamMembers.filter(m => m.role === 'Facilitator' && m.status === 'Active');
+  // Find all active assignable staff (Facilitators, Team Members, Program Managers) in workspace
+  const activeFacilitators = teamMembers.filter(m => m.status === 'Active' && m.role !== 'Organization Owner' && m.role !== 'Admin');
   const filteredFacilitators = activeFacilitators.filter(m => 
     (m.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
     (m.email || '').toLowerCase().includes(searchTerm.toLowerCase())

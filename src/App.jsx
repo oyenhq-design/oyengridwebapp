@@ -1618,15 +1618,15 @@ export default function App() {
       ];
     }
 
-    const displayPrograms = userRole === 'Facilitator'
-      ? wsPrograms.map(p => {
+    const displayPrograms = (userRole === 'Organization Owner' || userRole === 'Admin')
+      ? wsPrograms
+      : wsPrograms.map(p => {
           const facilitatorSessions = (p.sessions || []).filter(s => s.facilitatorEmail?.toLowerCase() === user.toLowerCase());
           return {
             ...p,
-            sessions: facilitatorSessions
+            sessions: userRole === 'Facilitator' ? facilitatorSessions : p.sessions
           };
-        }).filter(p => p.assignedFacilitators && Array.isArray(p.assignedFacilitators) && p.assignedFacilitators.some(email => email.toLowerCase() === user.toLowerCase()))
-      : wsPrograms;
+        }).filter(p => p.assignedFacilitators && Array.isArray(p.assignedFacilitators) && p.assignedFacilitators.some(email => email.toLowerCase() === user.toLowerCase()));
 
     return (
       <div className="dashboard-root" style={{
