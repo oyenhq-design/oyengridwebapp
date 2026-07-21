@@ -33,6 +33,36 @@ export default function SignInForm({
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
+  // Get unique roles from invitations and teamMembers
+  const getDynamicRoles = () => {
+    const rolesSet = new Set();
+    
+    // Include roles from pending/available invitations
+    if (Array.isArray(invitations)) {
+      invitations.forEach(inv => {
+        if (inv && inv.role && !inv.used) {
+          rolesSet.add(inv.role);
+        }
+      });
+    }
+
+    // Also include roles from active team members
+    if (Array.isArray(teamMembers)) {
+      teamMembers.forEach(member => {
+        if (member && member.role) {
+          rolesSet.add(member.role);
+        }
+      });
+    }
+
+    // If no roles are found, fallback to standard roles
+    if (rolesSet.size === 0) {
+      return ['Organization Owner', 'Admin', 'Program Manager', 'Facilitator', 'Team Member', 'Viewer'];
+    }
+
+    return Array.from(rolesSet);
+  };
+
   // Validate Standard Sign-In (email + password only, no role check at verification stage)
   const validateSignIn = () => {
     const newErrors = {};
@@ -470,12 +500,9 @@ export default function SignInForm({
                   }}
                 >
                   <option value="" style={{ backgroundColor: '#090a0f', color: 'rgba(255,255,255,0.4)' }}>Select your role</option>
-                  <option value="Organization Owner" style={{ backgroundColor: '#090a0f' }}>Organization Owner</option>
-                  <option value="Admin" style={{ backgroundColor: '#090a0f' }}>Admin</option>
-                  <option value="Program Manager" style={{ backgroundColor: '#090a0f' }}>Program Manager</option>
-                  <option value="Facilitator" style={{ backgroundColor: '#090a0f' }}>Facilitator</option>
-                  <option value="Team Member" style={{ backgroundColor: '#090a0f' }}>Team Member</option>
-                  <option value="Viewer" style={{ backgroundColor: '#090a0f' }}>Viewer</option>
+                  {getDynamicRoles().map((r) => (
+                    <option key={r} value={r} style={{ backgroundColor: '#090a0f' }}>{r}</option>
+                  ))}
                 </select>
                 <ChevronDown size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
               </div>
