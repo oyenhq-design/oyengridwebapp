@@ -11,7 +11,6 @@ export default function SignInForm({
   invitationPrefill,
   setInvitationPrefill
 }) {
-  // flowStep states: 'login' | 'invite-setup'
   const [flowStep, setFlowStep] = useState('login');
 
   // Input states for standard login
@@ -19,23 +18,22 @@ export default function SignInForm({
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState(invitationPrefill ? invitationPrefill.role || '' : '');
 
-  // Input states for invitation flow
+  // Input states for invitation activation (in "Have an Invitation?" section)
+  const [role, setRole] = useState(invitationPrefill ? invitationPrefill.role || '' : '');
   const [inviteCode, setInviteCode] = useState(invitationPrefill ? invitationPrefill.inviteCode : '');
+
+  // Input states for password creation step
   const [fullName, setFullName] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
 
-  // Matched invitation reference
   const [matchedInvitation, setMatchedInvitation] = useState(null);
-
-  // Status message and loaders
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // Validate Standard Sign-In
+  // Validate Standard Sign-In (email + password only, no role check at verification stage)
   const validateSignIn = () => {
     const newErrors = {};
     if (!email) {
@@ -46,14 +44,11 @@ export default function SignInForm({
     if (!password) {
       newErrors.password = 'Password is required';
     }
-    if (!role) {
-      newErrors.role = 'Please select your role';
-    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle Standard Sign-In Submit (for active users)
+  // Handle Standard Sign-In
   const handleSignInSubmit = (e) => {
     e.preventDefault();
     if (!validateSignIn()) return;
@@ -65,7 +60,6 @@ export default function SignInForm({
       setIsLoading(false);
       const targetEmail = email.trim().toLowerCase();
       
-      // 1. Search for the account in active roster or invitations
       const matchingMember = teamMembers.find(m => m.email.toLowerCase() === targetEmail);
       const pendingInvite = invitations.find(i => i.email.toLowerCase() === targetEmail && !i.used);
 
@@ -77,26 +71,15 @@ export default function SignInForm({
         return;
       }
 
-      // 2. Check if the invitation is still pending/unactivated
       if (pendingInvite && (!matchingMember || matchingMember.status === 'Pending')) {
         setStatusMessage({
           type: 'error',
-          text: 'Your invitation has not been activated yet. Please complete your invitation before signing in.'
+          text: 'Your invitation has not been activated yet. Please complete your invitation below before signing in.'
         });
         return;
       }
 
-      // 3. Verify user's assigned role
       const actualRole = matchingMember.role;
-      if (role !== actualRole) {
-        setStatusMessage({
-          type: 'error',
-          text: 'You do not have permission to sign in using this role.'
-        });
-        return;
-      }
-
-      // 4. Verify password
       const isOwnerDefault = (targetEmail === 'admin@oyengrid.com' || actualRole === 'Organization Owner');
       const expectedPassword = matchingMember.password || (isOwnerDefault ? 'password123' : null);
 
@@ -108,7 +91,6 @@ export default function SignInForm({
         return;
       }
 
-      // 5. Success
       setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
       
       if (setTeamMembers) {
@@ -121,12 +103,12 @@ export default function SignInForm({
     }, 1200);
   };
 
-  // Handle Continue button for first-time invited users (directly from sign in page)
+  // Validate and Continue Activation for first-time invited users
   const handleContinueInvite = (e) => {
     e.preventDefault();
     const newErrors = {};
     if (!email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email is required to verify invitation';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = 'Please enter a valid email address';
     }
@@ -150,7 +132,6 @@ export default function SignInForm({
       const codeUpper = inviteCode.trim().toUpperCase();
       const targetEmail = email.trim().toLowerCase();
 
-      // Find matching invitation
       const invite = invitations.find(i => i.accessCode.toUpperCase() === codeUpper);
 
       if (!invite) {
@@ -182,11 +163,9 @@ export default function SignInForm({
         return;
       }
 
-      // Invitation validated! Show password setup flow
       setErrors({});
       setMatchedInvitation(invite);
       
-      // Auto-prefill name
       if (invite.name) {
         setFullName(invite.name);
       } else {
@@ -221,7 +200,6 @@ export default function SignInForm({
       const assignedRole = matchedInvitation.role;
       const inviteCodeVal = matchedInvitation.accessCode;
 
-      // 1. Mark invitation as used
       if (setInvitations) {
         setInvitations(prev => prev.map(i => 
           i.accessCode.toUpperCase() === inviteCodeVal.toUpperCase() 
@@ -230,7 +208,6 @@ export default function SignInForm({
         ));
       }
 
-      // 2. Add member to team list
       if (setTeamMembers) {
         setTeamMembers(prev => {
           const exists = prev.some(m => m.email.toLowerCase() === targetEmail.toLowerCase());
@@ -267,9 +244,7 @@ export default function SignInForm({
         });
       }
 
-      // 3. Clear prefill context & log in
       if (setInvitationPrefill) setInvitationPrefill(null);
-      
       setStatusMessage({ type: 'success', text: 'Account activated successfully! Redirecting...' });
       
       setTimeout(() => {
@@ -306,7 +281,7 @@ export default function SignInForm({
         </div>
       </div>
 
-      {/* STEP: Standard Login (incorporating Have an Invitation check) */}
+      {/* STEP: Standard Login */}
       {flowStep === 'login' && (
         <>
           <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
@@ -413,7 +388,7 @@ export default function SignInForm({
             </div>
 
             {/* Options Row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
@@ -432,8 +407,45 @@ export default function SignInForm({
               </span>
             </div>
 
-            {/* Sign in as role select */}
-            <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+            {/* Submit button */}
+            <button 
+              type="submit" 
+              className="submit-btn"
+              style={{
+                background: '#F5D76E',
+                border: '1px solid #F5D76E',
+                color: '#000',
+                fontWeight: 700,
+                borderRadius: '6px',
+                padding: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                width: '100%',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                marginBottom: '1.5rem'
+              }}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="spinner" />
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight size={16} style={{ marginLeft: 'auto' }} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Have an Invitation? Section (with Role Dropdown and Code) */}
+          <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem', textAlign: 'left' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '1rem', fontFamily: "'Outfit', sans-serif" }}>Have an Invitation?</h3>
+            
+            {/* Sign in As / Role Selector */}
+            <div style={{ marginBottom: '1.25rem' }}>
               <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>Sign in As</label>
               <div style={{ position: 'relative' }}>
                 <User size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
@@ -473,43 +485,8 @@ export default function SignInForm({
               )}
             </div>
 
-            {/* Submit button */}
-            <button 
-              type="submit" 
-              className="submit-btn"
-              style={{
-                background: '#F5D76E',
-                border: '1px solid #F5D76E',
-                color: '#000',
-                fontWeight: 700,
-                borderRadius: '6px',
-                padding: '0.875rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                width: '100%',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                marginBottom: '1.5rem'
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="spinner" />
-              ) : (
-                <>
-                  <span>Sign In</span>
-                  <ArrowRight size={16} style={{ marginLeft: 'auto' }} />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Have an Invitation? Section */}
-          <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem', textAlign: 'left' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '0.75rem', fontFamily: "'Outfit', sans-serif" }}>Have an Invitation?</h3>
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
+            {/* Invitation Code */}
+            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
               <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Invitation Code</label>
               <div style={{ position: 'relative' }}>
                 <Shield size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -531,6 +508,8 @@ export default function SignInForm({
                 </span>
               )}
             </div>
+
+            {/* Continue Activation Button */}
             <button 
               type="button" 
               onClick={handleContinueInvite}
@@ -540,7 +519,7 @@ export default function SignInForm({
                 color: '#F5D76E',
                 fontWeight: 700,
                 borderRadius: '6px',
-                padding: '0.75rem',
+                padding: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
