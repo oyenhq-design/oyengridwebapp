@@ -17,6 +17,9 @@ import LearnersTab from './components/LearnersTab';
 import SessionsTab from './components/SessionsTab';
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
+import AttendanceTab from './components/AttendanceTab';
+import AssessmentsTab from './components/AssessmentsTab';
+import AnnouncementsTab from './components/AnnouncementsTab';
 
 
 export default function App() {
@@ -1590,7 +1593,11 @@ export default function App() {
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
         { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
-        { id: 'Session Notes', label: 'Session Notes', icon: <FileText size={18} /> }
+        { id: 'Assessments', label: 'Assessments', icon: <Award size={18} /> },
+        { id: 'Attendance', label: 'Attendance', icon: <CheckCircle2 size={18} /> },
+        { id: 'Announcements', label: 'Announcements', icon: <Bell size={18} /> },
+        { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
+        { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     } else if (userRole === 'Program Manager') {
       sidebarItems = [
@@ -2477,6 +2484,22 @@ export default function App() {
               <ReportsTab
                 programs={displayPrograms}
                 learners={wsLearners}
+              />
+            ) : activeTab === 'Attendance' ? (
+              <AttendanceTab
+                programs={displayPrograms}
+                learners={wsLearners}
+                addNotification={addNotification}
+              />
+            ) : activeTab === 'Assessments' ? (
+              <AssessmentsTab
+                programs={displayPrograms}
+                addNotification={addNotification}
+              />
+            ) : activeTab === 'Announcements' ? (
+              <AnnouncementsTab
+                programs={displayPrograms}
+                addNotification={addNotification}
               />
             ) : activeTab === 'Your Workspace' ? (
               /* Global Workspace Dashboard */
@@ -3761,6 +3784,33 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
     year: 'numeric'
   });
 
+  // Calculate Today's Sessions
+  const allSessions = [];
+  programs.forEach(p => {
+    (p.sessions || []).forEach(s => {
+      allSessions.push({
+        ...s,
+        programName: p.name,
+        programId: p.id
+      });
+    });
+  });
+
+  const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const todaySessions = allSessions.filter(s => {
+    const sDate = s.date || '';
+    return sDate.toLowerCase().includes('today') || sDate.toLowerCase().includes('30 may') || sDate.toLowerCase().includes(todayStr.toLowerCase());
+  });
+
+  // Notifications
+  const mockNotifications = [
+    { id: 1, text: 'New learner enrolled in Leadership Development', time: '10m ago' },
+    { id: 2, text: 'Session scheduled for Project Management Essentials', time: '1h ago' },
+    { id: 3, text: 'Assessment submitted: Quiz 1 - John Doe', time: '2h ago' },
+    { id: 4, text: 'Resource uploaded: Presentation Slides.pdf', time: 'Yesterday' },
+    { id: 5, text: 'Attendance completed for Emotional Intelligence', time: 'Yesterday' }
+  ];
+
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
       
@@ -3771,7 +3821,7 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
             Good morning, {info?.fullName || 'Facilitator'} 👋
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-            Manage your assigned training programs and upcoming learning activities.
+            Manage your assigned training programs and today's learning activities.
           </p>
         </div>
         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
@@ -3779,123 +3829,193 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
         </div>
       </div>
 
-      {/* Assigned Programs Section */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-          Assigned Programs
-        </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.1fr', gap: '2rem' }}>
+        
+        {/* Left Column: Programs and Today's Sessions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Assigned Programs Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+              Assigned Programs
+            </h3>
 
-        {programs.length === 0 ? (
-          <div style={{
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            backgroundColor: '#0e0f14',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: '14px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem'
-          }}>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              No programs assigned yet.
-            </h4>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0, maxWidth: '400px', lineHeight: 1.5 }}>
-              You haven't been assigned to any training programs. Your Organization Owner or Administrator will assign programs for you.
-            </p>
+            {programs.length === 0 ? (
+              <div style={{
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                backgroundColor: '#0e0f14',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                  No programs assigned yet.
+                </h4>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0, maxWidth: '400px', lineHeight: 1.5 }}>
+                  You haven't been assigned to any programs yet. Once an Organization Owner or Administrator assigns a program, it will appear here automatically.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+                {programs.map((p, idx) => {
+                  const programLearnersCount = learners.filter(l => l.program === p.name).length;
+                  const sessionsCount = p.sessions ? p.sessions.length : 0;
+                  const resourcesCount = p.resources ? p.resources.length : 0;
+                  const assessmentsCount = p.assessments ? p.assessments.length : 0;
+
+                  return (
+                    <div 
+                      key={p.id || idx} 
+                      style={{ 
+                        backgroundColor: '#0e0f14', 
+                        border: '1px solid rgba(255,255,255,0.06)', 
+                        borderRadius: '14px', 
+                        padding: '1.25rem', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '1rem',
+                        transition: 'border-color 0.2s ease'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,215,110,0.25)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                          {p.name}
+                        </h4>
+                        <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                          Active
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>👥</span> <strong>{programLearnersCount}</strong> Learners
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📅</span> <strong>{sessionsCount}</strong> Sessions
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📄</span> <strong>{resourcesCount}</strong> Resources
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📝</span> <strong>{assessmentsCount}</strong> Assessments
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📈</span> <strong>92%</strong> Attendance
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => onNavigate('My Programs')}
+                        style={{ 
+                          marginTop: 'auto', 
+                          width: '100%', 
+                          padding: '0.55rem', 
+                          backgroundColor: 'transparent', 
+                          border: '1px solid rgba(255,255,255,0.1)', 
+                          color: '#fff', 
+                          borderRadius: '8px', 
+                          fontSize: '0.78rem', 
+                          fontWeight: 600, 
+                          cursor: 'pointer', 
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.3rem'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
+                      >
+                        Open Program →
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 340px))', gap: '1.5rem' }}>
-            {programs.map((p, idx) => {
-              const programLearnersCount = learners.filter(l => l.program === p.name).length;
-              const sessionsCount = p.sessions ? p.sessions.length : 0;
-              const resourcesCount = p.resources ? p.resources.length : 0;
-              const assessmentsCount = p.assessments ? p.assessments.length : 0;
 
-              return (
-                <div 
-                  key={p.id || idx} 
-                  style={{ 
-                    backgroundColor: '#0e0f14', 
-                    border: '1px solid rgba(255,255,255,0.06)', 
-                    borderRadius: '14px', 
-                    padding: '1.5rem', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '1.25rem',
-                    transition: 'transform 0.2s ease, border-color 0.2s ease'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,215,110,0.25)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                      {p.name}
-                    </h4>
+          {/* Today's Sessions Section */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+              Today's Sessions
+            </h3>
+
+            {todaySessions.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                No sessions scheduled for today.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                {todaySessions.map(s => (
+                  <div key={s.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <span style={{ fontSize: '0.65rem', backgroundColor: 'rgba(245,215,110,0.1)', color: '#F5D76E', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase' }}>
+                        {s.status || 'Active'}
+                      </span>
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: '0.35rem 0 0.15rem 0' }}>{s.title}</h4>
+                      <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{s.programName} Program</p>
+                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.45rem' }}>
+                        <span>⏰ {s.time || '10:00 AM - 11:30 AM'}</span>
+                        <span>⏱️ {s.duration || '90 mins'}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button 
+                        onClick={() => alert(`Starting Live training: ${s.title}`)}
+                        style={{ padding: '0.5rem 0.9rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
+                      >
+                        Start Session
+                      </button>
+                      <button 
+                        onClick={() => alert(`Joining session: ${s.title}`)}
+                        style={{ padding: '0.5rem 0.9rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}
+                      >
+                        Join Session
+                      </button>
+                      <button 
+                        onClick={() => onNavigate('Sessions')}
+                        style={{ padding: '0.5rem 0.9rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}
+                      >
+                        View Details
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>👥</span> <strong>{programLearnersCount}</strong> Learners
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>📅</span> <strong>{sessionsCount}</strong> Sessions
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>📄</span> <strong>{resourcesCount}</strong> Resources
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>📝</span> <strong>{assessmentsCount}</strong> Assessments
-                    </div>
-                  </div>
+        </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
-                      Status: Active
-                    </span>
-                  </div>
-
-                  <button 
-                    onClick={() => onNavigate('My Programs')}
-                    style={{ 
-                      marginTop: 'auto', 
-                      width: '100%', 
-                      padding: '0.65rem', 
-                      backgroundColor: 'transparent', 
-                      border: '1px solid rgba(255,255,255,0.1)', 
-                      color: '#fff', 
-                      borderRadius: '8px', 
-                      fontSize: '0.82rem', 
-                      fontWeight: 600, 
-                      cursor: 'pointer', 
-                      transition: 'all 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.35rem'
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-                  >
-                    Open Program →
-                  </button>
+        {/* Right Column: Notifications */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+            Notifications
+          </h3>
+          
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {mockNotifications.map(n => (
+              <div key={n.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1rem', flexShrink: 0 }}>🔔</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: '#fff', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>{n.text}</p>
+                  <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.2rem', display: 'block' }}>{n.time}</span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Future Expansion widgets space (remains hidden until modules are implemented) */}
-      {/* 
-      <div className="future-expansion">
-        <div className="upcoming-sessions-widget"></div>
-        <div className="pending-assessments-widget"></div>
-        <div className="recent-activity-widget"></div>
-        <div className="announcements-widget"></div>
-      </div> 
-      */}
+      </div>
 
       <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', marginTop: '2rem' }}>
         © 2025 OYEN GRID. All rights reserved.

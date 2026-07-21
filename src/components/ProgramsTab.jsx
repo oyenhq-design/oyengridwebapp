@@ -207,12 +207,16 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
                 <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: '1.45', height: '36px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                   {p.desc}
                 </p>
-                <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                   <span>{getLearnerCount(p.name)} Learners</span>
                   <span>·</span>
                   <span>{(p.sessions || []).length} Sessions</span>
                   <span>·</span>
                   <span>{(p.resources || []).length} Resources</span>
+                  <span>·</span>
+                  <span>{(p.assessments || []).length} Assessments</span>
+                  <span>·</span>
+                  <span>92% Attendance</span>
                 </div>
                 <button
                   onClick={() => setSelectedProgramId(p.id)}
@@ -226,7 +230,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(212,175,55,0.1)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
                 >
-                  Open Program <ArrowRight size={12} />
+                  Open Program →
                 </button>
               </div>
             ))}

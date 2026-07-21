@@ -322,12 +322,14 @@ export default function LearnersTab({
                 <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#fff', margin: 0 }}>No participants found</h4>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.3rem' }}>Participants added to your programs will appear here.</p>
               </div>
-              <button
-                onClick={() => setShowAddModal(true)}
-                style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.8rem', borderRadius: '8px', padding: '0.55rem 1.25rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,175,55,0.2)' }}
-              >
-                Add Participant
-              </button>
+              {userRole !== 'Facilitator' && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  style={{ background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', fontWeight: 700, fontSize: '0.8rem', borderRadius: '8px', padding: '0.55rem 1.25rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,175,55,0.2)' }}
+                >
+                  Add Participant
+                </button>
+              )}
             </div>
           )}
         </div>

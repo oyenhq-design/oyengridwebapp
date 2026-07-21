@@ -26,7 +26,7 @@ const modalBox = {
   boxShadow: '0 30px 70px rgba(0,0,0,0.7)',
 };
 
-export default function SessionsTab({ programs = [], setPrograms, learners = [], addNotification, onNavigateToPrograms }) {
+export default function SessionsTab({ programs = [], setPrograms, learners = [], addNotification, onNavigateToPrograms, userRole }) {
   const [selectedProgId, setSelectedProgId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -542,39 +542,43 @@ export default function SessionsTab({ programs = [], setPrograms, learners = [],
                               >
                                 <Play size={13} fill="#fff" /> Open Workspace
                               </button>
-                              <button
-                                onClick={() => {
-                                  setActiveMenuSessionId(null);
-                                  setEditingSessionId(s.id);
-                                  setEditForm({
-                                    title: s.title,
-                                    type: s.type || 'Live Training',
-                                    date: s.date || '',
-                                    startTime: s.startTime || '',
-                                    endTime: s.endTime || '',
-                                    description: s.description || '',
-                                    enableOyenLive: s.enableOyenLive || false,
-                                    externalMeetingLink: s.externalMeetingLink || '',
-                                    location: s.location || 'Virtual',
-                                    trainer: s.trainer || 'Lead Instructor',
-                                    facilitatorName: s.facilitatorName || '',
-                                    facilitatorEmail: s.facilitatorEmail || ''
-                                  });
-                                  setShowEditModal(true);
-                                }}
-                                style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
-                              >
-                                <Edit size={13} color="#D4AF37" /> Edit Details
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setActiveMenuSessionId(null);
-                                  handleDeleteSession(s.id, s.title);
-                                }}
-                                style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}
-                              >
-                                <Trash2 size={13} color="#ef4444" /> Delete Session
-                              </button>
+                               {userRole !== 'Facilitator' && (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setActiveMenuSessionId(null);
+                                      setEditingSessionId(s.id);
+                                      setEditForm({
+                                        title: s.title,
+                                        type: s.type || 'Live Training',
+                                        date: s.date || '',
+                                        startTime: s.startTime || '',
+                                        endTime: s.endTime || '',
+                                        description: s.description || '',
+                                        enableOyenLive: s.enableOyenLive || false,
+                                        externalMeetingLink: s.externalMeetingLink || '',
+                                        location: s.location || 'Virtual',
+                                        trainer: s.trainer || 'Lead Instructor',
+                                        facilitatorName: s.facilitatorName || '',
+                                        facilitatorEmail: s.facilitatorEmail || ''
+                                      });
+                                      setShowEditModal(true);
+                                    }}
+                                    style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                                  >
+                                    <Edit size={13} color="#D4AF37" /> Edit Details
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setActiveMenuSessionId(null);
+                                      handleDeleteSession(s.id, s.title);
+                                    }}
+                                    style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}
+                                  >
+                                    <Trash2 size={13} color="#ef4444" /> Delete Session
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </>
                         )}
