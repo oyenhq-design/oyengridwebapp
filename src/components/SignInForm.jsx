@@ -107,11 +107,6 @@ export default function SignInForm({
   const handleContinueInvite = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!email) {
-      newErrors.email = 'Email is required to verify invitation';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
     if (!role) {
       newErrors.role = 'Please select your role';
     }
@@ -130,20 +125,11 @@ export default function SignInForm({
     setTimeout(() => {
       setIsLoading(false);
       const codeUpper = inviteCode.trim().toUpperCase();
-      const targetEmail = email.trim().toLowerCase();
 
       const invite = invitations.find(i => i.accessCode.toUpperCase() === codeUpper);
 
       if (!invite) {
         setErrors({ inviteCode: 'Invalid invitation code' });
-        return;
-      }
-
-      if (invite.email.toLowerCase() !== targetEmail) {
-        setStatusMessage({
-          type: 'error',
-          text: 'The email address does not match this invitation code.'
-        });
         return;
       }
 
@@ -165,6 +151,7 @@ export default function SignInForm({
 
       setErrors({});
       setMatchedInvitation(invite);
+      setEmail(invite.email); // Auto-prefill the email field from the invitation
       
       if (invite.name) {
         setFullName(invite.name);
