@@ -510,43 +510,6 @@ export default function SignInForm({
               )}
             </div>
 
-            {/* Demo/Helper: Quick-Fill Pending Invitations */}
-            {invitations && invitations.filter(i => !i.used).length > 0 && (
-              <div style={{ marginTop: '0.5rem', marginBottom: '1.25rem', padding: '0.75rem', backgroundColor: 'rgba(212,175,55,0.04)', border: '1px solid rgba(212,175,55,0.12)', borderRadius: '6px' }}>
-                <span style={{ fontSize: '0.75rem', color: '#D4AF37', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                  Active Invitations (Click to auto-fill)
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  {invitations.filter(i => !i.used).map((inv, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => {
-                        setRole(inv.role);
-                        setInviteCode(inv.accessCode);
-                      }}
-                      style={{ 
-                        fontSize: '0.75rem', 
-                        color: 'rgba(255,255,255,0.7)', 
-                        cursor: 'pointer', 
-                        padding: '0.35rem 0.5rem', 
-                        backgroundColor: 'rgba(255,255,255,0.02)', 
-                        border: '1px solid rgba(255,255,255,0.05)', 
-                        borderRadius: '4px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
-                    >
-                      <span>{inv.email} ({inv.role})</span>
-                      <strong style={{ color: '#F5D76E', fontFamily: 'monospace' }}>{inv.accessCode}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Continue Activation Button */}
             <button 
               type="button" 
