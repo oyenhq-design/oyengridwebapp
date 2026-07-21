@@ -8,6 +8,8 @@ import {
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
   Shield, Rocket, FileText, Mail, HardDrive
 } from 'lucide-react';
+import SessionDetail from './components/SessionDetail';
+import InboxTab from './components/InboxTab';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
 import SignInForm from './components/SignInForm';
@@ -80,6 +82,7 @@ export default function App() {
   const [ownerPhoto, setOwnerPhoto] = useState(null); // Base64 or object URL of the owner's profile photo
 
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeSession, setActiveSession] = useState(null);
 
   // Shared workspace data — lifted so Programs + Learners stay in sync
   const [wsPrograms, setWsPrograms] = useState(() => {
@@ -1590,15 +1593,9 @@ export default function App() {
     let sidebarItems = allSidebarItems;
     if (userRole === 'Facilitator') {
       sidebarItems = [
-        { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
-        { id: 'My Programs', label: 'My Programs', icon: <BookOpen size={18} /> },
+        { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
-        { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
-        { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
-        { id: 'Assessments', label: 'Assessments', icon: <Award size={18} /> },
-        { id: 'Attendance', label: 'Attendance', icon: <CheckCircle2 size={18} /> },
-        { id: 'Announcements', label: 'Announcements', icon: <Bell size={18} /> },
-        { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
+        { id: 'Inbox', label: 'Inbox', icon: <Mail size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     } else if (userRole === 'Program Manager') {
@@ -2088,13 +2085,23 @@ export default function App() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#090a0f', overflowY: 'auto' }}>
             
             {/* Conditional content based on activeTab */}
-            {showFacilitatorOverview ? (
+            {userRole === 'Facilitator' && activeSession ? (
+              <SessionDetail 
+                session={activeSession}
+                onBack={() => setActiveSession(null)}
+                addNotification={addNotification}
+              />
+            ) : showFacilitatorOverview ? (
               <FacilitatorOverview 
                 info={getLoggedInUserInfo()} 
                 programs={displayPrograms} 
                 learners={wsLearners}
                 onNavigate={setActiveTab} 
                 addNotification={addNotification}
+                onSelectSession={(s) => {
+                  setActiveSession(s);
+                  setActiveTab('Sessions');
+                }}
               />
             ) : showTeamMemberOverview ? (
               <TeamMemberOverview 
@@ -2499,6 +2506,7 @@ export default function App() {
                 addNotification={addNotification}
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
                 userRole={userRole}
+                onSelectSession={setActiveSession}
               />
             ) : activeTab === 'Reports' ? (
               /* Reports Tab Component */
@@ -2695,6 +2703,8 @@ export default function App() {
               <ProfileTab 
                 currentUser={user} 
                 info={getLoggedInUserInfo()} 
+                userRole={userRole}
+                organizationName={orgName}
                 onSaveName={(newName) => {
                   if (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com') {
                     const parts = newName.trim().split(' ');
@@ -2707,6 +2717,8 @@ export default function App() {
                 }}
                 addNotification={addNotification}
               />
+            ) : activeTab === 'Inbox' ? (
+              <InboxTab />
             ) : activeTab === 'Help' ? (
               <HelpTab />
             ) : activeTab === 'Resources' ? (
@@ -3543,7 +3555,7 @@ export default function App() {
   );
 }
 
-function ProfileTab({ info, onSaveName, addNotification }) {
+function ProfileTab({ info, onSaveName, addNotification, userRole, organizationName }) {
   const [name, setName] = useState(info.fullName);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -3608,8 +3620,9 @@ function ProfileTab({ info, onSaveName, addNotification }) {
               type="text" 
               value={name} 
               onChange={e => setName(e.target.value)} 
-              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: userRole === 'Facilitator' ? 'rgba(255,255,255,0.02)' : '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: userRole === 'Facilitator' ? 'rgba(255,255,255,0.4)' : '#fff', fontSize: '0.85rem', outline: 'none', cursor: userRole === 'Facilitator' ? 'not-allowed' : 'text' }}
               required
+              readOnly={userRole === 'Facilitator'}
             />
           </div>
 
@@ -3623,12 +3636,36 @@ function ProfileTab({ info, onSaveName, addNotification }) {
             />
           </div>
 
-          <button 
-            type="submit" 
-            style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}
-          >
-            Save Changes
-          </button>
+          {userRole === 'Facilitator' && (
+            <>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Organization</label>
+                <input 
+                  type="text" 
+                  value={organizationName || 'ABC Energy'} 
+                  style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
+                  readOnly
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Assigned Role</label>
+                <input 
+                  type="text" 
+                  value={info.role || 'Facilitator'} 
+                  style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
+                  readOnly
+                />
+              </div>
+            </>
+          )}
+          {userRole !== 'Facilitator' && (
+            <button 
+              type="submit" 
+              style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}
+            >
+              Save Changes
+            </button>
+          )}
         </form>
 
         <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
@@ -3803,7 +3840,7 @@ function HelpTab() {
   );
 }
 
-function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, addNotification }) {
+function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, addNotification, onSelectSession }) {
   const formattedDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     day: 'numeric',
@@ -3811,7 +3848,7 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
     year: 'numeric'
   });
 
-  // Calculate Today's Sessions
+  // Extract all sessions assigned to the logged-in facilitator
   const allSessions = [];
   programs.forEach(p => {
     (p.sessions || []).forEach(s => {
@@ -3823,20 +3860,20 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
     });
   });
 
+  // Filter today's sessions vs upcoming sessions
   const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const todaySessions = allSessions.filter(s => {
     const sDate = s.date || '';
-    return sDate.toLowerCase().includes('today') || sDate.toLowerCase().includes('30 may') || sDate.toLowerCase().includes(todayStr.toLowerCase());
+    return sDate.toLowerCase().includes('today') || sDate.toLowerCase().includes('25 august') || sDate.toLowerCase().includes(todayStr.toLowerCase());
   });
 
-  // Notifications
-  const mockNotifications = [
-    { id: 1, text: 'New learner enrolled in Leadership Development', time: '10m ago' },
-    { id: 2, text: 'Session scheduled for Project Management Essentials', time: '1h ago' },
-    { id: 3, text: 'Assessment submitted: Quiz 1 - John Doe', time: '2h ago' },
-    { id: 4, text: 'Resource uploaded: Presentation Slides.pdf', time: 'Yesterday' },
-    { id: 5, text: 'Attendance completed for Emotional Intelligence', time: 'Yesterday' }
-  ];
+  const upcomingSessions = allSessions.filter(s => {
+    const sDate = s.date || '';
+    return !sDate.toLowerCase().includes('today') && !sDate.toLowerCase().includes('25 august') && !sDate.toLowerCase().includes(todayStr.toLowerCase());
+  });
+
+  // Today's Focus: the immediate next session
+  const todaysFocusSession = todaySessions[0] || null;
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -3845,10 +3882,10 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-            Good morning, {info?.fullName || 'Facilitator'} 👋
+            Good Morning, {info?.fullName || 'Facilitator'} 👋
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-            Manage your assigned training programs and today's learning activities.
+            Today you have {todaySessions.length} scheduled session(s).
           </p>
         </div>
         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
@@ -3856,192 +3893,106 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.1fr', gap: '2rem' }}>
-        
-        {/* Left Column: Programs and Today's Sessions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Assigned Programs Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              Assigned Programs
-            </h3>
+      {/* Today's Focus Card */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+          Today's Focus
+        </h3>
 
-            {programs.length === 0 ? (
-              <div style={{
-                padding: '3rem 2rem',
-                textAlign: 'center',
-                backgroundColor: '#0e0f14',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                  No programs assigned yet.
-                </h4>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0, maxWidth: '400px', lineHeight: 1.5 }}>
-                  You haven't been assigned to any programs yet. Once an Organization Owner or Administrator assigns a program, it will appear here automatically.
-                </p>
+        {todaysFocusSession ? (
+          <div 
+            style={{ 
+              backgroundColor: '#0e0f14', 
+              border: '1px solid rgba(245,215,110,0.2)', 
+              borderRadius: '16px', 
+              padding: '2rem', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              flexWrap: 'wrap', 
+              gap: '1.5rem',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}
+          >
+            <div>
+              <span style={{ fontSize: '0.68rem', backgroundColor: 'rgba(245,215,110,0.1)', color: '#F5D76E', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase' }}>
+                {todaysFocusSession.status || 'Ready to Start'}
+              </span>
+              <h4 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', margin: '0.5rem 0 0.25rem 0', fontFamily: "'Outfit', sans-serif" }}>
+                {todaysFocusSession.title}
+              </h4>
+              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                {todaysFocusSession.programName}
+              </p>
+              <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.75rem' }}>
+                <span>⏰ {todaysFocusSession.time || '10:00 AM'}</span>
+                <span>⏱️ {todaysFocusSession.duration || '90 mins'}</span>
+                <span style={{ color: '#F5D76E', fontWeight: 700 }}>Starts in 18 minutes</span>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-                {programs.map((p, idx) => {
-                  const programLearnersCount = learners.filter(l => l.program === p.name).length;
-                  const sessionsCount = p.sessions ? p.sessions.length : 0;
-                  const resourcesCount = p.resources ? p.resources.length : 0;
-                  const assessmentsCount = p.assessments ? p.assessments.length : 0;
+            </div>
 
-                  return (
-                    <div 
-                      key={p.id || idx} 
-                      style={{ 
-                        backgroundColor: '#0e0f14', 
-                        border: '1px solid rgba(255,255,255,0.06)', 
-                        borderRadius: '14px', 
-                        padding: '1.25rem', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '1rem',
-                        transition: 'border-color 0.2s ease'
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,215,110,0.25)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                          {p.name}
-                        </h4>
-                        <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
-                          Active
-                        </span>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>👥</span> <strong>{programLearnersCount}</strong> Learners
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>📅</span> <strong>{sessionsCount}</strong> Sessions
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>📄</span> <strong>{resourcesCount}</strong> Resources
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>📝</span> <strong>{assessmentsCount}</strong> Assessments
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>📈</span> <strong>92%</strong> Attendance
-                        </div>
-                      </div>
-
-                      <button 
-                        onClick={() => onNavigate('My Programs')}
-                        style={{ 
-                          marginTop: 'auto', 
-                          width: '100%', 
-                          padding: '0.55rem', 
-                          backgroundColor: 'transparent', 
-                          border: '1px solid rgba(255,255,255,0.1)', 
-                          color: '#fff', 
-                          borderRadius: '8px', 
-                          fontSize: '0.78rem', 
-                          fontWeight: 600, 
-                          cursor: 'pointer', 
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.3rem'
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-                      >
-                        Open Program →
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <button 
+              onClick={() => onSelectSession(todaysFocusSession)}
+              style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+            >
+              Start Session
+            </button>
           </div>
+        ) : (
+          <div style={{ padding: '3rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+            No sessions scheduled for today.
+          </div>
+        )}
+      </div>
 
-          {/* Today's Sessions Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              Today's Sessions
-            </h3>
+      {/* Upcoming Sessions List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+          Upcoming Sessions
+        </h3>
 
-            {todaySessions.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
-                No sessions scheduled for today.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                {todaySessions.map(s => (
-                  <div key={s.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                      <span style={{ fontSize: '0.65rem', backgroundColor: 'rgba(245,215,110,0.1)', color: '#F5D76E', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase' }}>
-                        {s.status || 'Active'}
-                      </span>
-                      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: '0.35rem 0 0.15rem 0' }}>{s.title}</h4>
-                      <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{s.programName} Program</p>
-                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.45rem' }}>
-                        <span>⏰ {s.time || '10:00 AM - 11:30 AM'}</span>
-                        <span>⏱️ {s.duration || '90 mins'}</span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button 
-                        onClick={() => alert(`Starting Live training: ${s.title}`)}
-                        style={{ padding: '0.5rem 0.9rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
-                      >
-                        Start Session
-                      </button>
-                      <button 
-                        onClick={() => alert(`Joining session: ${s.title}`)}
-                        style={{ padding: '0.5rem 0.9rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}
-                      >
-                        Join Session
-                      </button>
-                      <button 
-                        onClick={() => onNavigate('Sessions')}
-                        style={{ padding: '0.5rem 0.9rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}
-                      >
-                        View Details
-                      </button>
-                    </div>
+        {upcomingSessions.length === 0 ? (
+          <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
+            No upcoming sessions scheduled for the next 7 days.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+            {upcomingSessions.slice(0, 5).map((s, idx) => (
+              <div 
+                key={s.id || idx} 
+                style={{ 
+                  backgroundColor: '#0e0f14', 
+                  border: '1px solid rgba(255,255,255,0.06)', 
+                  borderRadius: '12px', 
+                  padding: '1.25rem', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  flexWrap: 'wrap', 
+                  gap: '1rem' 
+                }}
+              >
+                <div>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0 }}>{s.title}</h4>
+                  <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
+                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.45rem' }}>
+                    <span>📅 {s.date}</span>
+                    <span>⏰ {s.time}</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        {/* Right Column: Notifications */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-            Notifications
-          </h3>
-          
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {mockNotifications.map(n => (
-              <div key={n.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
-                <span style={{ fontSize: '1rem', flexShrink: 0 }}>🔔</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ color: '#fff', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>{n.text}</p>
-                  <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.2rem', display: 'block' }}>{n.time}</span>
                 </div>
+
+                <button 
+                  onClick={() => onSelectSession(s)}
+                  style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
+                >
+                  View Session
+                </button>
               </div>
             ))}
           </div>
-        </div>
-
+        )}
       </div>
 
       <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', marginTop: '2rem' }}>
@@ -4050,6 +4001,7 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
     </div>
   );
 }
+
 
 function TeamMemberOverview({ info, programs = [], learners = [], onNavigate, addNotification }) {
   const formattedDate = new Date().toLocaleDateString('en-US', {

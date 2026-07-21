@@ -26,8 +26,116 @@ const modalBox = {
   boxShadow: '0 30px 70px rgba(0,0,0,0.7)',
 };
 
-export default function SessionsTab({ programs = [], setPrograms, learners = [], addNotification, onNavigateToPrograms, userRole }) {
-  const [selectedProgId, setSelectedProgId] = useState(null);
+export default function SessionsTab({ programs = [], setPrograms, learners = [], addNotification, onNavigateToPrograms, userRole, onSelectSession }) {
+    if (userRole === 'Facilitator') {
+    // Extract all sessions
+    const allSessions = [];
+    programs.forEach(p => {
+      (p.sessions || []).forEach(s => {
+        allSessions.push({
+          ...s,
+          programName: p.name,
+          programId: p.id
+        });
+      });
+    });
+
+    const liveSessions = allSessions.filter(s => s.status === 'Live');
+    const upcomingSessions = allSessions.filter(s => s.status === 'Scheduled' || s.status === 'Ready to Start');
+    const completedSessions = allSessions.filter(s => s.status === 'Completed');
+
+    return (
+      <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+        <div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Sessions</h2>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+            View and deliver your assigned training sessions.
+          </p>
+        </div>
+
+        {/* Live Sessions */}
+        {liveSessions.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ef4444', margin: 0 }}>● Live Sessions</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {liveSessions.map((s, idx) => (
+                <div key={s.id || idx} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0 }}>{s.title}</h4>
+                    <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
+                  </div>
+                  <button 
+                    onClick={() => onSelectSession(s)}
+                    style={{ padding: '0.55rem 1.2rem', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Resume Live Session
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Upcoming Sessions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0 }}>Upcoming Sessions</h3>
+          {upcomingSessions.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
+              No upcoming sessions scheduled.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {upcomingSessions.map((s, idx) => (
+                <div key={s.id || idx} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0 }}>{s.title}</h4>
+                    <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.45rem' }}>
+                      <span>📅 Date: {s.date}</span>
+                      <span>⏰ Time: {s.time}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => onSelectSession(s)}
+                    style={{ padding: '0.5rem 1rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    View Session
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Completed Sessions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Completed Sessions</h3>
+          {completedSessions.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
+              No completed sessions yet.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {completedSessions.map((s, idx) => (
+                <div key={s.id || idx} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.75 }}>
+                  <div>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', margin: 0 }}>{s.title}</h4>
+                    <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.45rem' }}>
+                      <span>📅 Date: {s.date}</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 700 }}>✓ Completed</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+const [selectedProgId, setSelectedProgId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [activeMenuSessionId, setActiveMenuSessionId] = useState(null);
