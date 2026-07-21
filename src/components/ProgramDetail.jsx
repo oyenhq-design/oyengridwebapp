@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Users, Calendar, FileText, ClipboardList,
-  CheckCircle2, Circle, Search, X, UserPlus, Play, Check, Plus, Send, BarChart3, Award
+  CheckCircle2, Circle, Search, X, UserPlus, Play, Check, Plus, Send, BarChart3, Award, Upload, Download, RotateCcw, ShieldCheck
 } from 'lucide-react';
 
 export default function ProgramDetail({ program, programLearners = [], teamMembers = [], setPrograms, setLearners, userRole, onBack }) {
@@ -32,6 +32,25 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   // Attendance marking
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [attendanceState, setAttendanceState] = useState({});
+
+  // Team Member Register Learner
+  const [newLearnerName, setNewLearnerName] = useState('');
+  const [newLearnerEmail, setNewLearnerEmail] = useState('');
+
+  // Certificates list
+  const [certificates, setCertificates] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_certificates');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const saveCerts = (newCerts) => {
+    setCertificates(newCerts);
+    localStorage.setItem('oyen_ws_certificates', JSON.stringify(newCerts));
+  };
 
   useEffect(() => {
     setSelectedFacs(program.assignedFacilitators || []);
@@ -130,7 +149,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
       type: resourceName.split('.').pop()?.toUpperCase() || 'PDF',
       date: new Date().toLocaleDateString('en-GB'),
       size: resourceSize,
-      uploadedBy: 'Lead Facilitator'
+      uploadedBy: 'Team Member Operations'
     };
     if (setPrograms) {
       setPrograms(prev => prev.map(p => 
@@ -176,7 +195,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
       text: annText.trim(),
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       status: 'Sent',
-      by: 'Lead Facilitator'
+      by: userRole === 'Team Member' ? 'Operations Staff' : 'Lead Facilitator'
     };
     if (setPrograms) {
       setPrograms(prev => prev.map(p => 
@@ -208,8 +227,56 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     }
   };
 
+  // Register Learner (Team Member specific)
+  const handleRegisterLearner = (e) => {
+    e.preventDefault();
+    if (!newLearnerName.trim() || !newLearnerEmail.trim()) return;
+    const newL = {
+      id: Date.now(),
+      name: newLearnerName.trim(),
+      email: newLearnerEmail.trim(),
+      program: program.name,
+      status: 'Active',
+      joined: new Date().toLocaleDateString('en-GB')
+    };
+    if (setLearners) {
+      setLearners(prev => [...prev, newL]);
+      alert(`Successfully registered ${newLearnerName}!`);
+    }
+    setNewLearnerName('');
+    setNewLearnerEmail('');
+  };
+
+  // Generate Certificate
+  const handleGenerateCert = (email, name) => {
+    const newCert = {
+      id: Date.now(),
+      name,
+      email,
+      programId: program.id,
+      programName: program.name,
+      status: 'Issued',
+      date: new Date().toLocaleDateString('en-GB')
+    };
+    saveCerts([newCert, ...certificates]);
+    alert(`Certificate generated for ${name}!`);
+  };
+
+  const handleReissueCert = (id) => {
+    const updated = certificates.map(c => 
+      c.id === id 
+        ? { ...c, date: new Date().toLocaleDateString('en-GB'), status: 'Reissued' } 
+        : c
+    );
+    saveCerts(updated);
+    alert('Certificate reissued!');
+  };
+
   const isOwnerOrAdmin = userRole === 'Organization Owner' || userRole === 'Admin';
-  const subTabs = ['Overview', 'Sessions', 'Learners', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports'];
+  
+  const subTabs = userRole === 'Team Member'
+    ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Announcements', 'Certificates', 'Reports']
+    : ['Overview', 'Sessions', 'Learners', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports'];
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -315,14 +382,6 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
             <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Facilitators</h3>
-                {isOwnerOrAdmin && (
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', backgroundColor: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: '#D4AF37', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    <UserPlus size={13} /> Assign Facilitator
-                  </button>
-                )}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -357,14 +416,6 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Program Sessions</h3>
-            {isOwnerOrAdmin && (
-              <button
-                onClick={() => setShowCreateSessionModal(true)}
-                style={{ padding: '0.5rem 1rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
-              >
-                Schedule Session
-              </button>
-            )}
           </div>
 
           {(program.sessions || []).length === 0 ? (
@@ -385,10 +436,19 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                   </div>
 
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <button onClick={() => alert(`Starting Live training...`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}>Start OYEN Live</button>
-                    <button onClick={() => alert(`Recording attendance...`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Record Attendance</button>
-                    <button onClick={() => alert(`Presentation dialog triggered...`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Upload Presentation</button>
-                    <button onClick={() => alert(`Marking completed...`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Mark Completed</button>
+                    {userRole === 'Team Member' ? (
+                      <>
+                        <button onClick={() => alert(`Logistics checklist prepared!`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}>Prepare Logistics</button>
+                        <button onClick={() => alert(`Attendance sheet uploaded!`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Upload Attendance</button>
+                        <button onClick={() => alert(`Session recording uploaded!`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Upload Recording</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => alert(`Starting Live training...`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}>Start OYEN Live</button>
+                        <button onClick={() => alert(`Recording attendance...`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Record Attendance</button>
+                        <button onClick={() => alert(`Presentation dialog triggered...`)} style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Upload Presentation</button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -398,7 +458,22 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
       )}
 
       {activeSubTab === 'Learners' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {userRole === 'Team Member' && (
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Register New Learner</h3>
+              <form onSubmit={handleRegisterLearner} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <input required type="text" placeholder="Full Name" value={newLearnerName} onChange={e => setNewLearnerName(e.target.value)} style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }} />
+                <input required type="email" placeholder="Email Address" value={newLearnerEmail} onChange={e => setNewLearnerEmail(e.target.value)} style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }} />
+                <button type="submit" style={{ padding: '0.65rem 1.25rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>Register</button>
+              </form>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button onClick={() => alert('Mocking import from CSV file!')} style={{ padding: '0.45rem 0.9rem', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Upload size={12} /> Import list (CSV)</button>
+                <button onClick={() => alert('Mocking export list!')} style={{ padding: '0.45rem 0.9rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Download size={12} /> Export list</button>
+              </div>
+            </div>
+          )}
+
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Learners Directory</h3>
           
           {programLearners.length === 0 ? (
@@ -630,10 +705,65 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
             <h4 style={{ fontSize: '0.9rem', color: '#fff', margin: 0 }}>History</h4>
             {(program.announcements || []).map(a => (
               <div key={a.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1rem' }}>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.35rem' }}>Posted on {a.date}</div>
+                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.35rem' }}>Posted on {a.date} by {a.by || 'Staff'}</div>
                 <p style={{ color: '#fff', fontSize: '0.82rem', margin: 0, lineHeight: 1.4 }}>{a.text}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === 'Certificates' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Program Certificates</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
+              <h4 style={{ fontSize: '0.92rem', color: '#fff', margin: '0 0 1rem 0' }}>Enrolled Learners</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {programLearners.map(l => {
+                  const hasCert = certificates.some(c => c.email === l.email && c.programId === program.id);
+                  return (
+                    <div key={l.email} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>{l.name}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem' }}>{l.email}</div>
+                      </div>
+                      <button
+                        onClick={() => handleGenerateCert(l.email, l.name)}
+                        disabled={hasCert}
+                        style={{ padding: '0.35rem 0.75rem', backgroundColor: hasCert ? 'rgba(255,255,255,0.05)' : '#F5D76E', border: 'none', color: hasCert ? 'rgba(255,255,255,0.3)' : '#000', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: hasCert ? 'not-allowed' : 'pointer' }}
+                      >
+                        {hasCert ? 'Generated' : 'Generate'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ fontSize: '#0.92rem', color: '#fff', margin: '0 0 1rem 0' }}>Issued Log</h4>
+              {certificates.filter(c => c.programId === program.id).length === 0 ? (
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', padding: '1rem', textAlign: 'center' }}>No certificates issued for this program.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {certificates.filter(c => c.programId === program.id).map(c => (
+                    <div key={c.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>{c.name}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.68rem', display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.2rem' }}>
+                          <ShieldCheck size={11} color="#22c55e" /> {c.status} · {c.date}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        <button onClick={() => alert('Certificate PDF downloaded!')} style={{ padding: '0.25rem 0.5rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer' }}><Download size={11} /></button>
+                        <button onClick={() => handleReissueCert(c.id)} style={{ padding: '0.25rem 0.5rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer' }}><RotateCcw size={11} /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
