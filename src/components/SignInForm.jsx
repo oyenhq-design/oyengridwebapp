@@ -124,11 +124,25 @@ export default function SignInForm({
 
     setTimeout(() => {
       setIsLoading(false);
-      const codeUpper = inviteCode.trim().toUpperCase();
+      
+      const normalize = (val) => {
+        if (!val) return '';
+        return val.trim().toUpperCase()
+          .replace(/O/g, '0')
+          .replace(/[IL]/g, '1')
+          .replace(/[^A-Z0-9]/g, ''); // strip hyphens or spaces to be extremely permissive
+      };
 
-      const invite = invitations.find(i => i.accessCode.toUpperCase() === codeUpper);
+      const codeNormalized = normalize(inviteCode);
+
+      const invite = invitations.find(i => {
+        if (!i || !i.accessCode) return false;
+        return normalize(i.accessCode) === codeNormalized;
+      });
 
       if (!invite) {
+        console.warn('Invitation lookup failed. Input:', inviteCode, 'Normalized:', codeNormalized);
+        console.log('Available invitations in state:', invitations.map(i => ({ email: i.email, code: i.accessCode, normalized: normalize(i.accessCode), role: i.role, used: i.used })));
         setErrors({ inviteCode: 'Invalid invitation code' });
         return;
       }
