@@ -80,8 +80,31 @@ export default function App() {
   // Shared workspace data — lifted so Programs + Learners stay in sync
   const [wsPrograms, setWsPrograms] = useState([]);
   const [wsLearners, setWsLearners] = useState([]);
-  const [wsTeam, setWsTeam]         = useState([]);
-  const [wsInvitations, setWsInvitations] = useState([]);
+  const [wsTeam, setWsTeam]         = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_team');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [wsInvitations, setWsInvitations] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_invitations');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Sync team and invitations to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam));
+  }, [wsTeam]);
+
+  useEffect(() => {
+    localStorage.setItem('oyen_ws_invitations', JSON.stringify(wsInvitations));
+  }, [wsInvitations]);
 
   // AI Assistant Chat Mock
 
