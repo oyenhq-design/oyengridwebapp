@@ -78,8 +78,22 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('Dashboard');
 
   // Shared workspace data — lifted so Programs + Learners stay in sync
-  const [wsPrograms, setWsPrograms] = useState([]);
-  const [wsLearners, setWsLearners] = useState([]);
+  const [wsPrograms, setWsPrograms] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_programs') || sessionStorage.getItem('oyen_ws_programs');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [wsLearners, setWsLearners] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_learners') || sessionStorage.getItem('oyen_ws_learners');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [wsTeam, setWsTeam]         = useState(() => {
     try {
       const saved = localStorage.getItem('oyen_ws_team');
@@ -105,6 +119,26 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('oyen_ws_invitations', JSON.stringify(wsInvitations));
   }, [wsInvitations]);
+
+  // Sync state across browser tabs in real-time when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'oyen_ws_programs' && e.newValue) {
+        setWsPrograms(JSON.parse(e.newValue));
+      }
+      if (e.key === 'oyen_ws_learners' && e.newValue) {
+        setWsLearners(JSON.parse(e.newValue));
+      }
+      if (e.key === 'oyen_ws_team' && e.newValue) {
+        setWsTeam(JSON.parse(e.newValue));
+      }
+      if (e.key === 'oyen_ws_invitations' && e.newValue) {
+        setWsInvitations(JSON.parse(e.newValue));
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // AI Assistant Chat Mock
 
@@ -310,9 +344,9 @@ export default function App() {
             setActiveTemplate(tpl || 'enterprise');
             setEnabledTemplates(enabled || { enterprise: true, bootcamp: false, education: false, events: false });
             
-            const savedProgs = sessionStorage.getItem('oyen_ws_programs');
+            const savedProgs = localStorage.getItem('oyen_ws_programs') || sessionStorage.getItem('oyen_ws_programs');
             if (savedProgs) setWsPrograms(JSON.parse(savedProgs));
-            const savedLearners = sessionStorage.getItem('oyen_ws_learners');
+            const savedLearners = localStorage.getItem('oyen_ws_learners') || sessionStorage.getItem('oyen_ws_learners');
             if (savedLearners) setWsLearners(JSON.parse(savedLearners));
             const savedTeam = localStorage.getItem('oyen_ws_team') || sessionStorage.getItem('oyen_ws_team');
             if (savedTeam) setWsTeam(JSON.parse(savedTeam));
@@ -346,7 +380,9 @@ export default function App() {
         enabledTemplates
       }));
       sessionStorage.setItem('oyen_ws_programs', JSON.stringify(wsPrograms));
+      localStorage.setItem('oyen_ws_programs', JSON.stringify(wsPrograms));
       sessionStorage.setItem('oyen_ws_learners', JSON.stringify(wsLearners));
+      localStorage.setItem('oyen_ws_learners', JSON.stringify(wsLearners));
       sessionStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam)); // Keep session sync too
       localStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam));
       localStorage.setItem('oyen_ws_invitations', JSON.stringify(wsInvitations));
