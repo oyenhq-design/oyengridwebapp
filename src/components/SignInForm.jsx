@@ -11,31 +11,31 @@ export default function SignInForm({
   invitationPrefill,
   setInvitationPrefill
 }) {
-  // flowStep states: 'login' | 'invite-verify' | 'invite-setup'
-  const [flowStep, setFlowStep] = useState(invitationPrefill ? 'invite-verify' : 'login');
+  // flowStep states: 'login' | 'invite-setup'
+  const [flowStep, setFlowStep] = useState('login');
 
   // Input states for standard login
   const [email, setEmail] = useState(invitationPrefill ? invitationPrefill.email : '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState(invitationPrefill ? invitationPrefill.role || '' : '');
 
   // Input states for invitation flow
-  const [inviteEmail, setInviteEmail] = useState(invitationPrefill ? invitationPrefill.email : '');
   const [inviteCode, setInviteCode] = useState(invitationPrefill ? invitationPrefill.inviteCode : '');
   const [fullName, setFullName] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
 
+  // Matched invitation reference
   const [matchedInvitation, setMatchedInvitation] = useState(null);
 
-  // Loader & status states
+  // Status message and loaders
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // Validate Standard Sign-In Form
+  // Validate Standard Sign-In
   const validateSignIn = () => {
     const newErrors = {};
     if (!email) {
@@ -46,11 +46,14 @@ export default function SignInForm({
     if (!password) {
       newErrors.password = 'Password is required';
     }
+    if (!role) {
+      newErrors.role = 'Please select your role';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle Standard Sign-In Submit
+  // Handle Standard Sign-In Submit (for active users)
   const handleSignInSubmit = (e) => {
     e.preventDefault();
     if (!validateSignIn()) return;
@@ -62,7 +65,7 @@ export default function SignInForm({
       setIsLoading(false);
       const targetEmail = email.trim().toLowerCase();
       
-      // 1. Search for the account in the workspace
+      // 1. Search for the account in active roster or invitations
       const matchingMember = teamMembers.find(m => m.email.toLowerCase() === targetEmail);
       const pendingInvite = invitations.find(i => i.email.toLowerCase() === targetEmail && !i.used);
 
@@ -74,7 +77,7 @@ export default function SignInForm({
         return;
       }
 
-      // 2. Check if the account has not been activated yet
+      // 2. Check if the invitation is still pending/unactivated
       if (pendingInvite && (!matchingMember || matchingMember.status === 'Pending')) {
         setStatusMessage({
           type: 'error',
@@ -85,7 +88,7 @@ export default function SignInForm({
 
       // 3. Verify user's assigned role
       const actualRole = matchingMember.role;
-      if (role && role !== actualRole) {
+      if (role !== actualRole) {
         setStatusMessage({
           type: 'error',
           text: 'You do not have permission to sign in using this role.'
@@ -94,7 +97,6 @@ export default function SignInForm({
       }
 
       // 4. Verify password
-      // Default credentials fallback for owner (admin@oyengrid.com or initial owner)
       const isOwnerDefault = (targetEmail === 'admin@oyengrid.com' || actualRole === 'Organization Owner');
       const expectedPassword = matchingMember.password || (isOwnerDefault ? 'password123' : null);
 
@@ -106,10 +108,9 @@ export default function SignInForm({
         return;
       }
 
-      // 5. Account is Active and credentials are correct
+      // 5. Success
       setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
       
-      // Update last login
       if (setTeamMembers) {
         setTeamMembers(prev => prev.map(m => m.email.toLowerCase() === targetEmail ? { ...m, lastLogin: new Date().toISOString() } : m));
       }
@@ -120,14 +121,17 @@ export default function SignInForm({
     }, 1200);
   };
 
-  // Step 1: Verify Email and Invitation Code
-  const handleVerifyInvite = (e) => {
+  // Handle Continue button for first-time invited users (directly from sign in page)
+  const handleContinueInvite = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!inviteEmail) {
-      newErrors.inviteEmail = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(inviteEmail)) {
-      newErrors.inviteEmail = 'Please enter a valid email address';
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    if (!role) {
+      newErrors.role = 'Please select your role';
     }
     if (!inviteCode) {
       newErrors.inviteCode = 'Invitation Code is required';
@@ -144,50 +148,57 @@ export default function SignInForm({
     setTimeout(() => {
       setIsLoading(false);
       const codeUpper = inviteCode.trim().toUpperCase();
-      const targetEmail = inviteEmail.trim().toLowerCase();
+      const targetEmail = email.trim().toLowerCase();
 
-      // Find invitation by code (support standard codes and fallback email matching)
+      // Find matching invitation
       const invite = invitations.find(i => i.accessCode.toUpperCase() === codeUpper);
 
       if (!invite) {
-        setErrors({ inviteCode: 'Invalid invitation code.' });
+        setErrors({ inviteCode: 'Invalid invitation code' });
         return;
       }
 
       if (invite.email.toLowerCase() !== targetEmail) {
-        setErrors({ inviteEmail: 'This email does not match the invitation record.' });
+        setStatusMessage({
+          type: 'error',
+          text: 'The email address does not match this invitation code.'
+        });
+        return;
+      }
+
+      if (invite.role !== role) {
+        setStatusMessage({
+          type: 'error',
+          text: `This invitation code is for the role of ${invite.role}, but you selected ${role}.`
+        });
         return;
       }
 
       if (invite.used) {
-        setErrors({ inviteCode: 'This invitation has already been accepted/used.' });
+        setStatusMessage({
+          type: 'error',
+          text: 'This invitation has already been accepted/activated.'
+        });
         return;
       }
 
-      if (invite.expiresAt) {
-        const expiryDate = new Date(invite.expiresAt);
-        if (expiryDate < new Date()) {
-          setErrors({ inviteCode: 'This invitation has expired.' });
-          return;
-        }
-      }
-
-      // Valid invitation
+      // Invitation validated! Show password setup flow
       setErrors({});
       setMatchedInvitation(invite);
       
-      // Pre-fill name from invite if present
+      // Auto-prefill name
       if (invite.name) {
         setFullName(invite.name);
       } else {
         const prefix = invite.email.split('@')[0];
         setFullName(prefix.charAt(0).toUpperCase() + prefix.slice(1));
       }
+      
       setFlowStep('invite-setup');
     }, 1200);
   };
 
-  // Step 2 & 3: Account Setup and Account Activation
+  // Submit Password Creation and Activation
   const handleAccountSetupSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -219,7 +230,7 @@ export default function SignInForm({
         ));
       }
 
-      // 2. Add/Update member in team roster
+      // 2. Add member to team list
       if (setTeamMembers) {
         setTeamMembers(prev => {
           const exists = prev.some(m => m.email.toLowerCase() === targetEmail.toLowerCase());
@@ -295,7 +306,7 @@ export default function SignInForm({
         </div>
       </div>
 
-      {/* STEP: Standard Sign-In Login */}
+      {/* STEP: Standard Login (incorporating Have an Invitation check) */}
       {flowStep === 'login' && (
         <>
           <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
@@ -310,10 +321,10 @@ export default function SignInForm({
           {statusMessage && (
             <div style={{
               padding: '0.8rem 1rem',
-              backgroundColor: statusMessage.type === 'error' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(34, 197, 94, 0.05)',
-              border: statusMessage.type === 'error' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(34, 197, 94, 0.2)',
+              backgroundColor: 'rgba(239, 68, 68, 0.05)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
               borderRadius: '6px',
-              color: statusMessage.type === 'error' ? '#ef4444' : '#22c55e',
+              color: '#ef4444',
               fontSize: '0.85rem',
               fontWeight: 500,
               marginBottom: '1.5rem',
@@ -322,20 +333,8 @@ export default function SignInForm({
               gap: '0.5rem',
               textAlign: 'left'
             }}>
-              {statusMessage.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+              <AlertCircle size={16} />
               <span style={{ flex: 1 }}>{statusMessage.text}</span>
-              {statusMessage.text.includes('activate') && (
-                <button 
-                  onClick={() => {
-                    setInviteEmail(email);
-                    setFlowStep('invite-verify');
-                    setStatusMessage(null);
-                  }}
-                  style={{ background: 'none', border: 'none', color: '#F5D76E', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', padding: 0 }}
-                >
-                  Activate Now
-                </button>
-              )}
             </div>
           )}
 
@@ -414,7 +413,7 @@ export default function SignInForm({
             </div>
 
             {/* Options Row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
@@ -433,6 +432,47 @@ export default function SignInForm({
               </span>
             </div>
 
+            {/* Sign in as role select */}
+            <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+              <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>Sign in As</label>
+              <div style={{ position: 'relative' }}>
+                <User size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                <select
+                  value={role}
+                  onChange={(e) => {
+                    setRole(e.target.value);
+                    if (errors.role) setErrors({ ...errors, role: '' });
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem 1rem 0.875rem 2.5rem',
+                    backgroundColor: 'rgba(255,255,255,0.02)',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    color: '#fff',
+                    borderRadius: '6px',
+                    appearance: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="" style={{ backgroundColor: '#090a0f', color: 'rgba(255,255,255,0.4)' }}>Select your role</option>
+                  <option value="Organization Owner" style={{ backgroundColor: '#090a0f' }}>Organization Owner</option>
+                  <option value="Admin" style={{ backgroundColor: '#090a0f' }}>Admin</option>
+                  <option value="Program Manager" style={{ backgroundColor: '#090a0f' }}>Program Manager</option>
+                  <option value="Facilitator" style={{ backgroundColor: '#090a0f' }}>Facilitator</option>
+                  <option value="Team Member" style={{ backgroundColor: '#090a0f' }}>Team Member</option>
+                  <option value="Viewer" style={{ backgroundColor: '#090a0f' }}>Viewer</option>
+                </select>
+                <ChevronDown size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              </div>
+              {errors.role && (
+                <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#ef4444', fontSize: '0.75rem', marginTop: '0.35rem' }}>
+                  <AlertCircle size={12} /> {errors.role}
+                </span>
+              )}
+            </div>
+
             {/* Submit button */}
             <button 
               type="submit" 
@@ -450,7 +490,8 @@ export default function SignInForm({
                 gap: '0.5rem',
                 width: '100%',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                marginBottom: '1.5rem'
               }}
               disabled={isLoading}
             >
@@ -465,142 +506,23 @@ export default function SignInForm({
             </button>
           </form>
 
-          {/* OR Separator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.75rem 0', color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', fontWeight: 600 }}>
-            <span style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }}></span>
-            <span>OR</span>
-            <span style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }}></span>
-          </div>
-
-          {/* Sign in as role select */}
-          <div style={{ textAlign: 'left', marginBottom: '1.25rem' }}>
-            <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>Sign in as</label>
-            <div style={{ position: 'relative' }}>
-              <User size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.875rem 1rem 0.875rem 2.5rem',
-                  backgroundColor: 'rgba(255,255,255,0.02)',
-                  borderColor: 'rgba(255,255,255,0.08)',
-                  color: '#fff',
-                  borderRadius: '6px',
-                  appearance: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  outline: 'none'
-                }}
-              >
-                <option value="" style={{ backgroundColor: '#090a0f', color: 'rgba(255,255,255,0.4)' }}>Select your role</option>
-                <option value="Organization Owner" style={{ backgroundColor: '#090a0f' }}>Organization Owner</option>
-                <option value="Admin" style={{ backgroundColor: '#090a0f' }}>Admin</option>
-                <option value="Program Manager" style={{ backgroundColor: '#090a0f' }}>Program Manager</option>
-                <option value="Facilitator" style={{ backgroundColor: '#090a0f' }}>Facilitator</option>
-                <option value="Team Member" style={{ backgroundColor: '#090a0f' }}>Team Member</option>
-                <option value="Viewer" style={{ backgroundColor: '#090a0f' }}>Viewer</option>
-              </select>
-              <ChevronDown size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            </div>
-          </div>
-
-          {/* Go to Invitation Verification link */}
-          <div style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '0.9rem', marginTop: '1.5rem' }}>
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>Received an invitation? </span>
-            <span 
-              onClick={() => {
-                setStatusMessage(null);
-                setFlowStep('invite-verify');
-              }} 
-              style={{ color: '#F5D76E', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Activate Invitation →
-            </span>
-          </div>
-        </>
-      )}
-
-      {/* STEP: Verify Invitation Code, Email */}
-      {flowStep === 'invite-verify' && (
-        <>
-          <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>
-              Accept <span style={{ color: '#F5D76E' }}>Invitation</span>
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              Verify invitation credentials to access your organization workspace.
-            </p>
-          </div>
-
-          {statusMessage && (
-            <div style={{
-              padding: '0.8rem 1rem',
-              backgroundColor: 'rgba(239, 68, 68, 0.05)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '6px',
-              color: '#ef4444',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              marginBottom: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              textAlign: 'left'
-            }}>
-              <AlertCircle size={16} />
-              <span>{statusMessage.text}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleVerifyInvite} noValidate style={{ textAlign: 'left' }}>
-            {/* Work Email Field */}
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Work Email</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                <input
-                  type="email"
-                  className="form-input"
-                  value={inviteEmail}
-                  placeholder="name@organization.com"
-                  onChange={(e) => {
-                    setInviteEmail(e.target.value);
-                    if (errors.inviteEmail) setErrors({ ...errors, inviteEmail: '' });
-                  }}
-                  style={{ 
-                    paddingLeft: '2.5rem', 
-                    backgroundColor: 'rgba(255,255,255,0.02)', 
-                    borderColor: 'rgba(255,255,255,0.08)', 
-                    color: '#fff', 
-                    borderRadius: '6px'
-                  }}
-                  disabled={isInvited}
-                />
-              </div>
-              {errors.inviteEmail && (
-                <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#ef4444', fontSize: '0.75rem', marginTop: '0.35rem' }}>
-                  <AlertCircle size={12} /> {errors.inviteEmail}
-                </span>
-              )}
-            </div>
-
-            {/* Invitation Code Field */}
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Invitation Code / Access Code</label>
+          {/* Have an Invitation? Section */}
+          <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.5rem', textAlign: 'left' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '0.75rem', fontFamily: "'Outfit', sans-serif" }}>Have an Invitation?</h3>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: '0.85rem' }}>Invitation Code</label>
               <div style={{ position: 'relative' }}>
                 <Shield size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Enter your invitation code (e.g. OYEN-FAC-8K4M9Q)"
+                  placeholder="Enter invitation code (e.g. OYEN-FAC-XXXX)"
                   value={inviteCode}
                   onChange={(e) => {
                     setInviteCode(e.target.value);
                     if (errors.inviteCode) setErrors({ ...errors, inviteCode: '' });
                   }}
                   style={{ paddingLeft: '2.5rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.08)', color: '#fff', borderRadius: '6px' }}
-                  disabled={isLoading}
                 />
               </div>
               {errors.inviteCode && (
@@ -609,49 +531,40 @@ export default function SignInForm({
                 </span>
               )}
             </div>
-
-            {/* Submit button */}
             <button 
-              type="submit" 
-              className="submit-btn"
+              type="button" 
+              onClick={handleContinueInvite}
               style={{
-                background: '#F5D76E',
+                background: 'transparent',
                 border: '1px solid #F5D76E',
-                color: '#000',
+                color: '#F5D76E',
                 fontWeight: 700,
                 borderRadius: '6px',
-                padding: '0.875rem',
+                padding: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
                 width: '100%',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                fontSize: '0.85rem'
               }}
               disabled={isLoading}
             >
-              {isLoading ? (
-                <span className="spinner" />
-              ) : (
-                <>
-                  <span>Verify Invitation</span>
-                  <ArrowRight size={16} style={{ marginLeft: 'auto' }} />
-                </>
-              )}
+              <span>Continue Activation</span>
+              <ArrowRight size={14} style={{ marginLeft: 'auto' }} />
             </button>
-          </form>
+          </div>
 
-          {/* Cancel Option */}
-          <div style={{ textAlign: 'center', marginBottom: '2rem', fontSize: '0.9rem', marginTop: '1.5rem' }}>
+          {/* Create Organization Link */}
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem', marginTop: '1.5rem' }}>
+            <span style={{ color: 'rgba(255,255,255,0.5)' }}>New to OYEN GRID? </span>
             <span 
-              onClick={() => {
-                if (setInvitationPrefill) setInvitationPrefill(null);
-                setFlowStep('login');
-              }} 
+              onClick={() => onSwitchForm('portal')} 
               style={{ color: '#F5D76E', fontWeight: 600, cursor: 'pointer' }}
             >
-              ← Cancel & Sign In Normally
+              Create an organization →
             </span>
           </div>
         </>
@@ -665,7 +578,7 @@ export default function SignInForm({
               Account <span style={{ color: '#F5D76E' }}>Setup</span>
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem', marginTop: '0.5rem' }}>
-              Set up your credentials to activate your workspace access as <strong>{assignedRole}</strong>.
+              Set up your credentials to activate your workspace access as <strong>{role}</strong>.
             </p>
           </div>
 
@@ -691,7 +604,7 @@ export default function SignInForm({
               <label style={{ display: 'block', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.35rem', fontWeight: 600 }}>Email Address</label>
               <input 
                 type="email" 
-                value={verifiedEmail}
+                value={email}
                 readOnly
                 style={{ width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', cursor: 'not-allowed' }}
               />
@@ -735,7 +648,20 @@ export default function SignInForm({
               style={{ width: '100%', padding: '0.85rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
               disabled={isLoading}
             >
-              {isLoading ? <span className="spinner" /> : <>Activate Account & Sign In <ArrowRight size={15} /></>}
+              {isLoading ? <span className="spinner" /> : <>Create Account & Sign In <ArrowRight size={15} /></>}
+            </button>
+
+            {/* Back Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setFlowStep('login');
+                setRegPassword('');
+                setRegConfirmPassword('');
+              }}
+              style={{ width: '100%', padding: '0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', marginTop: '0.25rem' }}
+            >
+              ← Back to Sign In
             </button>
           </form>
         </div>
