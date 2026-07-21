@@ -1589,7 +1589,7 @@ export default function App() {
             ...p,
             sessions: facilitatorSessions
           };
-        }).filter(p => p.sessions.length > 0 || p.facilitatorEmail?.toLowerCase() === user.toLowerCase())
+        }).filter(p => p.sessions.length > 0 || p.facilitatorEmail?.toLowerCase() === user.toLowerCase() || !p.facilitatorEmail)
       : wsPrograms;
 
     return (
