@@ -1589,7 +1589,7 @@ export default function App() {
             ...p,
             sessions: facilitatorSessions
           };
-        }).filter(p => p.sessions.length > 0 || p.facilitatorEmail?.toLowerCase() === user.toLowerCase() || !p.facilitatorEmail)
+        }).filter(p => p.assignedFacilitators && Array.isArray(p.assignedFacilitators) && p.assignedFacilitators.some(email => email.toLowerCase() === user.toLowerCase()))
       : wsPrograms;
 
     return (
@@ -2411,6 +2411,7 @@ export default function App() {
                 setPrograms={setWsPrograms}
                 learners={wsLearners}
                 setLearners={setWsLearners}
+                teamMembers={wsTeam}
                 addNotification={addNotification}
                 userRole={userRole}
               />
@@ -3762,10 +3763,10 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
             gap: '0.5rem'
           }}>
             <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              No programs assigned yet
+              No programs assigned yet.
             </h4>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0, maxWidth: '400px', lineHeight: 1.5 }}>
-              You haven't been assigned to any programs. Once an administrator assigns a program, it will appear here.
+              You haven't been assigned to any training programs. Your Organization Owner or Administrator will assign programs for you.
             </p>
           </div>
         ) : (
@@ -3774,6 +3775,7 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
               const programLearnersCount = learners.filter(l => l.program === p.name).length;
               const sessionsCount = p.sessions ? p.sessions.length : 0;
               const resourcesCount = p.resources ? p.resources.length : 0;
+              const assessmentsCount = p.assessments ? p.assessments.length : 0;
 
               return (
                 <div 
@@ -3806,6 +3808,9 @@ function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, a
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <span>📄</span> <strong>{resourcesCount}</strong> Resources
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>📝</span> <strong>{assessmentsCount}</strong> Assessments
                     </div>
                   </div>
 

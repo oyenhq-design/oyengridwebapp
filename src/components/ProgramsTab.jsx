@@ -4,7 +4,7 @@ import ProgramDetail from './ProgramDetail';
 
 const PROGRAM_LIMIT = 3;
 
-export default function ProgramsTab({ programs = [], setPrograms, learners = [], setLearners, addNotification, userRole }) {
+export default function ProgramsTab({ programs = [], setPrograms, learners = [], setLearners, teamMembers = [], addNotification, userRole }) {
   const [showCreateModal, setShowCreateModal]   = useState(false);
   const [newProgName, setNewProgName]           = useState('');
   const [newProgDesc, setNewProgDesc]           = useState('');
@@ -31,6 +31,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
         resources:   [],
         assessments: [],
         activity:    [],
+        assignedFacilitators: [],
       }
     ]);
     addNotification?.(`New program "${cleanName}" created`);
@@ -80,6 +81,8 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
         setPrograms={setPrograms}
         programLearners={learners.filter(l => l.program === selectedProgram.name)}
         setLearners={setLearners}
+        teamMembers={teamMembers}
+        userRole={userRole}
         onBack={() => setSelectedProgramId(null)}
       />
     );
