@@ -2521,6 +2521,8 @@ export default function App() {
                 learners={wsLearners}
                 teamMembers={wsTeam}
                 setTeamMembers={setWsTeam}
+                invitations={wsInvitations}
+                setInvitations={setWsInvitations}
                 addNotification={addNotification}
                 organizationName={orgName}
                 setOrganizationName={setOrgName}

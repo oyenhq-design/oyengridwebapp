@@ -9,6 +9,8 @@ export default function SettingsTab({
   learners = [], 
   teamMembers = [], 
   setTeamMembers,
+  invitations = [],
+  setInvitations,
   addNotification,
   organizationName = 'ABC ENERGY',
   setOrganizationName,
@@ -96,6 +98,15 @@ export default function SettingsTab({
       if (setTeamMembers) {
         setTeamMembers(prev => prev.filter(m => m.email !== email));
         if (addNotification) addNotification('success', `Team member ${email} removed`);
+      }
+    }
+  };
+
+  const handleRemoveInvitation = (code, email) => {
+    if (window.confirm(`Are you sure you want to revoke invitation for ${email}?`)) {
+      if (setInvitations) {
+        setInvitations(prev => prev.filter(i => i.accessCode !== code));
+        if (addNotification) addNotification('success', `Invitation for ${email} revoked`);
       }
     }
   };
@@ -265,6 +276,11 @@ export default function SettingsTab({
 
               <div style={{ borderBottom: `1px solid ${themeBorder}`, paddingBottom: '0.5rem' }} />
 
+              {/* Active Members Subtitle */}
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', marginTop: '0.5rem', fontFamily: "'Outfit', sans-serif" }}>
+                Active Members ({teamMembers.length})
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {teamMembers.map((member, i) => (
                   <div key={member.email || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.1rem', backgroundColor: '#0A0A0A', border: `1px solid ${themeBorder}`, borderRadius: '8px' }}>
@@ -288,6 +304,42 @@ export default function SettingsTab({
                   </div>
                 ))}
               </div>
+
+              {/* Pending/Invited Members Subtitle */}
+              {invitations.length > 0 && (
+                <>
+                  <div style={{ borderBottom: `1px solid ${themeBorder}`, margin: '0.5rem 0' }} />
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>
+                    Pending Invitations ({invitations.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {invitations.map((inv, i) => (
+                      <div key={inv.accessCode || i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.1rem', backgroundColor: 'rgba(212,175,55,0.02)', border: `1px solid ${themeBorder}`, borderRadius: '8px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', fontFamily: "'Inter', sans-serif" }}>{inv.email}</div>
+                          {inv.accessCode && (
+                            <div style={{ fontSize: '0.7rem', color: goldAccent, marginTop: '0.15rem', fontFamily: 'monospace', fontWeight: 600 }}>Code: {inv.accessCode}</div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#D4AF37', backgroundColor: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.25)', padding: '0.15rem 0.45rem', borderRadius: '4px', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
+                            {inv.role}
+                          </span>
+                          <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#fff', backgroundColor: 'rgba(255,255,255,0.05)', padding: '0.15rem 0.45rem', borderRadius: '4px', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
+                            {inv.status || 'Pending'}
+                          </span>
+                          <button 
+                            onClick={() => handleRemoveInvitation(inv.accessCode, inv.email)}
+                            style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
