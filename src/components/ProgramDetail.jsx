@@ -274,9 +274,11 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
   const isOwnerOrAdmin = userRole === 'Organization Owner' || userRole === 'Admin';
   
-  const subTabs = userRole === 'Team Member'
-    ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Announcements', 'Certificates', 'Reports']
-    : ['Overview', 'Sessions', 'Learners', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports'];
+  const subTabs = userRole === 'Viewer'
+    ? ['Overview', 'Learners', 'Resources', 'Reports', 'Announcements']
+    : (userRole === 'Team Member'
+        ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Announcements', 'Certificates', 'Reports']
+        : ['Overview', 'Sessions', 'Learners', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports']);
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -490,6 +492,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                     <th style={{ padding: '0.9rem 1.25rem' }}>Attendance %</th>
                     <th style={{ padding: '0.9rem 1.25rem' }}>Progress %</th>
                     <th style={{ padding: '0.9rem 1.25rem' }}>Assessment Score</th>
+                    <th style={{ padding: '0.9rem 1.25rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -500,6 +503,9 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                       <td style={{ padding: '0.9rem 1.25rem' }}>92%</td>
                       <td style={{ padding: '0.9rem 1.25rem' }}>65%</td>
                       <td style={{ padding: '0.9rem 1.25rem' }}>88/100</td>
+                      <td style={{ padding: '0.9rem 1.25rem' }}>
+                        <button onClick={() => alert(`Viewing profile for ${l.name}...`)} style={{ padding: '0.25rem 0.55rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer' }}>View Profile</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -580,29 +586,31 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {activeSubTab === 'Resources' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>Upload Resource File</h3>
-            <form onSubmit={handleUploadResource} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <input
-                required
-                type="text"
-                placeholder="e.g. Lesson_Slides.pdf"
-                value={resourceName}
-                onChange={e => setResourceName(e.target.value)}
-                style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }}
-              />
-              <button type="submit" style={{ padding: '0.65rem 1.25rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>
-                Upload File
-              </button>
-            </form>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
-              <span>Storage Used</span>
-              <strong>2.4 GB / 10 GB</strong>
+          {userRole !== 'Viewer' && (
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>Upload Resource File</h3>
+              <form onSubmit={handleUploadResource} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Lesson_Slides.pdf"
+                  value={resourceName}
+                  onChange={e => setResourceName(e.target.value)}
+                  style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }}
+                />
+                <button type="submit" style={{ padding: '0.65rem 1.25rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>
+                  Upload File
+                </button>
+              </form>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
+                <span>Storage Used</span>
+                <strong>2.4 GB / 10 GB</strong>
+              </div>
+              <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden', marginTop: '0.4rem' }}>
+                <div style={{ height: '100%', width: '24%', backgroundColor: '#F5D76E', borderRadius: '99px' }} />
+              </div>
             </div>
-            <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden', marginTop: '0.4rem' }}>
-              <div style={{ height: '100%', width: '24%', backgroundColor: '#F5D76E', borderRadius: '99px' }} />
-            </div>
-          </div>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <h4 style={{ fontSize: '0.9rem', color: '#fff', margin: 0 }}>Materials List</h4>
@@ -684,22 +692,24 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {activeSubTab === 'Announcements' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>Post Announcement</h3>
-            <form onSubmit={handleCreateAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <textarea
-                required
-                placeholder="Broadcast to all learners in this program..."
-                value={annText}
-                onChange={e => setAnnText(e.target.value)}
-                rows={3}
-                style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
-              />
-              <button type="submit" style={{ padding: '0.65rem 1.25rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}>
-                Post Message
-              </button>
-            </form>
-          </div>
+          {userRole !== 'Viewer' && (
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>Post Announcement</h3>
+              <form onSubmit={handleCreateAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <textarea
+                  required
+                  placeholder="Broadcast to all learners in this program..."
+                  value={annText}
+                  onChange={e => setAnnText(e.target.value)}
+                  rows={3}
+                  style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                />
+                <button type="submit" style={{ padding: '0.65rem 1.25rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                  Post Message
+                </button>
+              </form>
+            </div>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <h4 style={{ fontSize: '0.9rem', color: '#fff', margin: 0 }}>History</h4>

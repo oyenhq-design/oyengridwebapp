@@ -99,7 +99,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
             Manage your training programs and keep everything organized in one place.
           </p>
         </div>
-        {userRole !== 'Facilitator' && (
+        {(userRole === 'Organization Owner' || userRole === 'Admin') && (
           <button
             onClick={() => {
               if (programs.length >= PROGRAM_LIMIT) {
@@ -140,7 +140,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
               >
                 {/* Action Menu (Three Dots) */}
-                {userRole !== 'Facilitator' && (
+                {(userRole === 'Organization Owner' || userRole === 'Admin') && (
                   <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
                     <button
                       onClick={(e) => {
@@ -230,7 +230,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(212,175,55,0.1)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
                 >
-                  Open Program →
+                  {userRole === 'Viewer' ? 'View Program →' : 'Open Program →'}
                 </button>
               </div>
             ))}
@@ -245,24 +245,36 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
               <BookOpen size={24} />
             </div>
             <div>
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>Create your first program</h4>
+              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                {userRole === 'Viewer' 
+                  ? 'No programs have been assigned to you yet.' 
+                  : (userRole === 'Facilitator' || userRole === 'Team Member'
+                      ? 'No programs assigned yet'
+                      : 'Create your first program')}
+              </h4>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '0.4rem', maxWidth: '340px', margin: '0.4rem auto 0 auto', lineHeight: 1.5 }}>
-                Set up a program, add learners, upload resources, and start running your training.
+                {userRole === 'Viewer'
+                  ? 'Once an administrator assigns a program to your account, it will appear here.'
+                  : (userRole === 'Facilitator' || userRole === 'Team Member'
+                      ? 'Once an administrator assigns a program, it will appear here.'
+                      : 'Set up a program, add learners, upload resources, and start running your training.')}
               </p>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              style={{
-                background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
-                border: 'none', color: '#000', fontWeight: 700,
-                fontSize: '0.82rem', borderRadius: '8px',
-                padding: '0.6rem 1.25rem', cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(212,175,55,0.2)',
-                marginTop: '0.5rem'
-              }}
-            >
-              Create Program
-            </button>
+            {(userRole === 'Organization Owner' || userRole === 'Admin') && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
+                  border: 'none', color: '#000', fontWeight: 700,
+                  fontSize: '0.82rem', borderRadius: '8px',
+                  padding: '0.6rem 1.25rem', cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(212,175,55,0.2)',
+                  marginTop: '0.5rem'
+                }}
+              >
+                Create Program
+              </button>
+            )}
           </div>
         )}
       </div>

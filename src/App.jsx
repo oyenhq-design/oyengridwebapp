@@ -357,7 +357,7 @@ export default function App() {
             const savedInvitations = localStorage.getItem('oyen_ws_invitations');
             if (savedInvitations) setWsInvitations(JSON.parse(savedInvitations));
             setActiveRoute('dashboard');
-            setActiveTab((role === 'Facilitator' || role === 'Team Member') ? 'Overview' : 'Dashboard');
+            setActiveTab((role === 'Facilitator' || role === 'Team Member' || role === 'Viewer') ? 'Overview' : 'Dashboard');
           } catch (e) {
             console.error('Error parsing session data', e);
             setActiveRoute('portal');
@@ -606,7 +606,7 @@ export default function App() {
       setUser(email);
       setUserRole(role);
       setActiveRoute('dashboard');
-      setActiveTab((role === 'Facilitator' || role === 'Team Member') ? 'Overview' : 'Dashboard');
+      setActiveTab((role === 'Facilitator' || role === 'Team Member' || role === 'Viewer') ? 'Overview' : 'Dashboard');
     });
   };
 
@@ -1573,6 +1573,7 @@ export default function App() {
     const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard' || activeTab === 'Overview';
     const showFacilitatorOverview = userRole === 'Facilitator' && isWelcome;
     const showTeamMemberOverview = userRole === 'Team Member' && isWelcome;
+    const showViewerOverview = userRole === 'Viewer' && isWelcome;
 
     const allSidebarItems = [
       { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
@@ -1624,10 +1625,13 @@ export default function App() {
       ];
     } else if (userRole === 'Viewer') {
       sidebarItems = [
-        { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
-        { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
-        { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
-        { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> }
+        { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
+        { id: 'Programs', label: 'Programs', icon: <BookOpen size={18} /> },
+        { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
+        { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
+        { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
+        { id: 'Announcements', label: 'Announcements', icon: <Bell size={18} /> },
+        { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     }
 
@@ -2099,6 +2103,14 @@ export default function App() {
               />
             ) : showTeamMemberOverview ? (
               <TeamMemberOverview 
+                info={getLoggedInUserInfo()} 
+                programs={displayPrograms} 
+                learners={wsLearners}
+                onNavigate={setActiveTab} 
+                addNotification={addNotification}
+              />
+            ) : showViewerOverview ? (
+              <ViewerOverview 
                 info={getLoggedInUserInfo()} 
                 programs={displayPrograms} 
                 learners={wsLearners}
@@ -4228,6 +4240,188 @@ function TeamMemberOverview({ info, programs = [], learners = [], onNavigate, ad
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+      </div>
+
+      <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', marginTop: '2rem' }}>
+        © 2025 OYEN GRID. All rights reserved.
+      </div>
+    </div>
+  );
+}
+
+function ViewerOverview({ info, programs = [], learners = [], onNavigate, addNotification }) {
+  const formattedDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+
+  // Calculate live statistics
+  const assignedProgramsCount = programs.length;
+  const totalLearnersCount = learners.length;
+  const activeSessionsCount = programs.reduce((acc, p) => acc + (p.sessions ? p.sessions.filter(s => s.status !== 'Completed').length : 0), 0);
+  const availableResourcesCount = programs.reduce((acc, p) => acc + (p.resources ? p.resources.length : 0), 0);
+
+  // Extract all announcements for programs the viewer has access to
+  const allAnnouncements = [];
+  programs.forEach(p => {
+    (p.announcements || []).forEach(a => {
+      allAnnouncements.push({
+        ...a,
+        programName: p.name
+      });
+    });
+  });
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+      
+      {/* Header Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+            Good morning, {info?.fullName || 'Viewer'} 👋
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+            Welcome to your organization overview.
+          </p>
+        </div>
+        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
+          {formattedDate}
+        </div>
+      </div>
+
+      {/* Program Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
+        {[
+          { label: 'Assigned Programs', value: assignedProgramsCount },
+          { label: 'Total Learners', value: totalLearnersCount },
+          { label: 'Active Sessions', value: activeSessionsCount },
+          { label: 'Available Resources', value: availableResourcesCount }
+        ].map(card => (
+          <div key={card.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#F5D76E', marginTop: '0.25rem' }}>{card.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.1fr', gap: '2rem' }}>
+        
+        {/* Left Column: Program Status Grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+            Program Status
+          </h3>
+
+          {programs.length === 0 ? (
+            <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', color: 'rgba(255,255,255,0.4)' }}>
+              No programs have been assigned to you yet.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+              {programs.map((p, idx) => {
+                const programLearnersCount = learners.filter(l => l.program === p.name).length;
+                const sessionsCount = p.sessions ? p.sessions.length : 0;
+
+                return (
+                  <div 
+                    key={p.id || idx} 
+                    style={{ 
+                      backgroundColor: '#0e0f14', 
+                      border: '1px solid rgba(255,255,255,0.06)', 
+                      borderRadius: '14px', 
+                      padding: '1.25rem', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '1rem',
+                      transition: 'border-color 0.2s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245,215,110,0.25)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                        {p.name}
+                      </h4>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                        Active
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>👥</span> <strong>{programLearnersCount}</strong> Learners
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>📅</span> <strong>{sessionsCount}</strong> Sessions
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>📈</span> <strong>65%</strong> Progress
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>📊</span> <strong>92%</strong> Attendance
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => onNavigate('Programs')}
+                      style={{ 
+                        marginTop: 'auto', 
+                        width: '100%', 
+                        padding: '0.55rem', 
+                        backgroundColor: 'transparent', 
+                        border: '1px solid rgba(255,255,255,0.1)', 
+                        color: '#fff', 
+                        borderRadius: '8px', 
+                        fontSize: '0.78rem', 
+                        fontWeight: 600, 
+                        cursor: 'pointer', 
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.3rem'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5D76E'; e.currentTarget.style.color = '#F5D76E'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
+                    >
+                      View Program →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Recent Announcements */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+            Recent Announcements
+          </h3>
+          
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {allAnnouncements.length === 0 ? (
+              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', textAlign: 'center', padding: '2rem 0' }}>
+                No announcements available.
+              </div>
+            ) : (
+              allAnnouncements.slice(0, 5).map(a => (
+                <div key={a.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>📢</span>
+                  <div style={{ flex: 1 }}>
+                    <h5 style={{ color: '#fff', fontSize: '0.82rem', margin: 0, fontWeight: 700 }}>{a.programName} Announcement</h5>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem', margin: '0.2rem 0 0 0', lineHeight: 1.4 }}>{a.text}</p>
+                    <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', display: 'block' }}>Posted: {a.date}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
