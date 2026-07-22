@@ -36,7 +36,7 @@ export default function App() {
   const [transitionFading, setTransitionFading] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [invitationPrefill, setInvitationPrefill] = useState(null);
-  // Trigger Vercel deploy rollback refresh
+  // Trigger Vercel deploy validation refresh
   
   // Auth state
   const [user, setUser] = useState(null); 
