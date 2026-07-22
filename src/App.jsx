@@ -9,6 +9,8 @@ import {
   Shield, Rocket, FileText, Mail, HardDrive
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
+import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser } from './domain/workspace/selectors';
+import { updateSessionStatus } from './domain/workspace/actions';
 import FacilitatorOverview from './pages/facilitator/FacilitatorOverview';
 import TeamMemberOverview from './pages/owner/TeamMemberOverview';
 import ViewerOverview from './pages/viewer/ViewerOverview';
@@ -87,6 +89,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [activeSession, setActiveSession] = useState(null);
+  const isLoggingOutRef = useRef(false);
 
   // Shared workspace data — lifted so Programs + Learners stay in sync
   const [wsPrograms, setWsPrograms] = useState(() => {
@@ -150,6 +153,39 @@ export default function App() {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  useEffect(() => {
+    if (!user || isLoggingOutRef.current) return;
+    
+    const currentEmail = user.trim().toLowerCase();
+    
+    // Bypass checks for default/master Admin/Owner account
+    if (currentEmail === 'admin@oyengrid.com' || currentEmail === ownerEmail?.trim().toLowerCase()) {
+      return;
+    }
+    
+    const member = wsTeam.find(m => m.email && m.email.trim().toLowerCase() === currentEmail);
+    
+    // Invalidation check (deleted, suspended/inactive, or role mismatch)
+    const isInvalid = !member || 
+                      member.status === 'Suspended' || 
+                      member.status === 'Inactive' ||
+                      member.role !== userRole;
+                      
+    if (isInvalid) {
+      isLoggingOutRef.current = true;
+      
+      // Clear storage and authentication
+      localStorage.removeItem('oyen_logged_in_user');
+      localStorage.removeItem('oyen_user_role');
+      sessionStorage.clear();
+      
+      setUser(null);
+      setUserRole(null);
+      setActiveRoute('signin');
+      addNotification('Your access to this organization has been removed. Please contact your Organization Owner.');
+    }
+  }, [wsTeam, user, userRole, ownerEmail]);
 
   // AI Assistant Chat Mock
 
@@ -609,6 +645,7 @@ export default function App() {
       activeTemplate,
       enabledTemplates
     }));
+    isLoggingOutRef.current = false;
     triggerTransition(() => {
       setUser(email);
       setUserRole(role);
@@ -650,6 +687,7 @@ export default function App() {
   };
 
   const handleLogOut = () => {
+    isLoggingOutRef.current = false;
     triggerTransition(() => {
       setUser(null);
       setUserRole(null);
@@ -1631,15 +1669,10 @@ export default function App() {
       ];
     }
 
-    const displayPrograms = (userRole === 'Organization Owner' || userRole === 'Admin')
-      ? wsPrograms
-      : wsPrograms.map(p => {
-          const facilitatorSessions = (p.sessions || []).filter(s => s.facilitatorEmail?.toLowerCase() === user.toLowerCase());
-          return {
-            ...p,
-            sessions: userRole === 'Facilitator' ? facilitatorSessions : p.sessions
-          };
-        }).filter(p => p.assignedFacilitators && Array.isArray(p.assignedFacilitators) && p.assignedFacilitators.some(email => email.toLowerCase() === user.toLowerCase()));
+    const displayPrograms = getProgramsForUser(user, userRole, wsPrograms);
+    const displaySessions = getSessionsForUser(user, userRole, wsPrograms);
+    const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
+    const displayInbox = getInboxForUser(user, userRole, wsPrograms, wsAnnouncements || []);
 
     return (
       <div className="dashboard-root" style={{
@@ -2094,6 +2127,21 @@ export default function App() {
                 session={activeSession}
                 onBack={() => setActiveSession(null)}
                 addNotification={addNotification}
+                onUpdateStatus={(newStatus) => {
+                  setWsPrograms(prev => {
+                    const next = updateSessionStatus(prev, activeSession.programId, activeSession.id, newStatus);
+                    const updatedProg = next.find(p => p.id === activeSession.programId);
+                    const updatedSess = updatedProg?.sessions?.find(s => s.id === activeSession.id);
+                    if (updatedSess) {
+                      setActiveSession({ ...updatedSess, programName: updatedProg.name, programId: updatedProg.id });
+                    }
+                    localStorage.setItem('oyen_ws_programs', JSON.stringify(next));
+                    return next;
+                  });
+                }}
+                learners={wsLearners.filter(l => l.program === activeSession.programName)}
+                programResources={wsPrograms.find(p => p.id === activeSession.programId)?.resources || []}
+                sessionResources={activeSession.resources || []}
               />
             ) : showFacilitatorOverview ? (
               <FacilitatorOverview 
@@ -2722,7 +2770,7 @@ export default function App() {
                 addNotification={addNotification}
               />
             ) : activeTab === 'Inbox' ? (
-              <InboxTab />
+              <InboxTab announcements={displayInbox} />
             ) : activeTab === 'Help' ? (
               <HelpTab />
             ) : activeTab === 'Resources' ? (
