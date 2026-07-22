@@ -1686,7 +1686,7 @@ export default function App() {
     const displayPrograms = getProgramsForUser(user, userRole, wsPrograms);
     const displaySessions = getSessionsForUser(user, userRole, wsPrograms);
     const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
-    const displayInbox = getInboxForUser(user, userRole, wsPrograms, wsAnnouncements || []);
+    const displayInbox = getInboxForUser(user, userRole, wsPrograms);
 
     return (
       <div className="dashboard-root" style={{
