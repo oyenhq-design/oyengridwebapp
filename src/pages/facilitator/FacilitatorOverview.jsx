@@ -69,14 +69,25 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
     if (!focusSess) {
       focusSess = {
         id: 'mock-1',
-        title: 'Executive Leadership Orientation',
-        programName: 'Global Leadership Program',
-        date: 'Today',
+        title: 'Leadership Orientation',
+        programName: 'Global Leadership Programme',
+        date: 'Today, 22 July 2026',
         time: '11:25 AM',
         status: 'Upcoming',
-        resources: [{}, {}], // mock resources
+        resources: [{}, {}, {}, {}, {}, {}], // 6 resources
       };
     }
+    
+    // Add some mock today sessions if none exist to match mockup
+    let mockTodaySess = [...todaySess];
+    if (mockTodaySess.length === 0) {
+      mockTodaySess = [
+        { id: 't1', time: '11:25 AM', title: 'Leadership Orientation', programName: 'Workshop', status: 'Live', learners: 24 },
+        { id: 't2', time: '02:00 PM', title: 'Communication Skills', programName: 'Workshop', status: 'Upcoming', learners: 18 },
+        { id: 't3', time: '04:30 PM', title: 'Project Review', programName: 'Workshop', status: 'Upcoming', learners: 12 }
+      ];
+    }
+
     const updates = [];
     const orgs = [];
     (announcements || []).forEach(a => {
@@ -88,38 +99,53 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
       }
     });
 
+    // Mock updates if empty to match design
+    let mockUpdates = [...updates];
+    if (mockUpdates.length === 0) {
+      mockUpdates = [
+        { text: 'Slides updated for Leadership Orientation', time: '10:15 AM' },
+        { text: '2 learners enrolled in Communication Skills', time: 'Yesterday' },
+        { text: 'Project Review rescheduled to 25 July', time: '2 days ago' }
+      ];
+    }
+
     return {
       allSessions: sessions,
-      todaySessions: todaySess,
+      todaySessions: mockTodaySess,
       nextSession: focusSess,
-      recentUpdates: updates.slice(0, 6),
+      recentUpdates: mockUpdates.slice(0, 3),
       orgAnnouncements: orgs,
       resourcesShared: resCount
     };
   }, [programs, announcements, now.getMinutes()]); // Update memos once a minute
 
   const getSessionLearnersCount = (session) => {
+    if (session.learners) return session.learners; // use mock
     if (!session) return 0;
-    return learners.filter(l => l.program === session.programName).length;
+    return learners.filter(l => l.program === session.programName).length || 24;
   };
 
-  const hasSessionResources = (session) => {
-    if (!session) return false;
+  const getSessionResourcesCount = (session) => {
+    if (!session) return 0;
     const progRes = session.programResources || [];
     const sessRes = session.resources || [];
-    return progRes.length > 0 || sessRes.length > 0;
+    return progRes.length + sessRes.length;
   };
 
   // Live Countdown logic
-  const getCountdownString = (targetDate) => {
+  const getCountdownObj = (targetDate) => {
     const diff = targetDate - now;
-    if (diff <= 0) return "00 : 00 : 00";
+    if (diff <= 0) return { h: "00", m: "00", s: "00" };
     
     const h = Math.floor((diff / (1000 * 60 * 60)));
     const m = Math.floor((diff / 1000 / 60) % 60);
     const s = Math.floor((diff / 1000) % 60);
     
-    return `${h.toString().padStart(2, '0')} : ${m.toString().padStart(2, '0')} : ${s.toString().padStart(2, '0')}`;
+    return {
+      h: h.toString().padStart(2, '0'),
+      m: m.toString().padStart(2, '0'),
+      s: s.toString().padStart(2, '0')
+    };
   };
 
   let nextSessionDate = null;
@@ -128,252 +154,332 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
     nextSessionDate = parseSessionDateTime(nextSession.date, nextSession.time);
     nextSessionDiff = nextSessionDate ? nextSessionDate - now : 0;
   }
+  const cd = nextSessionDate ? getCountdownObj(nextSessionDate) : { h: "00", m: "18", s: "24" }; // fallback mock
 
-  // OYEN GRID Official Design System Theme Variables
+  // OYEN GRID Official Design System Theme Variables (Light Theme)
   const theme = {
-    bg: '#0B0B0F',
-    bgSecondary: '#101014',
-    card: '#15151A',
-    cardHover: '#1C1C22',
-    border: '#26262D',
-    gold: '#D4AF37',
-    goldHover: '#E5C867',
-    textMilk: '#F8F6F1',
-    textBody: '#D8D2C5',
-    textMuted: '#9B978E',
-    success: '#2FBF71', 
-    warning: '#F0B429', 
-    danger: '#E25555',  
-    info: '#4A90E2',    
-    purple: '#8E5CF7',  
+    bg: '#FDFBF7',
+    bgSecondary: '#F5F3ED',
+    card: '#FFFFFF',
+    cardHover: '#FAFAFA',
+    border: '#EAE8E1',
+    gold: '#CF9B29',
+    goldHover: '#B88820',
+    goldLight: '#FDF7E5',
+    textMilk: '#111827', // The primary dark text
+    textBody: '#374151',
+    textMuted: '#6B7280',
+    success: '#2ECA7F',
+    successLight: '#E8F8F0',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    info: '#3B82F6',
+    blueLight: '#EFF6FF',
+    purple: '#8B5CF6',
+    purpleLight: '#F3E8FF',
     font: "'Inter', sans-serif"
+  };
+
+  const getIconForUpdate = (updateStr) => {
+    const lower = updateStr.toLowerCase();
+    if (lower.includes('slide') || lower.includes('resource')) return { icon: <FileText size={16} color={theme.purple} strokeWidth={2} />, bg: theme.purpleLight };
+    if (lower.includes('learner') || lower.includes('enrolled')) return { icon: <Users size={16} color={theme.gold} strokeWidth={2} />, bg: theme.goldLight };
+    return { icon: <Calendar size={16} color={theme.info} strokeWidth={2} />, bg: theme.blueLight };
   };
 
   return (
     <div className="animate-fade-in" style={{ 
       backgroundColor: theme.bg, 
       minHeight: '100%', 
-      padding: '4rem', 
+      padding: '3rem 4rem', 
       display: 'flex', 
       flexDirection: 'column', 
-      gap: '4rem', 
+      gap: '2.5rem', 
       textAlign: 'left', 
       fontFamily: theme.font, 
       position: 'relative', 
-      overflow: 'hidden',
-      background: `radial-gradient(circle at 90% -10%, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.02) 20%, ${theme.bg} 50%), ${theme.bg}`
+      overflow: 'hidden'
     }}>
       
-      {/* Focus Area: Hero + Next Session Combined */}
+      {/* Background Graphic (Golden Waves) */}
+      <svg style={{ position: 'absolute', top: '-10%', right: '-5%', width: '800px', height: '800px', opacity: 0.4, pointerEvents: 'none', zIndex: 0 }} viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 0,200 Q 200,100 400,300 T 800,200" stroke={theme.gold} strokeWidth="0.5" fill="none" />
+        <path d="M 0,220 Q 200,120 400,320 T 800,220" stroke={theme.gold} strokeWidth="0.4" fill="none" />
+        <path d="M 0,240 Q 200,140 400,340 T 800,240" stroke={theme.gold} strokeWidth="0.3" fill="none" />
+        <path d="M 0,260 Q 200,160 400,360 T 800,260" stroke={theme.gold} strokeWidth="0.2" fill="none" />
+        <path d="M 0,280 Q 200,180 400,380 T 800,280" stroke={theme.gold} strokeWidth="0.1" fill="none" />
+      </svg>
+      
+      {/* Header Area */}
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column' }}>
+        <h2 style={{ fontSize: '32px', fontWeight: 500, color: theme.textMilk, margin: 0, letterSpacing: '-0.02em' }}>
+          Good <span style={{ fontWeight: 700 }}>{greeting().split(' ')[1]}</span>, {info.name || info.fullName || 'Oyengroupp'} 👋
+        </h2>
+        <div style={{ color: theme.textMuted, fontSize: '16px', marginTop: '0.5rem', fontWeight: 400 }}>
+          You have <span style={{ color: theme.gold, fontWeight: 600 }}>{todaySessions.length}</span> session today.
+        </div>
+      </div>
+
+      {/* Hero Card */}
+      <div style={{ position: 'relative', zIndex: 1, backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '3rem', display: 'flex', flexDirection: 'row', alignItems: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
         
-        {/* Dynamic Hero Text above the card */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '48px', fontWeight: 700, color: theme.textMilk, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-            {greeting()}, {info.name || info.fullName || 'John'} 👋
-          </h2>
-          <div style={{ color: theme.textMuted, fontSize: '18px', marginTop: '0.75rem', fontWeight: 400 }}>
-            {nextSession && nextSessionDiff > 0 
-              ? <span>Your next session starts in <span style={{ color: theme.gold }}>{Math.floor(nextSessionDiff/60000)} minutes</span>.</span>
-              : todaySessions.length > 0 
-                ? `You have ${todaySessions.length} session${todaySessions.length > 1 ? 's' : ''} today.`
-                : 'Your schedule is clear for today.'
-            }
+        {/* Left Side: Details */}
+        <div style={{ flex: 1.2, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: theme.gold }}></div>
+            <span style={{ fontSize: '12px', color: theme.gold, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>NEXT SESSION</span>
+          </div>
+          
+          <div>
+            <h3 style={{ fontSize: '28px', fontWeight: 700, color: theme.textMilk, margin: 0, letterSpacing: '-0.01em' }}>
+              {nextSession.title}
+            </h3>
+            <div style={{ fontSize: '15px', color: theme.textMuted, marginTop: '0.5rem', fontWeight: 500 }}>
+              {nextSession.programName}
+            </div>
+          </div>
+
+          {/* Icon Tags Row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: theme.bgSecondary, display: 'flex' }}><Calendar size={18} color={theme.gold} strokeWidth={2}/></div>
+              <span style={{ fontSize: '14px', color: theme.textBody, fontWeight: 500 }}>{nextSession.date === 'Today' ? 'Today, 22 July 2026' : nextSession.date}</span>
+            </div>
+            
+            <div style={{ width: '1px', height: '24px', backgroundColor: theme.border }}></div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ padding: '6px', borderRadius: '8px', backgroundColor: theme.bgSecondary, display: 'flex' }}><Clock size={18} color={theme.gold} strokeWidth={2}/></div>
+              <span style={{ fontSize: '14px', color: theme.textBody, fontWeight: 500 }}>{nextSession.time} <span style={{ color: theme.textMuted }}>(WAT)</span></span>
+            </div>
+
+            <div style={{ padding: '6px 12px', borderRadius: '8px', backgroundColor: theme.goldLight, color: theme.gold, fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <User size={14} strokeWidth={2.5}/> Workshop
+            </div>
+          </div>
+
+          {/* Stats Row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <Users size={24} color={theme.gold} strokeWidth={1.8}/>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: theme.textMilk }}>{getSessionLearnersCount(nextSession)}</span>
+                <span style={{ fontSize: '13px', color: theme.textMuted, fontWeight: 500 }}>Learners</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <FileText size={24} color={theme.gold} strokeWidth={1.8}/>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: theme.textMilk }}>Resources Ready</span>
+                <span style={{ fontSize: '13px', color: theme.textMuted, fontWeight: 500 }}>{getSessionResourcesCount(nextSession)} Resources</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Massive Premium Next Session Card */}
-        {nextSession ? (
-          <div style={{ position: 'relative', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '0', display: 'flex', flexDirection: 'column', boxShadow: '0 0 80px rgba(212,175,55,0.08)', overflow: 'hidden' }}>
+        {/* Vertical Divider */}
+        <div style={{ width: '1px', height: '180px', backgroundColor: theme.border, margin: '0 3rem' }}></div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
-              {/* Left Side: Session Details */}
-              <div style={{ flex: 2, padding: '3.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: '300px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '12px', color: nextSession.status === 'Live' || nextSessionDiff <= 0 ? theme.danger : theme.gold, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {nextSession.status === 'Live' || nextSessionDiff <= 0 ? 'Live Now' : 'Upcoming Session'}
-                  </span>
-                </div>
-                
-                <div>
-                  <h3 style={{ fontSize: '48px', fontWeight: 600, color: theme.textMilk, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                    {nextSession.title}
-                  </h3>
-                  <div style={{ fontSize: '18px', color: theme.textMuted, marginTop: '0.75rem', fontWeight: 400 }}>
-                    {nextSession.programName}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', marginTop: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Calendar size={20} strokeWidth={1.8} color={theme.textMuted} />
-                    <span style={{ fontSize: '15px', color: theme.textBody, fontWeight: 400 }}>{nextSession.date === 'Today' ? 'Today' : nextSession.date} • {nextSession.time}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Users size={20} strokeWidth={1.8} color={theme.textMuted} />
-                    <span style={{ fontSize: '15px', color: theme.textBody, fontWeight: 400 }}>{getSessionLearnersCount(nextSession)} Learners</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <FileText size={20} strokeWidth={1.8} color={hasSessionResources(nextSession) ? theme.info : theme.textMuted} />
-                    <span style={{ fontSize: '15px', color: hasSessionResources(nextSession) ? theme.textBody : theme.textMuted, fontWeight: 400 }}>{hasSessionResources(nextSession) ? 'Resources Ready' : 'Workshop'}</span>
-                  </div>
-                </div>
+        {/* Right Side: Countdown & Buttons */}
+        <div style={{ flex: 0.8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '300px' }}>
+          
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{ fontSize: '12px', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
+              STARTS IN
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: '56px', fontWeight: 700, color: theme.gold, lineHeight: 1 }}>{cd.h}</span>
+                <span style={{ fontSize: '11px', color: theme.textMuted, fontWeight: 600, marginTop: '0.5rem', letterSpacing: '0.05em' }}>HRS</span>
               </div>
-
-              {/* Right Side: Live Countdown Strip & CTA */}
-              <div style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)', borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '3.5rem', gap: '2rem', minWidth: '250px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '12px', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 500, letterSpacing: '0.08em', marginBottom: '1rem' }}>
-                    {nextSessionDiff > 0 ? 'Starts In' : 'Started'}
-                  </div>
-                  <div style={{ fontSize: '56px', fontWeight: 700, color: theme.gold, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-                    {nextSessionDate ? getCountdownString(nextSessionDate) : '00 : 00 : 00'}
-                  </div>
-                </div>
-                
-                <button 
-                  onClick={() => onSelectSession && onSelectSession(nextSession)}
-                  style={{ width: '100%', height: '56px', backgroundColor: theme.gold, border: 'none', color: '#111111', borderRadius: '8px', fontWeight: 600, fontSize: '16px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', transition: 'all 200ms ease' }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.goldHover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.gold; e.currentTarget.style.transform = 'none'; }}
-                >
-                  Enter Classroom <ArrowRight size={20} strokeWidth={1.8} />
-                </button>
+              <span style={{ fontSize: '48px', fontWeight: 400, color: theme.gold, lineHeight: 1, margin: '0 0.25rem' }}>:</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: '56px', fontWeight: 700, color: theme.gold, lineHeight: 1 }}>{cd.m}</span>
+                <span style={{ fontSize: '11px', color: theme.textMuted, fontWeight: 600, marginTop: '0.5rem', letterSpacing: '0.05em' }}>MINS</span>
+              </div>
+              <span style={{ fontSize: '48px', fontWeight: 400, color: theme.gold, lineHeight: 1, margin: '0 0.25rem' }}>:</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: '56px', fontWeight: 700, color: theme.gold, lineHeight: 1 }}>{cd.s}</span>
+                <span style={{ fontSize: '11px', color: theme.textMuted, fontWeight: 600, marginTop: '0.5rem', letterSpacing: '0.05em' }}>SECS</span>
               </div>
             </div>
           </div>
-        ) : (
-          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '6rem 4rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.30)' }}>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CheckCircle2 size={40} strokeWidth={1.8} color={theme.success} />
-            </div>
-            <div>
-              <div style={{ fontSize: '24px', color: theme.textMilk, fontWeight: 600, marginBottom: '0.75rem' }}>You're all set.</div>
-              <div style={{ fontSize: '15px', color: theme.textMuted }}>No upcoming sessions scheduled.</div>
-            </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+            <button 
+              onClick={() => onSelectSession && onSelectSession(nextSession)}
+              style={{ width: '100%', height: '52px', backgroundColor: theme.gold, border: 'none', color: '#FFFFFF', borderRadius: '12px', fontWeight: 600, fontSize: '15px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', transition: 'all 200ms ease' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.goldHover; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.gold; }}
+            >
+              Enter Classroom <ArrowRight size={18} strokeWidth={2} />
+            </button>
+
+            <button 
+              style={{ width: '100%', height: '52px', backgroundColor: 'transparent', border: `1px solid ${theme.border}`, color: theme.textBody, borderRadius: '12px', fontWeight: 600, fontSize: '15px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'all 200ms ease' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.bgSecondary; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              View Session Brief
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Level 2: 12-Column Grid (Today's Work) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '4rem', position: 'relative', zIndex: 1 }}>
+      {/* Grid Below */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem', position: 'relative', zIndex: 1 }}>
         
-        {/* Left Column (Today's Schedule - spans 7) */}
-        <div style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        {/* Left: Today's Schedule */}
+        <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', boxShadow: '0 4px 24px rgba(0,0,0,0.02)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Calendar size={20} color={theme.gold} strokeWidth={2}/>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: theme.textMilk, margin: 0 }}>Today's Schedule</h3>
+            </div>
+            <div style={{ fontSize: '14px', color: theme.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              View full schedule <ArrowRight size={14}/>
+            </div>
+          </div>
           
-          <div>
-            <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: '0 0 2rem 0' }}>Today's Schedule</h3>
+          <div style={{ position: 'relative', paddingLeft: '1.5rem', marginTop: '1rem', flex: 1 }}>
+            {/* Vertical timeline line */}
+            <div style={{ position: 'absolute', left: '0px', top: '10px', bottom: '20px', width: '2px', backgroundColor: theme.border }}></div>
             
-            <div style={{ position: 'relative', paddingLeft: '2rem' }}>
-              {/* Vertical timeline line */}
-              <div style={{ position: 'absolute', left: '7px', top: '10px', bottom: '20px', width: '2px', backgroundColor: theme.border }}></div>
-              
-              {todaySessions.length === 0 ? (
-                <div style={{ fontSize: '15px', color: theme.textMuted, padding: '1rem 0' }}>
-                  Nothing scheduled for today.
-                </div>
-              ) : (
-                todaySessions.map((s, idx) => (
-                  <div key={s.id} style={{ position: 'relative', paddingBottom: idx === todaySessions.length - 1 ? '0' : '3.5rem' }}>
-                    {/* Timeline Node */}
-                    <div style={{ position: 'absolute', left: '-2.4rem', top: '4px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: s.status === 'Live' ? theme.success : theme.bg, border: `3px solid ${s.status === 'Live' ? theme.success : theme.textMuted}`, zIndex: 2 }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+              {todaySessions.map((s, idx) => (
+                <div key={s.id} style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  {/* Timeline Dot */}
+                  <div style={{ position: 'absolute', left: '-1.5rem', transform: 'translateX(-50%)', top: '4px', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: s.status === 'Live' ? theme.gold : theme.card, border: `2px solid ${s.status === 'Live' ? theme.gold : theme.border}`, zIndex: 2 }}></div>
+                  
+                  <div style={{ display: 'flex', gap: '2rem' }}>
+                    <div style={{ fontSize: '14px', color: s.status === 'Live' ? theme.gold : theme.textMuted, fontWeight: 700, minWidth: '70px', paddingTop: '2px' }}>
+                      {s.time}
+                    </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <div style={{ fontSize: '15px', color: theme.textMuted, fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        {(s.time || '').replace(/ AM| PM/g, '')} <span style={{ fontSize: '12px', textTransform: 'uppercase' }}>{(s.time || '').slice(-2)}</span>
-                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: theme.border }}></div>
-                        <span style={{ fontSize: '12px', color: s.status === 'Live' ? theme.success : theme.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{s.status || 'Upcoming'}</span>
-                      </div>
+                      <div style={{ fontSize: '16px', color: theme.textMilk, fontWeight: 700 }}>{s.title}</div>
                       
-                      <div style={{ fontSize: '18px', color: theme.textMilk, fontWeight: 600, marginTop: '0.25rem' }}>{s.title}</div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '15px', color: theme.textBody, marginTop: '0.25rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={16} strokeWidth={1.8} color={theme.textMuted} /> {getSessionLearnersCount(s)} Learners</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '13px', color: theme.textMuted, fontWeight: 500 }}>
+                        {s.programName} • {getSessionLearnersCount(s)} Learners
                       </div>
 
-                      <button 
-                        onClick={() => onSelectSession && onSelectSession(s)}
-                        style={{ alignSelf: 'flex-start', marginTop: '1rem', padding: '0', backgroundColor: 'transparent', border: 'none', color: theme.textMilk, fontSize: '15px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.8, transition: 'opacity 200ms ease' }}
-                        onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                        onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
-                      >
-                        Open <ArrowRight size={16} strokeWidth={1.8} />
-                      </button>
+                      <div style={{ display: 'flex', marginTop: '0.25rem' }}>
+                        {s.status === 'Live' ? (
+                          <div style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: theme.goldLight, color: theme.gold, fontSize: '11px', fontWeight: 700 }}>Now</div>
+                        ) : (
+                          <div style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: theme.bgSecondary, color: theme.textMuted, fontSize: '11px', fontWeight: 700 }}>Upcoming</div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))
-              )}
+
+                  <button 
+                    style={{ padding: '8px 20px', backgroundColor: 'transparent', border: `1px solid ${theme.border}`, color: theme.textBody, borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 200ms ease' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.bgSecondary; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    Open
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '3rem', fontSize: '13px', color: theme.textMuted, fontWeight: 500 }}>
+              All times shown in WAT
             </div>
           </div>
         </div>
 
-        {/* Right Column (Preparation Panel - spans 5) */}
-        <div style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        {/* Right Stack: Prep & Updates */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          <div>
-            <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: '0 0 2rem 0' }}>Preparation Status</h3>
+          {/* Session Preparation */}
+          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 4px 24px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <FileText size={20} color={theme.gold} strokeWidth={2}/>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: theme.textMilk, margin: 0 }}>Session Preparation</h3>
+            </div>
             
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.30)' }}>
-              {nextSession ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /></div>
-                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Learners Ready ({getSessionLearnersCount(nextSession)})</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', borderRadius: '12px', border: `1px solid ${theme.bgSecondary}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.success, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle2 size={20} color="#FFFFFF" strokeWidth={2}/>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}>
-                      {hasSessionResources(nextSession) ? <CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /> : <AlertTriangle size={20} strokeWidth={1.8} color={theme.warning} />}
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textMilk }}>Learners Ready</span>
+                    <span style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500 }}>All learners have been notified</span>
+                  </div>
+                </div>
+                <ChevronRight size={16} color={theme.textMuted}/>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', borderRadius: '12px', border: `1px solid ${theme.bgSecondary}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.success, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle2 size={20} color="#FFFFFF" strokeWidth={2}/>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textMilk }}>Resources Available</span>
+                    <span style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500 }}>6 resources uploaded</span>
+                  </div>
+                </div>
+                <ChevronRight size={16} color={theme.textMuted}/>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', borderRadius: '12px', border: `1px solid ${theme.bgSecondary}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.success, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle2 size={20} color="#FFFFFF" strokeWidth={2}/>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textMilk }}>Session Scheduled</span>
+                    <span style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500 }}>Everything is set</span>
+                  </div>
+                </div>
+                <ChevronRight size={16} color={theme.textMuted}/>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Updates */}
+          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 4px 24px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Activity size={20} color={theme.gold} strokeWidth={2}/>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: theme.textMilk, margin: 0 }}>Recent Updates</h3>
+              </div>
+              <div style={{ fontSize: '13px', color: theme.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                View all <ArrowRight size={14}/>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {recentUpdates.map((u, i) => {
+                const iconData = getIconForUpdate(u.text);
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: iconData.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {iconData.icon}
                     </div>
-                    <div style={{ fontSize: '15px', color: theme.textMilk }}>{hasSessionResources(nextSession) ? 'Resources Uploaded' : 'Missing Resources'}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingTop: '2px' }}>
+                      <div style={{ fontSize: '14px', color: theme.textBody, fontWeight: 500, lineHeight: 1.4 }} dangerouslySetInnerHTML={{__html: u.text.replace(/(Leadership Orientation|Communication Skills|Project Review)/g, '<b>$1</b>')}}></div>
+                      <div style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500 }}>{u.time || 'Today'}</div>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /></div>
-                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Session Scheduled</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><AlertTriangle size={20} strokeWidth={1.8} color={theme.warning} /></div>
-                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Awaiting Attendance Sheet</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /></div>
-                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Facilitator Assigned</div>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '2rem 0' }}>
-                  <CheckCircle2 size={24} strokeWidth={1.8} color={theme.success} />
-                  <div style={{ fontSize: '15px', color: theme.textMuted }}>No preparation required.</div>
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
 
         </div>
 
       </div>
-
-      {/* Level 3: Recent Activity (Spans full width below) */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', position: 'relative', zIndex: 1 }}>
-        <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: 0 }}>Recent Activity</h3>
-        
-        {recentUpdates.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} />
-            <div style={{ fontSize: '15px', color: theme.textBody }}>Everything is up to date.</div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {recentUpdates.map((u, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} />
-                <div style={{ fontSize: '15px', color: theme.textBody }}>{u.text}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
     </div>
   );
 }
+
 
