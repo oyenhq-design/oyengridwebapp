@@ -249,7 +249,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
                     )}
                     
                     <div style={{ width: '50px', fontSize: '0.85rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)', paddingTop: '0.25rem', textAlign: 'right' }}>
-                      {s.time.replace(/ AM| PM/g, '')}
+                      {(s.time || '').replace(/ AM| PM/g, '')}
                     </div>
                     
                     <div style={{ flex: 1, backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
