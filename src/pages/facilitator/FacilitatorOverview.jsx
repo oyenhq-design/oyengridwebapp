@@ -1,7 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+
+// Helper to parse date/time into a JS Date object
+function parseSessionDateTime(dateStr, timeStr) {
+  if (!dateStr) return null;
+  
+  let dStr = dateStr;
+  const today = new Date();
+  
+  if (dStr.toLowerCase() === 'today') {
+    dStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+  } else if (dStr.toLowerCase() === 'tomorrow') {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dStr = `${tomorrow.getMonth() + 1}/${tomorrow.getDate()}/${tomorrow.getFullYear()}`;
+  }
+
+  // Combine with time if available
+  const dateString = timeStr ? `${dStr} ${timeStr}` : dStr;
+  const parsed = new Date(dateString);
+  
+  if (!isNaN(parsed.getTime())) return parsed;
+  return null;
+}
 
 export default function FacilitatorOverview({ info, programs = [], learners = [], onNavigate, addNotification, onSelectSession }) {
-  const formattedDate = new Date().toLocaleDateString('en-US', {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = now.toLocaleDateString('en-US', {
     weekday: 'long',
     day: 'numeric',
     month: 'short',
@@ -20,20 +50,51 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
     });
   });
 
+  // Sort by closest date
+  allSessions.sort((a, b) => {
+    const da = parseSessionDateTime(a.date, a.time) || new Date(9999, 11, 31);
+    const db = parseSessionDateTime(b.date, b.time) || new Date(9999, 11, 31);
+    return da - db;
+  });
+
   // Filter today's sessions vs upcoming sessions
-  const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  // A session is "today" if its parsed date matches today's date
   const todaySessions = allSessions.filter(s => {
-    const sDate = s.date || '';
-    return sDate.toLowerCase().includes('today') || sDate.toLowerCase().includes('25 august') || sDate.toLowerCase().includes(todayStr.toLowerCase());
+    const sDate = parseSessionDateTime(s.date, s.time);
+    if (!sDate) return false;
+    return sDate.toDateString() === now.toDateString();
   });
 
   const upcomingSessions = allSessions.filter(s => {
-    const sDate = s.date || '';
-    return !sDate.toLowerCase().includes('today') && !sDate.toLowerCase().includes('25 august') && !sDate.toLowerCase().includes(todayStr.toLowerCase());
+    const sDate = parseSessionDateTime(s.date, s.time);
+    if (!sDate) return false;
+    return sDate.toDateString() !== now.toDateString() && sDate > now;
   });
 
-  // Today's Focus: the immediate next session
-  const todaysFocusSession = todaySessions[0] || null;
+  // Today's Focus: the immediate next session for today (not completed)
+  const todaysFocusSession = todaySessions.find(s => s.status !== 'Completed') || todaySessions[0] || null;
+
+  const getCountdownText = (session) => {
+    if (session.status === 'Live') return 'Live Now';
+    if (session.status === 'Completed') return 'Completed';
+    
+    const sDate = parseSessionDateTime(session.date, session.time);
+    if (!sDate) return '';
+
+    const diffMs = sDate - now;
+    if (diffMs < 0) {
+      return session.status === 'Scheduled' ? 'Ready to Start' : session.status;
+    }
+
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays === 1) return `Starts Tomorrow at ${session.time}`;
+    if (diffDays > 1) return `Starts in ${diffDays} days`;
+    if (diffHours >= 1) return `Starts in ${diffHours} hours`;
+    return `Starts in ${diffMins} minutes`;
+  };
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -76,18 +137,18 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
           >
             <div>
               <span style={{ fontSize: '0.68rem', backgroundColor: 'rgba(245,215,110,0.1)', color: '#F5D76E', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase' }}>
-                {todaysFocusSession.status || 'Ready to Start'}
+                {todaysFocusSession.status || 'Scheduled'}
               </span>
               <h4 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', margin: '0.5rem 0 0.25rem 0', fontFamily: "'Outfit', sans-serif" }}>
-                {todaysFocusSession.title}
+                {todaysFocusSession.title || 'Untitled Session'}
               </h4>
               <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
-                {todaysFocusSession.programName}
+                {todaysFocusSession.programName || 'Unknown Program'}
               </p>
               <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.75rem' }}>
-                <span>⏰ {todaysFocusSession.time || '10:00 AM'}</span>
-                <span>⏱️ {todaysFocusSession.duration || '90 mins'}</span>
-                <span style={{ color: '#F5D76E', fontWeight: 700 }}>Starts in 18 minutes</span>
+                <span>⏰ {todaysFocusSession.time || 'TBD'}</span>
+                <span>⏱️ {todaysFocusSession.duration || 'N/A'}</span>
+                <span style={{ color: '#F5D76E', fontWeight: 700 }}>{getCountdownText(todaysFocusSession)}</span>
               </div>
             </div>
 
@@ -95,7 +156,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
               onClick={() => onSelectSession(todaysFocusSession)}
               style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
             >
-              Start Session
+              {todaysFocusSession.status === 'Scheduled' || todaysFocusSession.status === 'Ready to Start' ? 'Start Session' : 'View Session'}
             </button>
           </div>
         ) : (
@@ -133,11 +194,11 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
                 }}
               >
                 <div>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0 }}>{s.title}</h4>
-                  <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0 }}>{s.title || 'Untitled Session'}</h4>
+                  <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', margin: '0.2rem 0 0 0' }}>{s.programName || 'Unknown Program'}</p>
                   <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.45rem' }}>
-                    <span>📅 {s.date}</span>
-                    <span>⏰ {s.time}</span>
+                    <span>📅 {s.date || 'TBD'}</span>
+                    <span>⏰ {s.time || 'TBD'}</span>
                   </div>
                 </div>
 
@@ -156,7 +217,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
       </div>
 
       <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.15)', fontSize: '0.75rem', marginTop: '2rem' }}>
-        © 2025 OYEN GRID. All rights reserved.
+        © 2026 OYEN GRID. All rights reserved.
       </div>
     </div>
   );

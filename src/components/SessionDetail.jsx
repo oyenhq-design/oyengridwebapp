@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Check, CheckCircle2, Play, CircleDot, Video, Users, FileText, Download, Eye, ExternalLink } from 'lucide-react';
 
-export default function SessionDetail({ session, onBack, addNotification }) {
-  // States: 'Scheduled' | 'Ready to Start' | 'Live' | 'Processing' | 'Completed'
-  const [statusState, setStatusState] = useState('Scheduled');
-  const [timeLeft, setTimeLeft] = useState(18 * 60); // 18 minutes in seconds
+export default function SessionDetail({ 
+  session, 
+  onBack, 
+  addNotification, 
+  onUpdateStatus, 
+  learners = [], 
+  programResources = [], 
+  sessionResources = [] 
+}) {
+  const statusState = session.status || 'Scheduled';
+  const [timeLeft, setTimeLeft] = useState(0);
   const [liveTimer, setLiveTimer] = useState(0);
 
   // Live checklist items
@@ -17,31 +24,44 @@ export default function SessionDetail({ session, onBack, addNotification }) {
     learners: true
   });
 
-  // Mock Learners list with status
-  const [participants, setParticipants] = useState([
-    { name: 'John Doe', email: 'john@example.com', status: 'Waiting' },
-    { name: 'Mary James', email: 'mary@example.com', status: 'Waiting' },
-    { name: 'Peter Parker', email: 'peter@example.com', status: 'Waiting' },
-    { name: 'Alice Cooper', email: 'alice@example.com', status: 'Waiting' }
-  ]);
-
-  // Countdown timer for Scheduled state
+  // Calculate actual countdown timer based on session date and time
   useEffect(() => {
     let interval = null;
-    if (statusState === 'Scheduled' && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft(t => {
-          if (t <= 1) {
-            clearInterval(interval);
-            setStatusState('Ready to Start');
-            return 0;
-          }
-          return t - 1;
-        });
-      }, 1000);
+    if (statusState === 'Scheduled') {
+      const updateTimeLeft = () => {
+        if (!session.date || !session.time) return;
+        let dStr = session.date;
+        const today = new Date();
+        if (dStr.toLowerCase() === 'today') {
+          dStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+        } else if (dStr.toLowerCase() === 'tomorrow') {
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          dStr = `${tomorrow.getMonth() + 1}/${tomorrow.getDate()}/${tomorrow.getFullYear()}`;
+        }
+        
+        const targetDate = new Date(`${dStr} ${session.time}`);
+        if (isNaN(targetDate.getTime())) return;
+        
+        const now = new Date();
+        const diffSecs = Math.floor((targetDate - now) / 1000);
+        
+        if (diffSecs <= 0) {
+          setTimeLeft(0);
+          // If all checklist items are ticked, we might want to automatically prompt Ready to Start, 
+          // but we won't mutate state here automatically unless we trigger the parent.
+        } else {
+          setTimeLeft(diffSecs);
+        }
+      };
+      
+      updateTimeLeft();
+      interval = setInterval(updateTimeLeft, 1000);
     }
-    return () => clearInterval(interval);
-  }, [statusState, timeLeft]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [statusState, session.date, session.time]);
 
   // Timer for Live state
   useEffect(() => {
@@ -49,17 +69,6 @@ export default function SessionDetail({ session, onBack, addNotification }) {
     if (statusState === 'Live') {
       interval = setInterval(() => {
         setLiveTimer(t => t + 1);
-        
-        // Randomly simulate learners joining live
-        setParticipants(prev => prev.map(p => {
-          if (p.status === 'Waiting' && Math.random() > 0.6) {
-            return { ...p, status: 'Joined' };
-          }
-          if (p.status === 'Joined' && Math.random() > 0.95) {
-            return { ...p, status: 'Left Session' };
-          }
-          return p;
-        }));
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -67,8 +76,12 @@ export default function SessionDetail({ session, onBack, addNotification }) {
 
   // Format time (MM:SS)
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+    if (hours > 0) {
+      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -77,32 +90,26 @@ export default function SessionDetail({ session, onBack, addNotification }) {
     const updated = { ...checklist, [key]: !checklist[key] };
     setChecklist(updated);
 
-    // If all items checked, move to "Ready to Start"
+    // If all items checked, move to "Ready to Start" immutably via parent
     const allChecked = Object.values(updated).every(val => val === true);
     if (allChecked && statusState === 'Scheduled') {
-      setStatusState('Ready to Start');
+      onUpdateStatus('Ready to Start');
     } else if (!allChecked && statusState === 'Ready to Start') {
-      setStatusState('Scheduled');
+      onUpdateStatus('Scheduled');
     }
   };
 
   const startLiveSession = () => {
-    setStatusState('Live');
-    // Set initially joined
-    setParticipants(prev => prev.map((p, idx) => {
-      if (idx < 2) return { ...p, status: 'Joined' };
-      return p;
-    }));
+    onUpdateStatus('Live');
     addNotification('OYEN Live session started.');
   };
 
   const endLiveSession = () => {
-    setStatusState('Processing');
+    onUpdateStatus('Processing');
     addNotification('Ending OYEN Live session. Processing attendance and metadata.');
     
-    // Simulate processing steps sequentially
     setTimeout(() => {
-      setStatusState('Completed');
+      onUpdateStatus('Completed');
       addNotification('Session completed and processed successfully.');
     }, 4000);
   };
@@ -114,9 +121,19 @@ export default function SessionDetail({ session, onBack, addNotification }) {
       case 'Live': return { text: 'Live', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
       case 'Processing': return { text: 'Processing', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' };
       case 'Completed': return { text: 'Completed', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' };
-      default: return { text: 'Scheduled', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
+      default: return { text: statusState, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
     }
   };
+
+  // Determine Learning Objectives
+  let learningObjectives = [];
+  if (session.objectives && session.objectives.length > 0) {
+    learningObjectives = session.objectives;
+  } else if (session.programObjectives && session.programObjectives.length > 0) {
+    // Note: The prop for program objectives might not be passed directly, 
+    // assuming it might be in session object if mapped, or empty.
+    learningObjectives = session.programObjectives;
+  }
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -141,14 +158,14 @@ export default function SessionDetail({ session, onBack, addNotification }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                {session.title || 'Leadership Fundamentals'}
+                {session.title || 'Untitled Session'}
               </h2>
               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                {session.programName || 'Leadership Development Program'}
+                {session.programName || 'Unknown Program'}
               </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', borderRadius: '8px', backgroundColor: currentStatusLabel().bg, color: currentStatusLabel().color, fontSize: '0.78rem', fontWeight: 700 }}>
-              <CircleDot size={12} className="animate-pulse" /> {currentStatusLabel().text}
+              <CircleDot size={12} className={statusState === 'Live' ? 'animate-pulse' : ''} /> {currentStatusLabel().text}
             </div>
           </div>
 
@@ -162,34 +179,42 @@ export default function SessionDetail({ session, onBack, addNotification }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>
                 <div>
                   <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Program</strong>
-                  {session.programName}
+                  {session.programName || 'N/A'}
                 </div>
                 <div>
                   <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Session Topic</strong>
-                  {session.title}
+                  {session.title || 'N/A'}
                 </div>
                 <div>
                   <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Expected Learners</strong>
-                  {participants.length} Learners
+                  {learners.length} Learners
                 </div>
                 <div>
                   <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Duration</strong>
-                  {session.duration || '90 Minutes'}
+                  {session.duration || 'N/A'}
                 </div>
               </div>
 
               <div>
                 <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.45rem' }}>Learning Objectives</strong>
-                <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <li>Understand core leadership styles and frameworks</li>
-                  <li>Discuss real-world scenarios and client team cases</li>
-                  <li>Facilitate group reflection and feedback activity</li>
-                </ul>
+                {learningObjectives && learningObjectives.length > 0 ? (
+                  <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {learningObjectives.map((obj, i) => <li key={i}>{obj}</li>)}
+                  </ul>
+                ) : (
+                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                    No learning objectives available.
+                  </span>
+                )}
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
                 <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                  Session starts in <strong style={{ color: '#F5D76E' }}>{formatTime(timeLeft)}</strong>
+                  {timeLeft > 0 ? (
+                    <>Session starts in <strong style={{ color: '#F5D76E' }}>{formatTime(timeLeft)}</strong></>
+                  ) : (
+                    <strong style={{ color: '#F5D76E' }}>Ready to Start</strong>
+                  )}
                 </div>
               </div>
             </div>
@@ -224,7 +249,7 @@ export default function SessionDetail({ session, onBack, addNotification }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
                 {[
-                  { label: 'Learners Joined', val: `${participants.filter(p => p.status === 'Joined').length} / ${participants.length}`, icon: '👥' },
+                  { label: 'Learners Joined', val: `${learners.length} / ${learners.length}`, icon: '👥' }, // Simplified since no mock status
                   { label: 'Camera Status', val: checklist.camera ? 'Active' : 'Muted', icon: '📹' },
                   { label: 'Mic Status', val: checklist.mic ? 'Active' : 'Muted', icon: '🎙️' },
                   { label: 'Connection', val: 'Excellent', icon: '📶' }
@@ -324,23 +349,23 @@ export default function SessionDetail({ session, onBack, addNotification }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
                 <span style={{ color: 'rgba(255,255,255,0.4)' }}>Program Name</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.programName}</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{session.programName || 'N/A'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
                 <span style={{ color: 'rgba(255,255,255,0.4)' }}>Session Topic</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.title}</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{session.title || 'N/A'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
                 <span style={{ color: 'rgba(255,255,255,0.4)' }}>Date</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.date}</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{session.date || 'TBD'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
                 <span style={{ color: 'rgba(255,255,255,0.4)' }}>Time</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.time}</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{session.time || 'TBD'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'rgba(255,255,255,0.4)' }}>Duration</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.duration || '90 mins'}</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{session.duration || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -364,7 +389,7 @@ export default function SessionDetail({ session, onBack, addNotification }) {
                   { key: 'internet', label: 'Internet Connected' },
                   { key: 'camera', label: 'Camera Detected' },
                   { key: 'mic', label: 'Microphone Working' },
-                  { key: 'learners', label: '24 Learners Enrolled' }
+                  { key: 'learners', label: `${learners.length} Learners Enrolled` }
                 ].map(item => (
                   <div 
                     key={item.key} 
@@ -403,20 +428,23 @@ export default function SessionDetail({ session, onBack, addNotification }) {
                 Program Resources
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.45rem' }}>
-                {[
-                  { name: 'Course Handbook.pdf', size: '2.4 MB' },
-                  { name: 'Welcome Guide.pdf', size: '1.1 MB' }
-                ].map(file => (
-                  <div key={file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '0.8rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <FileText size={14} color="rgba(255,255,255,0.4)" />
-                      <span style={{ color: '#fff' }}>{file.name}</span>
+                {programResources.length === 0 ? (
+                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                    No program resources available.
+                  </span>
+                ) : (
+                  programResources.map(file => (
+                    <div key={file.id || file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <FileText size={14} color="rgba(255,255,255,0.4)" />
+                        <span style={{ color: '#fff' }}>{file.name}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.45rem' }}>
+                        <span onClick={() => alert(`Downloading ${file.name}...`)} style={{ color: '#F5D76E', cursor: 'pointer', fontSize: '0.72rem' }}>Download</span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.45rem' }}>
-                      <span onClick={() => alert(`Downloading ${file.name}...`)} style={{ color: '#F5D76E', cursor: 'pointer', fontSize: '0.72rem' }}>Download</span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
@@ -426,21 +454,23 @@ export default function SessionDetail({ session, onBack, addNotification }) {
                 Session Resources
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.45rem' }}>
-                {[
-                  { name: 'Module 3 Slides.pdf', size: '4.8 MB' },
-                  { name: 'Exercise Sheet.docx', size: '820 KB' },
-                  { name: 'Case Study.pdf', size: '1.6 MB' }
-                ].map(file => (
-                  <div key={file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '0.8rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <FileText size={14} color="rgba(255,255,255,0.4)" />
-                      <span style={{ color: '#fff' }}>{file.name}</span>
+                {sessionResources.length === 0 ? (
+                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                    No session resources available.
+                  </span>
+                ) : (
+                  sessionResources.map(file => (
+                    <div key={file.id || file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <FileText size={14} color="rgba(255,255,255,0.4)" />
+                        <span style={{ color: '#fff' }}>{file.name}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.45rem' }}>
+                        <span onClick={() => alert(`Downloading ${file.name}...`)} style={{ color: '#F5D76E', cursor: 'pointer', fontSize: '0.72rem' }}>Download</span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.45rem' }}>
-                      <span onClick={() => alert(`Downloading ${file.name}...`)} style={{ color: '#F5D76E', cursor: 'pointer', fontSize: '0.72rem' }}>Download</span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
@@ -449,30 +479,36 @@ export default function SessionDetail({ session, onBack, addNotification }) {
           {/* Enrolled Learners */}
           <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              Enrolled Learners ({participants.length})
+              Enrolled Learners ({learners.length})
             </h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {participants.map(learner => (
-                <div key={learner.email} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.8rem' }}>
-                  <div>
-                    <div style={{ color: '#fff', fontWeight: 600 }}>{learner.name}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.68rem', marginTop: '0.1rem' }}>{learner.email}</div>
+              {learners.length === 0 ? (
+                <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                  No learners enrolled.
+                </span>
+              ) : (
+                learners.map(learner => (
+                  <div key={learner.email || learner.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.8rem' }}>
+                    <div>
+                      <div style={{ color: '#fff', fontWeight: 600 }}>{learner.name || `${learner.firstName} ${learner.lastName}`}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.68rem', marginTop: '0.1rem' }}>{learner.email}</div>
+                    </div>
+                    <span 
+                      style={{ 
+                        fontSize: '0.68rem', 
+                        fontWeight: 700, 
+                        color: statusState === 'Live' ? '#22c55e' : 'rgba(255,255,255,0.3)',
+                        backgroundColor: statusState === 'Live' ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      {statusState === 'Live' ? 'Joined' : 'Waiting'}
+                    </span>
                   </div>
-                  <span 
-                    style={{ 
-                      fontSize: '0.68rem', 
-                      fontWeight: 700, 
-                      color: learner.status === 'Joined' ? '#22c55e' : learner.status === 'Left Session' ? '#ef4444' : '#f59e0b',
-                      backgroundColor: learner.status === 'Joined' ? 'rgba(34,197,94,0.08)' : learner.status === 'Left Session' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '4px'
-                    }}
-                  >
-                    {learner.status}
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
