@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Calendar, Plus, X, ChevronDown, Video, FileText, CheckCircle2,
-  ArrowRight, ArrowLeft, MoreVertical, Edit, Download, Clock, ExternalLink, Play, Trash2
+  ArrowRight, ArrowLeft, MoreVertical, Edit, Download, Clock, ExternalLink, Play, Trash2, Search, Users, Book
 } from 'lucide-react';
 
 /* ── Shared styles ── */
@@ -26,113 +26,243 @@ const modalBox = {
   boxShadow: '0 30px 70px rgba(0,0,0,0.7)',
 };
 
-export default function SessionsTab({ programs = [], setPrograms, learners = [], addNotification, onNavigateToPrograms, userRole, onSelectSession }) {
-    if (userRole === 'Facilitator') {
-    // Extract all sessions
-    const allSessions = [];
-    programs.forEach(p => {
-      (p.sessions || []).forEach(s => {
-        allSessions.push({
-          ...s,
-          programName: p.name,
-          programId: p.id
-        });
-      });
+const FacilitatorSessionsView = ({ programs, onSelectSession }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All');
+
+  const allSessions = [];
+  programs.forEach(p => {
+    (p.sessions || []).forEach(s => {
+      allSessions.push({ ...s, programName: p.name, programId: p.id });
     });
+  });
 
-    const liveSessions = allSessions.filter(s => s.status === 'Live');
-    const upcomingSessions = allSessions.filter(s => s.status === 'Scheduled' || s.status === 'Ready to Start');
-    const completedSessions = allSessions.filter(s => s.status === 'Completed');
+  const filteredSessions = allSessions.filter(s => {
+    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          s.programName.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
 
-    return (
-      <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
+    if (activeFilter === 'All') return true;
+    if (activeFilter === "Today's Sessions") {
+      // Mock logic: assuming anything 'Live' or 'Ready to Start' is today
+      return s.status === 'Live' || s.status === 'Ready to Start';
+    }
+    if (activeFilter === 'Upcoming') return s.status === 'Scheduled';
+    if (activeFilter === 'Completed') return s.status === 'Completed';
+    return true;
+  });
+
+  const liveSessions = filteredSessions.filter(s => s.status === 'Live');
+  const upcomingSessions = filteredSessions.filter(s => s.status === 'Scheduled' || s.status === 'Ready to Start');
+  const completedSessions = filteredSessions.filter(s => s.status === 'Completed');
+
+  const filters = ['All', "Today's Sessions", 'Upcoming', 'Completed'];
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '3rem 4rem', display: 'flex', flexDirection: 'column', gap: '3rem', textAlign: 'left', fontFamily: "'Inter', sans-serif", maxWidth: '1440px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+      
+      {/* Header & Search */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#232323', margin: 0, fontFamily: "'Inter', sans-serif", letterSpacing: '-0.02em' }}>Sessions</h2>
-          <p style={{ color: '#5E5A53', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-            View and deliver your assigned training sessions.
+          <h2 style={{ fontSize: '40px', fontWeight: 700, color: '#232323', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Sessions</h2>
+          <p style={{ color: '#5E5A53', fontSize: '15px', marginTop: '0.5rem' }}>
+            Manage, prepare and deliver your assigned training sessions.
           </p>
         </div>
-
-        {/* Live Sessions */}
-        {liveSessions.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#EF4444', margin: 0 }}>● Live Sessions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {liveSessions.map((s, idx) => (
-                <div key={s.id || idx} style={{ backgroundColor: '#FCFBF8', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
-                  <div>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#232323', margin: 0 }}>{s.title}</h4>
-                    <p style={{ fontSize: '0.78rem', color: '#5E5A53', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
-                  </div>
-                  <button 
-                    onClick={() => onSelectSession(s)}
-                    style={{ padding: '0.55rem 1.2rem', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Resume Live Session
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming Sessions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#232323', margin: 0 }}>Upcoming Sessions</h3>
-          {upcomingSessions.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '12px', color: '#8D887E', fontSize: '0.82rem', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
-              No upcoming sessions scheduled.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {upcomingSessions.map((s, idx) => (
-                <div key={s.id || idx} style={{ backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
-                  <div>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#232323', margin: 0 }}>{s.title}</h4>
-                    <p style={{ fontSize: '0.78rem', color: '#5E5A53', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
-                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: '#8D887E', marginTop: '0.45rem' }}>
-                      <span>📅 Date: {s.date}</span>
-                      <span>⏰ Time: {s.time}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => onSelectSession(s)}
-                    style={{ padding: '0.5rem 1rem', backgroundColor: '#C99A2E', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    View Session
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Completed Sessions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#5E5A53', margin: 0 }}>Completed Sessions</h3>
-          {completedSessions.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '12px', color: '#8D887E', fontSize: '0.82rem', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
-              No completed sessions yet.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {completedSessions.map((s, idx) => (
-                <div key={s.id || idx} style={{ backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.75, boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
-                  <div>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#5E5A53', margin: 0 }}>{s.title}</h4>
-                    <p style={{ fontSize: '0.78rem', color: '#8D887E', margin: '0.2rem 0 0 0' }}>{s.programName}</p>
-                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.72rem', color: '#8D887E', marginTop: '0.45rem' }}>
-                      <span>📅 Date: {s.date}</span>
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '0.75rem', color: '#3D8B57', fontWeight: 700 }}>✓ Completed</span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div style={{ position: 'relative', width: '320px' }}>
+          <Search size={18} color="#8D887E" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Search Sessions..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', fontSize: '15px',
+              backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8',
+              borderRadius: '999px', color: '#232323', outline: 'none', boxSizing: 'border-box',
+              fontFamily: "'Inter', sans-serif", transition: 'all 0.2s', boxShadow: '0 2px 10px rgba(60,45,20,.03)'
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = '#C99A2E'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(201,154,46,.1)'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#E8E2D8'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(60,45,20,.03)'; }}
+          />
         </div>
       </div>
-    );
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {filters.map(f => (
+          <button
+            key={f}
+            onClick={() => setActiveFilter(f)}
+            style={{
+              padding: '0.6rem 1.2rem',
+              borderRadius: '999px',
+              border: activeFilter === f ? '1px solid #C99A2E' : '1px solid #E8E2D8',
+              backgroundColor: activeFilter === f ? '#C99A2E' : '#FCFBF8',
+              color: activeFilter === f ? '#FFFFFF' : '#5E5A53',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeFilter === f ? '0 4px 12px rgba(201,154,46,.2)' : '0 2px 8px rgba(60,45,20,.03)'
+            }}
+            onMouseEnter={e => { if(activeFilter !== f) { e.currentTarget.style.borderColor = '#C99A2E'; e.currentTarget.style.color = '#C99A2E'; } }}
+            onMouseLeave={e => { if(activeFilter !== f) { e.currentTarget.style.borderColor = '#E8E2D8'; e.currentTarget.style.color = '#5E5A53'; } }}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* Live / Upcoming Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {(liveSessions.length > 0 || upcomingSessions.length > 0) && (
+          <h3 style={{ fontSize: '24px', fontWeight: 700, color: '#232323', margin: '0 0 0.5rem 0' }}>Upcoming</h3>
+        )}
+
+        {liveSessions.length === 0 && upcomingSessions.length === 0 && activeFilter !== 'Completed' ? (
+          <div style={{ padding: '6rem 2rem', textAlign: 'center', backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 18px 40px rgba(60,45,20,.08)' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(201,154,46,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
+              📅
+            </div>
+            <div>
+              <h4 style={{ fontSize: '22px', fontWeight: 600, color: '#232323', margin: '0 0 0.5rem 0' }}>You're all caught up</h4>
+              <p style={{ color: '#8D887E', fontSize: '15px', margin: 0, lineHeight: 1.5 }}>
+                No upcoming sessions have been assigned.<br/>New sessions will automatically appear here.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {[...liveSessions, ...upcomingSessions].map((s, idx) => {
+              const isLive = s.status === 'Live';
+              const badgeColor = isLive ? '#3D8B57' : '#C99A2E';
+              const badgeBg = isLive ? 'rgba(61,139,87,0.1)' : 'rgba(201,154,46,0.1)';
+
+              return (
+                <div 
+                  key={s.id || idx} 
+                  style={{ 
+                    backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '20px', padding: '2rem', 
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                    boxShadow: '0 18px 40px rgba(60,45,20,.08)', transition: 'all 220ms ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 24px 50px rgba(60,45,20,.12)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 18px 40px rgba(60,45,20,.08)'; }}
+                >
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: badgeColor, backgroundColor: badgeBg, padding: '0.3rem 0.8rem', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {isLive && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: badgeColor }} />}
+                        {isLive ? 'Live Now' : 'Upcoming'}
+                      </span>
+                      <span style={{ fontSize: '14px', color: '#5E5A53', fontWeight: 500 }}>{s.programName}</span>
+                    </div>
+
+                    <h4 style={{ fontSize: '22px', fontWeight: 600, color: '#232323', margin: 0 }}>{s.title}</h4>
+
+                    <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#5E5A53', fontSize: '15px' }}>
+                        <Calendar size={16} color="#8D887E" /> {s.date || 'Today'} • {s.time || '11:25 AM'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#5E5A53', fontSize: '15px' }}>
+                        <Users size={16} color="#8D887E" /> 24 Learners
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#5E5A53', fontSize: '15px' }}>
+                        <Video size={16} color="#8D887E" /> {s.type || 'Workshop'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#356BB3', fontSize: '15px', fontWeight: 500 }}>
+                        <Book size={16} /> Resources Ready
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <span style={{ fontSize: '14px', color: '#8D887E', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Starts in
+                      </span>
+                      <span style={{ fontSize: '32px', fontWeight: 700, color: '#C99A2E', fontFamily: "'Outfit', sans-serif" }}>
+                        00:18:22
+                      </span>
+                    </div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onSelectSession(s); }}
+                      style={{ 
+                        padding: '0.8rem 1.5rem', backgroundColor: '#C99A2E', border: 'none', color: '#fff', 
+                        borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px rgba(201,154,46,.2)'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#D7AE4F'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#C99A2E'; e.currentTarget.style.transform = 'none'; }}
+                    >
+                      Open Session <ArrowRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Completed Sessions */}
+      {completedSessions.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
+          <h3 style={{ fontSize: '24px', fontWeight: 700, color: '#5E5A53', margin: '0 0 0.5rem 0' }}>Completed</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {completedSessions.map((s, idx) => (
+              <div 
+                key={s.id || idx} 
+                style={{ 
+                  backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '20px', padding: '1.5rem 2rem', 
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                  boxShadow: '0 8px 24px rgba(60,45,20,.04)', transition: 'all 220ms ease', cursor: 'pointer'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 30px rgba(60,45,20,.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(60,45,20,.04)'; }}
+              >
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#64748B', backgroundColor: '#F1F5F9', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
+                      Completed
+                    </span>
+                    <span style={{ fontSize: '14px', color: '#8D887E', fontWeight: 500 }}>{s.programName}</span>
+                  </div>
+                  <h4 style={{ fontSize: '20px', fontWeight: 600, color: '#5E5A53', margin: 0 }}>{s.title}</h4>
+                  <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8D887E', fontSize: '15px' }}>
+                      <CheckCircle2 size={16} color="#64748B" /> {s.date || '22 July'}
+                    </div>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onSelectSession(s); }}
+                  style={{ 
+                    padding: '0.6rem 1rem', background: 'none', border: 'none', color: '#8D887E', 
+                    fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#5E5A53'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#8D887E'; }}
+                >
+                  View Summary <ArrowRight size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function SessionsTab({ programs = [], setPrograms, learners = [], addNotification, onNavigateToPrograms, userRole, onSelectSession }) {
+  if (userRole === 'Facilitator') {
+    return <FacilitatorSessionsView programs={programs} onSelectSession={onSelectSession} />;
   }
 
 const [selectedProgId, setSelectedProgId] = useState(null);
