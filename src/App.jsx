@@ -1734,7 +1734,6 @@ export default function App() {
     if (userRole === 'Facilitator') {
       sidebarItems = [
         { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
-        { id: 'Today', label: 'Today\'s Schedule', icon: <Clock size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Resources', label: 'Resources', icon: <BookOpen size={18} /> },
         { id: 'Notifications', label: 'Notifications', icon: <Bell size={18} /> },
