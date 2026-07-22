@@ -2784,7 +2784,14 @@ export default function App() {
                 addNotification={addNotification}
               />
             ) : activeTab === 'Inbox' ? (
-              <InboxTab announcements={displayInbox} />
+              <InboxTab 
+                announcements={displayInbox} 
+                programs={displayPrograms} 
+                onSelectSession={(s) => {
+                  setActiveSession(s);
+                  setActiveTab('Sessions');
+                }} 
+              />
             ) : activeTab === 'Help' ? (
               <HelpTab />
             ) : activeTab === 'Resources' ? (
