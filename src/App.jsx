@@ -29,6 +29,7 @@ import AttendanceTab from './components/AttendanceTab';
 import AssessmentsTab from './components/AssessmentsTab';
 import AnnouncementsTab from './components/AnnouncementsTab';
 import CertificatesTab from './components/CertificatesTab';
+import NotificationsTab from './components/NotificationsTab';
 
 
 export default function App() {
@@ -235,6 +236,69 @@ export default function App() {
     { id: 1, text: 'Sarah Ahmed accepted your team invitation', time: '2 minutes ago', read: false },
     { id: 2, text: 'New program created', time: 'Today', read: false },
     { id: 3, text: 'Your weekly program report is ready', time: 'Yesterday', read: false }
+  ]);
+
+  const [facilitatorNotifications, setFacilitatorNotifications] = useState([
+    {
+      id: 1,
+      priority: 'Critical',
+      category: '🔴',
+      title: 'Session Rescheduled',
+      program: 'Leadership Orientation',
+      description: 'Today\'s session has been moved from 10:00 AM to 11:30 AM.',
+      time: '12 minutes ago',
+      read: false,
+      actionText: 'View Session',
+      actionType: 'view_session'
+    },
+    {
+      id: 2,
+      priority: 'Important',
+      category: '🟡',
+      title: 'New Resources Uploaded',
+      program: 'Communication Skills',
+      description: 'The Organization Owner uploaded "Session 2 Slides.pdf" and "Workbook.docx".',
+      time: '2 hours ago',
+      read: false,
+      actionText: 'View Resource',
+      actionType: 'view_resource'
+    },
+    {
+      id: 3,
+      priority: 'Information',
+      category: '🔵',
+      title: 'Organization Announcement',
+      program: 'General Update',
+      description: 'New policy updates regarding the Q3 training guidelines have been posted.',
+      time: '1 day ago',
+      read: true,
+      actionText: 'Read Guidelines',
+      actionType: 'view_policy'
+    },
+    {
+      id: 4,
+      priority: 'Critical',
+      category: '🔴',
+      title: 'Classroom Changed',
+      program: 'Leadership Orientation',
+      description: 'The physical classroom for your session has been moved to Room 402B.',
+      time: '3 hours ago',
+      read: false,
+      actionText: 'View Session',
+      actionType: 'view_session'
+    },
+    {
+      id: 5,
+      priority: 'Important',
+      category: '🟡',
+      title: 'Session Starts in 30 Minutes',
+      program: 'Project Review',
+      description: 'Reminder: Your upcoming session "Project Review" starts in 30 minutes.',
+      time: '25 minutes ago',
+      read: true,
+      actionText: 'View Session',
+      actionType: 'view_session'
+    }
   ]);
 
   useEffect(() => {
@@ -1673,6 +1737,7 @@ export default function App() {
         { id: 'Today', label: 'Today\'s Schedule', icon: <Clock size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Resources', label: 'Resources', icon: <BookOpen size={18} /> },
+        { id: 'Notifications', label: 'Notifications', icon: <Bell size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     } else if (userRole === 'Program Manager') {
@@ -2189,6 +2254,7 @@ export default function App() {
                 programs={displayPrograms} 
                 learners={wsLearners}
                 announcements={displayInbox}
+                notifications={facilitatorNotifications}
                 onNavigate={setActiveTab} 
                 addNotification={addNotification}
                 onSelectSession={(s) => {
@@ -2623,6 +2689,16 @@ export default function App() {
                 programs={displayPrograms}
                 addNotification={addNotification}
                 userRole={userRole}
+              />
+            ) : activeTab === 'Notifications' ? (
+              <NotificationsTab
+                notifications={facilitatorNotifications}
+                setNotifications={setFacilitatorNotifications}
+                onSelectSession={(s) => {
+                  setActiveSession(s);
+                  setActiveTab('Sessions');
+                }}
+                programs={displayPrograms}
               />
             ) : activeTab === 'Certificates' ? (
               <CertificatesTab

@@ -23,7 +23,7 @@ function parseSessionDateTime(dateStr, timeStr) {
   return null;
 }
 
-export default function FacilitatorOverview({ info, programs = [], learners = [], announcements = [], onNavigate, addNotification, onSelectSession }) {
+export default function FacilitatorOverview({ info, programs = [], learners = [], announcements = [], notifications = [], onNavigate, addNotification, onSelectSession }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -436,33 +436,45 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
             </div>
           </div>
 
-          {/* Recent Updates */}
+          {/* Recent Notifications Widget */}
           <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Activity size={20} color={theme.gold} strokeWidth={2}/>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: theme.textMilk, margin: 0 }}>Recent Updates</h3>
+                <Bell size={20} color={theme.gold} strokeWidth={2}/>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: theme.textMilk, margin: 0 }}>Recent Notifications</h3>
               </div>
-              <div style={{ fontSize: '13px', color: theme.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <div 
+                onClick={() => onNavigate?.('Notifications')}
+                style={{ fontSize: '13px', color: theme.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
                 View all <ArrowRight size={14}/>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {recentUpdates.map((u, i) => {
-                const iconData = getIconForUpdate(u.text);
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {notifications.slice(0, 4).map((n, i) => {
+                const priorityColor = n.priority === 'Critical' ? '#EF4444' : n.priority === 'Important' ? '#F59E0B' : '#3B82F6';
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: iconData.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {iconData.icon}
+                  <div 
+                    key={i} 
+                    onClick={() => onNavigate?.('Notifications')}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', cursor: 'pointer', padding: '0.5rem 0', borderBottom: i < 3 && i < notifications.length - 1 ? `1px solid ${theme.border}` : 'none' }}
+                  >
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: priorityColor, marginTop: '6px', flexShrink: 0 }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', flexGrow: 1 }}>
+                      <div style={{ fontSize: '14px', color: theme.textBody, fontWeight: 600 }}>{n.title}</div>
+                      {n.program && <div style={{ fontSize: '12px', color: theme.gold, fontWeight: 500 }}>{n.program}</div>}
+                      <div style={{ fontSize: '13px', color: theme.textMuted }}>{n.description}</div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingTop: '2px' }}>
-                      <div style={{ fontSize: '14px', color: theme.textBody, fontWeight: 500, lineHeight: 1.4 }} dangerouslySetInnerHTML={{__html: u.text.replace(/(Leadership Orientation|Communication Skills|Project Review)/g, '<b>$1</b>')}}></div>
-                      <div style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500 }}>{u.time || 'Today'}</div>
-                    </div>
+                    <span style={{ fontSize: '12px', color: theme.textMuted, flexShrink: 0 }}>{n.time}</span>
                   </div>
                 );
               })}
+              {notifications.length === 0 && (
+                <div style={{ color: theme.textMuted, fontSize: '14px', textAlign: 'center', padding: '1rem' }}>
+                  No notifications yet
+                </div>
+              )}
             </div>
           </div>
 
