@@ -2162,6 +2162,7 @@ export default function App() {
                 info={getLoggedInUserInfo()} 
                 programs={displayPrograms} 
                 learners={wsLearners}
+                announcements={displayInbox}
                 onNavigate={setActiveTab} 
                 addNotification={addNotification}
                 onSelectSession={(s) => {
