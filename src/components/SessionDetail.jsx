@@ -14,6 +14,26 @@ export default function SessionDetail({
   const [timeLeft, setTimeLeft] = useState(0);
   const [liveTimer, setLiveTimer] = useState(0);
 
+  // Updates state
+  const [updateType, setUpdateType] = useState('Reminder');
+  const [updateMessage, setUpdateMessage] = useState('');
+  const [recentUpdates, setRecentUpdates] = useState([
+    { id: 1, text: 'Reminder sent', time: '10:30 AM' },
+    { id: 2, text: 'Slides shared', time: 'Yesterday' }
+  ]);
+
+  const handleSendUpdate = () => {
+    if (!updateMessage.trim() && updateType !== 'Resource') return;
+    const newUpdate = {
+      id: Date.now(),
+      text: updateType === 'Resource' ? 'Resource shared' : `${updateType} sent`,
+      time: 'Just now'
+    };
+    setRecentUpdates([newUpdate, ...recentUpdates]);
+    addNotification?.(`Session update sent to ${session.title}`);
+    setUpdateMessage('');
+  };
+
   // Calculate actual countdown timer based on session date and time
   useEffect(() => {
     let interval = null;
@@ -364,9 +384,74 @@ export default function SessionDetail({
 
         </div>
 
-        {/* Right Side: Learners & Resources */}
+        {/* Right Side: Updates, Learners & Resources */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
+          {/* Session Updates (New Lightweight Communication) */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+              Session Updates
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Compose Options */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.75rem' }}>
+                  {['Reminder', 'Resource', 'Schedule Change'].map(type => (
+                    <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="updateType" 
+                        checked={updateType === type} 
+                        onChange={() => setUpdateType(type)} 
+                        style={{ accentColor: '#C99A2E', cursor: 'pointer' }}
+                      />
+                      {type}
+                    </label>
+                  ))}
+                </div>
+                
+                {updateType === 'Resource' ? (
+                  <select style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.85rem', outline: 'none' }}>
+                    <option>Select shared file...</option>
+                    {(programResources || []).concat(sessionResources || []).map(r => (
+                      <option key={r.id || r.name} value={r.name}>{r.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input 
+                    type="text" 
+                    placeholder={updateType === 'Reminder' ? '"Session starts in 30 minutes."' : '"The session has been moved to 2 PM."'}
+                    value={updateMessage}
+                    onChange={e => setUpdateMessage(e.target.value)}
+                    style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                )}
+                
+                <button 
+                  onClick={handleSendUpdate}
+                  style={{ alignSelf: 'flex-start', padding: '0.4rem 1rem', backgroundColor: '#C99A2E', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  {updateType === 'Resource' ? 'Share' : 'Send'}
+                </button>
+              </div>
+
+              {/* Recent Updates */}
+              {recentUpdates.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Recent Updates</div>
+                  {recentUpdates.map(u => (
+                    <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#fff' }}>
+                      <Check size={14} color="#C99A2E" />
+                      <span>{u.text}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', marginLeft: 'auto' }}>{u.time}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* 5. Enrolled Learners */}
           <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>

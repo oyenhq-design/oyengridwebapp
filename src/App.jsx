@@ -1673,7 +1673,6 @@ export default function App() {
         { id: 'Today', label: 'Today\'s Schedule', icon: <Clock size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Resources', label: 'Resources', icon: <BookOpen size={18} /> },
-        { id: 'Announcements', label: 'Communication', icon: <MessageSquare size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     } else if (userRole === 'Program Manager') {
