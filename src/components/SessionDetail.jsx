@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Check, CheckCircle2, Play, CircleDot, Video, Users, FileText, Download, Eye, ExternalLink } from 'lucide-react';
+import { ChevronLeft, Check, CheckCircle2, Play, CircleDot, Video, Users, FileText, ExternalLink, Calendar, Clock } from 'lucide-react';
 
 export default function SessionDetail({ 
   session, 
@@ -14,20 +14,10 @@ export default function SessionDetail({
   const [timeLeft, setTimeLeft] = useState(0);
   const [liveTimer, setLiveTimer] = useState(0);
 
-  // Live checklist items
-  const [checklist, setChecklist] = useState({
-    slides: true,
-    resources: true,
-    internet: true,
-    camera: false,
-    mic: false,
-    learners: true
-  });
-
   // Calculate actual countdown timer based on session date and time
   useEffect(() => {
     let interval = null;
-    if (statusState === 'Scheduled') {
+    if (statusState === 'Scheduled' || statusState === 'Ready to Start') {
       const updateTimeLeft = () => {
         if (!session.date || !session.time) return;
         let dStr = session.date;
@@ -48,8 +38,6 @@ export default function SessionDetail({
         
         if (diffSecs <= 0) {
           setTimeLeft(0);
-          // If all checklist items are ticked, we might want to automatically prompt Ready to Start, 
-          // but we won't mutate state here automatically unless we trigger the parent.
         } else {
           setTimeLeft(diffSecs);
         }
@@ -74,7 +62,7 @@ export default function SessionDetail({
     return () => clearInterval(interval);
   }, [statusState]);
 
-  // Format time (MM:SS)
+  // Format time (MM:SS or HH:MM:SS)
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -85,18 +73,21 @@ export default function SessionDetail({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleToggleCheck = (key) => {
-    if (statusState !== 'Scheduled' && statusState !== 'Ready to Start') return;
-    const updated = { ...checklist, [key]: !checklist[key] };
-    setChecklist(updated);
+  const getCountdownText = () => {
+    if (statusState === 'Live') return 'Live Now';
+    if (statusState === 'Completed') return 'Completed';
+    if (statusState === 'Processing') return 'Processing';
 
-    // If all items checked, move to "Ready to Start" immutably via parent
-    const allChecked = Object.values(updated).every(val => val === true);
-    if (allChecked && statusState === 'Scheduled') {
-      onUpdateStatus('Ready to Start');
-    } else if (!allChecked && statusState === 'Ready to Start') {
-      onUpdateStatus('Scheduled');
-    }
+    if (timeLeft <= 0) return 'Ready to Start';
+
+    const diffMins = Math.floor(timeLeft / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays === 1) return `Starts Tomorrow at ${session.time}`;
+    if (diffDays > 1) return `Starts in ${diffDays} days`;
+    if (diffHours >= 1) return `Starts in ${diffHours} hours`;
+    return `Starts in ${diffMins} minutes`;
   };
 
   const startLiveSession = () => {
@@ -125,15 +116,24 @@ export default function SessionDetail({
     }
   };
 
+  const getLearnerStatus = () => {
+    if (statusState === 'Live') return 'Joined';
+    if (statusState === 'Completed' || statusState === 'Processing') return 'Attended';
+    return 'Registered';
+  };
+  const learnerStatusText = getLearnerStatus();
+
   // Determine Learning Objectives
   let learningObjectives = [];
   if (session.objectives && session.objectives.length > 0) {
     learningObjectives = session.objectives;
   } else if (session.programObjectives && session.programObjectives.length > 0) {
-    // Note: The prop for program objectives might not be passed directly, 
-    // assuming it might be in session object if mapped, or empty.
     learningObjectives = session.programObjectives;
   }
+
+  const hasResources = programResources.length > 0 || sessionResources.length > 0;
+  const isScheduled = !!(session.date && session.time);
+  const hasLearners = learners.length > 0;
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
@@ -148,363 +148,254 @@ export default function SessionDetail({
         </span>
       </div>
 
-      {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'flex-start' }}>
-        
-        {/* Left Side: Brief & Information */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Header & Status Banner */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                {session.title || 'Untitled Session'}
-              </h2>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                {session.programName || 'Unknown Program'}
-              </p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', borderRadius: '8px', backgroundColor: currentStatusLabel().bg, color: currentStatusLabel().color, fontSize: '0.78rem', fontWeight: 700 }}>
-              <CircleDot size={12} className={statusState === 'Live' ? 'animate-pulse' : ''} /> {currentStatusLabel().text}
-            </div>
+      {/* 1. Hero Section */}
+      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.68rem', backgroundColor: currentStatusLabel().bg, color: currentStatusLabel().color, padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              {statusState === 'Live' && <CircleDot size={10} className="animate-pulse" />} 
+              {currentStatusLabel().text}
+            </span>
+            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>{session.programName || 'Unknown Program'}</span>
           </div>
+          
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', margin: '0', fontFamily: "'Outfit', sans-serif" }}>
+            {session.title || 'Untitled Session'}
+          </h2>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+            {session.date && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Calendar size={14} /> {session.date}
+              </span>
+            )}
+            {session.time && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Clock size={14} /> {session.time}
+              </span>
+            )}
+          </div>
+        </div>
 
-          {/* Dynamic teaching workspace content based on state */}
-          {statusState === 'Scheduled' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                Teaching Brief
-              </h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>
-                <div>
-                  <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Program</strong>
-                  {session.programName || 'N/A'}
-                </div>
-                <div>
-                  <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Session Topic</strong>
-                  {session.title || 'N/A'}
-                </div>
-                <div>
-                  <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Expected Learners</strong>
-                  {learners.length} Learners
-                </div>
-                <div>
-                  <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Duration</strong>
-                  {session.duration || 'N/A'}
-                </div>
-              </div>
-
-              <div>
-                <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.45rem' }}>Learning Objectives</strong>
-                {learningObjectives && learningObjectives.length > 0 ? (
-                  <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {learningObjectives.map((obj, i) => <li key={i}>{obj}</li>)}
-                  </ul>
-                ) : (
-                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
-                    No learning objectives available.
-                  </span>
-                )}
-              </div>
-
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
-                <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-                  {timeLeft > 0 ? (
-                    <>Session starts in <strong style={{ color: '#F5D76E' }}>{formatTime(timeLeft)}</strong></>
-                  ) : (
-                    <strong style={{ color: '#F5D76E' }}>Ready to Start</strong>
-                  )}
-                </div>
-              </div>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#F5D76E' }}>
+            {getCountdownText()}
+          </div>
+          
+          {(statusState === 'Scheduled' || statusState === 'Ready to Start') && (
+            <button 
+              onClick={startLiveSession}
+              style={{ padding: '0.8rem 2rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 12px rgba(245,215,110,0.15)' }}
+            >
+              <Play size={16} fill="#000" /> Start Session
+            </button>
           )}
 
-          {statusState === 'Ready to Start' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', backgroundColor: 'rgba(34,197,94,0.02)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '14px', padding: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                Teaching Brief
-              </h3>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', margin: 0 }}>
-                Everything is configured and all checklist items have been cleared. You are ready to start.
-              </p>
-              
+          {statusState === 'Live' && (
+            <div style={{ display: 'flex', gap: '1rem' }}>
               <button 
-                onClick={startLiveSession}
-                style={{ width: '100%', padding: '0.8rem', backgroundColor: '#22c55e', border: 'none', color: '#fff', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                onClick={() => alert('Launching OYEN Live external view...')}
+                style={{ padding: '0.8rem 1.5rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               >
-                <Play size={16} fill="#fff" /> Start Session Now
+                Open OYEN Live <ExternalLink size={14} />
+              </button>
+              <button 
+                onClick={endLiveSession}
+                style={{ padding: '0.8rem 2rem', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '8px', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                End Session
               </button>
             </div>
           )}
 
-          {statusState === 'Live' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', backgroundColor: 'rgba(239,68,68,0.02)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '14px', padding: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                  Session Live
-                </h3>
-                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ef4444' }}>{formatTime(liveTimer)}</span>
-              </div>
+          {statusState === 'Completed' && (
+            <button 
+              onClick={onBack}
+              style={{ padding: '0.8rem 2rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+            >
+              Return to Dashboard
+            </button>
+          )}
+        </div>
+      </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
+      {/* Main Grid Content */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'flex-start' }}>
+        
+        {/* Left Side: Brief & Preparation */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* 2. Teaching Brief */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+              Teaching Brief
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1.25rem', color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>
+              <div>
+                <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Expected Learners</strong>
+                {learners.length} Learners
+              </div>
+              {session.duration && (
+                <div>
+                  <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Duration</strong>
+                  {session.duration}
+                </div>
+              )}
+              {session.deliveryMode && (
+                <div>
+                  <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Delivery Mode</strong>
+                  {session.deliveryMode}
+                </div>
+              )}
+            </div>
+
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
+              <strong style={{ color: '#fff', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.6rem' }}>Learning Objectives</strong>
+              {learningObjectives && learningObjectives.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {learningObjectives.map((obj, i) => <li key={i}>{obj}</li>)}
+                </ul>
+              ) : (
+                <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                  No learning objectives have been defined for this session.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 3. Session Preparation (Data-Driven) */}
+          {(statusState === 'Scheduled' || statusState === 'Ready to Start') && (
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                Session Preparation
+              </h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {[
-                  { label: 'Learners Joined', val: `${learners.length} / ${learners.length}`, icon: '👥' }, // Simplified since no mock status
-                  { label: 'Camera Status', val: checklist.camera ? 'Active' : 'Muted', icon: '📹' },
-                  { label: 'Mic Status', val: checklist.mic ? 'Active' : 'Muted', icon: '🎙️' },
-                  { label: 'Connection', val: 'Excellent', icon: '📶' }
+                  { label: 'Learners Enrolled', done: hasLearners },
+                  { label: 'Resources Uploaded', done: hasResources },
+                  { label: 'Session Scheduled', done: isScheduled }
                 ].map(item => (
-                  <div key={item.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '0.85rem' }}>
-                    <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>{item.label}</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <span>{item.icon}</span> {item.val}
+                  <div 
+                    key={item.label} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      padding: '0.65rem 0.85rem', 
+                      backgroundColor: item.done ? 'rgba(34,197,94,0.03)' : 'rgba(255,255,255,0.01)', 
+                      border: '1px solid', 
+                      borderColor: item.done ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.04)', 
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', color: item.done ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: item.done ? 600 : 400 }}>{item.label}</span>
+                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '1px solid', borderColor: item.done ? '#22c55e' : 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: item.done ? '#22c55e' : 'transparent' }}>
+                      {item.done && <Check size={12} color="#fff" />}
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button 
-                  onClick={() => alert('Launching OYEN Live external view...')}
-                  style={{ flex: 1, padding: '0.75rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                >
-                  Open OYEN Live <ExternalLink size={14} />
-                </button>
-                <button 
-                  onClick={endLiveSession}
-                  style={{ flex: 1, padding: '0.75rem', backgroundColor: '#ef4444', border: 'none', color: '#fff', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
-                >
-                  End Session
-                </button>
+          {/* Live Statistics / Processing States */}
+          {statusState === 'Live' && (
+            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                  Live Session
+                </h3>
+                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ef4444' }}>{formatTime(liveTimer)}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Learners Present</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginTop: '0.3rem' }}>{learners.length} / {learners.length}</div>
+                </div>
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Connection</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#22c55e', marginTop: '0.3rem' }}>Stable</div>
+                </div>
               </div>
             </div>
           )}
 
           {statusState === 'Processing' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                Session Ended
-              </h3>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', margin: 0 }}>
-                Please hold while OYEN GRID completes background session operations.
-              </p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  { label: 'Recording Saved', status: 'done' },
-                  { label: 'Attendance Capture', status: 'done' },
-                  { label: 'Session Data Syncing', status: 'done' },
-                  { label: 'AI Summary Generation', status: 'processing' }
-                ].map(step => (
-                  <div key={step.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.82rem', color: '#fff' }}>
-                    <span>{step.label}</span>
-                    <span style={{ color: step.status === 'done' ? '#22c55e' : '#3b82f6', fontWeight: 700 }}>
-                      {step.status === 'done' ? '✓ Ready' : 'Processing...'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem' }}>
+               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                 Session Ended
+               </h3>
+               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', margin: 0 }}>
+                 Please hold while OYEN GRID completes background session operations.
+               </p>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                 {[
+                   { label: 'Recording Saved', status: 'done' },
+                   { label: 'Attendance Capture', status: 'done' },
+                   { label: 'Session Data Syncing', status: 'done' },
+                   { label: 'AI Summary Generation', status: 'processing' }
+                 ].map(step => (
+                   <div key={step.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', color: '#fff', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                     <span>{step.label}</span>
+                     <span style={{ color: step.status === 'done' ? '#22c55e' : '#3b82f6', fontWeight: 700, fontSize: '0.8rem' }}>
+                       {step.status === 'done' ? '✓ Ready' : 'Processing...'}
+                     </span>
+                   </div>
+                 ))}
+               </div>
+             </div>
           )}
 
           {statusState === 'Completed' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: 'rgba(34,197,94,0.02)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '14px', padding: '1.5rem', textAlign: 'center', alignItems: 'center' }}>
-              <CheckCircle2 size={42} color="#22c55e" />
-              <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                  ✓ Session Completed
-                </h3>
-                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginTop: '0.35rem' }}>
-                  All post-session activities completed successfully.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', width: '100%', maxWidth: '300px', margin: '0.5rem 0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
-                  <span>Recording Status</span> <strong style={{ color: '#22c55e' }}>✓ Ready</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
-                  <span>Attendance Captured</span> <strong style={{ color: '#22c55e' }}>✓ Captured</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
-                  <span>AI Summary</span> <strong style={{ color: '#22c55e' }}>✓ Ready</strong>
-                </div>
-              </div>
-
-              <button 
-                onClick={onBack}
-                style={{ padding: '0.65rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
-              >
-                Return to Dashboard
-              </button>
-            </div>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: 'rgba(34,197,94,0.02)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: '14px', padding: '2rem', textAlign: 'center', alignItems: 'center' }}>
+               <CheckCircle2 size={42} color="#22c55e" />
+               <div>
+                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                   Session Completed
+                 </h3>
+                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginTop: '0.35rem' }}>
+                   All post-session activities completed successfully.
+                 </p>
+               </div>
+             </div>
           )}
-
-          {/* Session Information Table */}
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              Session Information
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Program Name</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.programName || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Session Topic</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.title || 'N/A'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Date</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.date || 'TBD'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.45rem' }}>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Time</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.time || 'TBD'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Duration</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{session.duration || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
 
         </div>
 
-        {/* Right Side: Checklist, Split Resources, and Learners */}
+        {/* Right Side: Learners & Resources */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* Pre-session Checklist */}
-          {(statusState === 'Scheduled' || statusState === 'Ready to Start') && (
-            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-                Pre-session Checklist
-              </h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  { key: 'slides', label: 'Slides Available' },
-                  { key: 'resources', label: 'Resources Ready' },
-                  { key: 'internet', label: 'Internet Connected' },
-                  { key: 'camera', label: 'Camera Detected' },
-                  { key: 'mic', label: 'Microphone Working' },
-                  { key: 'learners', label: `${learners.length} Learners Enrolled` }
-                ].map(item => (
-                  <div 
-                    key={item.key} 
-                    onClick={() => handleToggleCheck(item.key)}
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between', 
-                      padding: '0.55rem 0.75rem', 
-                      backgroundColor: checklist[item.key] ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.01)', 
-                      border: '1px solid', 
-                      borderColor: checklist[item.key] ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.04)', 
-                      borderRadius: '8px', 
-                      cursor: 'pointer' 
-                    }}
-                  >
-                    <span style={{ fontSize: '0.8rem', color: checklist[item.key] ? '#fff' : 'rgba(255,255,255,0.4)' }}>{item.label}</span>
-                    <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '1px solid', borderColor: checklist[item.key] ? '#22c55e' : 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: checklist[item.key] ? '#22c55e' : 'transparent' }}>
-                      {checklist[item.key] && <Check size={12} color="#fff" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Learning Resources (Program vs Session split) */}
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              Learning Resources
-            </h3>
-
-            {/* Program Resources */}
-            <div>
-              <span style={{ fontSize: '0.68rem', color: '#F5D76E', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                Program Resources
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.45rem' }}>
-                {programResources.length === 0 ? (
-                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
-                    No program resources available.
-                  </span>
-                ) : (
-                  programResources.map(file => (
-                    <div key={file.id || file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '0.8rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <FileText size={14} color="rgba(255,255,255,0.4)" />
-                        <span style={{ color: '#fff' }}>{file.name}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.45rem' }}>
-                        <span onClick={() => alert(`Downloading ${file.name}...`)} style={{ color: '#F5D76E', cursor: 'pointer', fontSize: '0.72rem' }}>Download</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Session Resources */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-              <span style={{ fontSize: '0.68rem', color: '#a855f7', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                Session Resources
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.45rem' }}>
-                {sessionResources.length === 0 ? (
-                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
-                    No session resources available.
-                  </span>
-                ) : (
-                  sessionResources.map(file => (
-                    <div key={file.id || file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '0.8rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <FileText size={14} color="rgba(255,255,255,0.4)" />
-                        <span style={{ color: '#fff' }}>{file.name}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.45rem' }}>
-                        <span onClick={() => alert(`Downloading ${file.name}...`)} style={{ color: '#F5D76E', cursor: 'pointer', fontSize: '0.72rem' }}>Download</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Enrolled Learners */}
+          {/* 5. Enrolled Learners */}
           <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
-              Enrolled Learners ({learners.length})
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+              Learners ({learners.length})
             </h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {learners.length === 0 ? (
-                <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
-                  No learners enrolled.
-                </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {!hasLearners ? (
+                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', padding: '1rem', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.01)', borderRadius: '8px' }}>
+                  No learners are enrolled in this session.
+                </div>
               ) : (
                 learners.map(learner => (
-                  <div key={learner.email || learner.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.8rem' }}>
+                  <div key={learner.email || learner.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.85rem' }}>
                     <div>
                       <div style={{ color: '#fff', fontWeight: 600 }}>{learner.name || `${learner.firstName} ${learner.lastName}`}</div>
-                      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.68rem', marginTop: '0.1rem' }}>{learner.email}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', marginTop: '0.1rem' }}>{learner.email}</div>
                     </div>
                     <span 
                       style={{ 
-                        fontSize: '0.68rem', 
+                        fontSize: '0.7rem', 
                         fontWeight: 700, 
-                        color: statusState === 'Live' ? '#22c55e' : 'rgba(255,255,255,0.3)',
-                        backgroundColor: statusState === 'Live' ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)',
-                        padding: '0.2rem 0.5rem',
+                        color: statusState === 'Live' ? '#22c55e' : 'rgba(255,255,255,0.4)',
+                        backgroundColor: statusState === 'Live' ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
+                        padding: '0.25rem 0.6rem',
                         borderRadius: '4px'
                       }}
                     >
-                      {statusState === 'Live' ? 'Joined' : 'Waiting'}
+                      {learnerStatusText}
                     </span>
                   </div>
                 ))
@@ -512,10 +403,61 @@ export default function SessionDetail({
             </div>
           </div>
 
+          {/* 4. Learning Resources */}
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+              Resources
+            </h3>
+
+            {!hasResources ? (
+              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', padding: '1.5rem', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.01)', borderRadius: '8px' }}>
+                No resources have been shared for this session yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {programResources.length > 0 && (
+                  <div>
+                    <span style={{ fontSize: '0.7rem', color: '#F5D76E', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                      Program Resources ({programResources.length})
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.6rem' }}>
+                      {programResources.map(file => (
+                        <div key={file.id || file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <FileText size={16} color="rgba(255,255,255,0.5)" />
+                            <span style={{ color: '#fff' }}>{file.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sessionResources.length > 0 && (
+                  <div style={{ borderTop: programResources.length > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingTop: programResources.length > 0 ? '1rem' : 0 }}>
+                    <span style={{ fontSize: '0.7rem', color: '#a855f7', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                      Session Resources ({sessionResources.length})
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.6rem' }}>
+                      {sessionResources.map(file => (
+                        <div key={file.id || file.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <FileText size={16} color="rgba(255,255,255,0.5)" />
+                            <span style={{ color: '#fff' }}>{file.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+          </div>
+
         </div>
-
       </div>
-
     </div>
   );
 }
