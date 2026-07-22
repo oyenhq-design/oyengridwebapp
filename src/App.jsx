@@ -159,8 +159,22 @@ export default function App() {
     
     const currentEmail = user.trim().toLowerCase();
     
-    // Bypass checks for default/master Admin/Owner account
-    if (userRole === 'Organization Owner' || currentEmail === 'admin@oyengrid.com' || currentEmail === ownerEmail?.trim().toLowerCase()) {
+    // Bypass checks for default/master Admin/Owner account and demo accounts
+    const demoEmails = [
+      'john.doe@abcenergy.com',
+      'sarah.ahmed@abcenergy.com',
+      'michael.ibrahim@abcenergy.com',
+      'fatima.aliyu@abcenergy.com',
+      'ngozi.kalu@abcenergy.com',
+      'facilitator@oyengrid.test'
+    ];
+    if (
+      userRole === 'Organization Owner' || 
+      userRole === 'Workspace Super Admin' || 
+      currentEmail === 'admin@oyengrid.com' || 
+      currentEmail === ownerEmail?.trim().toLowerCase() ||
+      demoEmails.includes(currentEmail)
+    ) {
       return;
     }
     
