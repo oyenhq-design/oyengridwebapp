@@ -1669,8 +1669,10 @@ export default function App() {
     if (userRole === 'Facilitator') {
       sidebarItems = [
         { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
+        { id: 'Today', label: 'Today\'s Schedule', icon: <Clock size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
-        { id: 'Inbox', label: 'Inbox', icon: <Mail size={18} /> },
+        { id: 'Resources', label: 'Resources', icon: <BookOpen size={18} /> },
+        { id: 'Announcements', label: 'Announcements', icon: <Bell size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     } else if (userRole === 'Program Manager') {

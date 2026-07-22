@@ -150,25 +150,29 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
   };
 
   return (
-    <div className="animate-fade-in" style={{ backgroundColor: theme.bg, minHeight: '100%', padding: '3rem', display: 'flex', flexDirection: 'column', gap: '3rem', textAlign: 'left', fontFamily: theme.font, position: 'relative', overflow: 'hidden' }}>
-      
-      {/* Abstract Background SVG (Fixed, extremely low opacity grid) */}
-      <svg style={{ position: 'absolute', top: 0, right: 0, width: '600px', height: '100%', opacity: 0.02, pointerEvents: 'none', zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-        <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-          <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#FFFFFF" strokeWidth="0.5"/>
-        </pattern>
-        <rect width="100" height="100" fill="url(#grid)" />
-      </svg>
+    <div className="animate-fade-in" style={{ 
+      backgroundColor: theme.bg, 
+      minHeight: '100%', 
+      padding: '4rem', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '4rem', 
+      textAlign: 'left', 
+      fontFamily: theme.font, 
+      position: 'relative', 
+      overflow: 'hidden',
+      background: `radial-gradient(circle at 90% -10%, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.02) 20%, ${theme.bg} 50%), ${theme.bg}`
+    }}>
       
       {/* Focus Area: Hero + Next Session Combined */}
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column' }}>
         
         {/* Dynamic Hero Text above the card */}
-        <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '48px', fontWeight: 700, color: theme.textMilk, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
             {greeting()}, {info.name || info.fullName || 'John'} 👋
           </h2>
-          <div style={{ color: theme.textMuted, fontSize: '18px', marginTop: '0.5rem', fontWeight: 400 }}>
+          <div style={{ color: theme.textMuted, fontSize: '18px', marginTop: '0.75rem', fontWeight: 400 }}>
             {nextSession && nextSessionDiff > 0 
               ? <span>Your next session starts in <span style={{ color: theme.gold }}>{Math.floor(nextSessionDiff/60000)} minutes</span>.</span>
               : todaySessions.length > 0 
@@ -180,11 +184,11 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
 
         {/* Massive Premium Next Session Card */}
         {nextSession ? (
-          <div style={{ position: 'relative', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '0', display: 'flex', flexDirection: 'column', boxShadow: '0 0 80px rgba(212,175,55,0.08), 0 10px 40px rgba(0,0,0,0.30)', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '0', display: 'flex', flexDirection: 'column', boxShadow: '0 0 80px rgba(212,175,55,0.08)', overflow: 'hidden' }}>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
               {/* Left Side: Session Details */}
-              <div style={{ flex: 2, padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: '300px' }}>
+              <div style={{ flex: 2, padding: '3.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: '300px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <span style={{ fontSize: '12px', color: nextSession.status === 'Live' || nextSessionDiff <= 0 ? theme.danger : theme.gold, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {nextSession.status === 'Live' || nextSessionDiff <= 0 ? 'Live Now' : 'Upcoming Session'}
@@ -192,223 +196,154 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
                 </div>
                 
                 <div>
-                  <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: 0, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                  <h3 style={{ fontSize: '48px', fontWeight: 600, color: theme.textMilk, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                     {nextSession.title}
                   </h3>
-                  <div style={{ fontSize: '15px', color: theme.textMuted, marginTop: '0.5rem', fontWeight: 400 }}>
+                  <div style={{ fontSize: '18px', color: theme.textMuted, marginTop: '0.75rem', fontWeight: 400 }}>
                     {nextSession.programName}
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', marginTop: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Calendar size={18} strokeWidth={1.8} color={theme.textMuted} />
+                    <Calendar size={20} strokeWidth={1.8} color={theme.textMuted} />
                     <span style={{ fontSize: '15px', color: theme.textBody, fontWeight: 400 }}>{nextSession.date === 'Today' ? 'Today' : nextSession.date} • {nextSession.time}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Users size={18} strokeWidth={1.8} color={theme.textMuted} />
+                    <Users size={20} strokeWidth={1.8} color={theme.textMuted} />
                     <span style={{ fontSize: '15px', color: theme.textBody, fontWeight: 400 }}>{getSessionLearnersCount(nextSession)} Learners</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <FileText size={18} strokeWidth={1.8} color={hasSessionResources(nextSession) ? theme.info : theme.textMuted} />
-                    <span style={{ fontSize: '15px', color: hasSessionResources(nextSession) ? theme.textBody : theme.textMuted, fontWeight: 400 }}>{hasSessionResources(nextSession) ? 'Resources Ready' : 'No Resources'}</span>
+                    <FileText size={20} strokeWidth={1.8} color={hasSessionResources(nextSession) ? theme.info : theme.textMuted} />
+                    <span style={{ fontSize: '15px', color: hasSessionResources(nextSession) ? theme.textBody : theme.textMuted, fontWeight: 400 }}>{hasSessionResources(nextSession) ? 'Resources Ready' : 'Workshop'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Right Side: Live Countdown Strip & CTA */}
-              <div style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)', borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '3rem', gap: '1.5rem', minWidth: '250px' }}>
+              <div style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)', borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '3.5rem', gap: '2rem', minWidth: '250px' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '12px', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 500, letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+                  <div style={{ fontSize: '12px', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 500, letterSpacing: '0.08em', marginBottom: '1rem' }}>
                     {nextSessionDiff > 0 ? 'Starts In' : 'Started'}
                   </div>
-                  <div style={{ fontSize: '48px', fontWeight: 700, color: theme.gold, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+                  <div style={{ fontSize: '56px', fontWeight: 700, color: theme.gold, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                     {nextSessionDate ? getCountdownString(nextSessionDate) : '00 : 00 : 00'}
                   </div>
                 </div>
                 
                 <button 
                   onClick={() => onSelectSession && onSelectSession(nextSession)}
-                  style={{ width: '100%', height: '48px', backgroundColor: theme.gold, border: 'none', color: '#111111', borderRadius: '8px', fontWeight: 600, fontSize: '15px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', transition: 'all 200ms ease' }}
+                  style={{ width: '100%', height: '56px', backgroundColor: theme.gold, border: 'none', color: '#111111', borderRadius: '8px', fontWeight: 600, fontSize: '16px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', transition: 'all 200ms ease' }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.goldHover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.gold; e.currentTarget.style.transform = 'none'; }}
                 >
-                  Enter Classroom <ArrowRight size={18} strokeWidth={1.8} />
+                  Enter Classroom <ArrowRight size={20} strokeWidth={1.8} />
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '4rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.30)' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Calendar size={32} strokeWidth={1.8} color={theme.textMuted} />
+          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '6rem 4rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.30)' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle2 size={40} strokeWidth={1.8} color={theme.success} />
             </div>
             <div>
-              <div style={{ fontSize: '24px', color: theme.textMilk, fontWeight: 600, marginBottom: '0.5rem' }}>No Upcoming Sessions</div>
-              <div style={{ fontSize: '15px', color: theme.textMuted }}>You're all caught up. Enjoy your day!</div>
+              <div style={{ fontSize: '24px', color: theme.textMilk, fontWeight: 600, marginBottom: '0.75rem' }}>You're all set.</div>
+              <div style={{ fontSize: '15px', color: theme.textMuted }}>No upcoming sessions scheduled.</div>
             </div>
           </div>
         )}
       </div>
 
-      {/* 2-Column Grid for the rest of the Dashboard */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2.5rem', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+      {/* Level 2: 12-Column Grid (Today's Work) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '4rem', position: 'relative', zIndex: 1 }}>
         
-        {/* Left Column (Schedule & Activity) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        {/* Left Column (Today's Schedule - spans 7) */}
+        <div style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           
-          {/* Today's Schedule */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: 0 }}>Today's Schedule</h3>
-            </div>
+            <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: '0 0 2rem 0' }}>Today's Schedule</h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ position: 'relative', paddingLeft: '2rem' }}>
+              {/* Vertical timeline line */}
+              <div style={{ position: 'absolute', left: '7px', top: '10px', bottom: '20px', width: '2px', backgroundColor: theme.border }}></div>
+              
               {todaySessions.length === 0 ? (
-                <div style={{ fontSize: '15px', color: theme.textMuted, padding: '2rem', backgroundColor: theme.card, border: `1px dashed ${theme.border}`, borderRadius: '20px', textAlign: 'center' }}>
+                <div style={{ fontSize: '15px', color: theme.textMuted, padding: '1rem 0' }}>
                   Nothing scheduled for today.
                 </div>
               ) : (
-                todaySessions.map((s) => (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', gap: '1.5rem', transition: 'all 200ms ease', boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }} onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.cardHover; e.currentTarget.style.transform = 'translateY(-2px)'}} onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.card; e.currentTarget.style.transform = 'none' }}>
-                    <div style={{ width: '85px', fontSize: '15px', fontWeight: 600, color: theme.textMilk }}>
-                      {(s.time || '').replace(/ AM| PM/g, '')} <span style={{ fontSize: '12px', color: theme.textMuted }}>{(s.time || '').slice(-2)}</span>
-                    </div>
+                todaySessions.map((s, idx) => (
+                  <div key={s.id} style={{ position: 'relative', paddingBottom: idx === todaySessions.length - 1 ? '0' : '3.5rem' }}>
+                    {/* Timeline Node */}
+                    <div style={{ position: 'absolute', left: '-2.4rem', top: '4px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: s.status === 'Live' ? theme.success : theme.bg, border: `3px solid ${s.status === 'Live' ? theme.success : theme.textMuted}`, zIndex: 2 }}></div>
                     
-                    <div style={{ width: '4px', height: '40px', borderRadius: '4px', backgroundColor: s.status === 'Live' ? theme.success : theme.textMuted }}></div>
-
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <div style={{ fontSize: '18px', color: theme.textMilk, fontWeight: 600 }}>{s.title}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '15px', color: theme.textMuted }}>
-                        <span>{s.programName}</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={14} strokeWidth={1.8} /> {getSessionLearnersCount(s)} Learners</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ fontSize: '15px', color: theme.textMuted, fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {(s.time || '').replace(/ AM| PM/g, '')} <span style={{ fontSize: '12px', textTransform: 'uppercase' }}>{(s.time || '').slice(-2)}</span>
+                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: theme.border }}></div>
+                        <span style={{ fontSize: '12px', color: s.status === 'Live' ? theme.success : theme.gold, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{s.status || 'Upcoming'}</span>
                       </div>
-                    </div>
+                      
+                      <div style={{ fontSize: '18px', color: theme.textMilk, fontWeight: 600, marginTop: '0.25rem' }}>{s.title}</div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '15px', color: theme.textBody, marginTop: '0.25rem' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={16} strokeWidth={1.8} color={theme.textMuted} /> {getSessionLearnersCount(s)} Learners</span>
+                      </div>
 
-                    <button 
-                      onClick={() => onSelectSession && onSelectSession(s)}
-                      style={{ height: '40px', padding: '0 1.5rem', backgroundColor: 'transparent', border: `1px solid ${theme.border}`, color: theme.textBody, borderRadius: '8px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 200ms ease' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = theme.bgSecondary}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      Open <ArrowRight size={16} strokeWidth={1.8} />
-                    </button>
+                      <button 
+                        onClick={() => onSelectSession && onSelectSession(s)}
+                        style={{ alignSelf: 'flex-start', marginTop: '1rem', padding: '0', backgroundColor: 'transparent', border: 'none', color: theme.textMilk, fontSize: '15px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.8, transition: 'opacity 200ms ease' }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
+                      >
+                        Open <ArrowRight size={16} strokeWidth={1.8} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-
-          {/* Quick Actions (List style) */}
-          <div>
-            <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: '0 0 1.5rem 0' }}>Quick Actions</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-              <div 
-                onClick={() => nextSession ? (onSelectSession && onSelectSession(nextSession)) : addNotification("No session scheduled.")}
-                style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'all 200ms ease', boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.cardHover; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.card; e.currentTarget.style.transform = 'none' }}
-              >
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Video size={20} strokeWidth={1.8} color={theme.textBody} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '18px', fontWeight: 600, color: theme.textMilk }}>Open Classroom</div>
-                  <div style={{ fontSize: '15px', color: theme.textMuted, marginTop: '0.2rem' }}>Go to your next live class</div>
-                </div>
-                <ArrowRight size={18} strokeWidth={1.8} color={theme.textMuted} />
-              </div>
-
-              <div 
-                onClick={() => onNavigate('Resources')}
-                style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'all 200ms ease', boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.cardHover; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.card; e.currentTarget.style.transform = 'none' }}
-              >
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <BookOpen size={20} strokeWidth={1.8} color={theme.info} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '18px', fontWeight: 600, color: theme.textMilk }}>Resources</div>
-                  <div style={{ fontSize: '15px', color: theme.textMuted, marginTop: '0.2rem' }}>View teaching materials</div>
-                </div>
-                <ArrowRight size={18} strokeWidth={1.8} color={theme.textMuted} />
-              </div>
-
-              <div 
-                onClick={() => onNavigate('Announcements')}
-                style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'all 200ms ease', boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.cardHover; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.card; e.currentTarget.style.transform = 'none' }}
-              >
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Bell size={20} strokeWidth={1.8} color={theme.purple} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '18px', fontWeight: 600, color: theme.textMilk }}>Updates</div>
-                  <div style={{ fontSize: '15px', color: theme.textMuted, marginTop: '0.2rem' }}>See organization updates</div>
-                </div>
-                <ArrowRight size={18} strokeWidth={1.8} color={theme.textMuted} />
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        {/* Right Column (Sidebar) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        {/* Right Column (Preparation Panel - spans 5) */}
+        <div style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           
-          {/* Snapshot KPIs */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
-              <Calendar size={20} strokeWidth={1.8} color={theme.textMuted} />
-              <div>
-                <div style={{ fontSize: '24px', color: theme.textMilk, fontWeight: 600 }}>{todaySessions.length}</div>
-                <div style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.25rem' }}>Today's Sessions</div>
-              </div>
-            </div>
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
-              <Users size={20} strokeWidth={1.8} color={theme.textMuted} />
-              <div>
-                <div style={{ fontSize: '24px', color: theme.textMilk, fontWeight: 600 }}>{todaySessions.reduce((acc, s) => acc + getSessionLearnersCount(s), 0)}</div>
-                <div style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.25rem' }}>Learners</div>
-              </div>
-            </div>
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
-              <FileText size={20} strokeWidth={1.8} color={theme.info} />
-              <div>
-                <div style={{ fontSize: '24px', color: theme.textMilk, fontWeight: 600 }}>{resourcesShared}</div>
-                <div style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.25rem' }}>Resources</div>
-              </div>
-            </div>
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
-              <AlertTriangle size={20} strokeWidth={1.8} color={theme.danger} />
-              <div>
-                <div style={{ fontSize: '24px', color: theme.textMilk, fontWeight: 600 }}>0</div>
-                <div style={{ fontSize: '12px', color: theme.textMuted, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.25rem' }}>Pending</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 600, color: theme.textMilk, margin: 0 }}>Recent Activity</h3>
+          <div>
+            <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: '0 0 2rem 0' }}>Preparation Status</h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {recentUpdates.length === 0 ? (
-                <div style={{ padding: '2rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ fontSize: '24px' }}>📬</div>
-                  <div>
-                    <div style={{ fontSize: '15px', color: theme.textBody, fontWeight: 400 }}>No new updates</div>
-                    <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '0.25rem' }}>Everything is up to date.</div>
+            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '20px', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.30)' }}>
+              {nextSession ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /></div>
+                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Learners Ready ({getSessionLearnersCount(nextSession)})</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}>
+                      {hasSessionResources(nextSession) ? <CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /> : <AlertTriangle size={20} strokeWidth={1.8} color={theme.warning} />}
+                    </div>
+                    <div style={{ fontSize: '15px', color: theme.textMilk }}>{hasSessionResources(nextSession) ? 'Resources Uploaded' : 'Missing Resources'}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /></div>
+                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Session Scheduled</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><AlertTriangle size={20} strokeWidth={1.8} color={theme.warning} /></div>
+                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Awaiting Attendance Sheet</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '24px', display: 'flex', justifyContent: 'center' }}><CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} /></div>
+                    <div style={{ fontSize: '15px', color: theme.textMilk }}>Facilitator Assigned</div>
                   </div>
                 </div>
               ) : (
-                recentUpdates.map((u, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: theme.textMuted, marginTop: '0.35rem' }}></div>
-                    <div style={{ flex: 1, fontSize: '15px', color: theme.textBody, lineHeight: 1.4 }}>
-                      {u.text}
-                    </div>
-                  </div>
-                ))
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '2rem 0' }}>
+                  <CheckCircle2 size={24} strokeWidth={1.8} color={theme.success} />
+                  <div style={{ fontSize: '15px', color: theme.textMuted }}>No preparation required.</div>
+                </div>
               )}
             </div>
           </div>
@@ -416,6 +351,28 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
         </div>
 
       </div>
+
+      {/* Level 3: Recent Activity (Spans full width below) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', position: 'relative', zIndex: 1 }}>
+        <h3 style={{ fontSize: '24px', fontWeight: 600, color: theme.textMilk, margin: 0 }}>Recent Activity</h3>
+        
+        {recentUpdates.length === 0 ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} />
+            <div style={{ fontSize: '15px', color: theme.textBody }}>Everything is up to date.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {recentUpdates.map((u, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <CheckCircle2 size={20} strokeWidth={1.8} color={theme.success} />
+                <div style={{ fontSize: '15px', color: theme.textBody }}>{u.text}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
