@@ -6,7 +6,8 @@ import {
   Calendar, Award, 
   ArrowRight, Check, UserPlus, 
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
-  Shield, Rocket, FileText, Mail, HardDrive
+  Shield, Rocket, FileText, Mail, HardDrive,
+  Presentation, Folder, Image, Eye, Download, Book, Video
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
 import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser } from './domain/workspace/selectors';
@@ -3947,6 +3948,305 @@ function HelpTab() {
 
 
 
+const FacilitatorResourcesView = ({ programs }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All');
+
+  // Extract and flat map all resources
+  const programResources = [];
+  const sessionResources = [];
+
+  programs.forEach(p => {
+    (p.resources || []).forEach(r => {
+      programResources.push({ ...r, programName: p.name, programId: p.id, category: 'Program Resource' });
+    });
+    (p.sessions || []).forEach(s => {
+      (s.resources || []).forEach(r => {
+        sessionResources.push({ ...r, programName: p.name, sessionName: s.title, programId: p.id, category: 'Session Resource' });
+      });
+    });
+  });
+
+  const allResources = [...programResources, ...sessionResources];
+
+  // Derive counts
+  const totalPrograms = programs.length;
+  const totalResources = allResources.length;
+  // Mock recently added and last updated for the summary
+  const recentlyAdded = Math.min(2, totalResources);
+  const lastUpdated = 'Today';
+
+  const getIconForType = (name) => {
+    const ext = name.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return <FileText size={20} color="#EF4444" />;
+    if (ext === 'mp4' || ext === 'mov') return <Video size={20} color="#3B82F6" />;
+    if (ext === 'ppt' || ext === 'pptx') return <Presentation size={20} color="#F59E0B" />;
+    if (ext === 'png' || ext === 'jpg') return <Image size={20} color="#10B981" />;
+    return <FileText size={20} color="#8D887E" />;
+  };
+
+  const getResourceType = (name) => {
+    const ext = name.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'PDF';
+    if (ext === 'mp4' || ext === 'mov') return 'Video';
+    if (ext === 'ppt' || ext === 'pptx') return 'Slides';
+    if (ext === 'png' || ext === 'jpg') return 'Image';
+    return 'Document';
+  };
+
+  const filteredResources = allResources.filter(r => {
+    const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          r.programName.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (activeFilter === 'All') return true;
+    if (activeFilter === 'Program Materials') return r.category === 'Program Resource';
+    if (activeFilter === 'Session Materials') return r.category === 'Session Resource';
+    
+    const type = getResourceType(r.name);
+    if (activeFilter === 'Documents' && type === 'Document') return true;
+    if (activeFilter === 'Slides' && type === 'Slides') return true;
+    if (activeFilter === 'Videos' && type === 'Video') return true;
+    if (activeFilter === 'Templates') return r.name.toLowerCase().includes('template');
+
+    // If activeFilter doesn't match the derived types directly, return false
+    return false;
+  });
+
+  const filters = ['All', 'Program Materials', 'Session Materials', 'Documents', 'Slides', 'Videos', 'Templates'];
+
+  // Sort: push newest first (mock: we just take the first as featured if it exists)
+  const featuredResource = filteredResources.length > 0 ? filteredResources[0] : null;
+  const gridResources = filteredResources.slice(1);
+
+  // Group grid resources by Program Name
+  const groupedGridResources = gridResources.reduce((acc, curr) => {
+    if (!acc[curr.programName]) acc[curr.programName] = [];
+    acc[curr.programName].push(curr);
+    return acc;
+  }, {});
+
+  return (
+    <div className="animate-fade-in" style={{ padding: '3rem 4rem', display: 'flex', flexDirection: 'column', gap: '3rem', textAlign: 'left', fontFamily: "'Inter', sans-serif", maxWidth: '1440px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+      
+      {/* Header & Search */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem' }}>
+        <div>
+          <h2 style={{ fontSize: '40px', fontWeight: 700, color: '#232323', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Resources</h2>
+          <p style={{ color: '#5E5A53', fontSize: '15px', marginTop: '0.5rem' }}>
+            All teaching materials shared for your assigned programs.
+          </p>
+        </div>
+        <div style={{ position: 'relative', width: '320px' }}>
+          <Search size={18} color="#8D887E" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Search resources..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', fontSize: '15px',
+              backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8',
+              borderRadius: '999px', color: '#232323', outline: 'none', boxSizing: 'border-box',
+              fontFamily: "'Inter', sans-serif", transition: 'all 0.2s', boxShadow: '0 2px 10px rgba(60,45,20,.03)'
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = '#C99A2E'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(201,154,46,.1)'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#E8E2D8'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(60,45,20,.03)'; }}
+          />
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {filters.map(f => (
+          <button
+            key={f}
+            onClick={() => setActiveFilter(f)}
+            style={{
+              padding: '0.6rem 1.2rem',
+              borderRadius: '999px',
+              border: activeFilter === f ? '1px solid #C99A2E' : '1px solid #E8E2D8',
+              backgroundColor: activeFilter === f ? '#C99A2E' : '#FCFBF8',
+              color: activeFilter === f ? '#FFFFFF' : '#5E5A53',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeFilter === f ? '0 4px 12px rgba(201,154,46,.2)' : '0 2px 8px rgba(60,45,20,.03)'
+            }}
+            onMouseEnter={e => { if(activeFilter !== f) { e.currentTarget.style.borderColor = '#C99A2E'; e.currentTarget.style.color = '#C99A2E'; } }}
+            onMouseLeave={e => { if(activeFilter !== f) { e.currentTarget.style.borderColor = '#E8E2D8'; e.currentTarget.style.color = '#5E5A53'; } }}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '3rem', alignItems: 'start' }}>
+        
+        {/* Main Content Area */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+          
+          {filteredResources.length === 0 ? (
+            <div style={{ padding: '6rem 2rem', textAlign: 'center', backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 18px 40px rgba(60,45,20,.08)' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(201,154,46,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
+                📚
+              </div>
+              <div>
+                <h4 style={{ fontSize: '22px', fontWeight: 600, color: '#232323', margin: '0 0 0.5rem 0' }}>Your Resource Library</h4>
+                <p style={{ color: '#8D887E', fontSize: '15px', margin: 0, lineHeight: 1.5 }}>
+                  No materials have been shared yet.<br/>Resources published by your organization will automatically appear here.
+                </p>
+              </div>
+              <button 
+                style={{ marginTop: '1rem', padding: '0.6rem 1.2rem', backgroundColor: 'transparent', border: '1px solid #E8E2D8', color: '#5E5A53', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f4f4f4'; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                Contact your program administrator.
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Featured Resource Hero Card */}
+              {featuredResource && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#5E5A53', margin: 0 }}>Featured Resource</h3>
+                  <div 
+                    style={{ 
+                      backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '18px', padding: '2.5rem', 
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                      boxShadow: '0 14px 35px rgba(40,30,15,.06)', transition: 'all 220ms ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                      <div style={{ width: '80px', height: '80px', borderRadius: '16px', backgroundColor: '#F5F2EB', border: '1px solid #E8E2D8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {getIconForType(featuredResource.name)}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <h4 style={{ fontSize: '24px', fontWeight: 700, color: '#232323', margin: 0 }}>{featuredResource.name}</h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#5E5A53', fontSize: '15px' }}>
+                          <span style={{ fontWeight: 600, color: '#C99A2E' }}>Program:</span> {featuredResource.programName}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#8D887E', fontSize: '14px', marginTop: '0.2rem' }}>
+                          <span>Updated Today</span>
+                          <span>•</span>
+                          <span>{getResourceType(featuredResource.name)}</span>
+                          <span>•</span>
+                          <span>{featuredResource.size || '3.2 MB'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <button 
+                        style={{ padding: '0.8rem 1.5rem', backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', color: '#232323', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(60,45,20,.04)' }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f4f4f4'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FCFBF8'; e.currentTarget.style.transform = 'none'; }}
+                        onClick={() => alert(`Opening: ${featuredResource.name}`)}
+                      >
+                        <Eye size={18} /> Open
+                      </button>
+                      <button 
+                        style={{ padding: '0.8rem 1.5rem', backgroundColor: '#C99A2E', border: 'none', color: '#fff', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(201,154,46,.2)' }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#D7AE4F'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#C99A2E'; e.currentTarget.style.transform = 'none'; }}
+                        onClick={() => alert(`Downloading: ${featuredResource.name}`)}
+                      >
+                        <Download size={18} /> Download
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Resource Grid Grouped by Program */}
+              {Object.entries(groupedGridResources).map(([programName, resources]) => (
+                <div key={programName} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Folder size={20} color="#5E5A53" />
+                    <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#232323', margin: 0 }}>{programName}</h3>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                    {resources.map((res, i) => (
+                      <div 
+                        key={i} 
+                        style={{ 
+                          backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '18px', padding: '1.5rem', 
+                          display: 'flex', flexDirection: 'column', gap: '1.25rem', 
+                          boxShadow: '0 14px 35px rgba(40,30,15,.06)', transition: 'all 220ms ease', cursor: 'pointer'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 18px 45px rgba(40,30,15,.1)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 14px 35px rgba(40,30,15,.06)'; }}
+                        onClick={() => alert(`Opening: ${res.name}`)}
+                      >
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F5F2EB', border: '1px solid #E8E2D8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {getIconForType(res.name)}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                            <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#232323', margin: 0, lineHeight: 1.3 }}>{res.name}</h4>
+                            <span style={{ fontSize: '13px', color: '#C99A2E', fontWeight: 600 }}>{res.category}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #E8E2D8', paddingTop: '1.25rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                            <span style={{ fontSize: '13px', color: '#5E5A53' }}>Updated {i === 0 ? 'Yesterday' : 'Last Week'}</span>
+                            <span style={{ fontSize: '13px', color: '#8D887E' }}>{getResourceType(res.name)} • {res.size || '2.3 MB'}</span>
+                          </div>
+                          <button 
+                            style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', border: '1px solid #E8E2D8', color: '#232323', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f4f4f4'; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                          >
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+        </div>
+
+        {/* Sidebar Summary */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'sticky', top: '2rem' }}>
+          <div style={{ backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '20px', padding: '2rem', boxShadow: '0 14px 35px rgba(40,30,15,.06)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#232323', margin: '0 0 1.5rem 0' }}>Library Summary</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#5E5A53', fontSize: '15px' }}>Programs</span>
+                <span style={{ color: '#232323', fontSize: '16px', fontWeight: 600 }}>{totalPrograms}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#5E5A53', fontSize: '15px' }}>Resources</span>
+                <span style={{ color: '#232323', fontSize: '16px', fontWeight: 600 }}>{totalResources}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#5E5A53', fontSize: '15px' }}>Recently Added</span>
+                <span style={{ color: '#232323', fontSize: '16px', fontWeight: 600 }}>{recentlyAdded}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#5E5A53', fontSize: '15px' }}>Last Updated</span>
+                <span style={{ color: '#C99A2E', fontSize: '15px', fontWeight: 600 }}>{lastUpdated}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ padding: '1.5rem', borderRadius: '16px', border: '1px dashed #E8E2D8', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#232323', margin: 0 }}>Need help?</h4>
+            <a href="#" style={{ fontSize: '14px', color: '#C99A2E', textDecoration: 'none', fontWeight: 500 }}>Contact Program Administrator</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
 
 
 function ResourcesTab({ programs = [], addNotification, currentUser }) {
@@ -4001,6 +4301,10 @@ function ResourcesTab({ programs = [], addNotification, currentUser }) {
     alert(`Resource file "${fileName}" successfully uploaded.`);
     setFileName('');
   };
+
+  if (currentUser?.role === 'Facilitator') {
+    return <FacilitatorResourcesView programs={programs} />;
+  }
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', maxWidth: '1200px', margin: '0 auto' }}>
