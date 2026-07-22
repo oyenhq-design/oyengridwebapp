@@ -88,25 +88,7 @@ export default function App() {
   const [ownerPhoto, setOwnerPhoto] = useState(null); // Base64 or object URL of the owner's profile photo
 
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [activeSessionIdentifier, setActiveSessionIdentifier] = useState(null);
 
-  const activeSession = useMemo(() => {
-    if (!activeSessionIdentifier) return null;
-    const { programId, sessionId } = activeSessionIdentifier;
-    const prog = wsPrograms.find(p => p.id === programId);
-    if (!prog) return null;
-    const sess = prog.sessions?.find(s => s.id === sessionId);
-    if (!sess) return null;
-    return { ...sess, programName: prog.name, programId: prog.id, programResources: prog.resources || [] };
-  }, [activeSessionIdentifier, wsPrograms]);
-
-  const setActiveSession = (s) => {
-    if (s === null) {
-      setActiveSessionIdentifier(null);
-    } else {
-      setActiveSessionIdentifier({ programId: s.programId, sessionId: s.id });
-    }
-  };
   const isLoggingOutRef = useRef(false);
 
   // Shared workspace data — lifted so Programs + Learners stay in sync
@@ -220,6 +202,25 @@ export default function App() {
   }, [wsTeam, user, userRole, ownerEmail]);
 
   // AI Assistant Chat Mock
+  const [activeSessionIdentifier, setActiveSessionIdentifier] = useState(null);
+
+  const activeSession = useMemo(() => {
+    if (!activeSessionIdentifier) return null;
+    const { programId, sessionId } = activeSessionIdentifier;
+    const prog = wsPrograms.find(p => p.id === programId);
+    if (!prog) return null;
+    const sess = prog.sessions?.find(s => s.id === sessionId);
+    if (!sess) return null;
+    return { ...sess, programName: prog.name, programId: prog.id, programResources: prog.resources || [] };
+  }, [activeSessionIdentifier, wsPrograms]);
+
+  const setActiveSession = (s) => {
+    if (s === null) {
+      setActiveSessionIdentifier(null);
+    } else {
+      setActiveSessionIdentifier({ programId: s.programId, sessionId: s.id });
+    }
+  };
 
 
   const canvasRef = useRef(null);
