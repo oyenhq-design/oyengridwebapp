@@ -85,17 +85,17 @@ export default function NotificationsTab({ notifications = [], setNotifications,
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <h2 style={{ fontSize: '36px', fontWeight: 600, color: '#161616', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Notifications</h2>
-          <p style={{ color: '#6D6D6D', fontSize: '15px', margin: 0 }}>
+          <h2 style={{ fontSize: '36px', fontWeight: 700, color: '#111111', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>Notifications</h2>
+          <p style={{ color: '#222222', fontSize: '15px', fontWeight: 500, margin: 0 }}>
             Stay informed with updates from your organization and assigned programs.
           </p>
         </div>
         {unreadCount > 0 && (
           <button 
             onClick={handleMarkAllAsRead}
-            style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', border: '1px solid #E7E1D6', color: '#6D6D6D', borderRadius: '6px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#161616'; e.currentTarget.style.color = '#161616'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#E7E1D6'; e.currentTarget.style.color = '#6D6D6D'; }}
+            style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', border: '1px solid #E7E1D6', color: '#222222', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#111111'; e.currentTarget.style.color = '#111111'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#E7E1D6'; e.currentTarget.style.color = '#222222'; }}
           >
             Mark all as read
           </button>
@@ -122,9 +122,9 @@ export default function NotificationsTab({ notifications = [], setNotifications,
                   borderRadius: '6px',
                   border: '1px solid #E7E1D6',
                   backgroundColor: isActive ? '#C89A2B' : '#FAF8F4',
-                  color: isActive ? '#FFF' : '#6D6D6D',
+                  color: isActive ? '#FFF' : '#222222',
                   fontSize: '14px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -208,20 +208,20 @@ export default function NotificationsTab({ notifications = [], setNotifications,
               {/* Text content */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flexGrow: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#161616', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#111111', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {n.title}
                     {!n.read && (
                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#C89A2B' }}></span>
                     )}
                   </span>
-                  <span style={{ fontSize: '14px', color: '#6D6D6D' }}>{n.time}</span>
+                  <span style={{ fontSize: '14px', color: '#333333', fontWeight: 600 }}>{n.time}</span>
                 </div>
 
                 {n.program && (
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#C89A2B' }}>{n.program}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#C89A2B' }}>{n.program}</span>
                 )}
 
-                <p style={{ fontSize: '15px', color: '#6D6D6D', margin: 0, lineHeight: 1.4 }}>
+                <p style={{ fontSize: '15px', color: '#222222', fontWeight: 500, margin: 0, lineHeight: 1.4 }}>
                   {n.description}
                 </p>
               </div>
@@ -237,8 +237,8 @@ export default function NotificationsTab({ notifications = [], setNotifications,
                     border: '1px solid #E7E1D6',
                     borderRadius: '6px',
                     fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#161616',
+                    fontWeight: 700,
+                    color: '#111111',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -247,7 +247,7 @@ export default function NotificationsTab({ notifications = [], setNotifications,
                     flexShrink: 0
                   }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#C89A2B'; e.currentTarget.style.borderColor = '#C89A2B'; e.currentTarget.style.color = '#FFF'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = '#E7E1D6'; e.currentTarget.style.color = '#161616'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = '#E7E1D6'; e.currentTarget.style.color = '#111111'; }}
                 >
                   {n.actionText} <ExternalLink size={14} />
                 </button>
