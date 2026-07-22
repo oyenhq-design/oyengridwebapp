@@ -2059,12 +2059,12 @@ export default function App() {
           {/* Sidebar Left */}
           <aside style={{
             width: '260px',
-            backgroundColor: '#000000',
+            backgroundColor: '#141414',
             borderRight: '1px solid rgba(255, 255, 255, 0.05)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            padding: '1.5rem 0',
+            padding: '1.5rem 0.5rem',
             flexShrink: 0
           }}>
             {/* Navigation links */}
@@ -2079,23 +2079,30 @@ export default function App() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.85rem',
-                      padding: '0.75rem 1.5rem',
+                      padding: '0.75rem 1rem',
+                      margin: '0 0.5rem',
+                      borderRadius: '8px',
                       cursor: 'pointer',
                       fontSize: '0.9rem',
                       fontWeight: isActive ? 600 : 500,
-                      color: isActive ? '#D4AF37' : '#a0aec0',
-                      background: isActive ? 'linear-gradient(90deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.01) 100%)' : 'transparent',
-                      borderLeft: isActive ? '3px solid #D4AF37' : '3px solid transparent',
+                      color: isActive ? '#FFFFFF' : '#a0aec0',
+                      background: isActive ? '#C99A2E' : 'transparent',
                       transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      if (!isActive) e.currentTarget.style.color = '#fff';
+                      if (!isActive) {
+                        e.currentTarget.style.color = '#fff';
+                        e.currentTarget.style.background = 'rgba(201,154,46,.08)';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.color = '#a0aec0';
+                      if (!isActive) {
+                        e.currentTarget.style.color = '#a0aec0';
+                        e.currentTarget.style.background = 'transparent';
+                      }
                     }}
                   >
-                    <span style={{ color: isActive ? '#D4AF37' : '#718096' }}>
+                    <span style={{ color: isActive ? '#FFFFFF' : '#718096' }}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>

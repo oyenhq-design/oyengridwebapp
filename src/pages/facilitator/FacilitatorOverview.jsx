@@ -156,27 +156,27 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
   }
   const cd = nextSessionDate ? getCountdownObj(nextSessionDate) : { h: "00", m: "18", s: "24" }; // fallback mock
 
-  // OYEN GRID Official Design System Theme Variables (Light Theme)
+  // OYEN GRID Official Design System Theme Variables (Warm Stone Theme)
   const theme = {
-    bg: '#FDFBF7',
-    bgSecondary: '#F5F3ED',
-    card: '#FFFFFF',
-    cardHover: '#FAFAFA',
-    border: '#EAE8E1',
-    gold: '#CF9B29',
-    goldHover: '#B88820',
-    goldLight: '#FDF7E5',
-    textMilk: '#111827', // The primary dark text
-    textBody: '#374151',
-    textMuted: '#6B7280',
-    success: '#2ECA7F',
-    successLight: '#E8F8F0',
-    warning: '#F59E0B',
+    bg: '#F5F2EB',
+    bgSecondary: '#E8E2D8',
+    card: '#FCFBF8',
+    cardHover: '#FAFAF5',
+    border: '#E8E2D8',
+    gold: '#C99A2E',
+    goldHover: '#D7AE4F',
+    goldLight: 'rgba(201,154,46,0.1)',
+    textMilk: '#232323', 
+    textBody: '#5E5A53',
+    textMuted: '#8D887E',
+    success: '#3D8B57',
+    successLight: 'rgba(61,139,87,0.1)',
+    warning: '#D8A325',
     danger: '#EF4444',
-    info: '#3B82F6',
-    blueLight: '#EFF6FF',
+    info: '#356BB3',
+    blueLight: 'rgba(53,107,179,0.1)',
     purple: '#8B5CF6',
-    purpleLight: '#F3E8FF',
+    purpleLight: 'rgba(139,92,246,0.1)',
     font: "'Inter', sans-serif"
   };
 
@@ -201,15 +201,6 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
       overflow: 'hidden'
     }}>
       
-      {/* Background Graphic (Golden Waves) */}
-      <svg style={{ position: 'absolute', top: '-10%', right: '-5%', width: '800px', height: '800px', opacity: 0.4, pointerEvents: 'none', zIndex: 0 }} viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 0,200 Q 200,100 400,300 T 800,200" stroke={theme.gold} strokeWidth="0.5" fill="none" />
-        <path d="M 0,220 Q 200,120 400,320 T 800,220" stroke={theme.gold} strokeWidth="0.4" fill="none" />
-        <path d="M 0,240 Q 200,140 400,340 T 800,240" stroke={theme.gold} strokeWidth="0.3" fill="none" />
-        <path d="M 0,260 Q 200,160 400,360 T 800,260" stroke={theme.gold} strokeWidth="0.2" fill="none" />
-        <path d="M 0,280 Q 200,180 400,380 T 800,280" stroke={theme.gold} strokeWidth="0.1" fill="none" />
-      </svg>
-      
       {/* Header Area */}
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column' }}>
         <h2 style={{ fontSize: '32px', fontWeight: 500, color: theme.textMilk, margin: 0, letterSpacing: '-0.02em' }}>
@@ -221,7 +212,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
       </div>
 
       {/* Hero Card */}
-      <div style={{ position: 'relative', zIndex: 1, backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '3rem', display: 'flex', flexDirection: 'row', alignItems: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.03)' }}>
+      <div style={{ position: 'relative', zIndex: 1, background: `linear-gradient(135deg, #FFF9ED 0%, #F5F2EB 100%)`, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '3rem', display: 'flex', flexDirection: 'row', alignItems: 'center', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
         
         {/* Left Side: Details */}
         <div style={{ flex: 1.2, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -333,7 +324,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem', position: 'relative', zIndex: 1 }}>
         
         {/* Left: Today's Schedule */}
-        <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', boxShadow: '0 4px 24px rgba(0,0,0,0.02)' }}>
+        <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Calendar size={20} color={theme.gold} strokeWidth={2}/>
@@ -397,7 +388,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Session Preparation */}
-          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 4px 24px rgba(0,0,0,0.02)' }}>
+          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
               <FileText size={20} color={theme.gold} strokeWidth={2}/>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: theme.textMilk, margin: 0 }}>Session Preparation</h3>
@@ -446,7 +437,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
           </div>
 
           {/* Recent Updates */}
-          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 4px 24px rgba(0,0,0,0.02)' }}>
+          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 18px 45px rgba(50,40,20,.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Activity size={20} color={theme.gold} strokeWidth={2}/>
