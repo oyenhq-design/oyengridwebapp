@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Play, Calendar, FileText, HelpCircle, Activity, ChevronRight, User, CheckCircle2, AlertTriangle, MessageSquare, BookOpen, Clock, AlertCircle } from 'lucide-react';
+import { Play, Calendar, FileText, HelpCircle, Activity, ChevronRight, User, CheckCircle2, AlertTriangle, MessageSquare, BookOpen, Clock, Users, ArrowRight, Bell, Video } from 'lucide-react';
 
 // Helper to parse date/time into a JS Date object
 function parseSessionDateTime(dateStr, timeStr) {
@@ -27,7 +27,8 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
+    // Update every second for the live countdown
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -84,25 +85,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
       orgAnnouncements: orgs,
       resourcesShared: resCount
     };
-  }, [programs, announcements, now]);
-
-  const getHeroStatusText = () => {
-    if (!nextSession) return 'No sessions are scheduled today.';
-    const sDate = parseSessionDateTime(nextSession.date, nextSession.time);
-    if (!sDate) return 'Your next session is scheduled.';
-    
-    const diffMs = sDate - now;
-    if (diffMs <= 0) return 'Your session is ready to start.';
-    
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays === 1) return `Your next session starts tomorrow at ${nextSession.time}.`;
-    if (diffDays > 1) return `Your next session starts in ${diffDays} days.`;
-    if (diffHours >= 1) return `Your next session starts in ${diffHours} hours.`;
-    return `Your next session starts in ${diffMins} minutes.`;
-  };
+  }, [programs, announcements, now.getMinutes()]); // Update memos once a minute
 
   const getSessionLearnersCount = (session) => {
     if (!session) return 0;
@@ -116,186 +99,242 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
     return progRes.length > 0 || sessRes.length > 0;
   };
 
-  const isStartingSoon = (session) => {
-    if (!session) return false;
-    const sDate = parseSessionDateTime(session.date, session.time);
-    if (!sDate) return false;
-    const diffMins = Math.floor((sDate - now) / 60000);
-    return diffMins >= 0 && diffMins <= 30;
+  // Live Countdown logic
+  const getCountdownString = (targetDate) => {
+    const diff = targetDate - now;
+    if (diff <= 0) return "00 : 00 : 00";
+    
+    const h = Math.floor((diff / (1000 * 60 * 60)));
+    const m = Math.floor((diff / 1000 / 60) % 60);
+    const s = Math.floor((diff / 1000) % 60);
+    
+    return `${h.toString().padStart(2, '0')} : ${m.toString().padStart(2, '0')} : ${s.toString().padStart(2, '0')}`;
   };
+
+  let nextSessionDate = null;
+  let nextSessionDiff = 0;
+  if (nextSession) {
+    nextSessionDate = parseSessionDateTime(nextSession.date, nextSession.time);
+    nextSessionDiff = nextSessionDate ? nextSessionDate - now : 0;
+  }
 
   // Styles based on Theme variables
   const theme = {
     bg: '#0B0B0F',
     card: '#121318',
+    cardLighter: '#1A1B23',
     border: '#23242B',
     accent: '#F5C84C',
     success: '#22c55e',
     warning: '#f59e0b',
     danger: '#ef4444',
+    info: '#3b82f6',
+    purple: '#a855f7',
+    teal: '#14b8a6',
     font: "'Inter', sans-serif"
   };
 
   return (
-    <div className="animate-fade-in" style={{ backgroundColor: theme.bg, minHeight: '100%', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', textAlign: 'left', fontFamily: theme.font }}>
+    <div className="animate-fade-in" style={{ backgroundColor: theme.bg, minHeight: '100%', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', textAlign: 'left', fontFamily: theme.font, position: 'relative', overflow: 'hidden' }}>
       
-      {/* 2-Column Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '2rem', alignItems: 'flex-start' }}>
+      {/* Abstract Background SVG (Fixed, extremely low opacity) */}
+      <svg style={{ position: 'absolute', top: 0, right: 0, width: '600px', height: '100%', opacity: 0.03, pointerEvents: 'none', zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+          <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#FFFFFF" strokeWidth="0.5"/>
+        </pattern>
+        <rect width="100" height="100" fill="url(#grid)" />
+      </svg>
+      
+      {/* Focus Area: Hero + Next Session Combined */}
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column' }}>
         
-        {/* Left Column (Main Content) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-          
-          {/* Hero */}
-          <div>
-            <h2 style={{ fontSize: '2.25rem', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
-              {greeting()}, {info.name || info.fullName || 'John'} 👋
-            </h2>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', marginTop: '0.5rem', fontWeight: 400 }}>
-              {todaySessions.length > 0 ? `You're facilitating ${todaySessions.length} session${todaySessions.length > 1 ? 's' : ''} today. ` : ''}
-              {getHeroStatusText()}
-            </div>
+        {/* Dynamic Hero Text above the card */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
+            {greeting()}, {info.name || info.fullName || 'John'} 👋
+          </h2>
+          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.05rem', marginTop: '0.25rem', fontWeight: 400 }}>
+            {nextSession && nextSessionDiff > 0 
+              ? `Your next session starts in ${Math.floor(nextSessionDiff/60000)} minutes.`
+              : todaySessions.length > 0 
+                ? `You have ${todaySessions.length} session${todaySessions.length > 1 ? 's' : ''} today.`
+                : 'Your schedule is clear for today.'
+            }
           </div>
+        </div>
 
-          {/* Primary Card: Next Session */}
-          {nextSession ? (
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 8px 30px rgba(0,0,0,0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.75rem', backgroundColor: nextSession.status === 'Live' ? 'rgba(239,68,68,0.1)' : 'rgba(245,200,76,0.1)', color: nextSession.status === 'Live' ? theme.danger : theme.accent, padding: '0.25rem 0.75rem', borderRadius: '20px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {nextSession.status === 'Live' ? 'Live Now' : 'Next Session'}
-                </span>
-              </div>
-              
-              <div>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>
-                  {nextSession.title}
-                </h3>
-                <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.25rem', fontWeight: 500 }}>
-                  {nextSession.programName}
-                </div>
-              </div>
+        {/* Massive Premium Next Session Card */}
+        {nextSession ? (
+          <div style={{ position: 'relative', background: 'linear-gradient(145deg, #111114 0%, #0B0B0F 100%)', border: `1px solid ${theme.border}`, borderLeft: `4px solid ${theme.accent}`, borderRadius: '16px', padding: '0', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+            
+            {/* Gold Glow behind card content */}
+            <div style={{ position: 'absolute', top: '-50%', left: '-10%', width: '50%', height: '200%', background: 'radial-gradient(ellipse at center, rgba(245,200,76,0.04) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none', zIndex: 0 }}></div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 600 }}>Time</span>
-                  <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Clock size={14} color={theme.accent}/> {nextSession.time}</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
+              {/* Left Side: Session Details */}
+              <div style={{ flex: 2, padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: '300px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', backgroundColor: nextSession.status === 'Live' || nextSessionDiff <= 0 ? 'rgba(239,68,68,0.1)' : 'rgba(245,200,76,0.1)', color: nextSession.status === 'Live' || nextSessionDiff <= 0 ? theme.danger : theme.accent, padding: '0.35rem 0.85rem', borderRadius: '20px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {nextSession.status === 'Live' || nextSessionDiff <= 0 ? 'Live Now' : 'Next Session'}
+                  </span>
                 </div>
-                {nextSession.duration && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 600 }}>Duration</span>
-                    <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>{nextSession.duration}</span>
+                
+                <div>
+                  <h3 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                    {nextSession.title}
+                  </h3>
+                  <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.5rem', fontWeight: 500 }}>
+                    {nextSession.programName}
                   </div>
-                )}
-                {nextSession.deliveryMode && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 600 }}>Mode</span>
-                    <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>{nextSession.deliveryMode}</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Calendar size={18} color={theme.accent} />
+                    <span style={{ fontSize: '0.95rem', color: '#fff', fontWeight: 600 }}>{nextSession.date === 'Today' ? 'Today' : nextSession.date} • {nextSession.time}</span>
                   </div>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 600 }}>Enrolled</span>
-                  <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}><User size={14}/> {getSessionLearnersCount(nextSession)} Learners</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Users size={18} color={theme.success} />
+                    <span style={{ fontSize: '0.95rem', color: '#fff', fontWeight: 600 }}>{getSessionLearnersCount(nextSession)} Learners</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <FileText size={18} color={hasSessionResources(nextSession) ? theme.info : 'rgba(255,255,255,0.3)'} />
+                    <span style={{ fontSize: '0.95rem', color: hasSessionResources(nextSession) ? '#fff' : 'rgba(255,255,255,0.4)', fontWeight: 600 }}>{hasSessionResources(nextSession) ? 'Resources Ready' : 'No Resources'}</span>
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+              {/* Right Side: Live Countdown Strip & CTA */}
+              <div style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '2.5rem', gap: '1.5rem', minWidth: '250px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+                    {nextSessionDiff > 0 ? 'Starts In' : 'Started'}
+                  </div>
+                  <div style={{ fontSize: '2.75rem', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums' }}>
+                    {nextSessionDate ? getCountdownString(nextSessionDate) : '00 : 00 : 00'}
+                  </div>
+                </div>
+                
                 <button 
                   onClick={() => onSelectSession && onSelectSession(nextSession)}
-                  style={{ flex: 1, padding: '0.85rem', backgroundColor: theme.accent, border: 'none', color: '#000', borderRadius: '8px', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', transition: 'opacity 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                  style={{ width: '100%', padding: '1.1rem', backgroundColor: '#fff', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(255,255,255,0.1)' }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(255,255,255,0.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(255,255,255,0.1)'; }}
                 >
-                  <Play size={18} fill="#000" /> Enter Classroom
-                </button>
-                <button 
-                  onClick={() => {
-                     onSelectSession && onSelectSession(nextSession);
-                     addNotification("Opened Session Brief");
-                  }}
-                  style={{ flex: 1, padding: '0.85rem', backgroundColor: 'transparent', border: `1px solid ${theme.border}`, color: '#fff', borderRadius: '8px', fontWeight: 500, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  View Session Brief
+                  Enter Classroom <ArrowRight size={18} />
                 </button>
               </div>
             </div>
-          ) : (
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '3rem', textAlign: 'center', color: 'rgba(255,255,255,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-              <Calendar size={32} color="rgba(255,255,255,0.2)" />
-              <div>
-                <div style={{ fontSize: '1.1rem', color: '#fff', fontWeight: 600, marginBottom: '0.25rem' }}>No Upcoming Sessions</div>
-                <div style={{ fontSize: '0.9rem' }}>You're all caught up. Enjoy your day!</div>
-              </div>
+          </div>
+        ) : (
+          <div style={{ background: 'linear-gradient(145deg, #111114 0%, #0B0B0F 100%)', border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '4rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Calendar size={32} color="rgba(255,255,255,0.3)" />
             </div>
-          )}
+            <div>
+              <div style={{ fontSize: '1.25rem', color: '#fff', fontWeight: 700, marginBottom: '0.5rem' }}>No Upcoming Sessions</div>
+              <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.5)' }}>You're all caught up. Enjoy your day!</div>
+            </div>
+          </div>
+        )}
+      </div>
 
-          {/* Today's Schedule Timeline */}
+      {/* 2-Column Grid for the rest of the Dashboard */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+        
+        {/* Left Column (Schedule & Activity) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Today's Schedule */}
           <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calendar size={18} /> Today's Schedule
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', margin: 0 }}>Today's Schedule</h3>
+            </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {todaySessions.length === 0 ? (
-                <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.4)', padding: '1rem', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px' }}>
+                <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.4)', padding: '1.5rem', backgroundColor: theme.card, border: `1px dashed ${theme.border}`, borderRadius: '12px', textAlign: 'center' }}>
                   Nothing scheduled for today.
                 </div>
               ) : (
-                todaySessions.map((s, idx) => (
-                  <div key={s.id} style={{ display: 'flex', gap: '1.5rem', position: 'relative', paddingBottom: idx === todaySessions.length - 1 ? '0' : '1.5rem' }}>
-                    {/* Timeline Line */}
-                    {idx !== todaySessions.length - 1 && (
-                      <div style={{ position: 'absolute', left: '60px', top: '24px', bottom: '-8px', width: '2px', backgroundColor: theme.border }}></div>
-                    )}
-                    
-                    <div style={{ width: '50px', fontSize: '0.85rem', fontWeight: 500, color: 'rgba(255,255,255,0.6)', paddingTop: '0.25rem', textAlign: 'right' }}>
-                      {(s.time || '').replace(/ AM| PM/g, '')}
+                todaySessions.map((s) => (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem 1.5rem', gap: '1.5rem', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.borderColor = theme.border}>
+                    <div style={{ width: '85px', fontSize: '1.05rem', fontWeight: 600, color: '#fff' }}>
+                      {(s.time || '').replace(/ AM| PM/g, '')} <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{(s.time || '').slice(-2)}</span>
                     </div>
                     
-                    <div style={{ flex: 1, backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <div style={{ fontSize: '0.95rem', color: '#fff', fontWeight: 600 }}>{s.title}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>{s.programName}</span>
-                          {s.status === 'Live' && <span style={{ fontSize: '0.7rem', color: theme.danger, fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: theme.danger }}></span> Live</span>}
-                        </div>
+                    <div style={{ width: '4px', height: '40px', borderRadius: '4px', backgroundColor: s.status === 'Live' ? theme.danger : theme.accent }}></div>
+
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <div style={{ fontSize: '1.05rem', color: '#fff', fontWeight: 600 }}>{s.title}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
+                        <span>{s.programName}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={12} /> {getSessionLearnersCount(s)} Learners</span>
                       </div>
-                      <button 
-                        onClick={() => onSelectSession && onSelectSession(s)}
-                        style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', border: `1px solid ${theme.border}`, color: '#fff', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer', transition: 'background 0.2s' }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        Open
-                      </button>
                     </div>
+
+                    <button 
+                      onClick={() => onSelectSession && onSelectSession(s)}
+                      style={{ padding: '0.6rem 1.25rem', backgroundColor: 'rgba(255,255,255,0.04)', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+                    >
+                      Open <ArrowRight size={14} />
+                    </button>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Recent Activity */}
+          {/* Quick Actions (List style) */}
           <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Activity size={18} /> Recent Activity
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {recentUpdates.length === 0 ? (
-                <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.4)', padding: '1rem', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px' }}>
-                  No recent operational activity.
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', margin: '0 0 1.25rem 0' }}>Quick Actions</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+              <div 
+                onClick={() => nextSession ? (onSelectSession && onSelectSession(nextSession)) : addNotification("No session scheduled.")}
+                style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = theme.cardLighter} onMouseLeave={e => e.currentTarget.style.backgroundColor = theme.card}
+              >
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Video size={20} color={theme.danger} />
                 </div>
-              ) : (
-                recentUpdates.map((u, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem', backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px' }}>
-                    <CheckCircle2 size={16} color={theme.success} />
-                    <div style={{ flex: 1, fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>
-                      {u.text}
-                    </div>
-                  </div>
-                ))
-              )}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>Open Classroom</div>
+                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.1rem' }}>Go to your next live class</div>
+                </div>
+                <ArrowRight size={16} color="rgba(255,255,255,0.3)" />
+              </div>
+
+              <div 
+                onClick={() => onNavigate('Resources')}
+                style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = theme.cardLighter} onMouseLeave={e => e.currentTarget.style.backgroundColor = theme.card}
+              >
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BookOpen size={20} color={theme.info} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>Resources</div>
+                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.1rem' }}>View teaching materials</div>
+                </div>
+                <ArrowRight size={16} color="rgba(255,255,255,0.3)" />
+              </div>
+
+              <div 
+                onClick={() => onNavigate('Announcements')}
+                style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = theme.cardLighter} onMouseLeave={e => e.currentTarget.style.backgroundColor = theme.card}
+              >
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(168,85,247,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Bell size={20} color={theme.purple} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>Updates</div>
+                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.1rem' }}>See organization updates</div>
+                </div>
+                <ArrowRight size={16} color="rgba(255,255,255,0.3)" />
+              </div>
             </div>
           </div>
 
@@ -304,99 +343,61 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
         {/* Right Column (Sidebar) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* Today's Snapshot */}
+          {/* Snapshot KPIs */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ backgroundColor: theme.cardLighter, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <Calendar size={16} color={theme.accent} />
+              <div>
+                <div style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>{todaySessions.length}</div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>Today's Sessions</div>
+              </div>
+            </div>
+            <div style={{ backgroundColor: theme.cardLighter, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <Users size={16} color={theme.success} />
+              <div>
+                <div style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>{todaySessions.reduce((acc, s) => acc + getSessionLearnersCount(s), 0)}</div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>Learners</div>
+              </div>
+            </div>
+            <div style={{ backgroundColor: theme.cardLighter, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <FileText size={16} color={theme.info} />
+              <div>
+                <div style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>{resourcesShared}</div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>Resources</div>
+              </div>
+            </div>
+            <div style={{ backgroundColor: theme.cardLighter, border: `1px solid ${theme.border}`, borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <AlertTriangle size={16} color={theme.warning} />
+              <div>
+                <div style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>0</div>
+                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>Pending</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
           <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', margin: 0 }}>Today's Snapshot</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Sessions Today</span>
-                <span style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>{todaySessions.length}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Learners Today</span>
-                <span style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>
-                  {todaySessions.reduce((acc, s) => acc + getSessionLearnersCount(s), 0)}
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Resources Shared</span>
-                <span style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>{resourcesShared}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Pending Tasks</span>
-                <span style={{ fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>2</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Session Readiness */}
-          {nextSession && (
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', margin: 0 }}>Session Readiness</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', color: getSessionLearnersCount(nextSession) > 0 ? '#fff' : 'rgba(255,255,255,0.5)' }}>
-                  <CheckCircle2 size={16} color={getSessionLearnersCount(nextSession) > 0 ? theme.success : 'rgba(255,255,255,0.2)'} /> 
-                  Learners enrolled
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', color: hasSessionResources(nextSession) ? '#fff' : 'rgba(255,255,255,0.5)' }}>
-                  <CheckCircle2 size={16} color={hasSessionResources(nextSession) ? theme.success : 'rgba(255,255,255,0.2)'} /> 
-                  Resources available
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', color: '#fff' }}>
-                  <CheckCircle2 size={16} color={theme.success} /> 
-                  Session scheduled
-                </div>
-                {isStartingSoon(nextSession) && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', color: theme.warning }}>
-                    <AlertTriangle size={16} color={theme.warning} /> 
-                    Session starts soon
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', margin: 0 }}>Recent Activity</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {recentUpdates.length === 0 ? (
+                <div style={{ padding: '2rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '2rem' }}>📬</div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>No new updates</div>
+                    <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>Everything is up to date.</div>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Quick Actions */}
-          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', margin: 0 }}>Quick Actions</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <button onClick={() => onNavigate('Sessions')} style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${theme.border}`, borderRadius: '10px', padding: '1rem', color: '#fff', fontSize: '0.85rem', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}>
-                <Calendar size={18} /> Open Sessions
-              </button>
-              <button onClick={() => onNavigate('Resources')} style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${theme.border}`, borderRadius: '10px', padding: '1rem', color: '#fff', fontSize: '0.85rem', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}>
-                <BookOpen size={18} /> Resources
-              </button>
-              <button onClick={() => onNavigate('Announcements')} style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${theme.border}`, borderRadius: '10px', padding: '1rem', color: '#fff', fontSize: '0.85rem', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}>
-                <MessageSquare size={18} /> Announcements
-              </button>
-              <button onClick={() => onNavigate('Profile')} style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${theme.border}`, borderRadius: '10px', padding: '1rem', color: '#fff', fontSize: '0.85rem', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}>
-                <User size={18} /> Profile
-              </button>
-            </div>
-          </div>
-
-          {/* Organization Updates */}
-          {orgAnnouncements.length > 0 && (
-            <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', margin: 0 }}>Organization Updates</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {orgAnnouncements.map((a, i) => (
-                  <div key={i} style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
-                    {a.text}
+                </div>
+              ) : (
+                recentUpdates.map((u, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: theme.info, marginTop: '0.35rem' }}></div>
+                    <div style={{ flex: 1, fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.4 }}>
+                      {u.text}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Need Help Footer */}
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500, fontSize: '0.85rem' }}>
-              <HelpCircle size={14} /> Need Help?
-            </div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '0.25rem' }}>
-              <span style={{ cursor: 'pointer', textDecoration: 'underline' }}>Contact Admin</span>
-              <span style={{ cursor: 'pointer', textDecoration: 'underline' }}>Report Issue</span>
+                ))
+              )}
             </div>
           </div>
 
