@@ -2796,7 +2796,7 @@ export default function App() {
             ) : activeTab === 'Help' ? (
               <HelpTab />
             ) : activeTab === 'Resources' ? (
-              <ResourcesTab programs={displayPrograms} addNotification={addNotification} />
+              <ResourcesTab programs={displayPrograms} addNotification={addNotification} currentUser={getLoggedInUserInfo()} />
             ) : activeTab === 'Session Notes' ? (
               <SessionNotesTab programs={displayPrograms} addNotification={addNotification} />
             ) : (
@@ -3923,21 +3923,49 @@ function HelpTab() {
 
 
 
-function ResourcesTab({ programs = [], addNotification }) {
+function ResourcesTab({ programs = [], addNotification, currentUser }) {
   const [search, setSearch] = useState('');
   const [selectedProgId, setSelectedProgId] = useState('');
   const [fileName, setFileName] = useState('');
 
-  const allResources = [];
+  const canUploadResources = currentUser?.permissions?.includes('upload_resources');
+
+  // Extract and flat map all resources for search
+  const programResources = [];
+  const sessionResources = [];
+
   programs.forEach(p => {
     (p.resources || []).forEach(r => {
-      allResources.push({
-        ...r,
-        programName: p.name,
-        programId: p.id
+      programResources.push({ ...r, programName: p.name, programId: p.id });
+    });
+    (p.sessions || []).forEach(s => {
+      (s.resources || []).forEach(r => {
+        sessionResources.push({ ...r, programName: p.name, sessionName: s.title, programId: p.id });
       });
     });
   });
+
+  const matchesSearch = (text) => text?.toLowerCase().includes(search.toLowerCase());
+
+  const filteredProgramResources = programResources.filter(r => matchesSearch(r.name) || matchesSearch(r.programName));
+  const filteredSessionResources = sessionResources.filter(r => matchesSearch(r.name) || matchesSearch(r.sessionName) || matchesSearch(r.programName));
+
+  const hasAnyResources = programResources.length > 0 || sessionResources.length > 0;
+  const hasSearchResults = filteredProgramResources.length > 0 || filteredSessionResources.length > 0;
+
+  // Grouping helpers
+  const groupedProgramResources = filteredProgramResources.reduce((acc, curr) => {
+    if (!acc[curr.programName]) acc[curr.programName] = [];
+    acc[curr.programName].push(curr);
+    return acc;
+  }, {});
+
+  const groupedSessionResources = filteredSessionResources.reduce((acc, curr) => {
+    const key = `${curr.programName} - ${curr.sessionName}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(curr);
+    return acc;
+  }, {});
 
   const handleUpload = (e) => {
     e.preventDefault();
@@ -3948,101 +3976,164 @@ function ResourcesTab({ programs = [], addNotification }) {
     setFileName('');
   };
 
-  const filtered = allResources.filter(r => r.name?.toLowerCase().includes(search.toLowerCase()));
-
   return (
-    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', maxWidth: '1200px', margin: '0 auto' }}>
       <div>
         <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Resources</h2>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-          Upload and manage training guides, slides, reference links, and handouts.
+          Find all materials shared for your assigned programs.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: canUploadResources ? '1.6fr 1fr' : '1fr', gap: '2rem' }}>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <input 
-            type="text" 
-            placeholder="Search resources..." 
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '1rem' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search resources..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.5rem', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+            />
+          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {filtered.length > 0 ? (
-              filtered.map((res, i) => (
-                <div key={i} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '1.3rem' }}>📄</span>
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.85rem' }}>{res.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.15rem' }}>
-                        {res.programName} · {res.size || '3.2 MB'}
+          {!hasAnyResources && !search ? (
+            <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📁</div>
+              <h3 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.5rem', fontWeight: 600 }}>No resources have been shared yet.</h3>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', maxWidth: '400px', margin: '0 auto', lineHeight: 1.5 }}>
+                Your organization hasn't shared any materials for your assigned programs. Resources will appear here automatically when they're published.
+              </p>
+            </div>
+          ) : !hasSearchResults && search ? (
+             <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', backgroundColor: '#0e0f14', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                No resources match "{search}".
+             </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              
+              {/* Program Resources */}
+              {Object.keys(groupedProgramResources).length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#F5D76E', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    Program Resources
+                  </h3>
+                  
+                  {Object.entries(groupedProgramResources).map(([progName, resList]) => (
+                    <div key={progName} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
+                        <span style={{ color: '#3b82f6' }}>📁</span> {progName}
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', paddingLeft: '1.5rem' }}>
+                        {resList.map((res, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                              <span>📄</span>
+                              <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{res.name}</span>
+                            </div>
+                            <button 
+                              onClick={() => alert(`Downloading: ${res.name}...`)}
+                              style={{ backgroundColor: 'transparent', border: 'none', color: '#F5D76E', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Download
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
-                  <span 
-                    onClick={() => alert(`Downloading: ${res.name}...`)}
-                    style={{ fontSize: '0.72rem', color: '#F5D76E', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    Download 📥
-                  </span>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>
-                No resources match your query. Upload one to get started.
+              )}
+
+              {/* Session Resources */}
+              {Object.keys(groupedSessionResources).length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    Session Resources
+                  </h3>
+                  
+                  {Object.entries(groupedSessionResources).map(([groupName, resList]) => (
+                    <div key={groupName} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
+                        <span style={{ color: '#a855f7' }}>📁</span> {groupName}
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', paddingLeft: '1.5rem' }}>
+                        {resList.map((res, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                              <span>📄</span>
+                              <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{res.name}</span>
+                            </div>
+                            <button 
+                              onClick={() => alert(`Downloading: ${res.name}...`)}
+                              style={{ backgroundColor: 'transparent', border: 'none', color: '#F5D76E', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Download
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+          )}
+        </div>
+
+        {canUploadResources && (
+          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', height: 'fit-content' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Upload Resource</h3>
+            
+            <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>File Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Leadership Workbook.pdf" 
+                  value={fileName}
+                  onChange={e => setFileName(e.target.value)}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.82rem', outline: 'none' }}
+                  required
+                />
               </div>
-            )}
-          </div>
-        </div>
 
-        <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', height: 'fit-content' }}>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Upload Resource</h3>
-          
-          <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>File Name</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Leadership Workbook.pdf" 
-                value={fileName}
-                onChange={e => setFileName(e.target.value)}
-                style={{ width: '100%', padding: '0.65rem 0.85rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.82rem', outline: 'none' }}
-                required
-              />
-            </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Program</label>
+                <select 
+                  value={selectedProgId}
+                  onChange={e => setSelectedProgId(e.target.value)}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.82rem', outline: 'none', cursor: 'pointer' }}
+                  required
+                >
+                  <option value="">Select a Program</option>
+                  {programs.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Program</label>
-              <select 
-                value={selectedProgId}
-                onChange={e => setSelectedProgId(e.target.value)}
-                style={{ width: '100%', padding: '0.65rem 0.85rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.82rem', outline: 'none', cursor: 'pointer' }}
-                required
+              <button 
+                type="submit"
+                style={{ width: '100%', padding: '0.65rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
               >
-                <option value="">Select a Program</option>
-                {programs.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <button 
-              type="submit"
-              style={{ width: '100%', padding: '0.65rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
-            >
-              Upload Material
-            </button>
-          </form>
-        </div>
+                Upload Material
+              </button>
+            </form>
+          </div>
+        )}
 
       </div>
     </div>
   );
 }
+
 
 function SessionNotesTab({ programs = [], addNotification }) {
   const [notes, setNotes] = useState({});
