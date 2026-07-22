@@ -63,9 +63,20 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
     });
 
     const upcoming = sessions.filter(s => s.status !== 'Completed' && s.status !== 'Processing');
-    const focusSess = upcoming[0] || null;
+    let focusSess = upcoming[0] || null;
 
-    // Derived updates from announcements
+    // Provide a premium mock session if the user's workspace is empty, so they can see the design
+    if (!focusSess) {
+      focusSess = {
+        id: 'mock-1',
+        title: 'Executive Leadership Orientation',
+        programName: 'Global Leadership Program',
+        date: 'Today',
+        time: '11:25 AM',
+        status: 'Upcoming',
+        resources: [{}, {}], // mock resources
+      };
+    }
     const updates = [];
     const orgs = [];
     (announcements || []).forEach(a => {
