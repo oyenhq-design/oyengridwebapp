@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Sun, Moon, Grid, ShieldCheck, LogOut, Users, BookOpen, 
   BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
