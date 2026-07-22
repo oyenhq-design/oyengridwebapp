@@ -160,7 +160,7 @@ export default function App() {
     const currentEmail = user.trim().toLowerCase();
     
     // Bypass checks for default/master Admin/Owner account
-    if (currentEmail === 'admin@oyengrid.com' || currentEmail === ownerEmail?.trim().toLowerCase()) {
+    if (userRole === 'Organization Owner' || currentEmail === 'admin@oyengrid.com' || currentEmail === ownerEmail?.trim().toLowerCase()) {
       return;
     }
     
