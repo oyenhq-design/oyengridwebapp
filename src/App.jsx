@@ -7,7 +7,7 @@ import {
   ArrowRight, Check, UserPlus, 
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
   Shield, Rocket, FileText, Mail, HardDrive,
-  Presentation, Folder, Image, Eye, Download, Book, Video
+  Presentation, Folder, Image, Eye, Download, Book, Video, MessageSquare
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
 import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser } from './domain/workspace/selectors';
@@ -1673,7 +1673,7 @@ export default function App() {
         { id: 'Today', label: 'Today\'s Schedule', icon: <Clock size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Resources', label: 'Resources', icon: <BookOpen size={18} /> },
-        { id: 'Announcements', label: 'Announcements', icon: <Bell size={18} /> },
+        { id: 'Announcements', label: 'Communication', icon: <MessageSquare size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     } else if (userRole === 'Program Manager') {
@@ -2623,6 +2623,7 @@ export default function App() {
               <AnnouncementsTab
                 programs={displayPrograms}
                 addNotification={addNotification}
+                userRole={userRole}
               />
             ) : activeTab === 'Certificates' ? (
               <CertificatesTab
