@@ -161,7 +161,7 @@ export default function App() {
     
     const currentEmail = user.trim().toLowerCase();
     
-    // Bypass checks for default/master Admin/Owner account and demo accounts
+    // Bypass checks for default/master Admin account and demo accounts
     const demoEmails = [
       'john.doe@abcenergy.com',
       'sarah.ahmed@abcenergy.com',
@@ -1202,7 +1202,7 @@ export default function App() {
 
             </div>
           )}
-          {/* STEP 2: Create Organization Owner */}
+          {/* STEP 2: Create Admin */}
           {onboardingStep === 2 && (
             <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '2.5rem' }}>
               

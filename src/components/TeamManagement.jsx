@@ -311,7 +311,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
 
     showToast('Creating invitation...', 'info');
 
-    const invitation = InvitationService.createInvitation(email, role, 'Owner');
+    const invitation = InvitationService.createInvitation(email, role, 'Admin');
     invitation.initials = email.slice(0, 2).toUpperCase();
     invitation.color = MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
 
