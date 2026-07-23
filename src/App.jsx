@@ -23,6 +23,7 @@ import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
 import SessionsTab from './components/SessionsTab';
+import oyenLogo from './assets/logo.png';
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
 import AttendanceTab from './components/AttendanceTab';
@@ -883,21 +884,7 @@ export default function App() {
             justifyContent: 'center',
             gap: '4px',
           }}>
-            {/* OYEN hexagon icon */}
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-              style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.5))' }}>
-              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="1.5" fill="rgba(212,175,55,0.08)"/>
-              <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            {/* OYEN wordmark */}
-            <span style={{
-              fontSize: '0.6rem',
-              fontWeight: 800,
-              letterSpacing: '0.12em',
-              color: '#D4AF37',
-              fontFamily: 'system-ui, sans-serif',
-              lineHeight: 1,
-            }}>OYEN</span>
+            <img src={oyenLogo} style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(200,154,43,0.3))' }} alt="OYEN GRID" />
           </div>
         </div>
 
@@ -3016,8 +3003,8 @@ export default function App() {
         </div>
         
         <header className="brand-header" style={{ position: 'relative', zIndex: 3, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ background: '#D4AF37', padding: '0.45rem', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Grid size={18} color="#000" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={oyenLogo} style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(200,154,43,0.2)' }} alt="OYEN GRID logo" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.35rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', lineHeight: 1.1 }}>
