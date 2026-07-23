@@ -5,8 +5,6 @@ import {
 } from 'lucide-react';
 import ProgramDetail from './ProgramDetail';
 
-const PROGRAM_LIMIT = 12; // Increased limit for enterprise-scale feel
-
 export default function ProgramsTab({ 
   programs = [], 
   setPrograms, 
@@ -21,7 +19,7 @@ export default function ProgramsTab({
   const [newProgDesc, setNewProgDesc]           = useState('');
   const [selectedProgramId, setSelectedProgramId] = useState(null);
 
-  // Search & Filter Toolbar state
+  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All'); // 'All' | 'Active' | 'Completed' | 'Archived'
   const [activeSort, setActiveSort] = useState('Newest'); // 'Newest' | 'Oldest' | 'Recently Updated' | 'Alphabetical'
@@ -31,13 +29,13 @@ export default function ProgramsTab({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Card action menu / modals state
+  // Card actions dropdown state
   const [activeMenuProgramId, setActiveMenuProgramId] = useState(null);
   const [renameProgramId, setRenameProgramId]         = useState(null);
   const [renameName, setRenameName]                   = useState('');
   const [deleteProgramId, setDeleteProgramId]         = useState(null);
 
-  // Local feedback toast
+  // local feedback toast
   const [toast, setToast] = useState(null);
   const showToast = (msg) => {
     setToast(msg);
@@ -47,10 +45,6 @@ export default function ProgramsTab({
   const handleCreate = (e) => {
     e.preventDefault();
     if (!newProgName.trim()) return;
-    if (programs.length >= PROGRAM_LIMIT) {
-      showToast('Program limit reached for standard workspace.');
-      return;
-    }
     const cleanName = newProgName.trim();
     setPrograms(prev => [
       {
@@ -165,22 +159,16 @@ export default function ProgramsTab({
     return 'Yesterday';
   };
 
-  // Filter & Search & Sort Pipeline
+  // Pipeline filter / sort
   const filteredAndSortedPrograms = useMemo(() => {
     let result = [...programs];
-
-    // Filter by Status
     if (activeFilter !== 'All') {
       result = result.filter(p => p.status === activeFilter);
     }
-
-    // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.name.toLowerCase().includes(q) || (p.desc || '').toLowerCase().includes(q));
     }
-
-    // Sorting
     if (activeSort === 'Newest') {
       result.sort((a, b) => b.id - a.id);
     } else if (activeSort === 'Oldest') {
@@ -188,10 +176,8 @@ export default function ProgramsTab({
     } else if (activeSort === 'Alphabetical') {
       result.sort((a, b) => a.name.localeCompare(b.name));
     } else if (activeSort === 'Recently Updated') {
-      // Just keep default custom sort or simulation
       result.sort((a, b) => b.id - a.id);
     }
-
     return result;
   }, [programs, activeFilter, searchQuery, activeSort]);
 
@@ -220,24 +206,24 @@ export default function ProgramsTab({
 
   return (
     <div className="animate-fade-in" style={{ 
-      padding: '3rem', 
-      backgroundColor: '#0B0B0F', 
+      padding: '48px 3rem 3rem 3rem', 
+      backgroundColor: '#111315', 
       minHeight: '100vh',
       display: 'flex', 
       flexDirection: 'column', 
-      gap: '2.5rem', 
+      gap: '32px', 
       textAlign: 'left',
-      color: '#F8F6F1'
+      color: '#F7F5F0'
     }}>
       
       {/* Toast Alert */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: '24px', right: '24px',
-          backgroundColor: '#15161B', border: '1px solid #D4AF37',
-          color: '#F8F6F1', padding: '0.8rem 1.25rem', borderRadius: '10px',
+          backgroundColor: '#1A1C20', border: '1px solid #C89A2B',
+          color: '#F7F5F0', padding: '0.8rem 1.25rem', borderRadius: '10px',
           boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 2000,
-          fontSize: '13px', fontWeight: 600, animation: 'slideIn 0.2s ease'
+          fontSize: '13px', fontWeight: 600
         }}>
           {toast}
         </div>
@@ -246,25 +232,25 @@ export default function ProgramsTab({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
-          <h2 style={{ fontSize: '34px', fontWeight: 800, color: '#F8F6F1', margin: 0, fontFamily: "'Outfit', sans-serif" }}>My Programs</h2>
-          <p style={{ color: '#B6B1A7', fontSize: '15px', marginTop: '0.4rem' }}>
-            Manage all training programs from one centralized workspace.
+          <h2 style={{ fontSize: '34px', fontWeight: 800, color: '#F7F5F0', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Programs</h2>
+          <p style={{ color: '#A8AFB9', fontSize: '15px', marginTop: '0.4rem' }}>
+            Manage every training program from one centralized workspace.
           </p>
         </div>
         {userRole === 'Admin' && (
           <button
             onClick={() => setShowCreateModal(true)}
             style={{
-              background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
-              border: 'none', color: '#000', fontWeight: 700,
+              background: 'linear-gradient(135deg, #C89A2B 0%, #AA7C11 100%)',
+              border: 'none', color: '#FFFFFF', fontWeight: 700,
               fontSize: '13px', borderRadius: '12px',
               padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center',
               gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
-              boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)',
-              transition: 'opacity 0.2s'
+              boxShadow: '0 4px 15px rgba(200, 154, 43, 0.2)',
+              transition: 'all 0.15s ease'
             }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.92'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            onMouseEnter={e => e.currentTarget.style.background = '#D7A93A'}
+            onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, #C89A2B 0%, #AA7C11 100%)'}
           >
             <Plus size={16} /> Create Program
           </button>
@@ -275,44 +261,44 @@ export default function ProgramsTab({
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
-        gap: '1rem',
+        gap: '1.25rem',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
-        paddingBottom: '2rem'
+        paddingBottom: '32px'
       }}>
-        <div style={{ backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.6rem', backgroundColor: 'rgba(212,175,55,0.08)', borderRadius: '10px', color: '#D4AF37' }}>
+        <div style={{ backgroundColor: '#1A1C20', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ color: '#C89A2B' }}>
             <BookOpen size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F8F6F1' }}>{programs.length}</div>
-            <div style={{ fontSize: '13px', color: '#7A7A82', fontWeight: 600 }}>Programs</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F7F5F0' }}>{programs.length}</div>
+            <div style={{ fontSize: '13px', color: '#707782', fontWeight: 600 }}>Programs</div>
           </div>
         </div>
-        <div style={{ backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.6rem', backgroundColor: 'rgba(22,163,74,0.08)', borderRadius: '10px', color: '#16A34A' }}>
+        <div style={{ backgroundColor: '#1A1C20', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ color: '#C89A2B' }}>
             <Layers size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F8F6F1' }}>{programs.filter(p => p.status === 'Active').length}</div>
-            <div style={{ fontSize: '13px', color: '#7A7A82', fontWeight: 600 }}>Active</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F7F5F0' }}>{programs.filter(p => p.status === 'Active').length}</div>
+            <div style={{ fontSize: '13px', color: '#707782', fontWeight: 600 }}>Active</div>
           </div>
         </div>
-        <div style={{ backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.6rem', backgroundColor: 'rgba(59,130,246,0.08)', borderRadius: '10px', color: '#3B82F6' }}>
+        <div style={{ backgroundColor: '#1A1C20', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ color: '#C89A2B' }}>
             <Users size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F8F6F1' }}>{learners.length}</div>
-            <div style={{ fontSize: '13px', color: '#7A7A82', fontWeight: 600 }}>Learners</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F7F5F0' }}>{learners.length}</div>
+            <div style={{ fontSize: '13px', color: '#707782', fontWeight: 600 }}>Learners</div>
           </div>
         </div>
-        <div style={{ backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.6rem', backgroundColor: 'rgba(245,158,11,0.08)', borderRadius: '10px', color: '#F59E0B' }}>
+        <div style={{ backgroundColor: '#1A1C20', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ color: '#C89A2B' }}>
             <Calendar size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F8F6F1' }}>{getSessionsTodayCount()}</div>
-            <div style={{ fontSize: '13px', color: '#7A7A82', fontWeight: 600 }}>Sessions Today</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#F7F5F0' }}>{getSessionsTodayCount()}</div>
+            <div style={{ fontSize: '13px', color: '#707782', fontWeight: 600 }}>Sessions Today</div>
           </div>
         </div>
       </div>
@@ -320,7 +306,7 @@ export default function ProgramsTab({
       {/* Toolbar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '380px', position: 'relative' }}>
-          <Search size={16} color="#7A7A82" style={{ position: 'absolute', left: '12px' }} />
+          <Search size={16} color="#707782" style={{ position: 'absolute', left: '12px' }} />
           <input 
             type="text" 
             placeholder="Search programs..."
@@ -330,15 +316,15 @@ export default function ProgramsTab({
               width: '100%', 
               padding: '0.6rem 0.75rem 0.6rem 2.4rem', 
               fontSize: '13px', 
-              backgroundColor: '#15161B', 
+              backgroundColor: '#1A1C20', 
               border: '1px solid rgba(255,255,255,0.06)', 
               borderRadius: '10px', 
-              color: '#F8F6F1', 
+              color: '#F7F5F0', 
               outline: 'none', 
               fontFamily: 'inherit',
               transition: 'border-color 0.2s'
             }}
-            onFocus={e => e.currentTarget.style.borderColor = '#3B82F6'}
+            onFocus={e => e.currentTarget.style.borderColor = '#356AE6'}
             onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
           />
         </div>
@@ -356,15 +342,16 @@ export default function ProgramsTab({
                     padding: '0.45rem 0.9rem',
                     borderRadius: '8px',
                     border: '1px solid rgba(255,255,255,0.06)',
-                    backgroundColor: isActive ? 'rgba(212,175,55,0.1)' : '#15161B',
-                    color: isActive ? '#D4AF37' : '#B6B1A7',
+                    borderColor: isActive ? '#C89A2B' : 'rgba(255,255,255,0.06)',
+                    backgroundColor: isActive ? 'rgba(200,154,43,0.1)' : '#1A1C20',
+                    color: isActive ? '#C89A2B' : '#A8AFB9',
                     fontSize: '13px',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.18s ease'
                   }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = '#1B1D23'; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = '#15161B'; }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = '#23262C'; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = '#1A1C20'; }}
                 >
                   {f}
                 </button>
@@ -379,9 +366,12 @@ export default function ProgramsTab({
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.45rem 0.9rem', borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.06)', backgroundColor: '#15161B',
-                color: '#B6B1A7', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                border: '1px solid rgba(255,255,255,0.06)', backgroundColor: '#1A1C20',
+                color: '#A8AFB9', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#23262C'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#1A1C20'}
             >
               Sort: {activeSort} <ChevronDown size={14} />
             </button>
@@ -390,7 +380,7 @@ export default function ProgramsTab({
                 <div onClick={() => setShowSortDropdown(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
                 <div style={{
                   position: 'absolute', right: 0, marginTop: '0.35rem',
-                  backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: '#23262C', border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: '10px', width: '160px', zIndex: 100, overflow: 'hidden',
                   boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
                 }}>
@@ -400,9 +390,11 @@ export default function ProgramsTab({
                       onClick={() => { setActiveSort(opt); setShowSortDropdown(false); }}
                       style={{
                         width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left',
-                        background: 'none', border: 'none', color: activeSort === opt ? '#D4AF37' : '#B6B1A7',
+                        background: 'none', border: 'none', color: activeSort === opt ? '#C89A2B' : '#A8AFB9',
                         fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center'
                       }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {opt}
                     </button>
@@ -423,10 +415,10 @@ export default function ProgramsTab({
         }}>
           {paginatedPrograms.map((p) => {
             const statusConfig = {
-              'Active':    { icon: '🟢', color: '#16A34A', bg: 'rgba(22,163,74,0.08)' },
-              'Completed': { icon: '🔵', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)' },
-              'Archived':  { icon: '⚪', color: '#B6B1A7', bg: 'rgba(182,177,167,0.08)' },
-              'Cancelled': { icon: '🔴', color: '#DC2626', bg: 'rgba(220,38,38,0.08)' }
+              'Active':    { color: '#22C55E', bg: 'rgba(34,197,94,0.08)' },
+              'Completed': { color: '#356AE6', bg: 'rgba(53,106,230,0.08)' },
+              'Archived':  { color: '#A8AFB9', bg: 'rgba(168,175,185,0.08)' },
+              'Cancelled': { color: '#EF4444', bg: 'rgba(239,68,68,0.08)' }
             };
             const currentStatus = statusConfig[p.status] || statusConfig['Active'];
 
@@ -434,14 +426,14 @@ export default function ProgramsTab({
               <div 
                 key={p.id}
                 style={{ 
-                  backgroundColor: '#15161B', 
+                  backgroundColor: '#1A1C20', 
                   border: '1px solid rgba(255,255,255,0.06)', 
-                  borderRadius: '18px', 
+                  borderRadius: '20px', 
                   padding: '24px', 
                   display: 'flex', 
                   flexDirection: 'column', 
                   gap: '1.25rem', 
-                  transition: 'all 0.2s ease', 
+                  transition: 'all 180ms ease', 
                   position: 'relative',
                   maxWidth: '420px', // Operational design restriction
                   boxSizing: 'border-box'
@@ -449,8 +441,8 @@ export default function ProgramsTab({
                 className="program-card"
                 onMouseEnter={e => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.borderColor = 'rgba(212,175,55,0.25)';
-                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
+                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(200, 154, 43, 0.08)';
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.transform = 'none';
@@ -467,7 +459,7 @@ export default function ProgramsTab({
                         setActiveMenuProgramId(activeMenuProgramId === p.id ? null : p.id);
                       }}
                       style={{ 
-                        background: 'none', border: 'none', color: '#7A7A82', 
+                        background: 'none', border: 'none', color: '#707782', 
                         cursor: 'pointer', padding: '0.2rem', display: 'flex', 
                         alignItems: 'center', justifyContent: 'center' 
                       }}
@@ -483,8 +475,8 @@ export default function ProgramsTab({
                         />
                         <div style={{
                           position: 'absolute', right: 0, marginTop: '0.35rem',
-                          backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                          backgroundColor: '#23262C', border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '10px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
                           width: '160px', zIndex: 100, overflow: 'hidden'
                         }}>
                           <button
@@ -492,9 +484,9 @@ export default function ProgramsTab({
                               setActiveMenuProgramId(null);
                               setSelectedProgramId(p.id);
                             }}
-                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F8F6F1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F7F5F0', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                           >
-                            <Play size={13} fill="#F8F6F1" /> Open Program
+                            <Play size={13} fill="#F7F5F0" /> Open Program
                           </button>
                           <button
                             onClick={() => {
@@ -502,7 +494,7 @@ export default function ProgramsTab({
                               setRenameProgramId(p.id);
                               setRenameName(p.name);
                             }}
-                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F8F6F1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F7F5F0', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                           >
                             <Edit2 size={13} /> Edit Program
                           </button>
@@ -511,7 +503,7 @@ export default function ProgramsTab({
                               setActiveMenuProgramId(null);
                               handleDuplicate(p);
                             }}
-                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F8F6F1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F7F5F0', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                           >
                             <Layers size={13} /> Duplicate
                           </button>
@@ -520,7 +512,7 @@ export default function ProgramsTab({
                               setActiveMenuProgramId(null);
                               handleToggleArchive(p);
                             }}
-                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F8F6F1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F7F5F0', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                           >
                             <Clock size={13} /> {p.status === 'Archived' ? 'Restore' : 'Archive'}
                           </button>
@@ -529,7 +521,7 @@ export default function ProgramsTab({
                               setActiveMenuProgramId(null);
                               setSelectedProgramId(p.id);
                             }}
-                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F8F6F1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F7F5F0', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                           >
                             <Users size={13} /> Manage Team
                           </button>
@@ -538,7 +530,7 @@ export default function ProgramsTab({
                               setActiveMenuProgramId(null);
                               setSelectedProgramId(p.id);
                             }}
-                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F8F6F1', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#F7F5F0', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                           >
                             <Award size={13} /> View Reports
                           </button>
@@ -547,7 +539,7 @@ export default function ProgramsTab({
                               setActiveMenuProgramId(null);
                               setDeleteProgramId(p.id);
                             }}
-                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                            style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#EF4444', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
                           >
                             <Trash2 size={13} /> Delete Program
                           </button>
@@ -559,27 +551,26 @@ export default function ProgramsTab({
 
                 {/* Card Title & Status */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: '2rem' }}>
-                  <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#F8F6F1', margin: 0, flex: 1, paddingRight: '0.5rem', fontFamily: "'Outfit', sans-serif" }}>{p.name}</h4>
+                  <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#F7F5F0', margin: 0, flex: 1, paddingRight: '0.5rem', fontFamily: "'Outfit', sans-serif" }}>{p.name}</h4>
                   <span style={{ 
                     fontSize: '11px', 
                     fontWeight: 700, 
                     color: currentStatus.color, 
                     backgroundColor: currentStatus.bg, 
-                    padding: '0.2rem 0.5rem', 
+                    padding: '0.25rem 0.5rem', 
                     borderRadius: '6px', 
                     flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
                   }}>
-                    <span>{currentStatus.icon}</span> <span>{p.status}</span>
+                    {p.status}
                   </span>
                 </div>
 
                 {/* Description */}
                 <p style={{ 
                   fontSize: '13px', 
-                  color: '#B6B1A7', 
+                  color: '#A8AFB9', 
                   margin: 0, 
                   lineHeight: '1.45', 
                   height: '36px', 
@@ -601,40 +592,40 @@ export default function ProgramsTab({
                   borderTop: '1px solid rgba(255,255,255,0.06)', 
                   borderBottom: '1px solid rgba(255,255,255,0.06)', 
                   padding: '0.75rem 0',
-                  color: '#B6B1A7',
+                  color: '#A8AFB9',
                   textAlign: 'center'
                 }}>
                   <div>
-                    <div style={{ color: '#F8F6F1', fontWeight: 700 }}>{getLearnerCount(p.name)}</div>
-                    <div style={{ fontSize: '11px', color: '#7A7A82' }}>Learners</div>
+                    <div style={{ color: '#F7F5F0', fontWeight: 700 }}>{getLearnerCount(p.name)}</div>
+                    <div style={{ fontSize: '11px', color: '#707782' }}>Learners</div>
                   </div>
                   <div>
-                    <div style={{ color: '#F8F6F1', fontWeight: 700 }}>{p.assignedFacilitators?.length || 2}</div>
-                    <div style={{ fontSize: '11px', color: '#7A7A82' }}>Facs</div>
+                    <div style={{ color: '#F7F5F0', fontWeight: 700 }}>{p.assignedFacilitators?.length || 2}</div>
+                    <div style={{ fontSize: '11px', color: '#707782' }}>Facilitators</div>
                   </div>
                   <div>
-                    <div style={{ color: '#F8F6F1', fontWeight: 700 }}>{(p.sessions || []).length}</div>
-                    <div style={{ fontSize: '11px', color: '#7A7A82' }}>Sessions</div>
+                    <div style={{ color: '#F7F5F0', fontWeight: 700 }}>{(p.sessions || []).length}</div>
+                    <div style={{ fontSize: '11px', color: '#707782' }}>Sessions</div>
                   </div>
                   <div>
-                    <div style={{ color: '#F8F6F1', fontWeight: 700 }}>{(p.resources || []).length}</div>
-                    <div style={{ fontSize: '11px', color: '#7A7A82' }}>Resources</div>
+                    <div style={{ color: '#F7F5F0', fontWeight: 700 }}>{(p.resources || []).length}</div>
+                    <div style={{ fontSize: '11px', color: '#707782' }}>Resources</div>
                   </div>
                 </div>
 
                 {/* Next Session & Last Updated */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#7A7A82' }}>Next Session</span>
-                    <span style={{ color: '#D4AF37', fontWeight: 600 }}>{getNextSessionText(p)}</span>
+                    <span style={{ color: '#707782' }}>Next Session</span>
+                    <span style={{ color: '#C89A2B', fontWeight: 600 }}>{getNextSessionText(p)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#7A7A82' }}>Last Activity</span>
-                    <span style={{ color: '#B6B1A7' }}>{getLastActivityText(p)}</span>
+                    <span style={{ color: '#707782' }}>Last Activity</span>
+                    <span style={{ color: '#A8AFB9' }}>{getLastActivityText(p)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#7A7A82' }}>Updated</span>
-                    <span style={{ color: '#B6B1A7' }}>{getLastUpdatedText(p)}</span>
+                    <span style={{ color: '#707782' }}>Updated</span>
+                    <span style={{ color: '#A8AFB9' }}>{getLastUpdatedText(p)}</span>
                   </div>
                 </div>
 
@@ -644,14 +635,14 @@ export default function ProgramsTab({
                   style={{
                     marginTop: '0.5rem', width: '100%', padding: '0.65rem',
                     background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '12px', color: '#D4AF37', fontWeight: 700,
+                    borderRadius: '12px', color: '#C89A2B', fontWeight: 700,
                     fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                    transition: 'all 0.2s'
+                    transition: 'all 150ms ease'
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(212,175,55,0.1)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(200, 154, 43, 0.1)'; e.currentTarget.style.borderColor = 'rgba(200, 154, 43, 0.3)'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
                 >
-                  {userRole === 'Viewer' ? 'View Program' : 'Open Program'}
+                  Open Program →
                 </button>
               </div>
             );
@@ -659,31 +650,31 @@ export default function ProgramsTab({
         </div>
       ) : (
         <div style={{
-          backgroundColor: '#15161B', border: '1px dashed rgba(255,255,255,0.1)',
-          borderRadius: '18px', padding: '4rem 2rem', textAlign: 'center',
+          backgroundColor: '#1A1C20', border: '1px dashed rgba(255,255,255,0.1)',
+          borderRadius: '20px', padding: '4rem 2rem', textAlign: 'center',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem',
           maxWidth: '500px', margin: '2rem auto'
         }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(200, 154, 43, 0.05)', border: '1px solid rgba(200, 154, 43, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C89A2B' }}>
             <FolderOpen size={26} />
           </div>
           <div>
-            <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#F8F6F1', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+            <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#F7F5F0', margin: 0, fontFamily: "'Outfit', sans-serif" }}>
               No Programs Yet
             </h4>
-            <p style={{ color: '#B6B1A7', fontSize: '13px', marginTop: '0.5rem', lineHeight: 1.5 }}>
-              Create your first program to organize learners, facilitators, sessions, resources, and assessments.
+            <p style={{ color: '#A8AFB9', fontSize: '13px', marginTop: '0.5rem', lineHeight: 1.5 }}>
+              Create your first program to organize learners, facilitators, sessions, and resources.
             </p>
           </div>
           {userRole === 'Admin' && (
             <button
               onClick={() => setShowCreateModal(true)}
               style={{
-                background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
-                border: 'none', color: '#000', fontWeight: 700,
+                background: 'linear-gradient(135deg, #C89A2B 0%, #AA7C11 100%)',
+                border: 'none', color: '#FFFFFF', fontWeight: 700,
                 fontSize: '13px', borderRadius: '12px',
                 padding: '0.65rem 1.5rem', cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(212,175,55,0.2)',
+                boxShadow: '0 4px 15px rgba(200, 154, 43, 0.2)',
                 marginTop: '0.5rem'
               }}
             >
@@ -701,19 +692,19 @@ export default function ProgramsTab({
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             style={{
               padding: '0.45rem 0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
-              backgroundColor: '#15161B', color: currentPage === 1 ? '#7A7A82' : '#B6B1A7',
+              backgroundColor: '#1A1C20', color: currentPage === 1 ? '#707782' : '#A8AFB9',
               fontSize: '13px', fontWeight: 600, cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
             }}
           >
             Previous
           </button>
-          <span style={{ fontSize: '13px', color: '#7A7A82' }}>Page {currentPage} of {totalPages}</span>
+          <span style={{ fontSize: '13px', color: '#707782' }}>Page {currentPage} of {totalPages}</span>
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             style={{
               padding: '0.45rem 0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
-              backgroundColor: '#15161B', color: currentPage === totalPages ? '#7A7A82' : '#B6B1A7',
+              backgroundColor: '#1A1C20', color: currentPage === totalPages ? '#707782' : '#A8AFB9',
               fontSize: '13px', fontWeight: 600, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
             }}
           >
@@ -722,7 +713,7 @@ export default function ProgramsTab({
         </div>
       )}
 
-      {/* Creation Modal */}
+      {/* Creation Modal (Warm Milk Surface) */}
       {showCreateModal && (
         <div
           onClick={() => setShowCreateModal(false)}
@@ -736,51 +727,56 @@ export default function ProgramsTab({
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '18px', padding: '2rem', width: '100%', maxWidth: '460px',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.6)'
+              backgroundColor: '#F5F2EB', border: '1px solid #E7E1D7',
+              borderRadius: '18px', padding: '2.5rem', width: '100%', maxWidth: '480px',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+              color: '#1E2A3B', textAlign: 'left'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', borderBottom: '1px solid #E7E1D7', paddingBottom: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#F8F6F1', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Create Training Program</h3>
-                <p style={{ fontSize: '13px', color: '#7A7A82', marginTop: '0.25rem' }}>Add a new program to your workspace directory.</p>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#1E2A3B', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Create Training Program</h3>
+                <p style={{ fontSize: '13px', color: '#5D6470', marginTop: '0.25rem' }}>Add a new program template slot to your workspace.</p>
               </div>
-              <button onClick={() => setShowCreateModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#B6B1A7', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => setShowCreateModal(false)} style={{ background: '#FFFFFF', border: '1px solid #E7E1D7', color: '#5D6470', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#7A7A82', marginBottom: '0.4rem' }}>Program Name</label>
-                <input
-                  required autoFocus type="text"
-                  placeholder="e.g. Leadership Development Program"
-                  value={newProgName}
-                  onChange={e => setNewProgName(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem 0.9rem', fontSize: '13px', backgroundColor: '#0B0B0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#F8F6F1', outline: 'none', boxSizing: 'border-box' }}
-                />
-              </div>
+              <div style={{ backgroundColor: '#FFFFFF', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E7E1D7', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#5D6470', marginBottom: '0.4rem' }}>Program Name</label>
+                  <input
+                    required autoFocus type="text"
+                    placeholder="e.g. Leadership Development Program"
+                    value={newProgName}
+                    onChange={e => setNewProgName(e.target.value)}
+                    style={{ width: '100%', padding: '0.75rem 0.9rem', fontSize: '13px', backgroundColor: '#FFFFFF', border: '1px solid #E7E1D7', borderRadius: '10px', color: '#1E2A3B', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#7A7A82', marginBottom: '0.4rem' }}>Description</label>
-                <textarea
-                  placeholder="Summarize program goals, curriculum, or tracks..."
-                  value={newProgDesc}
-                  onChange={e => setNewProgDesc(e.target.value)}
-                  rows={3}
-                  style={{ width: '100%', padding: '0.75rem 0.9rem', fontSize: '13px', backgroundColor: '#0B0B0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#F8F6F1', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                />
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#5D6470', marginBottom: '0.4rem' }}>Description</label>
+                  <textarea
+                    placeholder="Summarize program goals, curriculum, or tracks..."
+                    value={newProgDesc}
+                    onChange={e => setNewProgDesc(e.target.value)}
+                    rows={3}
+                    style={{ width: '100%', padding: '0.75rem 0.9rem', fontSize: '13px', backgroundColor: '#FFFFFF', border: '1px solid #E7E1D7', borderRadius: '10px', color: '#1E2A3B', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowCreateModal(false)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#B6B1A7', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
+                <button type="button" onClick={() => setShowCreateModal(false)} style={{ flex: 1, padding: '0.75rem', background: '#FFFFFF', border: '1px solid #DDD6CA', color: '#1E2A3B', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)', border: 'none', color: '#000', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
+                  style={{ flex: 2, padding: '0.75rem', background: '#C89A2B', border: 'none', color: '#FFFFFF', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px', transition: 'background-color 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#D7A93A'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#C89A2B'}
                 >
                   Create Program
                 </button>
@@ -790,33 +786,35 @@ export default function ProgramsTab({
         </div>
       )}
 
-      {/* Rename Modal */}
+      {/* Rename Modal (Warm Milk Surface) */}
       {renameProgramId !== null && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ backgroundColor: '#15161B', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '2rem', width: '100%', maxWidth: '460px', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#F8F6F1', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Edit Program Name</h3>
-              <button onClick={() => setRenameProgramId(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#B6B1A7', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#F5F2EB', border: '1px solid #E7E1D7', borderRadius: '18px', padding: '2.5rem', width: '100%', maxWidth: '480px', boxShadow: '0 25px 60px rgba(0,0,0,0.4)', color: '#1E2A3B' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', borderBottom: '1px solid #E7E1D7', paddingBottom: '1rem' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#1E2A3B', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Edit Program Name</h3>
+              <button onClick={() => setRenameProgramId(null)} style={{ background: '#FFFFFF', border: '1px solid #E7E1D7', color: '#5D6470', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={16} />
               </button>
             </div>
             <form onSubmit={handleRenameSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#7A7A82', marginBottom: '0.4rem' }}>Program Name</label>
+              <div style={{ backgroundColor: '#FFFFFF', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E7E1D7' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#5D6470', marginBottom: '0.4rem' }}>Program Name</label>
                 <input
                   required autoFocus type="text"
                   value={renameName}
                   onChange={e => setRenameName(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem 0.9rem', fontSize: '13px', backgroundColor: '#0B0B0F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#F8F6F1', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '0.75rem 0.9rem', fontSize: '13px', backgroundColor: '#FFFFFF', border: '1px solid #E7E1D7', borderRadius: '10px', color: '#1E2A3B', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button type="button" onClick={() => setRenameProgramId(null)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#B6B1A7', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
+                <button type="button" onClick={() => setRenameProgramId(null)} style={{ flex: 1, padding: '0.75rem', background: '#FFFFFF', border: '1px solid #DDD6CA', color: '#1E2A3B', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)', border: 'none', color: '#000', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
+                  style={{ flex: 2, padding: '0.75rem', background: '#C89A2B', border: 'none', color: '#FFFFFF', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px', transition: 'background-color 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#D7A93A'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#C89A2B'}
                 >
                   Save Changes
                 </button>
@@ -826,32 +824,32 @@ export default function ProgramsTab({
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal (Warm Milk Surface) */}
       {deleteProgramId !== null && (() => {
         const prog = programs.find(p => p.id === deleteProgramId);
         return (
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-            <div style={{ backgroundColor: '#15161B', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '18px', padding: '2rem', width: '100%', maxWidth: '480px', boxShadow: '0 30px 70px rgba(0,0,0,0.7)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#ef4444', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Delete Program</h3>
-                <button onClick={() => setDeleteProgramId(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#B6B1A7', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ backgroundColor: '#F5F2EB', border: '1px solid #EF4444', borderRadius: '18px', padding: '2.5rem', width: '100%', maxWidth: '480px', boxShadow: '0 30px 70px rgba(0,0,0,0.5)', color: '#1E2A3B' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', borderBottom: '1px solid #E7E1D7', paddingBottom: '1rem' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#EF4444', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Delete Program</h3>
+                <button onClick={() => setDeleteProgramId(null)} style={{ background: '#FFFFFF', border: '1px solid #E7E1D7', color: '#5D6470', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <X size={16} />
                 </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <p style={{ color: '#F8F6F1', fontSize: '15px', margin: 0, lineHeight: '1.5' }}>
-                  Are you sure you want to delete <strong style={{ color: '#D4AF37' }}>{prog?.name}</strong>?
+                <p style={{ color: '#1E2A3B', fontSize: '15px', margin: 0, lineHeight: '1.5' }}>
+                  Are you sure you want to delete <strong style={{ color: '#C89A2B' }}>{prog?.name}</strong>?
                 </p>
-                <div style={{ backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '0.9rem 1.1rem', fontSize: '13px', color: '#fca5a5', lineHeight: '1.5' }}>
+                <div style={{ backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid #E7E1D7', borderRadius: '10px', padding: '0.9rem 1.1rem', fontSize: '13px', color: '#EF4444', lineHeight: '1.5' }}>
                   <strong>Warning:</strong> This will permanently delete the program and remove all program-related data, including all sessions, resources, assessments, and any assigned learners. This action cannot be undone.
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                  <button type="button" onClick={() => setDeleteProgramId(null)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#B6B1A7', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
+                  <button type="button" onClick={() => setDeleteProgramId(null)} style={{ flex: 1, padding: '0.75rem', background: '#FFFFFF', border: '1px solid #DDD6CA', color: '#1E2A3B', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
                     Cancel
                   </button>
                   <button
                     onClick={handleDeleteConfirm}
-                    style={{ flex: 1, padding: '0.75rem', background: '#ef4444', border: 'none', color: '#fff', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
+                    style={{ flex: 1, padding: '0.75rem', background: '#EF4444', border: 'none', color: '#fff', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
                   >
                     Delete Program
                   </button>
