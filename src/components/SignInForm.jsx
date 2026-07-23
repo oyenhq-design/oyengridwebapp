@@ -110,8 +110,8 @@ export default function SignInForm({
       }
 
       const actualRole = matchingMember.role;
-      const isOwnerDefault = (targetEmail === 'admin@oyengrid.com' || actualRole === 'Admin');
-      const expectedPassword = matchingMember.password || (isOwnerDefault ? 'password123' : null);
+      const isAdminDefault = (targetEmail === 'admin@oyengrid.com' || actualRole === 'Admin');
+      const expectedPassword = matchingMember.password || (isAdminDefault ? 'password123' : null);
 
       if (!expectedPassword || password !== expectedPassword) {
         setStatusMessage({

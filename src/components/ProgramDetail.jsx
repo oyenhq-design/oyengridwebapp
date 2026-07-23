@@ -272,7 +272,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     alert('Certificate reissued!');
   };
 
-  const isOwnerOrAdmin = userRole === 'Admin';
+  const isAdmin = userRole === 'Admin';
   
   const subTabs = userRole === 'Viewer'
     ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Assessments', 'Reports', 'Announcements']
