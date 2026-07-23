@@ -70,7 +70,7 @@ export default function TeamMemberOverview({ info, programs = [], learners = [],
                   No programs assigned yet.
                 </h4>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0, maxWidth: '400px', lineHeight: 1.5 }}>
-                  Programs assigned by your Organization Owner or Program Manager will appear here.
+                  Programs assigned by your Admin or Program Manager will appear here.
                 </p>
               </div>
             ) : (

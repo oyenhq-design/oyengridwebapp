@@ -99,7 +99,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
             Manage your training programs and keep everything organized in one place.
           </p>
         </div>
-        {(userRole === 'Organization Owner' || userRole === 'Admin') && (
+        {(userRole === 'Admin') && (
           <button
             onClick={() => {
               if (programs.length >= PROGRAM_LIMIT) {
@@ -140,7 +140,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
               >
                 {/* Action Menu (Three Dots) */}
-                {(userRole === 'Organization Owner' || userRole === 'Admin') && (
+                {(userRole === 'Admin') && (
                   <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
                     <button
                       onClick={(e) => {
@@ -260,7 +260,7 @@ export default function ProgramsTab({ programs = [], setPrograms, learners = [],
                       : 'Set up a program, add learners, upload resources, and start running your training.')}
               </p>
             </div>
-            {(userRole === 'Organization Owner' || userRole === 'Admin') && (
+            {(userRole === 'Admin') && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 style={{

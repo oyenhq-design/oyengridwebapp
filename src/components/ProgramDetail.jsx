@@ -86,7 +86,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   const assignedFacs = teamMembers.filter(m => assignedEmails.includes(m.email));
 
   // Find all active assignable staff in workspace
-  const activeFacilitators = teamMembers.filter(m => m.status === 'Active' && m.role !== 'Organization Owner' && m.role !== 'Admin');
+  const activeFacilitators = teamMembers.filter(m => m.status === 'Active' && m.role !== 'Admin');
   const filteredFacilitators = activeFacilitators.filter(m => 
     (m.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
     (m.email || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -272,7 +272,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     alert('Certificate reissued!');
   };
 
-  const isOwnerOrAdmin = userRole === 'Organization Owner' || userRole === 'Admin';
+  const isOwnerOrAdmin = userRole === 'Admin';
   
   const subTabs = userRole === 'Viewer'
     ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Assessments', 'Reports', 'Announcements']

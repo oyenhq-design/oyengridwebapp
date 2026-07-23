@@ -171,7 +171,7 @@ export default function App() {
       'facilitator@oyengrid.test'
     ];
     if (
-      userRole === 'Organization Owner' || 
+      userRole === 'Admin' || 
       userRole === 'Workspace Super Admin' || 
       currentEmail === 'admin@oyengrid.com' || 
       currentEmail === ownerEmail?.trim().toLowerCase() ||
@@ -199,7 +199,7 @@ export default function App() {
       setUser(null);
       setUserRole(null);
       setActiveRoute('signin');
-      addNotification('Your access to this organization has been removed. Please contact your Organization Owner.');
+      addNotification('Your access to this organization has been removed. Please contact your Admin.');
     }
   }, [wsTeam, user, userRole, ownerEmail]);
 
@@ -257,7 +257,7 @@ export default function App() {
       category: '🟡',
       title: 'New Resources Uploaded',
       program: 'Communication Skills',
-      description: 'The Organization Owner uploaded "Session 2 Slides.pdf" and "Workbook.docx".',
+      description: 'The Admin uploaded "Session 2 Slides.pdf" and "Workbook.docx".',
       time: '2 hours ago',
       read: false,
       actionText: 'View Resource',
@@ -340,7 +340,7 @@ export default function App() {
       return {
         fullName: `${ownerFirstName} ${ownerLastName}`,
         initials: `${ownerFirstName?.[0] || 'J'}${ownerLastName?.[0] || 'D'}`,
-        role: userRole || 'Organization Owner',
+        role: userRole || 'Admin',
         email: user,
         photo: ownerPhoto
       };
@@ -563,7 +563,7 @@ export default function App() {
             ...m,
             name: ownerName,
             initials: ownerInitials.toUpperCase(),
-            role: userRole || 'Organization Owner',
+            role: userRole || 'Admin',
             isYou: true
           } : m);
         } else {
@@ -574,7 +574,7 @@ export default function App() {
               name: ownerName,
               isYou: true,
               email: ownerEmailAddr,
-              role: userRole || 'Organization Owner',
+              role: userRole || 'Admin',
               status: 'Active',
               joined: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
             },
@@ -765,7 +765,7 @@ export default function App() {
 
       // Save auth email
       setUser(email);
-      setUserRole('Organization Owner');
+      setUserRole('Admin');
 
       // Route to Onboarding Walkthrough
       setOnboardingStep(1);
@@ -1209,8 +1209,8 @@ export default function App() {
               {/* Form Side */}
               <div>
                 <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 2 of 5 Ã¢â‚¬Â¢ Organization Owner</span>
-                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Create the organization owner account.</h2>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 2 of 5 Ã¢â‚¬Â¢ Admin</span>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Create the admin account.</h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
                     This account will manage your workspace, billing, security, team members and platform settings.
                   </p>
@@ -1468,7 +1468,7 @@ export default function App() {
                     }} 
                     onClick={() => triggerTransition(() => {
                       setUser(ownerEmail || 'abc@gmail.com');
-                      setUserRole('Organization Owner');
+                      setUserRole('Admin');
                       setOrgName('abc energy');
                       setActiveRoute('dashboard');
                       setActiveTab('Dashboard');
@@ -1700,7 +1700,7 @@ export default function App() {
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
                 Your enterprise learning workspace is ready. Click below to launch the OYEN GRID administration dashboard.
               </p>
-              <button className="submit-btn" onClick={() => handleAuthSuccess(user, 'Organization Owner')}>
+              <button className="submit-btn" onClick={() => handleAuthSuccess(user, 'Admin')}>
                 Launch Workspace Dashboard
               </button>
             </div>
@@ -2216,7 +2216,7 @@ export default function App() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff' }}>{ownerFirstName} {ownerLastName}</span>
-                    <span style={{ fontSize: '0.65rem', color: '#a0aec0' }}>Organization Owner</span>
+                    <span style={{ fontSize: '0.65rem', color: '#a0aec0' }}>Admin</span>
                   </div>
                 </div>
                 <ChevronDown size={14} color="#718096" />
@@ -3319,7 +3319,7 @@ export default function App() {
                     onClick={() => triggerTransition(() => {
                       setOrgName(verifyOrgNameInput.trim() || 'ABC Energy Ltd');
                       setUser(verifyOrgEmailInput.trim());
-                      setUserRole('Organization Owner');
+                      setUserRole('Admin');
                       handleOrgRegistrationComplete(verifyOrgEmailInput.trim(), 'bootcamp');
                     })}
                   >
@@ -3914,7 +3914,7 @@ function HelpTab() {
   const faqs = [
     { q: 'How do I add a new facilitator?', a: 'Go to the Team tab, click Invite Member, enter their email, choose Facilitator role, and hit send. An invitation with a secure access code will be generated.' },
     { q: 'How is storage calculated?', a: 'Storage is calculated based on the file sizes of uploaded program resources, session attachments, and participant materials inside your active workspace.' },
-    { q: 'Can I change my subscription plan?', a: 'Plan changes can be managed under Organization Settings (accessible only to Organization Owners).' },
+    { q: 'Can I change my subscription plan?', a: 'Plan changes can be managed under Organization Settings (accessible only to Admins).' },
   ];
 
   const handleContactSubmit = (e) => {

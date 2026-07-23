@@ -57,7 +57,7 @@ export default function SignInForm({
 
     // If no roles are found, fallback to standard roles
     if (rolesSet.size === 0) {
-      return ['Organization Owner', 'Admin', 'Program Manager', 'Facilitator', 'Team Member', 'Viewer'];
+      return ['Admin', 'Program Manager', 'Facilitator', 'Viewer'];
     }
 
     return Array.from(rolesSet);
@@ -110,7 +110,7 @@ export default function SignInForm({
       }
 
       const actualRole = matchingMember.role;
-      const isOwnerDefault = (targetEmail === 'admin@oyengrid.com' || actualRole === 'Organization Owner');
+      const isOwnerDefault = (targetEmail === 'admin@oyengrid.com' || actualRole === 'Admin');
       const expectedPassword = matchingMember.password || (isOwnerDefault ? 'password123' : null);
 
       if (!expectedPassword || password !== expectedPassword) {

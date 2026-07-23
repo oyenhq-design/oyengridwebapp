@@ -9,7 +9,7 @@ export function getProgramsForUser(user, role, programs = []) {
   const currentEmail = user.trim().toLowerCase();
   const safePrograms = programs || [];
 
-  if (role === 'Organization Owner' || role === 'Admin' || role === 'Viewer') {
+  if (role === 'Admin' || role === 'Viewer') {
     return safePrograms;
   }
 

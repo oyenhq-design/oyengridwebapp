@@ -6,14 +6,12 @@ import {
   CheckCircle2, AlertCircle, Eye, EyeOff, MoreVertical, ExternalLink, Download
 } from 'lucide-react';
 
-const ROLES = ['Admin', 'Program Manager', 'Facilitator', 'Team Member', 'Viewer'];
+const ROLES = ['Admin', 'Program Manager', 'Facilitator', 'Viewer'];
 
 const ROLE_COLORS = {
-  'Organization Owner': { bg: 'rgba(212,175,55,0.12)', text: '#B98C17' },
-  'Admin':              { bg: 'rgba(16,185,129,0.12)', text: '#059669' },
+  'Admin':              { bg: 'rgba(212,175,55,0.12)', text: '#B98C17' },
   'Program Manager':    { bg: 'rgba(139,92,246,0.12)', text: '#7C3AED' },
   'Facilitator':        { bg: 'rgba(59,130,246,0.12)', text: '#2563EB' },
-  'Team Member':        { bg: 'rgba(107,114,128,0.12)', text: '#4B5563' },
   'Viewer':             { bg: 'rgba(107,114,128,0.12)', text: '#4B5563' }
 };
 
@@ -332,7 +330,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
   /* Regenerate link */
   const handleRegenerate = () => {
     const email = `link-member-${Math.floor(1000 + Math.random() * 9000)}@oyengrid.com`;
-    const invitation = InvitationService.createInvitation(email, 'Team Member', 'Owner');
+    const invitation = InvitationService.createInvitation(email, 'Viewer', 'Admin');
     invitation.initials = 'LM';
     invitation.color = MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
 
@@ -412,8 +410,8 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
       }
     });
 
-    if (activeFilter === 'Owners') {
-      list = list.filter(item => item.role === 'Organization Owner');
+    if (activeFilter === 'Admins') {
+      list = list.filter(item => item.role === 'Admin');
     } else if (activeFilter === 'Facilitators') {
       list = list.filter(item => item.role === 'Facilitator');
     } else if (activeFilter === 'Pending') {
@@ -483,7 +481,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
         {/* Filters and Search Bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {['All', 'Owners', 'Facilitators', 'Pending'].map(f => {
+            {['All', 'Admins', 'Facilitators', 'Pending'].map(f => {
               const isActive = activeFilter === f;
               return (
                 <button
@@ -541,7 +539,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
                 const statusStyle = STATUS_COLOR[item.status] || { bg: 'rgba(212,175,55,0.1)', text: '#B98C17' };
                 
                 // Mock visual props
-                const programsList = item.role === 'Organization Owner' || item.role === 'Admin' ? 'All Programs' : 'Leadership Orientation';
+                const programsList = item.role === 'Admin' ? 'All Programs' : 'Leadership Orientation';
                 const lastActiveStr = item.status === 'Pending' ? 'Pending Invite' : (item.isYou ? 'Active now' : 'Yesterday');
 
                 return (
