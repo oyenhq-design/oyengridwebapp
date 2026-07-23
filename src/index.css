@@ -127,8 +127,10 @@ h1, h2, h3, h4, h5, h6 {
 .brand-panel {
   position: relative;
   background-image: url('./assets/mountain_bg.jpg');
-  background-size: cover;
+  background-size: contain;
+  background-repeat: no-repeat;
   background-position: center;
+  background-color: #030303;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
