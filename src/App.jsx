@@ -24,7 +24,6 @@ import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
 import SessionsTab from './components/SessionsTab';
 import oyenLogo from './assets/logo.png';
-import onboardingBg from './assets/onboarding_bg.png';
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
 import AttendanceTab from './components/AttendanceTab';
@@ -926,22 +925,17 @@ export default function App() {
       <div style={{ 
         display: 'flex', 
         minHeight: '100vh', 
-        backgroundImage: `radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 100%), url(${onboardingBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        background: isSplitStep ? '#09090B' : 'var(--bg-primary)', 
         alignItems: 'center', 
         justifyContent: 'center', 
         padding: '2rem',
-        transition: 'all 0.3s ease'
+        transition: 'background-color 0.3s ease'
       }}>
         <div className="form-card" style={{ 
           maxWidth: isSplitStep ? '1100px' : '600px', 
           width: '100%',
-          backgroundColor: isSplitStep ? 'rgba(17, 19, 21, 0.85)' : 'rgba(26, 28, 32, 0.9)',
-          backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+          backgroundColor: isSplitStep ? 'rgba(9, 9, 11, 0.95)' : 'var(--bg-card)',
+          borderColor: isSplitStep ? 'rgba(255, 255, 255, 0.08)' : 'var(--border-color)',
           transition: 'all 0.3s ease'
         }}>
           
