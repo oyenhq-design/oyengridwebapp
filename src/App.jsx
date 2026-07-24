@@ -24,7 +24,7 @@ import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
 import SessionsTab from './components/SessionsTab';
 import oyenLogo from './assets/logo.png';
-import onboardingBg from './assets/onboarding_bg.png';
+import onboardingBg from './assets/onboarding_bg_v2.png';
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
 import AttendanceTab from './components/AttendanceTab';
