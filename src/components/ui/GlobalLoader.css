@@ -3,8 +3,7 @@
 .global-loader-overlay {
   position: fixed;
   inset: 0;
-  /* Cool dark gradient background */
-  background: radial-gradient(circle at center, #15181D 0%, #0D1015 45%, #090B0E 100%);
+  background-color: #0B0D10;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -12,30 +11,29 @@
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  font-family: 'Geist', 'Outfit', system-ui, -apple-system, sans-serif;
   color: #F8F6F1;
   opacity: 0;
   transform: scale(0.92);
-  animation: globalLoaderFadeIn 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: globalLoaderFadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Exit transition styles managed by JS */
 .global-loader-overlay.fade-out {
   opacity: 0 !important;
-  transform: scale(0.97) !important;
-  transition: opacity 220ms cubic-bezier(0.16, 1, 0.3, 1), transform 220ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transform: scale(0.985) !important;
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1), transform 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Soft gold glow behind the logo */
+/* Softer breathing radial glow behind the logo (3-5% gold tint, very large blur) */
 .global-loader-radial-glow {
   position: absolute;
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 65%);
-  filter: blur(40px);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.04) 0%, transparent 70%);
+  filter: blur(50px);
   pointer-events: none;
   z-index: 1;
-  animation: breathingAmbientGlow 2.8s ease-in-out infinite;
+  animation: breathingAmbientGlow 4s ease-in-out infinite;
 }
 
 /* Base Logo Wrapper Animations */
@@ -48,30 +46,37 @@
   overflow: hidden;
   z-index: 2;
   animation: 
-    globalLogoFloat 3s ease-in-out infinite, 
-    globalLogoSlowPivot 12s ease-in-out infinite;
+    globalLogoFloat 3.5s ease-in-out infinite, 
+    globalLogoSlowPivot 12s ease-in-out infinite,
+    globalLogoBreathingScale 2.8s ease-in-out infinite;
 }
 
 .brand-loader-logo {
-  width: 90px;
-  height: 90px;
+  width: 96px;
+  height: 96px;
   object-fit: cover;
   border-radius: 50%;
   mix-blend-mode: screen;
-  /* Lower brightness, saturation, and contrast for premium gold look */
   filter: saturate(80%) brightness(85%) contrast(95%);
   animation: globalLogoGlow 2.8s ease-in-out infinite;
 }
 
 /* Responsive sizes */
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   .brand-loader-logo {
-    width: 80px;
-    height: 80px;
+    width: 84px;
+    height: 84px;
   }
 }
 
-/* Metallic Gold Shine Sweep */
+@media (max-width: 640px) {
+  .brand-loader-logo {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+/* Metallic Gold Shine Sweep: Sweeps for 2s, rests for 3.5s (5.5s total loop) */
 .global-loader-shine-overlay {
   position: absolute;
   top: 0;
@@ -84,16 +89,7 @@
   pointer-events: none;
   z-index: 3;
   transform: translateX(-100%) rotate(-15deg);
-  animation: globalGoldSweep 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-/* Loading Description text */
-.global-loader-desc-text {
-  font-size: 0.88rem;
-  color: #8B9098;
-  letter-spacing: 0.5px;
-  font-weight: 500;
-  opacity: 0.85;
+  animation: globalGoldSweep 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 /* Keyframes */
@@ -105,18 +101,23 @@
 }
 
 @keyframes breathingAmbientGlow {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.1); opacity: 1; }
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 @keyframes globalLogoFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  0%, 100% { transform: translateY(-2px); }
+  50% { transform: translateY(2px); }
+}
+
+@keyframes globalLogoBreathingScale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
 }
 
 @keyframes globalLogoGlow {
-  0%, 100% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 15px rgba(212, 175, 55, 0.12)); }
-  50% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 35px rgba(212, 175, 55, 0.22)); }
+  0%, 100% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 15px rgba(212, 175, 55, 0.10)); }
+  50% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 35px rgba(212, 175, 55, 0.18)); }
 }
 
 @keyframes globalLogoSlowPivot {
@@ -126,7 +127,8 @@
 
 @keyframes globalGoldSweep {
   0% { transform: translate(-100%, 100%) rotate(-15deg); }
-  35%, 100% { transform: translate(100%, -100%) rotate(-15deg); }
+  36% { transform: translate(100%, -100%) rotate(-15deg); }
+  100% { transform: translate(100%, -100%) rotate(-15deg); }
 }
 
 /* Accessibility: Respect Reduced Motion */

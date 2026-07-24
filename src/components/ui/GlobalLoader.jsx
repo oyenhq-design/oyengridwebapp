@@ -23,7 +23,7 @@ export default function GlobalLoader({ loading, message }) {
         fadeOutTimer = setTimeout(() => {
           setShouldRender(false);
           setIsFadingOut(false);
-        }, 250); // Matches the 250ms CSS exit transition
+        }, 180); // Matches the 180ms CSS exit transition
       } else {
         clearTimeout(renderTimer);
       }
@@ -81,8 +81,15 @@ export default function GlobalLoader({ loading, message }) {
       {/* Subtle radial ambient background glow behind the logo */}
       <div className="global-loader-radial-glow" />
 
-      {/* Main content wrapper */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
+      {/* Main content wrapper shifted to 45% viewport height */}
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        zIndex: 5,
+        transform: 'translateY(-5%)' 
+      }}>
         
         {/* Animated logo wrapper rendering the PNG directly */}
         <div className="global-loader-logo-wrapper">
@@ -96,10 +103,25 @@ export default function GlobalLoader({ loading, message }) {
           <div className="global-loader-shine-overlay" />
         </div>
 
-        {/* Brand Text */}
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <div className="global-loader-desc-text">
-            {message || "Loading..."}
+        {/* Brand Text & Description */}
+        <div style={{ marginTop: '32px', textAlign: 'center' }}>
+          <h2 style={{ 
+            fontSize: '16px', 
+            fontWeight: 600, 
+            color: '#FFFFFF', 
+            letterSpacing: '0.3px', 
+            margin: 0,
+            fontFamily: "'Inter', sans-serif"
+          }}>
+            Loading Workspace
+          </h2>
+          <div style={{ 
+            fontSize: '14px', 
+            color: 'rgba(255, 255, 255, 0.55)', 
+            marginTop: '10px',
+            fontFamily: "'Inter', sans-serif"
+          }}>
+            {message || "Preparing your workspace..."}
           </div>
         </div>
 
