@@ -35,17 +35,32 @@
   overflow: hidden;
   animation: 
     globalLogoFloat 3s ease-in-out infinite, 
-    globalLogoGlow 2.8s ease-in-out infinite,
     globalLogoSlowPivot 12s ease-in-out infinite;
 }
 
-.global-loader-logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  position: relative;
-  z-index: 2;
+.brand-loader-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
   mix-blend-mode: screen;
+  filter: contrast(135%) brightness(95%);
+  animation: globalLogoGlow 2.8s ease-in-out infinite;
+}
+
+/* Responsive sizes */
+@media (max-width: 1024px) {
+  .brand-loader-logo {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-loader-logo {
+    width: 80px;
+    height: 80px;
+  }
 }
 
 /* Metallic Gold Shine Sweep */
@@ -55,12 +70,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(255,255,255,0) 25%, rgba(212, 175, 55, 0.22) 50%, rgba(255,255,255,0) 75%);
-  mix-blend-mode: overlay;
+  background: linear-gradient(135deg, rgba(255,255,255,0) 25%, rgba(212, 175, 55, 0.25) 50%, rgba(255,255,255,0) 75%);
+  mix-blend-mode: screen;
+  opacity: 0.22;
   pointer-events: none;
   z-index: 3;
   transform: translateX(-100%) rotate(-15deg);
-  animation: globalGoldSweep 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: globalGoldSweep 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 /* Loading Description fading animation */
@@ -84,42 +100,22 @@
 
 @keyframes globalLogoFloat {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  50% { transform: translateY(-4px); }
 }
 
 @keyframes globalLogoGlow {
-  0%, 100% { filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.12)); }
-  50% { filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.22)); }
+  0%, 100% { filter: contrast(135%) brightness(95%) drop-shadow(0 0 15px rgba(212, 175, 55, 0.12)); }
+  50% { filter: contrast(135%) brightness(95%) drop-shadow(0 0 35px rgba(212, 175, 55, 0.22)); }
 }
 
 @keyframes globalLogoSlowPivot {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
 }
 
 @keyframes globalGoldSweep {
   0% { transform: translate(-100%, 100%) rotate(-15deg); }
   35%, 100% { transform: translate(100%, -100%) rotate(-15deg); }
-}
-
-/* Media Queries for Responsive Logo Sizes */
-.global-loader-logo-size {
-  width: 120px;
-  height: 120px;
-}
-
-@media (max-width: 1024px) {
-  .global-loader-logo-size {
-    width: 96px;
-    height: 96px;
-  }
-}
-
-@media (max-width: 640px) {
-  .global-loader-logo-size {
-    width: 80px;
-    height: 80px;
-  }
 }
 
 /* Accessibility: Respect Reduced Motion */
