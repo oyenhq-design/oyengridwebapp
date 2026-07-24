@@ -34,61 +34,6 @@ import CertificatesTab from './components/CertificatesTab';
 import NotificationsTab from './components/NotificationsTab';
 
 
-function OyenAnimatedLogo({ size = 96 }) {
-  return (
-    <div className="oyen-loader-logo-container" style={{ 
-      width: `${size}px`, 
-      height: `${size}px`, 
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      userSelect: 'none'
-    }}>
-      <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="goldGrad" x1="0" y1="0" x2="100" y2="100">
-            <stop offset="0%" stopColor="#C89A2B" />
-            <stop offset="50%" stopColor="#D7A93A" />
-            <stop offset="100%" stopColor="#AA7C11" />
-          </linearGradient>
-        </defs>
-
-        {/* Outer Circular Ring (rotates slowly clockwise) */}
-        <g className="oyen-loader-outer-ring">
-          <circle cx="50" cy="50" r="42" stroke="url(#goldGrad)" strokeWidth="5.5" fill="none" />
-          {/* Traveling Watch-Bezel Light Sweep (rotates or sweeps clockwise on top of the gold ring) */}
-          <circle 
-            cx="50" cy="50" r="42" 
-            stroke="#FFFFFF" 
-            strokeWidth="5.5" 
-            strokeDasharray="40 224" 
-            fill="none" 
-            className="oyen-loader-light-sweep" 
-            opacity="0.85" 
-          />
-        </g>
-
-        {/* Fixed Center Lightning Bolt (does not rotate) */}
-        <path 
-          d="M52 16 L62 42 H52 L58 58 H49 L55 84 L36 48 H46 L41 32 H52 Z" 
-          fill="url(#goldGrad)" 
-        />
-      </svg>
-      {/* Metallic sweep overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 0, left: 0, width: '100%', height: '100%',
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
-        mixBlendMode: 'overlay',
-        pointerEvents: 'none',
-        animation: 'metallicSweep 3s ease-in-out infinite'
-      }} />
-    </div>
-  );
-}
-
 export default function App() {
   const [activeRoute, setActiveRoute] = useState('portal'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
   const [showTransition, setShowTransition] = useState(false);
@@ -101,27 +46,6 @@ export default function App() {
   const [user, setUser] = useState(null); 
   const [userRole, setUserRole] = useState('Workspace Super Admin');
   const [authLoading, setAuthLoading] = useState(true);
-
-  // Loading messages fade cycling
-  const loadingMessages = useMemo(() => [
-    "Preparing Workspace...",
-    "Loading Programs...",
-    "Syncing Learners...",
-    "Connecting Team...",
-    "Organizing Sessions...",
-    "Generating Insights...",
-    "Almost Ready..."
-  ], []);
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-
-  useEffect(() => {
-    if (authLoading || showTransition) {
-      const interval = setInterval(() => {
-        setCurrentMessageIndex(prev => (prev + 1) % loadingMessages.length);
-      }, 1800);
-      return () => clearInterval(interval);
-    }
-  }, [authLoading, showTransition, loadingMessages]);
   
   // Workspace Template configuration
   const [activeTemplate, setActiveTemplate] = useState('enterprise'); // 'enterprise' | 'bootcamp' | 'education' | 'events'
@@ -911,8 +835,7 @@ export default function App() {
       <div style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: '#0A0A0A',
-        backgroundImage: 'radial-gradient(circle at center, rgba(200,154,43,0.06) 0%, transparent 80%)',
+        backgroundColor: '#0a0a0a',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -920,33 +843,75 @@ export default function App() {
         zIndex: 10000,
         opacity: transitionFading ? 0 : 1,
         transition: 'opacity 0.3s ease',
-        fontFamily: "'Outfit', sans-serif"
       }}>
-        {/* Signature Logo Animation */}
-        <OyenAnimatedLogo size={120} />
+        {/* Outer spinning arc ring */}
+        <div style={{ position: 'relative', width: '140px', height: '140px' }}>
+          {/* Rotating SVG arc */}
+          <svg
+            width="140" height="140"
+            viewBox="0 0 140 140"
+            style={{
+              position: 'absolute',
+              top: 0, left: 0,
+              animation: 'transitionSpin 1.2s linear infinite',
+            }}
+          >
+            <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(212,175,55,0.1)" strokeWidth="3" />
+            <circle
+              cx="70" cy="70" r="62"
+              fill="none"
+              stroke="#D4AF37"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="280"
+              strokeDashoffset="180"
+            />
+          </svg>
 
-        {/* Loading Text & Branding */}
-        <div style={{ marginTop: '2.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-          <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#F8F6F1', letterSpacing: '2px', textTransform: 'uppercase' }}>
-            OYEN <span style={{ color: '#C89A2B' }}>GRID</span>
-          </div>
-          <div style={{ fontSize: '0.72rem', color: '#A8AFB9', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.8 }}>
-            Program Operating System
-          </div>
-          
-          {/* Fading message */}
-          <div key={currentMessageIndex} className="animate-fade-in" style={{
-            fontSize: '0.85rem',
-            color: '#D7A93A',
-            textTransform: 'uppercase',
-            letterSpacing: '1.5px',
-            marginTop: '1.5rem',
-            height: '20px',
-            fontWeight: 700
+          {/* Center logo circle */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '88px',
+            height: '88px',
+            borderRadius: '50%',
+            backgroundColor: '#111111',
+            border: '1px solid rgba(212,175,55,0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px',
           }}>
-            {loadingMessages[currentMessageIndex]}
+            <img src={oyenLogo} style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(200,154,43,0.3))' }} alt="OYEN GRID" />
           </div>
         </div>
+
+        {/* Brand name below */}
+        <div style={{
+          marginTop: '1.75rem',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            letterSpacing: '0.35em',
+            color: 'rgba(255,255,255,0.55)',
+            textTransform: 'uppercase',
+            fontFamily: 'system-ui, sans-serif',
+          }}>
+            OYEN GRID
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes transitionSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -2987,39 +2952,32 @@ export default function App() {
   if (authLoading) {
     return (
       <div style={{
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        minHeight: '100vh', 
-        backgroundColor: '#0A0A0A',
-        backgroundImage: 'radial-gradient(circle at center, rgba(200,154,43,0.06) 0%, transparent 80%)',
-        color: '#F8F6F1',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100vh', backgroundColor: '#090a0f', color: '#fff',
         fontFamily: "'Outfit', sans-serif"
       }}>
-        {/* Signature Logo Animation */}
-        <OyenAnimatedLogo size={120} />
-
-        {/* Loading Text & Branding */}
-        <div style={{ marginTop: '2.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-          <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#F8F6F1', letterSpacing: '2px', textTransform: 'uppercase' }}>
-            OYEN <span style={{ color: '#C89A2B' }}>GRID</span>
-          </div>
-          <div style={{ fontSize: '0.72rem', color: '#A8AFB9', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', opacity: 0.8 }}>
-            Program Operating System
-          </div>
-          
-          {/* Fading message */}
-          <div key={currentMessageIndex} className="animate-fade-in" style={{
-            fontSize: '0.85rem',
-            color: '#D7A93A',
-            textTransform: 'uppercase',
-            letterSpacing: '1.5px',
-            marginTop: '1.5rem',
-            height: '20px',
-            fontWeight: 700
+        {/* Hexagon gold loading icon */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{
+            background: 'rgba(212, 175, 55, 0.1)',
+            border: '2px solid #D4AF37',
+            padding: '1.25rem',
+            borderRadius: '16px',
+            boxShadow: '0 0 40px rgba(212, 175, 55, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            {loadingMessages[currentMessageIndex]}
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="2.5" fill="none"/>
+              <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px' }}>
+            OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Authorizing Secure Session...
           </div>
         </div>
       </div>
