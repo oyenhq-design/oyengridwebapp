@@ -3,7 +3,8 @@
 .global-loader-overlay {
   position: fixed;
   inset: 0;
-  background-color: #0B0D10;
+  /* Cool dark gradient background */
+  background: radial-gradient(circle at center, #15181D 0%, #0D1015 45%, #090B0E 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -15,14 +16,26 @@
   color: #F8F6F1;
   opacity: 0;
   transform: scale(0.92);
-  animation: globalLoaderFadeIn 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: globalLoaderFadeIn 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Exit transition styles managed by JS */
 .global-loader-overlay.fade-out {
   opacity: 0 !important;
   transform: scale(0.97) !important;
-  transition: opacity 250ms cubic-bezier(0.16, 1, 0.3, 1), transform 250ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: opacity 220ms cubic-bezier(0.16, 1, 0.3, 1), transform 220ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Soft gold glow behind the logo */
+.global-loader-radial-glow {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 65%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 1;
+  animation: breathingAmbientGlow 2.8s ease-in-out infinite;
 }
 
 /* Base Logo Wrapper Animations */
@@ -33,29 +46,24 @@
   justify-content: center;
   border-radius: 50%;
   overflow: hidden;
+  z-index: 2;
   animation: 
     globalLogoFloat 3s ease-in-out infinite, 
     globalLogoSlowPivot 12s ease-in-out infinite;
 }
 
 .brand-loader-logo {
-  width: 120px;
-  height: 120px;
+  width: 90px;
+  height: 90px;
   object-fit: cover;
   border-radius: 50%;
   mix-blend-mode: screen;
-  filter: contrast(135%) brightness(95%);
+  /* Lower brightness, saturation, and contrast for premium gold look */
+  filter: saturate(80%) brightness(85%) contrast(95%);
   animation: globalLogoGlow 2.8s ease-in-out infinite;
 }
 
 /* Responsive sizes */
-@media (max-width: 1024px) {
-  .brand-loader-logo {
-    width: 96px;
-    height: 96px;
-  }
-}
-
 @media (max-width: 640px) {
   .brand-loader-logo {
     width: 80px;
@@ -79,15 +87,13 @@
   animation: globalGoldSweep 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* Loading Description fading animation */
+/* Loading Description text */
 .global-loader-desc-text {
-  transition: opacity 250ms ease-out;
   font-size: 0.88rem;
   color: #8B9098;
   letter-spacing: 0.5px;
-  height: 20px;
-  margin-top: 0.75rem;
   font-weight: 500;
+  opacity: 0.85;
 }
 
 /* Keyframes */
@@ -98,14 +104,19 @@
   }
 }
 
+@keyframes breathingAmbientGlow {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
 @keyframes globalLogoFloat {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  50% { transform: translateY(-3px); }
 }
 
 @keyframes globalLogoGlow {
-  0%, 100% { filter: contrast(135%) brightness(95%) drop-shadow(0 0 15px rgba(212, 175, 55, 0.12)); }
-  50% { filter: contrast(135%) brightness(95%) drop-shadow(0 0 35px rgba(212, 175, 55, 0.22)); }
+  0%, 100% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 15px rgba(212, 175, 55, 0.12)); }
+  50% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 35px rgba(212, 175, 55, 0.22)); }
 }
 
 @keyframes globalLogoSlowPivot {
@@ -131,5 +142,8 @@
     animation: none !important;
     opacity: 1 !important;
     transform: scale(1) !important;
+  }
+  .global-loader-radial-glow {
+    animation: none !important;
   }
 }
