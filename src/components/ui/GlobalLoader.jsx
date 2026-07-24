@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo_v2.png';
 import './GlobalLoader.css';
 
 export default function GlobalLoader({ loading, message }) {
