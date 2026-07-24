@@ -33,13 +33,13 @@ import AnnouncementsTab from './components/AnnouncementsTab';
 import CertificatesTab from './components/CertificatesTab';
 import NotificationsTab from './components/NotificationsTab';
 import GlobalLoader from './components/ui/GlobalLoader';
+import { useLoader } from './components/ui/LoaderProvider';
 
 
 
 export default function App() {
   const [activeRoute, setActiveRoute] = useState('portal'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
-  const [showTransition, setShowTransition] = useState(false);
-  const [transitionFading, setTransitionFading] = useState(false);
+  const { showLoader, hideLoader } = useLoader();
   const [theme, setTheme] = useState('dark');
   const [invitationPrefill, setInvitationPrefill] = useState(null);
   // Trigger Vercel deploy demo validation refresh
@@ -802,16 +802,14 @@ export default function App() {
 
   // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // Shows the branded overlay for ~1.5s then runs the callback
-  const triggerTransition = (callback, delay = 400) => {
-    setTransitionFading(false);
-    setShowTransition(true);
-    // Start fading out 200ms before the callback fires
-    setTimeout(() => setTransitionFading(true), delay - 200);
+  const triggerTransition = (callback, delay = 500) => {
+    showLoader();
     setTimeout(() => {
-      setShowTransition(false);
-      setTransitionFading(false);
       callback();
-    }, delay);
+      setTimeout(() => {
+        hideLoader();
+      }, delay);
+    }, 500);
   };
 
 
@@ -832,9 +830,7 @@ export default function App() {
   };
 
   // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Overlay (every button click) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  if (showTransition) {
-    return <GlobalLoader loading={true} />;
-  }
+
 
 
 

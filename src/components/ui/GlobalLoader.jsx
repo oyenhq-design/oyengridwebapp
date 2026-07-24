@@ -22,7 +22,7 @@ export default function GlobalLoader({ loading, message }) {
         fadeOutTimer = setTimeout(() => {
           setShouldRender(false);
           setIsFadingOut(false);
-        }, 250); // Match CSS fade out duration
+        }, 250); // Matches the 250ms CSS exit transition
       } else {
         clearTimeout(renderTimer);
       }
@@ -39,8 +39,7 @@ export default function GlobalLoader({ loading, message }) {
     "Preparing your workspace...",
     "Loading programs...",
     "Syncing learners...",
-    "Connecting your team...",
-    "Optimizing your experience...",
+    "Loading sessions...",
     "Almost ready..."
   ], []);
 
@@ -51,13 +50,13 @@ export default function GlobalLoader({ loading, message }) {
     if (!shouldRender || message) return;
 
     const interval = setInterval(() => {
-      // Fade out
+      // Crossfade: fade out first
       setTextOpacity(0);
       setTimeout(() => {
         setMessageIndex((prev) => (prev + 1) % defaultMessages.length);
         // Fade back in
         setTextOpacity(1);
-      }, 300); // Wait for fade-out to complete before changing text
+      }, 250); // Fade duration matches crossfade timing
     }, 3000);
 
     return () => clearInterval(interval);
@@ -69,10 +68,8 @@ export default function GlobalLoader({ loading, message }) {
 
   return (
     <div 
-      className="global-loader-overlay"
+      className={`global-loader-overlay ${isFadingOut ? 'fade-out' : ''}`}
       style={{
-        opacity: isFadingOut ? 0 : 1,
-        transform: isFadingOut ? 'scale(0.98)' : 'scale(1)',
         pointerEvents: loading ? 'all' : 'none'
       }}
     >
@@ -82,23 +79,24 @@ export default function GlobalLoader({ loading, message }) {
       {/* Main content wrapper */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
         
-        {/* Animated logo wrapper */}
+        {/* Animated logo wrapper using the supplied PNG logo exactly */}
         <div className="global-loader-logo-wrapper global-loader-logo-size">
           <img 
             src={oyenLogo} 
             className="global-loader-logo-img" 
             alt="OYEN GRID logo"
+            draggable="false"
           />
-          {/* Brushed metallic reflection sweep */}
+          {/* Brushed metallic sweep */}
           <div className="global-loader-shine-overlay" />
         </div>
 
         {/* Brand Text */}
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+        <div style={{ marginTop: '2.25rem', textAlign: 'center' }}>
           <h2 style={{ 
-            fontSize: '1rem', 
+            fontSize: '1.125rem', 
             fontWeight: 600, 
-            color: '#F5F5F5', 
+            color: '#F8F6F1', 
             letterSpacing: '1.5px', 
             textTransform: 'uppercase',
             margin: 0,
