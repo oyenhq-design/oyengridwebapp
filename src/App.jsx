@@ -32,7 +32,6 @@ import AssessmentsTab from './components/AssessmentsTab';
 import AnnouncementsTab from './components/AnnouncementsTab';
 import CertificatesTab from './components/CertificatesTab';
 import NotificationsTab from './components/NotificationsTab';
-import GlobalLoader from './components/ui/GlobalLoader';
 import { useLoader } from './components/ui/LoaderProvider';
 
 
@@ -48,6 +47,15 @@ export default function App() {
   const [user, setUser] = useState(null); 
   const [userRole, setUserRole] = useState('Workspace Super Admin');
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Sync authLoading state with context loader
+  useEffect(() => {
+    if (authLoading) {
+      showLoader("Preparing your workspace...");
+    } else {
+      hideLoader();
+    }
+  }, [authLoading]);
   
   // Workspace Template configuration
   const [activeTemplate, setActiveTemplate] = useState('enterprise'); // 'enterprise' | 'bootcamp' | 'education' | 'events'
@@ -514,7 +522,7 @@ export default function App() {
         setActiveRoute('portal');
       }
       setAuthLoading(false);
-    }, 450);
+    }, 10000); // 10 seconds for initial loader experience
     return () => clearTimeout(timer);
   }, []);
 
@@ -2866,7 +2874,7 @@ export default function App() {
   }
 
   if (authLoading) {
-    return <GlobalLoader loading={true} message="Authorizing secure session..." />;
+    return <div style={{ minHeight: '100vh', backgroundColor: '#0B0D10' }} />;
   }
 
   // Auth Layout (Not logged in)
