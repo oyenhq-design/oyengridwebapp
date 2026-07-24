@@ -3,10 +3,10 @@
 .global-loader-overlay {
   position: fixed;
   inset: 0;
-  /* Frosted "milky" glass wash background */
-  background-color: rgba(15, 18, 22, 0.45);
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  /* Milky white frosted glass wash background */
+  background-color: rgba(245, 247, 250, 0.65);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,12 +24,12 @@
   transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Faint gold halo behind the loader */
+/* Subtle gold halo behind the loader (soft gold tint for light backgrounds) */
 .global-loader-radial-glow {
   position: absolute;
   width: 340px;
   height: 340px;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%);
   filter: blur(50px);
   pointer-events: none;
   z-index: 1;
@@ -92,8 +92,8 @@
   height: 88px;
   object-fit: cover;
   border-radius: 50%;
-  mix-blend-mode: screen;
-  filter: saturate(80%) brightness(85%) contrast(95%);
+  /* No mix-blend-mode screen since the background is light/milky and logo is already transparent */
+  filter: saturate(90%) brightness(95%) contrast(100%);
   animation: globalLogoGlow 2.8s ease-in-out infinite;
 }
 
@@ -118,9 +118,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(255,255,255,0) 25%, rgba(212, 175, 55, 0.25) 50%, rgba(255,255,255,0) 75%);
-  mix-blend-mode: screen;
-  opacity: 0.22;
+  background: linear-gradient(135deg, rgba(255,255,255,0) 25%, rgba(212, 175, 55, 0.4) 50%, rgba(255,255,255,0) 75%);
+  opacity: 0.35;
   pointer-events: none;
   z-index: 4;
   transform: translateX(-100%) rotate(-15deg);
@@ -134,7 +133,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+  background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
   pointer-events: none;
   z-index: 5;
   transform: translateY(100%);
@@ -170,8 +169,8 @@
 }
 
 @keyframes globalLogoGlow {
-  0%, 100% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 15px rgba(212, 175, 55, 0.10)); }
-  50% { filter: saturate(80%) brightness(85%) contrast(95%) drop-shadow(0 0 35px rgba(212, 175, 55, 0.18)); }
+  0%, 100% { filter: saturate(90%) brightness(95%) contrast(100%) drop-shadow(0 0 15px rgba(212, 175, 55, 0.15)); }
+  50% { filter: saturate(90%) brightness(95%) contrast(100%) drop-shadow(0 0 35px rgba(212, 175, 55, 0.25)); }
 }
 
 @keyframes globalGoldSweep {
