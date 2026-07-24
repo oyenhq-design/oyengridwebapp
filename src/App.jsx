@@ -3498,7 +3498,7 @@ export default function App() {
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                       <button
-                        onClick={() => window.open('https://oyengridlanding.vercel.app/pricing', '_blank')}
+                        onClick={() => window.open('https://oyengrid.com/pricing', '_blank')}
                         style={{
                           flex: 1,
                           backgroundColor: 'rgba(255,255,255,0.01)',
