@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import logo from '../../assets/logo_v2.png';
 import './GlobalLoader.css';
 
@@ -69,6 +69,25 @@ export default function GlobalLoader({ loading }) {
     };
   }, []);
 
+  // Pre-calculate coordinates for the glowing trailing dotted circular spinner
+  const dots = useMemo(() => {
+    const totalDots = 24;
+    return Array.from({ length: totalDots }).map((_, index) => {
+      // Circle radius 42 in a 100x100 viewbox
+      const angle = (index / totalDots) * 2 * Math.PI - Math.PI / 2;
+      const r = 42; 
+      const x = 50 + r * Math.cos(angle);
+      const y = 50 + r * Math.sin(angle);
+      
+      // Fading trailing size and opacity
+      const progress = index / (totalDots - 1);
+      const dotRadius = 0.6 + progress * 2.2; // 0.6px to 2.8px
+      const opacity = 0.05 + progress * 0.95; // 5% to 100% opacity
+      
+      return { x, y, r: dotRadius, opacity };
+    });
+  }, []);
+
   if (!shouldRender) return null;
 
   const activeLogo = cleanedLogo || logo;
@@ -83,17 +102,27 @@ export default function GlobalLoader({ loading }) {
       {/* Subtle radial ambient background glow behind the logo */}
       <div className="global-loader-radial-glow" />
 
-      {/* Main content wrapper shifted to 45% viewport height */}
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        zIndex: 5,
-        transform: 'translateY(-5%)' 
-      }}>
+      {/* Loader Center Container shifted slightly above viewport center */}
+      <div className="global-loader-container">
         
-        {/* Animated logo wrapper rendering the PNG directly */}
+        {/* Trailing dotted spinner ring */}
+        <svg className="global-loader-spinner-svg" viewBox="0 0 100 100">
+          {dots.map((dot, i) => (
+            <circle 
+              key={i} 
+              cx={dot.x} 
+              cy={dot.y} 
+              r={dot.r} 
+              fill="#D4AF37" 
+              opacity={dot.opacity}
+              style={{
+                filter: `drop-shadow(0 0 ${dot.r * 0.8}px rgba(212, 175, 55, 0.7))`
+              }}
+            />
+          ))}
+        </svg>
+
+        {/* Masked logo wrapper */}
         <div className="global-loader-logo-wrapper">
           <img 
             src={activeLogo} 
@@ -101,7 +130,7 @@ export default function GlobalLoader({ loading }) {
             className="brand-loader-logo"
             draggable="false"
           />
-          {/* Brushed metallic sweep - masked to the logo's transparent shape */}
+          {/* Brushed metallic sweep */}
           <div 
             className="global-loader-shine-overlay" 
             style={{
@@ -111,7 +140,7 @@ export default function GlobalLoader({ loading }) {
               WebkitMaskSize: 'cover'
             }}
           />
-          {/* Lightning activation pulse - masked to the logo's transparent shape */}
+          {/* Lightning activation pulse */}
           <div 
             className="global-loader-lightning-pulse" 
             style={{
