@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import logo from '../../assets/logo_v2.png';
 import './GlobalLoader.css';
 
-export default function GlobalLoader({ loading, message }) {
+export default function GlobalLoader({ loading }) {
   const [shouldRender, setShouldRender] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [cleanedLogo, setCleanedLogo] = useState('');
@@ -23,7 +23,7 @@ export default function GlobalLoader({ loading, message }) {
         fadeOutTimer = setTimeout(() => {
           setShouldRender(false);
           setIsFadingOut(false);
-        }, 180); // Matches the 180ms CSS exit transition
+        }, 150); // Matches the 150ms CSS exit transition
       } else {
         clearTimeout(renderTimer);
       }
@@ -71,6 +71,8 @@ export default function GlobalLoader({ loading, message }) {
 
   if (!shouldRender) return null;
 
+  const activeLogo = cleanedLogo || logo;
+
   return (
     <div 
       className={`global-loader-overlay ${isFadingOut ? 'fade-out' : ''}`}
@@ -94,35 +96,31 @@ export default function GlobalLoader({ loading, message }) {
         {/* Animated logo wrapper rendering the PNG directly */}
         <div className="global-loader-logo-wrapper">
           <img 
-            src={cleanedLogo || logo} 
+            src={activeLogo} 
             alt="OYEN GRID" 
             className="brand-loader-logo"
             draggable="false"
           />
-          {/* Brushed metallic sweep */}
-          <div className="global-loader-shine-overlay" />
-        </div>
-
-        {/* Brand Text & Description */}
-        <div style={{ marginTop: '32px', textAlign: 'center' }}>
-          <h2 style={{ 
-            fontSize: '16px', 
-            fontWeight: 600, 
-            color: '#FFFFFF', 
-            letterSpacing: '0.3px', 
-            margin: 0,
-            fontFamily: "'Inter', sans-serif"
-          }}>
-            Loading Workspace
-          </h2>
-          <div style={{ 
-            fontSize: '14px', 
-            color: 'rgba(255, 255, 255, 0.55)', 
-            marginTop: '10px',
-            fontFamily: "'Inter', sans-serif"
-          }}>
-            {message || "Preparing your workspace..."}
-          </div>
+          {/* Brushed metallic sweep - masked to the logo's transparent shape */}
+          <div 
+            className="global-loader-shine-overlay" 
+            style={{
+              maskImage: `url(${activeLogo})`,
+              WebkitMaskImage: `url(${activeLogo})`,
+              maskSize: 'cover',
+              WebkitMaskSize: 'cover'
+            }}
+          />
+          {/* Lightning activation pulse - masked to the logo's transparent shape */}
+          <div 
+            className="global-loader-lightning-pulse" 
+            style={{
+              maskImage: `url(${activeLogo})`,
+              WebkitMaskImage: `url(${activeLogo})`,
+              maskSize: 'cover',
+              WebkitMaskSize: 'cover'
+            }}
+          />
         </div>
 
       </div>
