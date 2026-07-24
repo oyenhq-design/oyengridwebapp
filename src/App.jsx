@@ -32,6 +32,8 @@ import AssessmentsTab from './components/AssessmentsTab';
 import AnnouncementsTab from './components/AnnouncementsTab';
 import CertificatesTab from './components/CertificatesTab';
 import NotificationsTab from './components/NotificationsTab';
+import GlobalLoader from './components/ui/GlobalLoader';
+
 
 
 export default function App() {
@@ -831,89 +833,7 @@ export default function App() {
 
   // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Overlay (every button click) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   if (showTransition) {
-    return (
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: '#0a0a0a',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10000,
-        opacity: transitionFading ? 0 : 1,
-        transition: 'opacity 0.3s ease',
-      }}>
-        {/* Outer spinning arc ring */}
-        <div style={{ position: 'relative', width: '140px', height: '140px' }}>
-          {/* Rotating SVG arc */}
-          <svg
-            width="140" height="140"
-            viewBox="0 0 140 140"
-            style={{
-              position: 'absolute',
-              top: 0, left: 0,
-              animation: 'transitionSpin 1.2s linear infinite',
-            }}
-          >
-            <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(212,175,55,0.1)" strokeWidth="3" />
-            <circle
-              cx="70" cy="70" r="62"
-              fill="none"
-              stroke="#D4AF37"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray="280"
-              strokeDashoffset="180"
-            />
-          </svg>
-
-          {/* Center logo circle */}
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '88px',
-            height: '88px',
-            borderRadius: '50%',
-            backgroundColor: '#111111',
-            border: '1px solid rgba(212,175,55,0.15)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px',
-          }}>
-            <img src={oyenLogo} style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(200,154,43,0.3))' }} alt="OYEN GRID" />
-          </div>
-        </div>
-
-        {/* Brand name below */}
-        <div style={{
-          marginTop: '1.75rem',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            letterSpacing: '0.35em',
-            color: 'rgba(255,255,255,0.55)',
-            textTransform: 'uppercase',
-            fontFamily: 'system-ui, sans-serif',
-          }}>
-            OYEN GRID
-          </div>
-        </div>
-
-        <style>{`
-          @keyframes transitionSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    );
+    return <GlobalLoader loading={true} />;
   }
 
 
@@ -2950,38 +2870,7 @@ export default function App() {
   }
 
   if (authLoading) {
-    return (
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100vh', backgroundColor: '#090a0f', color: '#fff',
-        fontFamily: "'Outfit', sans-serif"
-      }}>
-        {/* Hexagon gold loading icon */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{
-            background: 'rgba(212, 175, 55, 0.1)',
-            border: '2px solid #D4AF37',
-            padding: '1.25rem',
-            borderRadius: '16px',
-            boxShadow: '0 0 40px rgba(212, 175, 55, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="2.5" fill="none"/>
-              <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px' }}>
-            OYEN <span style={{ color: '#D4AF37' }}>GRID</span>
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Authorizing Secure Session...
-          </div>
-        </div>
-      </div>
-    );
+    return <GlobalLoader loading={true} message="Authorizing secure session..." />;
   }
 
   // Auth Layout (Not logged in)

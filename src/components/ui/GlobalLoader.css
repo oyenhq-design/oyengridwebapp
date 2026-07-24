@@ -1,0 +1,130 @@
+/* GlobalLoader.css */
+
+.global-loader-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: #0B0D10;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  font-family: 'Geist', 'Outfit', system-ui, -apple-system, sans-serif;
+  color: #F8F6F1;
+  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.global-loader-radial-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(200, 154, 43, 0.05) 0%, rgba(11, 13, 16, 0) 70%);
+  pointer-events: none;
+  opacity: 0.8;
+  animation: breathingAmbientGlow 4s ease-in-out infinite;
+}
+
+/* Base Logo Wrapper Animations */
+.global-loader-logo-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  animation: globalLogoFloat 3s ease-in-out infinite, globalLogoGlow 2.8s ease-in-out infinite;
+}
+
+.global-loader-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+}
+
+/* Metallic Gold Shine Sweep */
+.global-loader-shine-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0) 25%, rgba(212, 175, 55, 0.25) 50%, rgba(255,255,255,0) 75%);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 3;
+  transform: translateX(-100%) rotate(-15deg);
+  animation: globalGoldSweep 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Loading Description fading animation */
+.global-loader-desc-text {
+  transition: opacity 300ms ease;
+  font-size: 0.85rem;
+  color: #8B9098;
+  letter-spacing: 0.5px;
+  height: 20px;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+/* Keyframes */
+@keyframes breathingAmbientGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes globalLogoFloat {
+  0%, 100% { transform: translateY(-4px); }
+  50% { transform: translateY(0); }
+}
+
+@keyframes globalLogoGlow {
+  0%, 100% { box-shadow: 0 0 25px rgba(212, 175, 55, 0.15); }
+  50% { box-shadow: 0 0 45px rgba(212, 175, 55, 0.35); }
+}
+
+@keyframes globalGoldSweep {
+  0% { transform: translate(-100%, 100%) rotate(-15deg); }
+  35%, 100% { transform: translate(100%, -100%) rotate(-15deg); }
+}
+
+/* Media Queries for Responsive Logo Sizes */
+.global-loader-logo-size {
+  width: 120px;
+  height: 120px;
+}
+
+@media (max-width: 1024px) {
+  .global-loader-logo-size {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (max-width: 640px) {
+  .global-loader-logo-size {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .global-loader-logo-wrapper {
+    animation: none !important;
+  }
+  .global-loader-shine-overlay {
+    animation: none !important;
+    display: none !important;
+  }
+  .global-loader-radial-glow {
+    animation: none !important;
+    opacity: 0.4 !important;
+  }
+  .global-loader-overlay {
+    transition: opacity 150ms ease !important;
+  }
+}
