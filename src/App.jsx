@@ -522,7 +522,7 @@ export default function App() {
         setActiveRoute('portal');
       }
       setAuthLoading(false);
-    }, 10000); // 10 seconds for initial loader experience
+    }, 1800); // 1.8 seconds for initial loader experience
     return () => clearTimeout(timer);
   }, []);
 

@@ -42,23 +42,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 140px;
-  height: 140px;
+  width: 170px;
+  height: 170px;
   z-index: 5;
   transform: translateY(-5%);
 }
 
 @media (max-width: 1024px) {
   .global-loader-container {
-    width: 120px;
-    height: 120px;
+    width: 145px;
+    height: 145px;
   }
 }
 
 @media (max-width: 640px) {
   .global-loader-container {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
   }
 }
 
@@ -88,8 +88,8 @@
 }
 
 .brand-loader-logo {
-  width: 88px;
-  height: 88px;
+  width: 108px;
+  height: 108px;
   object-fit: cover;
   border-radius: 50%;
   /* No mix-blend-mode screen since the background is light/milky and logo is already transparent */
@@ -99,15 +99,15 @@
 
 @media (max-width: 1024px) {
   .brand-loader-logo {
-    width: 76px;
-    height: 76px;
+    width: 92px;
+    height: 92px;
   }
 }
 
 @media (max-width: 640px) {
   .brand-loader-logo {
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
   }
 }
 
