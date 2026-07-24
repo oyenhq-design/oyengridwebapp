@@ -81,12 +81,20 @@ export default function GlobalLoader({ loading, message }) {
         
         {/* Animated logo wrapper using the supplied PNG logo exactly */}
         <div className="global-loader-logo-wrapper global-loader-logo-size">
-          <img 
-            src={oyenLogo} 
-            className="global-loader-logo-img" 
-            alt="OYEN GRID logo"
-            draggable="false"
-          />
+          <svg className="global-loader-logo-img" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="goldGrad" x1="0" y1="0" x2="100" y2="100">
+                <stop offset="0%" stopColor="#C89A2B" />
+                <stop offset="50%" stopColor="#D7A93A" />
+                <stop offset="100%" stopColor="#AA7C11" />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="42" stroke="url(#goldGrad)" strokeWidth="6.5" fill="none" />
+            <path 
+              d="M52 16 L62 42 H52 L58 58 H49 L55 84 L36 48 H46 L41 32 H52 Z" 
+              fill="url(#goldGrad)" 
+            />
+          </svg>
           {/* Brushed metallic sweep */}
           <div className="global-loader-shine-overlay" />
         </div>
