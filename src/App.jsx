@@ -2144,7 +2144,7 @@ export default function App() {
           </aside>
 
           {/* Main Workspace Frame */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#F8F5EF', backgroundImage: 'radial-gradient(circle at top left, rgba(245, 200, 76, 0.03), transparent 60%)', overflowY: 'auto' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#EEEAE4', backgroundImage: 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.04), transparent 50%)', overflowY: 'auto' }}>
             
             {/* Conditional content based on activeTab */}
             {userRole === 'Facilitator' && activeSession ? (
@@ -2204,9 +2204,9 @@ export default function App() {
                   {/* Hero welcome banner card */}
                   <div style={{
                     borderRadius: '18px',
-                    border: '1px solid #ECE6DC',
-                    backgroundColor: '#FFFFFF',
-                    backgroundImage: 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.08), transparent 50%)',
+                    border: '1px solid #DDD6CB',
+                    backgroundColor: '#F5F2ED',
+                    backgroundImage: 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.06), transparent 50%)',
                     padding: '3rem',
                     minHeight: '360px',
                     display: 'flex',
@@ -2214,7 +2214,7 @@ export default function App() {
                     alignItems: 'center',
                     position: 'relative',
                     overflow: 'hidden',
-                    boxShadow: '0 4px 24px rgba(142, 135, 120, 0.08)'
+                    boxShadow: '0 2px 16px rgba(100, 90, 75, 0.1)'
                   }}>
                     {/* Left content column */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, zIndex: 2, textAlign: 'left' }}>
@@ -2357,15 +2357,15 @@ export default function App() {
                         <div 
                           key={i}
                           style={{
-                            backgroundColor: '#FFFFFF',
-                            border: '1px solid #ECE6DC',
+                            backgroundColor: '#F5F2ED',
+                            border: '1px solid #DDD6CB',
                             borderRadius: '18px',
                             padding: '2rem 1.5rem',
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'space-between',
                             minHeight: '250px',
-                            boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)',
+                            boxShadow: '0 2px 12px rgba(100, 90, 75, 0.07)',
                             transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                             cursor: 'pointer'
                           }}
@@ -2422,35 +2422,35 @@ export default function App() {
                   
                   {/* Card 1: Workspace Summary */}
                   <div style={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #ECE6DC',
+                    backgroundColor: '#F5F2ED',
+                    border: '1px solid #DDD6CB',
                     borderRadius: '18px',
                     padding: '2rem 1.5rem',
-                    boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)'
+                    boxShadow: '0 2px 12px rgba(100, 90, 75, 0.07)'
                   }}>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#151515', marginBottom: '1.5rem', fontFamily: "'Inter', sans-serif" }}>Workspace Summary</h3>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.82rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #DDD6CB', paddingBottom: '0.75rem' }}>
                         <span style={{ color: '#7E7E7E' }}>Solution</span>
                         <span style={{ fontWeight: 600, color: '#151515' }}>Bootcamps & Training</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #DDD6CB', paddingBottom: '0.75rem' }}>
                         <span style={{ color: '#7E7E7E' }}>Plan</span>
                         <span style={{ fontWeight: 600, color: '#151515' }}>Standard</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #DDD6CB', paddingBottom: '0.75rem' }}>
                         <span style={{ color: '#7E7E7E' }}>Status</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#16a34a', fontWeight: 600 }}>
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a' }}></span>
                           Active
                         </div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #DDD6CB', paddingBottom: '0.75rem' }}>
                         <span style={{ color: '#7E7E7E' }}>Participants Included</span>
                         <span style={{ fontWeight: 600, color: '#151515' }}>50</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #DDD6CB', paddingBottom: '0.75rem' }}>
                         <span style={{ color: '#7E7E7E' }}>Storage</span>
                         <span style={{ fontWeight: 600, color: '#151515' }}>10 GB</span>
                       </div>
@@ -2463,11 +2463,11 @@ export default function App() {
 
                   {/* Card 2: Next Steps */}
                   <div style={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #ECE6DC',
+                    backgroundColor: '#F5F2ED',
+                    border: '1px solid #DDD6CB',
                     borderRadius: '18px',
                     padding: '2rem 1.5rem',
-                    boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)'
+                    boxShadow: '0 2px 12px rgba(100, 90, 75, 0.07)'
                   }}>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#151515', marginBottom: '1.5rem', fontFamily: "'Inter', sans-serif" }}>Next Steps</h3>
                     
@@ -2525,11 +2525,11 @@ export default function App() {
 
                   {/* Card 3: Need Help */}
                   <div style={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #ECE6DC',
+                    backgroundColor: '#F5F2ED',
+                    border: '1px solid #DDD6CB',
                     borderRadius: '18px',
                     padding: '2rem 1.5rem',
-                    boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)',
+                    boxShadow: '0 2px 12px rgba(100, 90, 75, 0.07)',
                     display: 'flex',
                     gap: '1rem',
                     alignItems: 'flex-start'
