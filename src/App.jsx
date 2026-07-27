@@ -25,6 +25,7 @@ import LearnersTab from './components/LearnersTab';
 import SessionsTab from './components/SessionsTab';
 import oyenLogo from './assets/logo_v2.png';
 import onboardingBg from './assets/onboarding_bg_v2.png';
+import dashboardHeroIllustration from './assets/dashboard_hero_illustration.jpg';
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
 import AttendanceTab from './components/AttendanceTab';
@@ -1702,15 +1703,17 @@ export default function App() {
         {/* Global Top Header Bar */}
         <header style={{
           height: '70px',
-          backgroundColor: '#000000',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+          backgroundColor: '#0D0D0D',
+          borderBottom: '1px solid #1F1F1F',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 2rem',
           position: 'sticky',
           top: 0,
-          zIndex: 100
+          zIndex: 100,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)'
         }}>
           {/* Header Left: Hamburger & Brand */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
@@ -2039,8 +2042,8 @@ export default function App() {
           {/* Sidebar Left */}
           <aside style={{
             width: '260px',
-            backgroundColor: '#141414',
-            borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+            backgroundColor: '#151515',
+            borderRight: '1px solid #252525',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -2065,14 +2068,14 @@ export default function App() {
                       cursor: 'pointer',
                       fontSize: '0.9rem',
                       fontWeight: isActive ? 600 : 500,
-                      color: isActive ? '#FFFFFF' : '#a0aec0',
-                      background: isActive ? '#C99A2E' : 'transparent',
+                      color: isActive ? '#151515' : '#a0aec0',
+                      background: isActive ? '#F5C84C' : 'transparent',
                       transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
                         e.currentTarget.style.color = '#fff';
-                        e.currentTarget.style.background = 'rgba(201,154,46,.08)';
+                        e.currentTarget.style.background = 'rgba(245, 200, 76, 0.05)';
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -2082,7 +2085,7 @@ export default function App() {
                       }
                     }}
                   >
-                    <span style={{ color: isActive ? '#FFFFFF' : '#718096' }}>
+                    <span style={{ color: isActive ? '#151515' : '#718096' }}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -2141,7 +2144,7 @@ export default function App() {
           </aside>
 
           {/* Main Workspace Frame */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#090a0f', overflowY: 'auto' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#F8F5EF', backgroundImage: 'radial-gradient(circle at top left, rgba(245, 200, 76, 0.03), transparent 60%)', overflowY: 'auto' }}>
             
             {/* Conditional content based on activeTab */}
             {userRole === 'Facilitator' && activeSession ? (
@@ -2194,181 +2197,215 @@ export default function App() {
                 addNotification={addNotification}
               />
             ) : isWelcome ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', padding: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2.5rem', padding: '2.5rem 3rem' }}>
                 
                 {/* Center Main Panel (Left in main layout) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                   {/* Hero welcome banner card */}
                   <div style={{
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    backgroundImage: `linear-gradient(to right, rgba(9, 9, 11, 0.98) 40%, rgba(9, 9, 11, 0.8) 65%, rgba(9, 9, 11, 0.2) 100%), url(${orgLogo || './src/assets/abc_energy_building.png'})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    padding: '3rem 2.5rem',
+                    borderRadius: '18px',
+                    border: '1px solid #ECE6DC',
+                    backgroundColor: '#FFFFFF',
+                    backgroundImage: 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.08), transparent 50%)',
+                    padding: '3rem',
                     minHeight: '360px',
                     display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     position: 'relative',
                     overflow: 'hidden',
-                    boxShadow: '0 4px 30px rgba(0,0,0,0.4)'
+                    boxShadow: '0 4px 24px rgba(142, 135, 120, 0.08)'
                   }}>
-                    {/* Workspace Ready Badge */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                      color: '#22c55e',
-                      border: '1px solid rgba(34, 197, 94, 0.25)',
-                      borderRadius: '20px',
-                      padding: '0.3rem 0.65rem',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      alignSelf: 'flex-start',
-                      marginBottom: '1.5rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }}></span>
-                      Workspace Ready
+                    {/* Left content column */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, zIndex: 2, textAlign: 'left' }}>
+                      {/* Workspace Ready Badge */}
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        color: '#16a34a',
+                        border: '1px solid rgba(34, 197, 94, 0.2)',
+                        borderRadius: '20px',
+                        padding: '0.35rem 0.75rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        alignSelf: 'flex-start',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a', display: 'inline-block' }}></span>
+                        Workspace Ready
+                      </div>
+
+                      <h1 style={{ fontSize: '2.75rem', fontWeight: 800, color: '#151515', margin: 0, lineHeight: 1.15, fontFamily: "'Inter', sans-serif" }}>
+                        Welcome to <br />
+                        <span style={{ color: '#E2B235' }}>Your Workspace</span>
+                      </h1>
+                      
+                      <p style={{ color: '#5C5C5C', fontSize: '0.95rem', marginTop: '0.5rem', maxWidth: '380px', lineHeight: '1.6' }}>
+                        Your workspace is ready to power impactful learning experiences.
+                      </p>
+
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                        <button 
+                          onClick={() => triggerTransition(() => setActiveTab('Your Workspace'))}
+                          style={{
+                            background: '#F5C84C',
+                            border: '1px solid #F5C84C',
+                            color: '#151515',
+                            fontFamily: "'Inter', sans-serif",
+                            fontWeight: 700,
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(245, 200, 76, 0.25)',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                          Go to Workspace <ArrowRight size={16} />
+                        </button>
+
+                        <button 
+                          onClick={() => triggerTransition(() => setActiveTab('Team'))}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid #ECE6DC',
+                            color: '#5C5C5C',
+                            fontFamily: "'Inter', sans-serif",
+                            fontWeight: 600,
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#F5F5F5';
+                            e.currentTarget.style.borderColor = '#D4CFC6';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.borderColor = '#ECE6DC';
+                          }}
+                        >
+                          <UserPlus size={16} /> Invite Team
+                        </button>
+                      </div>
                     </div>
 
-                    <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, lineHeight: 1.15 }}>
-                      Welcome to <br />
-                      <span style={{ color: '#D4AF37' }}>Your Workspace</span>
-                    </h1>
-                    
-                    <p style={{ color: '#a0aec0', fontSize: '0.95rem', marginTop: '1rem', maxWidth: '380px', lineHeight: '1.6' }}>
-                      Your workspace is ready to power impactful learning experiences.
-                    </p>
-
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                      <button 
-                        onClick={() => triggerTransition(() => setActiveTab('Your Workspace'))}
+                    {/* Right illustration column */}
+                    <div style={{ flexShrink: 0, zIndex: 1, marginLeft: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img 
+                        src={dashboardHeroIllustration} 
+                        alt="Workspace Illustration" 
                         style={{
-                          background: 'linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%)',
-                          border: '1px solid #D4AF37',
-                          color: '#000',
-                          fontFamily: 'var(--font-display)',
-                          fontWeight: 700,
-                          padding: '0.75rem 1.5rem',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 10px rgba(212,175,55,0.25)',
-                          transition: 'all 0.2s ease'
+                          width: '240px',
+                          height: '240px',
+                          objectFit: 'contain',
+                          mixBlendMode: 'multiply'
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                      >
-                        Go to Workspace <ArrowRight size={16} />
-                      </button>
-
-                      <button 
-                        onClick={() => triggerTransition(() => setActiveTab('Team'))}
-                        style={{
-                          background: 'transparent',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          color: '#fff',
-                          fontFamily: 'var(--font-display)',
-                          fontWeight: 600,
-                          padding: '0.75rem 1.5rem',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                        }}
-                      >
-                        <UserPlus size={16} /> Invite Team
-                      </button>
+                      />
                     </div>
                   </div>
 
                   {/* "What You Can Do Now" section */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', letterSpacing: '0.3px' }}>What You Can Do Now</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#151515', letterSpacing: '0.3px', fontFamily: "'Inter', sans-serif" }}>What You Can Do Now</h3>
                     
                     {/* 5 columns of action cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1.25rem' }}>
                       {[
                         { 
                           title: 'Programmes', 
                           desc: 'Create and manage bootcamps, training programmes and cohorts.', 
                           linkText: 'Manage',
-                          icon: <Grid size={24} color="#D4AF37" />
+                          icon: <Grid size={22} color="#E2B235" />
                         },
                         { 
                           title: 'Participants', 
                           desc: 'View and manage all participants enrolled in your programs.', 
                           linkText: 'View Participants',
-                          icon: <User size={24} color="#D4AF37" />
+                          icon: <User size={22} color="#E2B235" />
                         },
                         { 
                           title: 'Sessions', 
                           desc: 'Schedule, run and manage sessions and events seamlessly.', 
                           linkText: 'Manage Sessions',
-                          icon: <Calendar size={24} color="#D4AF37" />
+                          icon: <Calendar size={22} color="#E2B235" />
                         },
                         { 
                           title: 'Reports', 
                           desc: 'Access insights and performance analytics in real time.', 
                           linkText: 'View Reports',
-                          icon: <BarChart3 size={24} color="#D4AF37" />
+                          icon: <BarChart3 size={22} color="#E2B235" />
                         },
                         { 
                           title: 'Settings', 
                           desc: 'Manage workspace settings, roles, permissions and integrations.', 
                           linkText: 'Workspace Settings',
-                          icon: <Settings size={24} color="#D4AF37" />
+                          icon: <Settings size={22} color="#E2B235" />
                         }
                       ].map((card, i) => (
                         <div 
                           key={i}
                           style={{
-                            backgroundColor: '#0e0f14',
-                            border: '1px solid rgba(255, 255, 255, 0.05)',
-                            borderRadius: '12px',
-                            padding: '1.5rem 1rem',
+                            backgroundColor: '#FFFFFF',
+                            border: '1px solid #ECE6DC',
+                            borderRadius: '18px',
+                            padding: '2rem 1.5rem',
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'space-between',
-                            minHeight: '220px',
-                            boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                            minHeight: '250px',
+                            boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)',
+                            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                            cursor: 'pointer'
                           }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-4px)';
+                            e.currentTarget.style.boxShadow = '0 12px 30px rgba(142, 135, 120, 0.12)';
+                            e.currentTarget.style.borderColor = '#D4CFC6';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 4px 20px rgba(142, 135, 120, 0.05)';
+                            e.currentTarget.style.borderColor = '#ECE6DC';
+                          }}
+                          onClick={() => triggerTransition(() => setActiveTab(card.title))}
                         >
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <div style={{ marginBottom: '0.25rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ 
+                              alignSelf: 'flex-start',
+                              backgroundColor: 'rgba(245, 200, 76, 0.12)',
+                              padding: '0.65rem',
+                              borderRadius: '10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
                               {card.icon}
                             </div>
-                            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', margin: 0 }}>{card.title}</h4>
-                            <p style={{ color: '#718096', fontSize: '0.75rem', lineHeight: '1.4', margin: 0 }}>{card.desc}</p>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>{card.title}</h4>
+                            <p style={{ color: '#5C5C5C', fontSize: '0.78rem', lineHeight: '1.45', margin: 0 }}>{card.desc}</p>
                           </div>
                           
                           <div 
-                            onClick={() => triggerTransition(() => setActiveTab(card.title))}
                             style={{ 
                               display: 'flex', 
                               alignItems: 'center', 
                               gap: '0.35rem', 
-                              color: '#D4AF37', 
-                              fontSize: '0.75rem', 
+                              color: '#E2B235', 
+                              fontSize: '0.78rem', 
                               fontWeight: 700, 
-                              cursor: 'pointer',
-                              marginTop: '1rem'
+                              marginTop: '1.25rem'
                             }}
                           >
                             <span>{card.linkText}</span>
@@ -2385,56 +2422,56 @@ export default function App() {
                   
                   {/* Card 1: Workspace Summary */}
                   <div style={{
-                    backgroundColor: '#0e0f14',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRadius: '12px',
-                    padding: '1.5rem',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #ECE6DC',
+                    borderRadius: '18px',
+                    padding: '2rem 1.5rem',
+                    boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)'
                   }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>Workspace Summary</h3>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#151515', marginBottom: '1.5rem', fontFamily: "'Inter', sans-serif" }}>Workspace Summary</h3>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.8rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: '#718096' }}>Solution</span>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>Bootcamps & Training</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.82rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                        <span style={{ color: '#7E7E7E' }}>Solution</span>
+                        <span style={{ fontWeight: 600, color: '#151515' }}>Bootcamps & Training</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: '#718096' }}>Plan</span>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>Standard</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                        <span style={{ color: '#7E7E7E' }}>Plan</span>
+                        <span style={{ fontWeight: 600, color: '#151515' }}>Standard</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: '#718096' }}>Status</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#22c55e', fontWeight: 600 }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                        <span style={{ color: '#7E7E7E' }}>Status</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#16a34a', fontWeight: 600 }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a' }}></span>
                           Active
                         </div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: '#718096' }}>Participants Included</span>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>50</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                        <span style={{ color: '#7E7E7E' }}>Participants Included</span>
+                        <span style={{ fontWeight: 600, color: '#151515' }}>50</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.5rem' }}>
-                        <span style={{ color: '#718096' }}>Storage</span>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>10 GB</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #ECE6DC', paddingBottom: '0.75rem' }}>
+                        <span style={{ color: '#7E7E7E' }}>Storage</span>
+                        <span style={{ fontWeight: 600, color: '#151515' }}>10 GB</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#718096' }}>AI Allocation</span>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>Basic</span>
+                        <span style={{ color: '#7E7E7E' }}>AI Allocation</span>
+                        <span style={{ fontWeight: 600, color: '#151515' }}>Basic</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Card 2: Next Steps */}
                   <div style={{
-                    backgroundColor: '#0e0f14',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRadius: '12px',
-                    padding: '1.5rem',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #ECE6DC',
+                    borderRadius: '18px',
+                    padding: '2rem 1.5rem',
+                    boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)'
                   }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>Next Steps</h3>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#151515', marginBottom: '1.5rem', fontFamily: "'Inter', sans-serif" }}>Next Steps</h3>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       {[
                         { step: 1, label: 'Organization Verified', completed: true },
                         { step: 2, label: 'Workspace Configured', completed: true },
@@ -2442,43 +2479,45 @@ export default function App() {
                       ].map((st) => (
                         <div key={st.step} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           <div style={{
-                            width: '20px',
-                            height: '20px',
+                            width: '22px',
+                            height: '22px',
                             borderRadius: '50%',
-                            backgroundColor: 'rgba(212,175,55,0.15)',
-                            border: '1.5px solid #D4AF37',
+                            backgroundColor: 'rgba(22, 163, 74, 0.08)',
+                            border: '1.5px solid #16a34a',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#D4AF37'
+                            color: '#16a34a',
+                            flexShrink: 0
                           }}>
-                            <Check size={12} strokeWidth={3} />
+                            <Check size={11} strokeWidth={4} />
                           </div>
-                          <span style={{ fontSize: '0.85rem', color: '#718096', textDecoration: 'line-through' }}>{st.label}</span>
+                          <span style={{ fontSize: '0.85rem', color: '#7E7E7E', textDecoration: 'line-through' }}>{st.label}</span>
                         </div>
                       ))}
 
                       {/* Active Step 4 */}
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                         <div style={{
-                          width: '20px',
-                          height: '20px',
+                          width: '22px',
+                          height: '22px',
                           borderRadius: '50%',
-                          border: '1.5px solid #D4AF37',
+                          backgroundColor: 'rgba(245, 200, 76, 0.12)',
+                          border: '1.5px solid #F5C84C',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#D4AF37',
-                          fontSize: '0.75rem',
+                          color: '#E2B235',
+                          fontSize: '0.72rem',
                           fontWeight: 700,
-                          marginTop: '0.1rem',
+                          marginTop: '0.15rem',
                           flexShrink: 0
                         }}>
                           4
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                          <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Create Your First Programme</span>
-                          <span style={{ fontSize: '0.75rem', color: '#718096' }}>Kickstart your learning journey.</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', textAlign: 'left' }}>
+                          <span style={{ fontSize: '0.85rem', color: '#151515', fontWeight: 600 }}>Create Your First Programme</span>
+                          <span style={{ fontSize: '0.75rem', color: '#5C5C5C' }}>Kickstart your learning journey.</span>
                         </div>
                       </div>
                     </div>
@@ -2486,39 +2525,39 @@ export default function App() {
 
                   {/* Card 3: Need Help */}
                   <div style={{
-                    backgroundColor: '#0e0f14',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRadius: '12px',
-                    padding: '1.5rem',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #ECE6DC',
+                    borderRadius: '18px',
+                    padding: '2rem 1.5rem',
+                    boxShadow: '0 4px 20px rgba(142, 135, 120, 0.05)',
                     display: 'flex',
                     gap: '1rem',
                     alignItems: 'flex-start'
                   }}>
                     <div style={{
-                      backgroundColor: 'rgba(212,175,55,0.1)',
-                      border: '1px solid rgba(212,175,55,0.2)',
-                      borderRadius: '8px',
-                      padding: '0.5rem',
+                      backgroundColor: 'rgba(245, 200, 76, 0.12)',
+                      border: '1px solid rgba(245, 200, 76, 0.2)',
+                      borderRadius: '10px',
+                      padding: '0.65rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#D4AF37'
+                      color: '#E2B235'
                     }}>
                       <Headphones size={20} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', margin: 0 }}>Need Help?</h4>
-                      <p style={{ color: '#718096', fontSize: '0.75rem', lineHeight: '1.4', margin: 0 }}>
+                      <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Need Help?</h4>
+                      <p style={{ color: '#5C5C5C', fontSize: '0.78rem', lineHeight: '1.4', margin: 0 }}>
                         Our support team is here to help you get started.
                       </p>
                       <button style={{
                         background: 'transparent',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        color: '#fff',
+                        border: '1px solid #ECE6DC',
+                        color: '#5C5C5C',
                         borderRadius: '6px',
-                        padding: '0.4rem 0.8rem',
-                        fontSize: '0.75rem',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.78rem',
                         fontWeight: 600,
                         cursor: 'pointer',
                         display: 'flex',
@@ -2526,10 +2565,17 @@ export default function App() {
                         gap: '0.35rem',
                         alignSelf: 'flex-start',
                         marginTop: '0.25rem',
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
+                        fontFamily: "'Inter', sans-serif"
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'}
-                      onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#F5F5F5';
+                        e.currentTarget.style.borderColor = '#D4CFC6';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = '#ECE6DC';
+                      }}
                       >
                         Contact Support <ArrowRight size={12} />
                       </button>
