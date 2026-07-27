@@ -1729,23 +1729,35 @@ export default function App() {
               <Menu size={20} />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* Gold hexagon with bolt logo */}
+              {/* Org logo — uploaded during onboarding, fallback to gold hexagon */}
               <div style={{
-                background: 'rgba(212, 175, 55, 0.1)',
-                border: '1px solid #D4AF37',
-                padding: '0.35rem',
+                background: orgLogo ? 'transparent' : 'rgba(212, 175, 55, 0.1)',
+                border: orgLogo ? 'none' : '1px solid #D4AF37',
+                padding: orgLogo ? '0' : '0.35rem',
                 borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                flexShrink: 0,
+                overflow: 'hidden'
               }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="2.5" fill="rgba(212, 175, 55, 0.2)"/>
-                  <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                {orgLogo ? (
+                  <img
+                    src={orgLogo}
+                    alt="Organization Logo"
+                    style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '4px' }}
+                  />
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="#D4AF37" strokeWidth="2.5" fill="rgba(212, 175, 55, 0.2)"/>
+                    <path d="M12 6L9 12H15L12 18" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px', fontFamily: 'var(--font-display)' }}>ABC ENERGY</span>
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px', fontFamily: 'var(--font-display)', textTransform: 'uppercase' }}>{orgName || 'My Workspace'}</span>
                 <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#D4AF37', letterSpacing: '0.5px', textTransform: 'uppercase' }}>WORKSPACE</span>
               </div>
             </div>
