@@ -7,7 +7,8 @@ import {
   ArrowRight, Check, UserPlus, 
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
   Shield, Rocket, FileText, Mail, HardDrive,
-  Presentation, Folder, Image, Eye, Download, Book, Video, MessageSquare
+  Presentation, Folder, Image, Eye, Download, Book, Video, MessageSquare,
+  Play, Zap
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
 import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser } from './domain/workspace/selectors';
@@ -2813,6 +2814,161 @@ export default function App() {
                   })()}
                 </div>
               </div>
+            ) : activeTab === 'Getting Started' ? (
+              /* ── Getting Started Onboarding Page ── */
+              (() => {
+                const setupSteps = [
+                  { id: 1, label: 'Workspace Created', desc: 'Your OYEN GRID workspace has been successfully provisioned.', done: true, tab: null },
+                  { id: 2, label: 'Organization Profile Completed', desc: 'Your organization name, logo, and details have been saved.', done: !!(orgLogo || orgName), tab: null },
+                  { id: 3, label: 'Invite Team Members', desc: 'Add administrators and facilitators to collaborate in your workspace.', done: wsTeam.length > 0, tab: 'Team' },
+                  { id: 4, label: 'Configure Roles & Permissions', desc: 'Set up access levels to control what each team member can do.', done: false, tab: 'Settings' },
+                  { id: 5, label: 'Create Your First Programme', desc: 'Programmes are the foundation of your workspace learning structure.', done: displayPrograms.length > 0, tab: 'Programmes' },
+                  { id: 6, label: 'Add Learners', desc: 'Enroll participants into your programmes to begin their journey.', done: wsLearners.length > 0, tab: 'Participants' },
+                  { id: 7, label: 'Schedule Your First Session', desc: 'Create a live session or workshop inside one of your programmes.', done: false, tab: 'Sessions' },
+                  { id: 8, label: 'Configure Notifications', desc: 'Set up email and in-app notifications to keep your team updated.', done: false, tab: 'Settings' },
+                  { id: 9, label: 'Generate Test Certificate', desc: 'Preview and test your certificate template before launch.', done: false, tab: 'Certificates' },
+                  { id: 10, label: 'Launch Your First Programme', desc: 'Make your programme live and start enrolling learners at scale.', done: false, tab: 'Programmes' },
+                ];
+                const completedCount = setupSteps.filter(s => s.done).length;
+                const progressPct = Math.round((completedCount / setupSteps.length) * 100);
+                const nextStep = setupSteps.find(s => !s.done);
+                return (
+                  <div style={{ padding: '2.5rem 3rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', textAlign: 'left' }}>
+                    {/* Hero */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem', alignItems: 'start' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(245,200,76,0.1)', border: '1px solid rgba(245,200,76,0.25)', borderRadius: '20px', padding: '0.35rem 0.85rem', alignSelf: 'flex-start' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#E2B235', display: 'inline-block' }}></span>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#B8891A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Setup in Progress</span>
+                        </div>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif", lineHeight: 1.2 }}>Getting Started</h1>
+                        <p style={{ color: '#5C5C5C', fontSize: '1rem', maxWidth: '520px', lineHeight: '1.65', margin: 0 }}>Complete a few simple steps to prepare your workspace before launching your first programme.</p>
+                        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
+                          <button onClick={() => nextStep && nextStep.tab && triggerTransition(() => setActiveTab(nextStep.tab))} style={{ background: '#F5C84C', border: '1px solid #F5C84C', color: '#151515', fontFamily: "'Inter', sans-serif", fontWeight: 700, padding: '0.75rem 1.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,200,76,0.25)', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>Continue Setup <ArrowRight size={16} /></button>
+                          <button style={{ background: 'transparent', border: '1px solid #DDD6CB', color: '#5C5C5C', fontFamily: "'Inter', sans-serif", fontWeight: 600, padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F0EDE8'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}>View Setup Guide</button>
+                        </div>
+                      </div>
+                      {/* Progress Card */}
+                      <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 2px 12px rgba(100,90,75,0.07)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#151515', fontFamily: "'Inter', sans-serif" }}>Workspace Setup Progress</span>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#E2B235', fontFamily: "'Inter', sans-serif" }}>{progressPct}%</span>
+                        </div>
+                        <div style={{ height: '8px', backgroundColor: '#E8E2DA', borderRadius: '99px', overflow: 'hidden', marginBottom: '0.75rem' }}>
+                          <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, #F5C84C, #E2A020)', borderRadius: '99px', transition: 'width 0.6s ease' }} />
+                        </div>
+                        <p style={{ color: '#5C5C5C', fontSize: '0.78rem', margin: '0 0 1.25rem' }}>{setupSteps.length - completedCount} steps remaining to complete setup</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                          {setupSteps.slice(0, 5).map(s => (
+                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: s.done ? 'rgba(22,163,74,0.12)' : 'rgba(245,200,76,0.12)', border: s.done ? '1.5px solid #16a34a' : '1.5px solid #F5C84C', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                {s.done ? <Check size={9} strokeWidth={3} color="#16a34a" /> : <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#E2B235', display: 'inline-block' }}></span>}
+                              </div>
+                              <span style={{ fontSize: '0.75rem', color: s.done ? '#7E7E7E' : '#151515', fontWeight: s.done ? 400 : 600, textDecoration: s.done ? 'line-through' : 'none' }}>{s.label}</span>
+                            </div>
+                          ))}
+                          <span style={{ fontSize: '0.72rem', color: '#B8891A', fontWeight: 600, marginTop: '0.25rem' }}>+ {setupSteps.length - 5} more steps below ↓</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Main + Right Sidebar */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 310px', gap: '2rem', alignItems: 'start' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {/* Full checklist */}
+                        <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '2rem', boxShadow: '0 2px 12px rgba(100,90,75,0.07)' }}>
+                          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#151515', margin: '0 0 1.5rem', fontFamily: "'Inter', sans-serif" }}>Complete Your Workspace Setup</h2>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {setupSteps.map((step, idx) => (
+                              <div key={step.id} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '1rem 0', borderBottom: idx < setupSteps.length - 1 ? '1px solid #E8E2DA' : 'none', cursor: step.tab ? 'pointer' : 'default', transition: 'padding-left 0.2s ease', borderRadius: '4px' }} onClick={() => step.tab && triggerTransition(() => setActiveTab(step.tab))} onMouseEnter={(e) => { if (step.tab) e.currentTarget.style.paddingLeft = '0.35rem'; }} onMouseLeave={(e) => { e.currentTarget.style.paddingLeft = '0'; }}>
+                                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: step.done ? 'rgba(22,163,74,0.1)' : 'rgba(245,200,76,0.1)', border: step.done ? '1.5px solid #16a34a' : '1.5px solid #F5C84C', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.1rem' }}>
+                                  {step.done ? <Check size={12} strokeWidth={3} color="#16a34a" /> : <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#E2B235' }}>{idx + 1}</span>}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                                    <span style={{ fontSize: '0.88rem', fontWeight: 600, color: step.done ? '#7E7E7E' : '#151515', textDecoration: step.done ? 'line-through' : 'none', fontFamily: "'Inter', sans-serif" }}>{step.label}</span>
+                                    {step.tab && !step.done && <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#E2B235', display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>Start <ArrowRight size={12} /></span>}
+                                    {step.done && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', flexShrink: 0 }}>✓ Done</span>}
+                                  </div>
+                                  <p style={{ fontSize: '0.78rem', color: step.done ? '#A0A0A0' : '#5C5C5C', margin: '0.2rem 0 0', lineHeight: '1.4' }}>{step.desc}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Quick Setup Cards */}
+                        <div>
+                          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 1rem', fontFamily: "'Inter', sans-serif" }}>Recommended Setup</h3>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                            {[
+                              { label: 'Organization', desc: 'Complete company profile', btn: 'Manage', tab: 'Settings', icon: <Building2 size={20} color="#E2B235" /> },
+                              { label: 'Team', desc: 'Invite administrators and facilitators', btn: 'Invite', tab: 'Team', icon: <Users size={20} color="#E2B235" /> },
+                              { label: 'Programmes', desc: 'Create your first programme', btn: 'Create', tab: 'Programmes', icon: <Grid size={20} color="#E2B235" /> },
+                              { label: 'Workspace', desc: 'Configure branding and preferences', btn: 'Configure', tab: 'Settings', icon: <Settings size={20} color="#E2B235" /> },
+                            ].map((c, i) => (
+                              <div key={i} style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '16px', padding: '1.5rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', boxShadow: '0 2px 10px rgba(100,90,75,0.05)', transition: 'all 0.25s ease', cursor: 'pointer' }} onClick={() => triggerTransition(() => setActiveTab(c.tab))} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(100,90,75,0.1)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(100,90,75,0.05)'; }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(245,200,76,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{c.icon}</div>
+                                <div>
+                                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#151515', fontFamily: "'Inter', sans-serif" }}>{c.label}</div>
+                                  <div style={{ fontSize: '0.74rem', color: '#5C5C5C', marginTop: '0.2rem', lineHeight: '1.35' }}>{c.desc}</div>
+                                </div>
+                                <button onClick={(e) => { e.stopPropagation(); triggerTransition(() => setActiveTab(c.tab)); }} style={{ background: '#F5C84C', border: 'none', color: '#151515', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start', fontFamily: "'Inter', sans-serif" }}>{c.btn}</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Sidebar */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {nextStep && (
+                          <div style={{ backgroundColor: '#151515', border: '1px solid #252525', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
+                            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#F5C84C', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.75rem' }}>Recommended Next Step</div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 0.5rem', fontFamily: "'Inter', sans-serif" }}>{nextStep.label}</h4>
+                            <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.58)', lineHeight: '1.5', margin: '0 0 1.25rem' }}>{nextStep.desc}</p>
+                            {nextStep.tab && <button onClick={() => triggerTransition(() => setActiveTab(nextStep.tab))} style={{ background: '#F5C84C', border: 'none', color: '#151515', borderRadius: '8px', padding: '0.65rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>{nextStep.label.split(' ').slice(0, 3).join(' ')} <ArrowRight size={14} /></button>}
+                          </div>
+                        )}
+                        <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 2px 12px rgba(100,90,75,0.07)' }}>
+                          <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#151515', margin: '0 0 1rem', fontFamily: "'Inter', sans-serif" }}>Helpful Resources</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            {[
+                              { label: 'Setup Guide', icon: <BookOpen size={14} color="#E2B235" /> },
+                              { label: 'Video Tutorials', icon: <Play size={14} color="#E2B235" /> },
+                              { label: 'OYEN AI Assistant', icon: <Zap size={14} color="#E2B235" /> },
+                              { label: 'Contact Support', icon: <Headphones size={14} color="#E2B235" /> },
+                            ].map((r, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.55rem 0.65rem', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EDE8E0'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                <div style={{ width: '26px', height: '26px', borderRadius: '6px', backgroundColor: 'rgba(245,200,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{r.icon}</div>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#151515' }}>{r.label}</span>
+                                <ArrowRight size={11} color="#B8891A" style={{ marginLeft: 'auto' }} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 2px 12px rgba(100,90,75,0.07)' }}>
+                          <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#151515', margin: '0 0 1.1rem', fontFamily: "'Inter', sans-serif" }}>Workspace Health</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.78rem' }}>
+                            {[
+                              { label: 'Status', value: 'Active', valueColor: '#16a34a' },
+                              { label: 'Storage Used', value: '0.4 GB / 10 GB', valueColor: '#151515' },
+                              { label: 'Team Members', value: `${wsTeam.length} active`, valueColor: '#151515' },
+                              { label: 'Current Plan', value: 'Standard', valueColor: '#151515' },
+                              { label: 'Programmes', value: `${displayPrograms.length} created`, valueColor: '#151515' },
+                            ].map((row, i, arr) => (
+                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: i < arr.length - 1 ? '0.8rem' : 0, borderBottom: i < arr.length - 1 ? '1px solid #E0D9D0' : 'none' }}>
+                                <span style={{ color: '#7E7E7E' }}>{row.label}</span>
+                                <span style={{ fontWeight: 600, color: row.valueColor }}>{row.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
             ) : activeTab === 'Settings' ? (
               /* Settings Tab Component */
               <SettingsTab
