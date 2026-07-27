@@ -2301,19 +2301,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Right illustration column */}
-                    <div style={{ flexShrink: 0, zIndex: 1, marginLeft: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img 
-                        src={dashboardHeroIllustration} 
-                        alt="Workspace Illustration" 
-                        style={{
-                          width: '240px',
-                          height: '240px',
-                          objectFit: 'contain',
-                          mixBlendMode: 'multiply'
-                        }}
-                      />
-                    </div>
                   </div>
 
                   {/* "What You Can Do Now" section */}
