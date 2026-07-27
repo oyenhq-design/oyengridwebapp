@@ -2230,6 +2230,23 @@ export default function App() {
                   }}>
                     {/* Left content column */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, zIndex: 2, textAlign: 'left' }}>
+
+                      {/* Org Logo — shown if uploaded */}
+                      {orgLogo && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                          <img
+                            src={orgLogo}
+                            alt="Organization Logo"
+                            style={{
+                              height: '48px',
+                              maxWidth: '160px',
+                              objectFit: 'contain',
+                              borderRadius: '6px'
+                            }}
+                          />
+                        </div>
+                      )}
+
                       {/* Workspace Ready Badge */}
                       <div style={{
                         display: 'inline-flex',
@@ -2252,7 +2269,7 @@ export default function App() {
 
                       <h1 style={{ fontSize: '2.75rem', fontWeight: 800, color: '#151515', margin: 0, lineHeight: 1.15, fontFamily: "'Inter', sans-serif" }}>
                         Welcome to <br />
-                        <span style={{ color: '#E2B235' }}>Your Workspace</span>
+                        <span style={{ color: '#E2B235' }}>{orgName ? orgName.charAt(0).toUpperCase() + orgName.slice(1) : 'Your Workspace'}</span>
                       </h1>
                       
                       <p style={{ color: '#5C5C5C', fontSize: '0.95rem', marginTop: '0.5rem', maxWidth: '380px', lineHeight: '1.6' }}>
