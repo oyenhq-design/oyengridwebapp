@@ -2216,9 +2216,13 @@ export default function App() {
                   {/* Hero welcome banner card */}
                   <div style={{
                     borderRadius: '18px',
-                    border: '1px solid #DDD6CB',
+                    border: orgLogo ? '1px solid #C8BFB2' : '1px solid #DDD6CB',
                     backgroundColor: '#F5F2ED',
-                    backgroundImage: 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.06), transparent 50%)',
+                    backgroundImage: orgLogo
+                      ? `linear-gradient(to right, rgba(15, 12, 8, 0.82) 0%, rgba(15, 12, 8, 0.55) 55%, rgba(15, 12, 8, 0.15) 100%), url(${orgLogo})`
+                      : 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.06), transparent 50%)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
                     padding: '3rem',
                     minHeight: '360px',
                     display: 'flex',
@@ -2226,26 +2230,10 @@ export default function App() {
                     alignItems: 'center',
                     position: 'relative',
                     overflow: 'hidden',
-                    boxShadow: '0 2px 16px rgba(100, 90, 75, 0.1)'
+                    boxShadow: '0 2px 16px rgba(100, 90, 75, 0.12)'
                   }}>
                     {/* Left content column */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, zIndex: 2, textAlign: 'left' }}>
-
-                      {/* Org Logo — shown if uploaded */}
-                      {orgLogo && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-                          <img
-                            src={orgLogo}
-                            alt="Organization Logo"
-                            style={{
-                              height: '48px',
-                              maxWidth: '160px',
-                              objectFit: 'contain',
-                              borderRadius: '6px'
-                            }}
-                          />
-                        </div>
-                      )}
 
                       {/* Workspace Ready Badge */}
                       <div style={{
@@ -2267,12 +2255,12 @@ export default function App() {
                         Workspace Ready
                       </div>
 
-                      <h1 style={{ fontSize: '2.75rem', fontWeight: 800, color: '#151515', margin: 0, lineHeight: 1.15, fontFamily: "'Inter', sans-serif" }}>
+                      <h1 style={{ fontSize: '2.75rem', fontWeight: 800, color: orgLogo ? '#FFFFFF' : '#151515', margin: 0, lineHeight: 1.15, fontFamily: "'Inter', sans-serif" }}>
                         Welcome to <br />
-                        <span style={{ color: '#E2B235' }}>{orgName ? orgName.charAt(0).toUpperCase() + orgName.slice(1) : 'Your Workspace'}</span>
+                        <span style={{ color: '#F5C84C' }}>{orgName ? orgName.charAt(0).toUpperCase() + orgName.slice(1) : 'Your Workspace'}</span>
                       </h1>
                       
-                      <p style={{ color: '#5C5C5C', fontSize: '0.95rem', marginTop: '0.5rem', maxWidth: '380px', lineHeight: '1.6' }}>
+                      <p style={{ color: orgLogo ? 'rgba(255,255,255,0.75)' : '#5C5C5C', fontSize: '0.95rem', marginTop: '0.5rem', maxWidth: '380px', lineHeight: '1.6' }}>
                         Your workspace is ready to power impactful learning experiences.
                       </p>
 
@@ -2303,9 +2291,9 @@ export default function App() {
                         <button 
                           onClick={() => triggerTransition(() => setActiveTab('Team'))}
                           style={{
-                            background: 'transparent',
-                            border: '1px solid #ECE6DC',
-                            color: '#5C5C5C',
+                            background: orgLogo ? 'rgba(255,255,255,0.12)' : 'transparent',
+                            border: orgLogo ? '1px solid rgba(255,255,255,0.3)' : '1px solid #ECE6DC',
+                            color: orgLogo ? '#FFFFFF' : '#5C5C5C',
                             fontFamily: "'Inter', sans-serif",
                             fontWeight: 600,
                             padding: '0.75rem 1.5rem',
@@ -2317,12 +2305,12 @@ export default function App() {
                             transition: 'all 0.2s ease'
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#F5F5F5';
-                            e.currentTarget.style.borderColor = '#D4CFC6';
+                            e.currentTarget.style.backgroundColor = orgLogo ? 'rgba(255,255,255,0.2)' : '#F5F5F5';
+                            e.currentTarget.style.borderColor = orgLogo ? 'rgba(255,255,255,0.5)' : '#D4CFC6';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.borderColor = '#ECE6DC';
+                            e.currentTarget.style.backgroundColor = orgLogo ? 'rgba(255,255,255,0.12)' : 'transparent';
+                            e.currentTarget.style.borderColor = orgLogo ? 'rgba(255,255,255,0.3)' : '#ECE6DC';
                           }}
                         >
                           <UserPlus size={16} /> Invite Team
