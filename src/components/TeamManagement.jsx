@@ -528,6 +528,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
                 <th style={{ padding: '16px 20px' }}>Role</th>
                 <th style={{ padding: '16px 20px' }}>Programs</th>
                 <th style={{ padding: '16px 20px' }}>Status</th>
+                <th style={{ padding: '16px 20px' }}>Invite Code</th>
                 <th style={{ padding: '16px 20px' }}>Last Active</th>
                 <th style={{ padding: '16px 20px' }}>Joined</th>
                 <th style={{ padding: '16px 20px', width: '40px' }} />
@@ -585,6 +586,29 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
                         <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: statusStyle.text }} />
                         {item.status === 'Pending' ? 'Pending Invite' : item.status}
                       </span>
+                    </td>
+
+                    {/* Invite Code */}
+                    <td style={{ padding: '12px 20px' }}>
+                      {item.status === 'Pending' ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 700, color: '#151515', backgroundColor: '#F5F2ED', padding: '4px 8px', borderRadius: '6px', border: '1px solid #E8E2D8' }}>
+                            {item.accessCode || item.code || 'GRID-TEMP'}
+                          </span>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard?.writeText(item.accessCode || item.code || '').then(() => {
+                                alert('Invite code copied to clipboard!');
+                              });
+                            }}
+                            style={{ background: 'none', border: 'none', color: '#D4A017', fontSize: '11px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>Claimed</span>
+                      )}
                     </td>
 
                     {/* Last Active */}
