@@ -8,7 +8,7 @@ import {
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
   Shield, Rocket, FileText, Mail, HardDrive,
   Presentation, Folder, Image, Eye, Download, Book, Video, MessageSquare,
-  Play, Zap
+  Play, Zap, Plus
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
 import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser } from './domain/workspace/selectors';
@@ -2673,147 +2673,240 @@ export default function App() {
                 addNotification={addNotification}
               />
             ) : activeTab === 'Your Workspace' ? (
-              /* Global Workspace Dashboard */
-              <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Your Workspace</h2>
-                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                    Overview of your organization workspace settings, limits, and records.
-                  </p>
-                </div>
+              /* Redesigned Your Workspace Page */
+              (() => {
+                // Storage calculations
+                let totalBytes = 0;
+                displayPrograms.forEach(p => {
+                  (p.resources || []).forEach(r => { totalBytes += r.sizeInBytes || 0; });
+                  (p.sessions || []).forEach(s => {
+                    (s.resources || []).forEach(sr => { totalBytes += sr.sizeInBytes || 0; });
+                  });
+                });
+                const totalMB = totalBytes / (1024 * 1024);
+                const limitMB = 10240; // 10 GB
+                const storagePercent = Math.min((totalMB / limitMB) * 100, 100);
+                const storageText = totalBytes === 0 ? '0.00 MB' : totalBytes >= 1024*1024*1024 ? `${(totalBytes / (1024*1024*1024)).toFixed(2)} GB` : `${totalMB.toFixed(2)} MB`;
 
-                {/* Workspace Summary Cards with Integrated Progress Loaders */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', maxWidth: '800px' }}>
-                  {/* Programs Card */}
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(212,175,55,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', flexShrink: 0 }}>
-                        <BookOpen size={20} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Programs</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{displayPrograms.length} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 3 created</span></div>
-                      </div>
-                    </div>
-                    <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min((displayPrograms.length / 3) * 100, 100)}%`, background: 'linear-gradient(90deg,#D4AF37,#C49A2A)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
-                    </div>
-                  </div>
+                // Activity feed retrieval
+                const allActivities = [];
+                displayPrograms.forEach(p => {
+                  (p.activity || []).forEach(act => {
+                    allActivities.push({ ...act, programName: p.name });
+                  });
+                });
+                allActivities.sort((a, b) => b.id - a.id);
 
-                  {/* Participants Card */}
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(34,197,94,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e', flexShrink: 0 }}>
-                        <Users size={20} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Participants</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{wsLearners.length} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 50 enrolled</span></div>
-                      </div>
-                    </div>
-                    <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min((wsLearners.length / 50) * 100, 100)}%`, background: 'linear-gradient(90deg,#22c55e,#16a34a)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
-                    </div>
-                  </div>
-
-                  {/* Storage Card */}
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    {(() => {
-                      let totalBytes = 0;
-                      displayPrograms.forEach(p => {
-                        (p.resources || []).forEach(r => {
-                          totalBytes += r.sizeInBytes || 0;
-                        });
-                        (p.sessions || []).forEach(s => {
-                          (s.resources || []).forEach(sr => {
-                            totalBytes += sr.sizeInBytes || 0;
-                          });
-                        });
-                      });
-                      const totalMB = totalBytes / (1024 * 1024);
-                      const limitMB = 10240; // 10 GB
-                      const storagePercent = Math.min((totalMB / limitMB) * 100, 100);
-                      const storageText = totalBytes === 0 ? '0.00 MB' : totalBytes >= 1024*1024*1024 ? `${(totalBytes / (1024*1024*1024)).toFixed(2)} GB` : `${totalMB.toFixed(2)} MB`;
-                      return (
-                        <>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(59,130,246,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}>
-                              <HardDrive size={20} />
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage</div>
-                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{storageText} <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>/ 10 GB limit</span></div>
-                            </div>
-                          </div>
-                          <div style={{ height: '5px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${storagePercent}%`, background: 'linear-gradient(90deg,#3b82f6,#2563eb)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginTop: '0.2rem' }}>
-                    Real-time transaction feed of modifications across all programs in this workspace.
-                  </p>
-                </div>
-
-                <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '2rem', maxWidth: '800px' }}>
-                  {/* Merge and sort program activities */}
-                  {(() => {
-                    const allActivities = [];
-                    displayPrograms.forEach(p => {
-                      (p.activity || []).forEach(act => {
-                        allActivities.push({
-                          ...act,
-                          programName: p.name
-                        });
-                      });
-                    });
+                return (
+                  <div className="animate-fade-in" style={{ padding: '2.5rem 3rem', display: 'flex', flexDirection: 'column', gap: '2.5rem', textAlign: 'left' }}>
                     
-                    // Sort descending by id
-                    allActivities.sort((a, b) => b.id - a.id);
+                    {/* Hero Section */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem', alignItems: 'start' }}>
+                      <div>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif", lineHeight: 1.2 }}>Your Workspace</h1>
+                        <p style={{ color: '#5C5C5C', fontSize: '1rem', marginTop: '0.5rem', maxWidth: '520px', lineHeight: '1.65' }}>
+                          Manage your organization, monitor workspace usage, and configure essential settings from one place.
+                        </p>
+                      </div>
 
-                    if (allActivities.length > 0) {
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                          {allActivities.slice(0, 20).map((entry, i) => (
-                            <div key={entry.id} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '0.9rem 0', borderBottom: i < allActivities.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#D4AF37', marginTop: '0.45rem', flexShrink: 0 }} />
-                              <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', padding: '0.15rem 0.45rem', borderRadius: '4px', textTransform: 'uppercase' }}>
-                                    {entry.programName}
-                                  </span>
-                                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)' }}>{entry.time}</span>
-                                </div>
-                                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)', margin: '0.35rem 0 0 0' }}>{entry.text}</p>
-                              </div>
-                            </div>
-                          ))}
+                      {/* Workspace Status Card */}
+                      <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(100, 90, 75, 0.07)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#7E7E7E', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Workspace Status</span>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', backgroundColor: 'rgba(34, 197, 94, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '12px' }}>Active</span>
                         </div>
-                      );
-                    }
-
-                    return (
-                      <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2">
-                          <path d="M12 20h9M3 20v-8a2 2 0 012-2h4l2-3h4l2 3h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                        </svg>
-                        <div>
-                          <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#fff', margin: 0 }}>No recent activity</h4>
-                          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.3rem' }}>
-                            Activity entries from programs, sessions, and uploads in this workspace will populate here.
-                          </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.8rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#7E7E7E' }}>Current Plan:</span>
+                            <span style={{ fontWeight: 600, color: '#151515' }}>Standard</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#7E7E7E' }}>Workspace Type:</span>
+                            <span style={{ fontWeight: 600, color: '#151515' }}>Enterprise</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#7E7E7E' }}>Created Date:</span>
+                            <span style={{ fontWeight: 600, color: '#151515' }}>July 2026</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #DDD6CB', paddingTop: '0.6rem', marginTop: '0.2rem' }}>
+                            <span style={{ color: '#7E7E7E' }}>Workspace ID:</span>
+                            <span style={{ fontFamily: 'monospace', color: '#151515' }}>ws_oyg_9f3a8b</span>
+                          </div>
                         </div>
                       </div>
-                    );
-                  })()}
-                </div>
-              </div>
+                    </div>
+
+                    {/* Workspace Overview Cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+                      {[
+                        { label: 'Programmes', value: `${displayPrograms.length} / 3 Created`, pct: (displayPrograms.length / 3) * 100, barColor: 'linear-gradient(90deg, #F5C84C, #E2A020)', icon: <BookOpen size={20} color="#E2B235" /> },
+                        { label: 'Learners', value: `${wsLearners.length} / 50 Enrolled`, pct: (wsLearners.length / 50) * 100, barColor: 'linear-gradient(90deg, #22c55e, #16a34a)', icon: <Users size={20} color="#22c55e" /> },
+                        { label: 'Team Members', value: `${wsTeam.length} Active Member${wsTeam.length !== 1 ? 's' : ''}`, pct: 100, barColor: 'linear-gradient(90deg, #A855F7, #7E22CE)', icon: <UserCheck size={20} color="#A855F7" /> },
+                        { label: 'Storage', value: `${storageText} / 10 GB`, pct: storagePercent, barColor: 'linear-gradient(90deg, #3b82f6, #2563eb)', icon: <HardDrive size={20} color="#3b82f6" /> },
+                      ].map((card, i) => (
+                        <div key={i} style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(100,90,75,0.07)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {card.icon}
+                            </div>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#7E7E7E' }}>{card.label}</span>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#151515' }}>{card.value}</div>
+                          </div>
+                          <div style={{ height: '6px', backgroundColor: '#E8E2DA', borderRadius: '99px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${card.pct}%`, background: card.barColor, borderRadius: '99px' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Workspace Configuration & Recent Activity (2-column layout) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
+                      
+                      {/* Left: Configuration & Recent Activity */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        <div>
+                          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#151515', margin: '0 0 1.25rem 0', fontFamily: "'Inter', sans-serif" }}>Workspace Configuration</h2>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                            {[
+                              { title: 'Branding', desc: 'Manage your logo and organization profile.', tab: 'Settings' },
+                              { title: 'Roles & Permissions', desc: 'Control workspace access and user roles.', tab: 'Settings' },
+                              { title: 'Notifications', desc: 'Configure email and system notifications.', tab: 'Settings' },
+                              { title: 'Integrations', desc: 'Connect external services and applications.', tab: 'Settings' },
+                            ].map((config, idx) => (
+                              <div key={idx} style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem', transition: 'all 0.2s ease', cursor: 'pointer' }} onClick={() => triggerTransition(() => setActiveTab(config.tab))} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(100, 90, 75, 0.08)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                                <div>
+                                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>{config.title}</h4>
+                                  <p style={{ fontSize: '0.8rem', color: '#5C5C5C', marginTop: '0.4rem', lineHeight: '1.4' }}>{config.desc}</p>
+                                </div>
+                                <button style={{ background: 'transparent', border: 'none', color: '#E2B235', fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+                                  Manage <ArrowRight size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Recent Activity */}
+                        <div>
+                          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#151515', margin: '0 0 1rem 0', fontFamily: "'Inter', sans-serif" }}>Recent Activity</h2>
+                          <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.5rem', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            {allActivities.length > 0 ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                                {allActivities.slice(0, 5).map((entry, i) => (
+                                  <div key={entry.id} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', paddingBottom: '0.9rem', borderBottom: i < 4 ? '1px solid #E8E2DA' : 'none' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#F5C84C', marginTop: '0.45rem', flexShrink: 0 }} />
+                                    <div style={{ flex: 1, textAlign: 'left' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', padding: '0.15rem 0.45rem', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                          {entry.programName}
+                                        </span>
+                                        <span style={{ fontSize: '0.72rem', color: '#7E7E7E' }}>{entry.time}</span>
+                                      </div>
+                                      <p style={{ fontSize: '0.82rem', color: '#151515', margin: '0.35rem 0 0 0', lineHeight: '1.4' }}>{entry.text}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ padding: '2rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(245,200,76,0.12)', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', color: '#E2B235' }}>
+                                  <Clock size={22} />
+                                </div>
+                                <div>
+                                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: 0 }}>No recent activity yet</h4>
+                                  <p style={{ color: '#5C5C5C', fontSize: '0.8rem', marginTop: '0.3rem', maxWidth: '320px', lineHeight: '1.4' }}>
+                                    Activity from programmes, learners, sessions, and workspace updates will appear here once you begin using OYEN GRID.
+                                  </p>
+                                </div>
+                                <button onClick={() => triggerTransition(() => setActiveTab('Programmes'))} style={{ background: '#F5C84C', border: 'none', color: '#151515', borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", marginTop: '0.5rem' }}>
+                                  Create Your First Programme
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Workspace Information & Usage */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        
+                        {/* Workspace Information */}
+                        <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 2px 12px rgba(100, 90, 75, 0.07)' }}>
+                          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 1.25rem 0', fontFamily: "'Inter', sans-serif" }}>Workspace Information</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.8rem' }}>
+                            {[
+                              { label: 'Organization Name', value: orgName || 'Oyen Grid' },
+                              { label: 'Workspace Name', value: 'Default Workspace' },
+                              { label: 'Workspace Type', value: 'Enterprise' },
+                              { label: 'Current Plan', value: 'Standard Plan' },
+                              { label: 'Time Zone', value: 'GMT +1:00' },
+                              { label: 'Created Date', value: 'July 27, 2026' }
+                            ].map((row, idx, arr) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: idx < arr.length - 1 ? '0.8rem' : 0, borderBottom: idx < arr.length - 1 ? '1px solid #DDD6CB' : 'none' }}>
+                                <span style={{ color: '#7E7E7E' }}>{row.label}</span>
+                                <span style={{ fontWeight: 600, color: '#151515' }}>{row.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Workspace Usage */}
+                        <div style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 2px 12px rgba(100, 90, 75, 0.07)' }}>
+                          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 1.25rem 0', fontFamily: "'Inter', sans-serif" }}>Workspace Usage</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            {[
+                              { label: 'Programmes Used', value: `${displayPrograms.length} / 3`, pct: (displayPrograms.length / 3) * 100, barColor: '#E2B235' },
+                              { label: 'Learners Enrolled', value: `${wsLearners.length} / 50`, pct: (wsLearners.length / 50) * 100, barColor: '#22c55e' },
+                              { label: 'Team Members', value: `${wsTeam.length} / 10`, pct: (wsTeam.length / 10) * 100, barColor: '#A855F7' },
+                              { label: 'Storage Usage', value: `${storageText} / 10 GB`, pct: storagePercent, barColor: '#3b82f6' }
+                            ].map((row, idx) => (
+                              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                                  <span style={{ color: '#7E7E7E', fontWeight: 500 }}>{row.label}</span>
+                                  <span style={{ fontWeight: 600, color: '#151515' }}>{row.value}</span>
+                                </div>
+                                <div style={{ height: '6px', backgroundColor: '#E8E2DA', borderRadius: '99px', overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${row.pct}%`, backgroundColor: row.barColor, borderRadius: '99px' }} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    {/* Quick Actions Section */}
+                    <div>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#151515', margin: '0 0 1.25rem 0', fontFamily: "'Inter', sans-serif" }}>Quick Actions</h2>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+                        {[
+                          { title: 'Create Programme', desc: 'Build and launch a new educational workspace.', tab: 'Programmes', icon: <Plus size={18} color="#E2B235" /> },
+                          { title: 'Invite Team Members', desc: 'Add new facilitators and managers.', tab: 'Team', icon: <UserPlus size={18} color="#E2B235" /> },
+                          { title: 'Manage Workspace', desc: 'Configure brand assets, logo, and names.', tab: 'Settings', icon: <Settings size={18} color="#E2B235" /> },
+                          { title: 'Upgrade Plan', desc: 'Expand workspace limits and enrollments.', tab: 'Settings', icon: <Zap size={18} color="#E2B235" /> }
+                        ].map((act, i) => (
+                          <div key={i} style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem', transition: 'all 0.2s ease', cursor: 'pointer' }} onClick={() => triggerTransition(() => setActiveTab(act.tab))} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(100, 90, 75, 0.08)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(245,200,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {act.icon}
+                              </div>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>{act.title}</h4>
+                            </div>
+                            <p style={{ fontSize: '0.78rem', color: '#5C5C5C', margin: 0, lineHeight: '1.4' }}>{act.desc}</p>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#E2B235', display: 'flex', alignItems: 'center', gap: '0.25rem', alignSelf: 'flex-start' }}>
+                              Go <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })()
             ) : activeTab === 'Getting Started' ? (
               /* ── Getting Started Onboarding Page ── */
               (() => {
