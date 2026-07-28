@@ -289,6 +289,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
   const [inviteLink,  setInviteLink]  = useState(`${window.location.origin}/?code=EMP-${Math.floor(10000 + Math.random() * 90000)}`);
   const [linkEnabled, setLinkEnabled] = useState(true);
   const [activeActionMenu, setActiveActionMenu] = useState(null); // { type: 'active' | 'pending', index: number }
+  const [viewingProfileMember, setViewingProfileMember] = useState(null);
 
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -438,6 +439,101 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
       {/* Modals */}
       {activeModal === 'email'  && <InviteEmailModal onClose={closeModal} onSend={handleInviteEmail} />}
       {activeModal === 'link'   && <InviteLinkModal  onClose={closeModal} inviteLink={inviteLink} onRegenerate={handleRegenerate} linkEnabled={linkEnabled} onToggleLink={() => { setLinkEnabled(v => !v); showToast(linkEnabled ? 'Invite link disabled' : 'Invite link enabled'); addNotification?.(linkEnabled ? 'Workspace invite link disabled' : 'Workspace invite link enabled'); }} />}
+
+      {viewingProfileMember && (
+        <div onClick={() => setViewingProfileMember(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(21, 21, 21, 0.4)', backdropFilter: 'blur(4px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '400px', boxShadow: '0 12px 30px rgba(100, 90, 75, 0.15)', display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'left' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>User Profile</h3>
+              </div>
+              <button onClick={() => setViewingProfileMember(null)} style={{ background: '#F5F2ED', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Profile Info Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', borderBottom: '1px solid #E8E2D8', paddingBottom: '1.25rem' }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: viewingProfileMember.color || '#DDD', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
+                {viewingProfileMember.initials}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>
+                  {viewingProfileMember.name}
+                </h4>
+                <span style={{ fontSize: '0.85rem', color: '#6B7280' }}>{viewingProfileMember.email}</span>
+                <span style={{ alignSelf: 'flex-start', backgroundColor: ROLE_COLORS[viewingProfileMember.role]?.bg || 'rgba(107,114,128,0.12)', color: ROLE_COLORS[viewingProfileMember.role]?.text || '#4B5563', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: 700, marginTop: '0.25rem' }}>
+                  {viewingProfileMember.role}
+                </span>
+              </div>
+            </div>
+
+            {/* Details Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.82rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6B7280', fontWeight: 600 }}>Status</span>
+                <span style={{ backgroundColor: STATUS_COLOR[viewingProfileMember.status]?.bg || 'rgba(212,175,55,0.1)', color: STATUS_COLOR[viewingProfileMember.status]?.text || '#B98C17', borderRadius: '999px', padding: '3px 10px', fontSize: '11px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: STATUS_COLOR[viewingProfileMember.status]?.text || '#B98C17' }} />
+                  {viewingProfileMember.status === 'Pending' ? 'Pending Invite' : viewingProfileMember.status}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6B7280', fontWeight: 600 }}>Invite Code</span>
+                {(() => {
+                  const match = pending.find(p => p.email?.toLowerCase() === viewingProfileMember.email?.toLowerCase());
+                  const codeVal = viewingProfileMember.accessCode || viewingProfileMember.code || (match ? (match.accessCode || match.code) : null);
+                  if (codeVal) {
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: '#151515', backgroundColor: '#F5F2ED', padding: '2px 6px', borderRadius: '4px', border: '1px solid #E8E2D8' }}>
+                          {codeVal}
+                        </span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard?.writeText(codeVal).then(() => alert('Invite code copied!'));
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#D4A017', fontSize: '10px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    );
+                  }
+                  return <span style={{ color: '#151515', fontWeight: 700 }}>—</span>;
+                })()}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6B7280', fontWeight: 600 }}>Programmes</span>
+                <span style={{ color: '#151515', fontWeight: 700 }}>
+                  {viewingProfileMember.role === 'Admin' ? 'All Programs' : 'Leadership Orientation'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6B7280', fontWeight: 600 }}>Joined/Invited</span>
+                <span style={{ color: '#151515', fontWeight: 700 }}>
+                  {viewingProfileMember.joined || viewingProfileMember.invitedAt || '—'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6B7280', fontWeight: 600 }}>Last Active</span>
+                <span style={{ color: '#151515', fontWeight: 700 }}>
+                  {viewingProfileMember.status === 'Pending' ? 'Pending Invite' : (viewingProfileMember.isYou ? 'Active now' : 'Yesterday')}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <button onClick={() => setViewingProfileMember(null)} style={{ flex: 1, padding: '0.65rem', background: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, textAlign: 'center' }}>
+                Close Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
@@ -651,7 +747,7 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
                           <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={(e) => { e.stopPropagation(); setActiveActionMenu(null); }} />
                           <div style={{ position: 'absolute', right: '10px', top: '36px', backgroundColor: '#FFFFFF', border: '1px solid #E7E2D8', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.06)', width: '190px', zIndex: 100, overflow: 'hidden', textAlign: 'left' }}>
                             
-                            <button onClick={(e) => { e.stopPropagation(); alert(`Viewing profile for ${item.name}`); setActiveActionMenu(null); }}
+                            <button onClick={(e) => { e.stopPropagation(); setViewingProfileMember(item); setActiveActionMenu(null); }}
                                     style={{ width: '100%', padding: '0.6rem 0.8rem', textAlign: 'left', background: 'none', border: 'none', color: '#1B1D23', fontSize: '13px', cursor: 'pointer', transition: 'background-color 0.2s' }}
                                     onMouseEnter={ev => ev.currentTarget.style.backgroundColor = '#FAF8F3'}
                                     onMouseLeave={ev => ev.currentTarget.style.backgroundColor = 'transparent'}>
