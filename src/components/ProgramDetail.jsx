@@ -1096,63 +1096,63 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {/* Create Session Modal */}
       {showCreateSessionModal && (
-        <div onClick={() => setShowCreateSessionModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.78)', backdropFilter: 'blur(6px)', zIndex: 1400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 30px 70px rgba(0,0,0,0.7)', textAlign: 'left' }}>
+        <div onClick={() => setShowCreateSessionModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(8px)', zIndex: 1400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: 'rgba(23, 23, 23, 0.85)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', textAlign: 'left' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Schedule Session</h3>
-                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem', margin: '0.2rem 0 0 0' }}>Configure session properties for {program.name}</p>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Schedule Session</h3>
+                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.2rem', margin: '0.2rem 0 0 0' }}>Configure session properties for {program.name}</p>
               </div>
-              <button onClick={() => setShowCreateSessionModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => setShowCreateSessionModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={14} />
               </button>
             </div>
             
             <form onSubmit={handleCreateSession} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Title</label>
-                <input required autoFocus type="text" placeholder="e.g. Orientation & Onboarding" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Title</label>
+                <input required autoFocus type="text" placeholder="e.g. Orientation & Onboarding" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
               </div>
               
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Type</label>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Type</label>
                 <div style={{ position: 'relative' }}>
-                  <select value={sessionType} onChange={e => setSessionType(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', appearance: 'none', cursor: 'pointer' }}>
+                  <select value={sessionType} onChange={e => setSessionType(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', appearance: 'none', cursor: 'pointer' }}>
                     {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
                   </select>
-                  <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
+                  <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.6)', pointerEvents: 'none' }} />
                 </div>
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Name</label>
-                  <input type="text" placeholder="e.g. Dr. Jane" value={facilitatorName} onChange={e => setFacilitatorName(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Name</label>
+                  <input type="text" placeholder="e.g. Dr. Jane" value={facilitatorName} onChange={e => setFacilitatorName(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Email</label>
-                  <input type="email" placeholder="jane@domain.com" value={facilitatorEmail} onChange={e => setFacilitatorEmail(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Email</label>
+                  <input type="email" placeholder="jane@domain.com" value={facilitatorEmail} onChange={e => setFacilitatorEmail(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                 </div>
               </div>
  
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.5rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</label>
-                  <input required type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</label>
+                  <input required type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Start</label>
-                  <input required type="time" value={sessionStartTime} onChange={e => setSessionStartTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Start</label>
+                  <input required type="time" value={sessionStartTime} onChange={e => setSessionStartTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>End</label>
-                  <input required type="time" value={sessionEndTime} onChange={e => setSessionEndTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>End</label>
+                  <input required type="time" value={sessionEndTime} onChange={e => setSessionEndTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
                 </div>
               </div>
  
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Meeting Platform</label>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Meeting Platform</label>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', margin: '0.2rem 0' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#fff', cursor: 'pointer' }}>
                     <input type="checkbox" checked={enableOyenLive} onChange={e => setEnableOyenLive(e.target.checked)} style={{ accentColor: '#D4AF37' }} />
@@ -1160,23 +1160,24 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                   </label>
                 </div>
                 {!enableOyenLive && (
-                  <input type="text" placeholder="e.g. https://zoom.us/j/123456" value={externalMeetingLink} onChange={e => setExternalMeetingLink(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginTop: '0.35rem' }} />
+                  <input type="text" placeholder="e.g. https://zoom.us/j/123456" value={externalMeetingLink} onChange={e => setExternalMeetingLink(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginTop: '0.35rem' }} />
                 )}
               </div>
  
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description <span style={{ textTransform: 'none', opacity: 0.6 }}>(optional)</span></label>
-                <textarea rows={2} placeholder="Brief summary of discussion topic..." value={sessionDescription} onChange={e => setSessionDescription(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none' }} />
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description <span style={{ textTransform: 'none', opacity: 0.6 }}>(optional)</span></label>
+                <textarea rows={2} placeholder="Brief summary of discussion topic..." value={sessionDescription} onChange={e => setSessionDescription(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none' }} />
               </div>
  
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowCreateSessionModal(false)} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
+                <button type="button" onClick={() => setShowCreateSessionModal(false)} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
                 <button type="submit" style={{ flex: 2, padding: '0.7rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>Schedule Session</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }
