@@ -515,63 +515,123 @@ export default function ProgramsTab({
                     {p.desc}
                   </p>
 
-                  {/* Metrics row */}
-                  <div style={{ 
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: '4px', 
-                    fontSize: '0.8rem', 
-                    borderTop: '1px solid #E8E2D8', 
-                    borderBottom: '1px solid #E8E2D8', 
-                    padding: '0.75rem 0',
-                    color: '#6B7280',
-                    textAlign: 'center'
-                  }}>
-                    <div>
-                      <div style={{ color: '#151515', fontWeight: 700 }}>{getLearnerCount(p.name)}</div>
-                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Learners</div>
-                    </div>
-                    <div>
-                      <div style={{ color: '#151515', fontWeight: 700 }}>{p.assignedFacilitators?.length || 2}</div>
-                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Facilitators</div>
-                    </div>
-                    <div>
-                      <div style={{ color: '#151515', fontWeight: 700 }}>{(p.sessions || []).length}</div>
-                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Sessions</div>
-                    </div>
-                    <div>
-                      <div style={{ color: '#151515', fontWeight: 700 }}>{(p.resources || []).length}</div>
-                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Resources</div>
-                    </div>
-                  </div>
+                  {/* Program Card Contents - Progressive Reveal */}
+                  {(() => {
+                    const learnersCount = getLearnerCount(p.name);
+                    const facilitatorsCount = p.assignedFacilitators?.length || 0;
+                    const sessionsCount = (p.sessions || []).length;
+                    const resourcesCount = (p.resources || []).length;
+                    const isNewProgram = learnersCount === 0 && facilitatorsCount === 0 && sessionsCount === 0 && resourcesCount === 0;
 
-                  {/* Next Session & Details */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.78rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#6B7280' }}>Next Session</span>
-                      <span style={{ color: '#D4A017', fontWeight: 600 }}>{getNextSessionText(p)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#6B7280' }}>Last Activity</span>
-                      <span style={{ color: '#6B7280' }}>{getLastActivityText(p)}</span>
-                    </div>
-                  </div>
+                    if (isNewProgram) {
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.25rem' }}>
+                          <div style={{ backgroundColor: '#F8F5EF', border: '1px solid #E8E2D8', borderRadius: '12px', padding: '1rem', textAlign: 'left' }}>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#151515', marginBottom: '0.35rem' }}>Finish setting up this program</div>
+                            <p style={{ fontSize: '0.76rem', color: '#6B7280', margin: 0, lineHeight: 1.4 }}>
+                              This program has been created successfully. Complete the remaining setup steps before inviting learners.
+                            </p>
+                            <div style={{ marginTop: '0.75rem', borderTop: '1px solid #E8E2D8', paddingTop: '0.6rem' }}>
+                              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#151515', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Remaining steps</div>
+                              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.75rem', color: '#6B7280', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <li>Add facilitators</li>
+                                <li>Invite learners</li>
+                                <li>Create your first session</li>
+                                <li>Upload learning resources</li>
+                              </ul>
+                            </div>
+                          </div>
 
-                  {/* Action Link Button */}
-                  <button
-                    onClick={() => setSelectedProgramId(p.id)}
-                    style={{
-                      marginTop: '0.25rem', width: '100%', padding: '0.65rem',
-                      background: '#FFFFFF', border: '1px solid #E8E2D8',
-                      borderRadius: '8px', color: '#D4A017', fontWeight: 700,
-                      fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                      transition: 'all 0.15s'
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F5F2ED'; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
-                  >
-                    Open Program <ArrowRight size={14} />
-                  </button>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.75rem', color: '#6B7280' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Created</span>
+                              <span style={{ color: '#151515', fontWeight: 600 }}>{getLastUpdatedText(p)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Updated</span>
+                              <span style={{ color: '#151515', fontWeight: 600 }}>Just now</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => setSelectedProgramId(p.id)}
+                            style={{
+                              width: '100%', padding: '0.65rem',
+                              background: '#D4A017', border: 'none',
+                              borderRadius: '8px', color: '#151515', fontWeight: 700,
+                              fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                              boxShadow: '0 4px 12px rgba(212, 160, 23, 0.15)',
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            Continue Setup <ArrowRight size={14} />
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    // Build array of visible metrics dynamically
+                    const visibleMetrics = [];
+                    if (learnersCount > 0) visibleMetrics.push({ value: learnersCount, label: 'Learners' });
+                    if (facilitatorsCount > 0) visibleMetrics.push({ value: facilitatorsCount, label: 'Facilitators' });
+                    if (sessionsCount > 0) visibleMetrics.push({ value: sessionsCount, label: 'Sessions' });
+                    if (resourcesCount > 0) visibleMetrics.push({ value: resourcesCount, label: 'Resources' });
+
+                    return (
+                      <>
+                        {visibleMetrics.length > 0 && (
+                          <div style={{ 
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${visibleMetrics.length}, 1fr)`,
+                            gap: '8px', 
+                            fontSize: '0.8rem', 
+                            borderTop: '1px solid #E8E2D8', 
+                            borderBottom: '1px solid #E8E2D8', 
+                            padding: '0.75rem 0',
+                            color: '#6B7280',
+                            textAlign: 'center'
+                          }}>
+                            {visibleMetrics.map((m, idx) => (
+                              <div key={idx}>
+                                <div style={{ color: '#151515', fontWeight: 700 }}>{m.value}</div>
+                                <div style={{ fontSize: '10px', color: '#6B7280' }}>{m.label}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Details */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.78rem' }}>
+                          {sessionsCount > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: '#6B7280' }}>Next Session</span>
+                              <span style={{ color: '#D4A017', fontWeight: 600 }}>{getNextSessionText(p)}</span>
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#6B7280' }}>Last Activity</span>
+                            <span style={{ color: '#6B7280' }}>{getLastActivityText(p)}</span>
+                          </div>
+                        </div>
+
+                        {/* Action Link Button */}
+                        <button
+                          onClick={() => setSelectedProgramId(p.id)}
+                          style={{
+                            marginTop: '0.25rem', width: '100%', padding: '0.65rem',
+                            background: '#FFFFFF', border: '1px solid #E8E2D8',
+                            borderRadius: '8px', color: '#D4A017', fontWeight: 700,
+                            fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                            transition: 'all 0.15s'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F5F2ED'; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+                        >
+                          Open Program <ArrowRight size={14} />
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               );
             })}
