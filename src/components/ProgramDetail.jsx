@@ -280,47 +280,112 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
         ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Announcements', 'Certificates', 'Reports']
         : ['Overview', 'Sessions', 'Learners', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports']);
 
+  const doneSteps = [
+    true, // Program Created
+    assignedFacs.length > 0,
+    learnerCount > 0,
+    hasSession,
+    hasResource,
+    hasAssessment
+  ].filter(Boolean).length;
+  const progressPct = Math.round((doneSteps / 6) * 100);
+
+  // Determine current recommended action
+  let nextActionTitle = 'Assign Facilitators';
+  let nextActionDesc = 'Assign facilitators to this program before inviting learners. Facilitators help manage sessions, learners, attendance and assessments.';
+  let nextActionBtnText = 'Assign Facilitators';
+  let nextActionHandler = () => setShowAssignModal(true);
+
+  if (assignedFacs.length === 0) {
+    nextActionTitle = 'Assign Facilitators';
+    nextActionDesc = 'Assign facilitators to this program before inviting learners. Facilitators help manage sessions, learners, attendance and assessments.';
+    nextActionBtnText = 'Assign Facilitators';
+    nextActionHandler = () => setShowAssignModal(true);
+  } else if (learnerCount === 0) {
+    nextActionTitle = 'Invite Learners';
+    nextActionDesc = 'Invite participants to enroll in this program. You can add them manually or import a list via CSV.';
+    nextActionBtnText = 'Invite Learners';
+    nextActionHandler = () => setActiveSubTab('Learners');
+  } else if (sessionCount === 0) {
+    nextActionTitle = 'Schedule Session';
+    nextActionDesc = 'Plan and schedule your first virtual or live session. This creates calendar invites and links for learners.';
+    nextActionBtnText = 'Schedule Session';
+    nextActionHandler = () => setShowCreateSessionModal(true);
+  } else if (resourceCount === 0) {
+    nextActionTitle = 'Upload Resources';
+    nextActionDesc = 'Add study materials, guides, assignments, or documents for your participants.';
+    nextActionBtnText = 'Upload Resources';
+    nextActionHandler = () => setActiveSubTab('Resources');
+  } else if (assessmentCount === 0) {
+    nextActionTitle = 'Create Assessment';
+    nextActionDesc = 'Create your first quiz, assignment, or project to evaluate learner performance.';
+    nextActionBtnText = 'Create Assessment';
+    nextActionHandler = () => setActiveSubTab('Assessments');
+  } else {
+    nextActionTitle = 'Publish Program';
+    nextActionDesc = 'Your program setup is complete. Publish the program to make it live for everyone in the workspace.';
+    nextActionBtnText = 'Publish Program';
+    nextActionHandler = () => {
+      if (setPrograms) {
+        setPrograms(prev => prev.map(p => p.id === program.id ? { ...p, status: 'Active' } : p));
+      }
+      alert('Program published successfully!');
+    };
+  }
+
   return (
-    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', backgroundColor: '#F8F5EF', minHeight: '100%' }}>
 
       {/* ── Back nav ── */}
       <button onClick={onBack}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', padding: 0, width: 'fit-content', transition: 'color 0.15s' }}
-        onMouseEnter={e => e.currentTarget.style.color = '#D4AF37'}
-        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#6B7280', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', padding: 0, width: 'fit-content', transition: 'color 0.15s' }}
+        onMouseEnter={e => e.currentTarget.style.color = '#D4A017'}
+        onMouseLeave={e => e.currentTarget.style.color = '#6B7280'}
       >
         <ArrowLeft size={15} /> Programs
       </button>
 
       {/* ── Program header ── */}
-      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '1.75rem 2rem' }}>
+      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '1.75rem 2rem', boxShadow: '0 2px 12px rgba(100, 90, 75, 0.04)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>{program.name}</h1>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>{program.name}</h1>
               <span style={{ fontSize: '0.72rem', fontWeight: 700, color: statusColor.color, backgroundColor: statusColor.bg, padding: '0.22rem 0.6rem', borderRadius: '5px', flexShrink: 0 }}>
                 {program.status}
               </span>
             </div>
-            <p style={{ color: 'rgba(255, 255, 255, 0.45)', fontSize: '0.85rem', margin: 0, lineHeight: 1.55, maxWidth: '600px' }}>
+            <p style={{ color: '#6B7280', fontSize: '0.85rem', margin: '0 0 1.25rem 0', lineHeight: 1.55, maxWidth: '600px' }}>
               {program.desc || 'No description provided.'}
             </p>
+            
+            {/* Setup Progress Indicator */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: '1px solid #E8E2D8', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', fontWeight: 700, color: '#151515' }}>
+                <span>Program Setup Progress</span>
+                <span style={{ color: '#D4A017' }}>{doneSteps} of 6 completed ({progressPct}%)</span>
+              </div>
+              <div style={{ height: '6px', backgroundColor: '#E8E2DA', borderRadius: '99px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${progressPct}%`, background: 'linear-gradient(90deg, #F5C84C, #D4A017)', borderRadius: '99px', transition: 'width 0.3s ease' }} />
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
 
       {/* Operational Workspace Sub-Tabs Bar */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', pb: '0.5rem', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #E8E2D8', pb: '0.5rem', overflowX: 'auto' }}>
         {subTabs.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveSubTab(tab)}
             style={{
               padding: '0.6rem 1.1rem',
-              backgroundColor: activeSubTab === tab ? 'rgba(245,215,110,0.08)' : 'transparent',
+              backgroundColor: activeSubTab === tab ? 'rgba(212,160,23,0.06)' : 'transparent',
               border: 'none',
-              color: activeSubTab === tab ? '#F5D76E' : 'rgba(255,255,255,0.5)',
-              borderBottom: activeSubTab === tab ? '2px solid #F5D76E' : 'none',
+              color: activeSubTab === tab ? '#D4A017' : '#6B7280',
+              borderBottom: activeSubTab === tab ? '2px solid #D4A017' : 'none',
               fontSize: '0.85rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -336,84 +401,230 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
       {/* Sub-Tab Rendering */}
       {activeSubTab === 'Overview' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
           {/* Summary Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
             {[
-              { label: 'Participants', value: learnerCount,    icon: <Users size={20} />,         color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
-              { label: 'Sessions',    value: sessionCount,    icon: <Calendar size={20} />,      color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
+              { label: 'Learners',    value: learnerCount,    icon: <Users size={20} />,         color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+              { label: 'Sessions',    value: sessionCount,    icon: <Calendar size={20} />,      color: '#D4A017', bg: 'rgba(212,160,23,0.08)' },
               { label: 'Resources',   value: resourceCount,   icon: <FileText size={20} />,      color: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
-              { label: 'Assessments', value: assessmentCount, icon: <ClipboardList size={20} />, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+              { label: 'Assessments', value: assessmentCount, icon: <ClipboardList size={20} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
             ].map(card => (
-              <div key={card.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: card.color, flexShrink: 0 }}>
+              <div key={card.label} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '10px', backgroundColor: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: card.color, flexShrink: 0 }}>
                   {card.icon}
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.05rem' }}>{card.value}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>{card.label}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#151515', marginTop: '0.1rem' }}>{card.value}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-            {/* Program Status Checklist */}
-            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Status</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {checklist.map((item, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      {item.done
-                        ? <CheckCircle2 size={18} color="#22c55e" />
-                        : <Circle size={18} color="rgba(255,255,255,0.2)" />
-                      }
-                      <div>
-                        <span style={{ fontSize: '0.82rem', color: item.done ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: item.done ? 600 : 400 }}>{item.label}</span>
+          {/* Setup Checklist & Contextual Actions Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
+            
+            {/* Left: Complete Your Program Setup Checklist */}
+            <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Complete Your Program Setup</h3>
+                <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '0.35rem 0 0 0' }}>Follow the recommended checklist order to launch your training initiative successfully.</p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {[
+                  { label: 'Program Created', done: true, optional: false },
+                  { label: 'Add Facilitators', done: assignedFacs.length > 0, optional: false, tab: 'Overview', handler: () => setShowAssignModal(true), btnText: 'Assign' },
+                  { label: 'Invite Learners', done: learnerCount > 0, optional: false, tab: 'Learners', handler: () => setActiveSubTab('Learners'), btnText: 'Invite' },
+                  { label: 'Schedule Your First Session', done: hasSession, optional: false, tab: 'Sessions', handler: () => setShowCreateSessionModal(true), btnText: 'Schedule' },
+                  { label: 'Upload Learning Resources', done: hasResource, optional: false, tab: 'Resources', handler: () => setActiveSubTab('Resources'), btnText: 'Upload' },
+                  { label: 'Create an Assessment', done: hasAssessment, optional: true, tab: 'Assessments', handler: () => setActiveSubTab('Assessments'), btnText: 'Create' },
+                  { label: 'Publish Program', done: program.status === 'Active', optional: false, tab: 'Overview', handler: () => {
+                    if (setPrograms) setPrograms(prev => prev.map(p => p.id === program.id ? { ...p, status: 'Active' } : p));
+                    alert('Program published successfully!');
+                  }, btnText: 'Publish' }
+                ].map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: idx < 6 ? '1px solid #F3EFE6' : 'none', paddingBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {item.done ? (
+                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'rgba(34, 197, 94, 0.08)', border: '1.5px solid #22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
+                            <Check size={12} strokeWidth={4} />
+                          </div>
+                        ) : (
+                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: '1.5px solid #DDD6CA', backgroundColor: '#FFFFFF' }} />
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '0.88rem', color: item.done ? '#6B7280' : '#151515', fontWeight: item.done ? 600 : 700, textDecoration: item.done ? 'line-through' : 'none' }}>
+                          {item.label}
+                        </span>
                         {item.optional && !item.done && (
-                          <span style={{ marginLeft: '0.4rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>optional</span>
+                          <span style={{ fontSize: '0.68rem', color: '#A0AEC0', fontWeight: 600, textTransform: 'uppercase' }}>Optional</span>
                         )}
                       </div>
                     </div>
+
+                    {!item.done && (
+                      <button 
+                        onClick={item.handler}
+                        style={{
+                          padding: '0.35rem 0.85rem',
+                          background: 'transparent',
+                          border: '1px solid #D4A017',
+                          color: '#D4A017',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          textTransform: 'uppercase',
+                          transition: 'all 0.15s'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(212,160,23,0.06)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                      >
+                        Complete
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Facilitators List */}
-            <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Facilitators</h3>
-                <button onClick={() => setShowAssignModal(true)} style={{ backgroundColor: '#D4AF37', color: '#000', border: 'none', borderRadius: '4px', padding: '0.2rem 0.6rem', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>
-                  Assign
-                </button>
+            {/* Right: Next Recommended Action Panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Next Step Onboarding Recommended Card */}
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+                <div style={{ alignSelf: 'flex-start', fontSize: '10px', fontWeight: 700, color: '#D4A017', backgroundColor: 'rgba(212,160,23,0.08)', padding: '0.2rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Next Step
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>
+                    {nextActionTitle}
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: '0.5rem', lineHeight: 1.55 }}>
+                    {nextActionDesc}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button 
+                    onClick={nextActionHandler}
+                    style={{
+                      width: '100%', padding: '0.7rem',
+                      background: '#D4A017', border: 'none',
+                      color: '#151515', borderRadius: '8px',
+                      fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(212, 160, 23, 0.2)',
+                      transition: 'background-color 0.15s'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#E5B128'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D4A017'}
+                  >
+                    {nextActionBtnText}
+                  </button>
+                  <button 
+                    onClick={() => alert('Opening guide article...')}
+                    style={{
+                      background: 'none', border: 'none', color: '#6B7280',
+                      fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    Learn about {nextActionTitle.split(' ').pop()}
+                  </button>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {assignedFacs.length === 0 ? (
-                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
-                    No facilitators assigned yet.
-                  </span>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                    {assignedFacs.map((fac, idx) => (
-                      <div key={fac.email} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: fac.color || '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>
-                          {fac.initials || 'F'}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.7rem', color: idx === 0 ? '#D4AF37' : 'rgba(255,255,255,0.4)', fontWeight: 700, textTransform: 'uppercase' }}>
-                            {idx === 0 ? 'Lead Facilitator' : 'Facilitator'}
+              {/* Facilitators Quick List status block */}
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Facilitators</h4>
+                  <button onClick={() => setShowAssignModal(true)} style={{ background: 'transparent', border: 'none', color: '#D4A017', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                    {assignedFacs.length > 0 ? 'Edit' : 'Assign'}
+                  </button>
+                </div>
+                
+                <div style={{ borderTop: '1px solid #F3EFE6', paddingTop: '1rem' }}>
+                  {assignedFacs.length === 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem', color: '#6B7280' }}>
+                      <p style={{ margin: 0, lineHeight: 1.45 }}>No facilitators assigned yet.</p>
+                      <span style={{ fontSize: '11px', color: '#A0AEC0' }}>Assign at least one facilitator before launching your first session.</span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                      {assignedFacs.map((fac, idx) => (
+                        <div key={fac.email} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: fac.color || '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>
+                            {fac.initials || 'F'}
                           </div>
-                          <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>{fac.name}</div>
+                          <div>
+                            <div style={{ fontSize: '0.65rem', color: idx === 0 ? '#D4A017' : '#6B7280', fontWeight: 700, textTransform: 'uppercase' }}>
+                              {idx === 0 ? 'Lead Facilitator' : 'Facilitator'}
+                            </div>
+                            <div style={{ color: '#151515', fontSize: '0.85rem', fontWeight: 600 }}>{fac.name}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+
+            </div>
+
+          </div>
+
+          {/* Bottom Section — Quick Actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid #E8E2D8', paddingTop: '2rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Quick Actions</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem' }}>
+              {[
+                { title: 'Assign Facilitators', icon: <Users size={18} color="#D4A017" />, handler: () => setShowAssignModal(true) },
+                { title: 'Invite Learners', icon: <UserPlus size={18} color="#D4A017" />, handler: () => setActiveSubTab('Learners') },
+                { title: 'Schedule Session', icon: <Calendar size={18} color="#D4A017" />, handler: () => setShowCreateSessionModal(true) },
+                { title: 'Upload Resources', icon: <Upload size={18} color="#D4A017" />, handler: () => setActiveSubTab('Resources') },
+                { title: 'Create Assessment', icon: <ClipboardList size={18} color="#D4A017" />, handler: () => setActiveSubTab('Assessments') },
+                { title: 'Open Settings', icon: <ShieldCheck size={18} color="#D4A017" />, handler: () => alert('Opening settings panel...') }
+              ].map((act, i) => (
+                <div 
+                  key={i} 
+                  onClick={act.handler}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E8E2D8',
+                    borderRadius: '12px',
+                    padding: '1.25rem 1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    textAlign: 'center',
+                    boxShadow: '0 2px 8px rgba(100,90,75,0.02)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 14px rgba(100, 90, 75, 0.06)';
+                    e.currentTarget.style.borderColor = '#D4A017';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(100,90,75,0.02)';
+                    e.currentTarget.style.borderColor = '#E8E2D8';
+                  }}
+                >
+                  <div style={{ backgroundColor: 'rgba(212,160,23,0.08)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {act.icon}
+                  </div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#151515' }}>{act.title}</span>
+                </div>
+              ))}
             </div>
           </div>
+
         </div>
       )}
 
@@ -815,39 +1026,43 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
         </div>
       )}
 
-      {/* Assignment Modal */}
+            {/* Assignment Modal */}
       {showAssignModal && (
-        <div onClick={() => setShowAssignModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(5px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '2rem', width: '100%', maxWidth: '440px', boxShadow: '0 25px 60px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
+        <div onClick={() => setShowAssignModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(21, 21, 21, 0.4)', backdropFilter: 'blur(4px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '440px', boxShadow: '0 12px 30px rgba(100, 90, 75, 0.15)', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Assign Facilitator</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Assign Facilitator</h3>
               </div>
-              <button onClick={() => setShowAssignModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => setShowAssignModal(false)} style={{ background: '#F5F2ED', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={15} />
               </button>
             </div>
 
             <div style={{ position: 'relative' }}>
-              <Search size={14} color="rgba(255,255,255,0.3)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-              <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '0.6rem 0.75rem 0.6rem 2.2rem', fontSize: '0.82rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+              <Search size={14} color="#6B7280" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <input type="text" placeholder="Search facilitators..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.75rem 0.65rem 2.2rem', fontSize: '0.82rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', outline: 'none', boxSizing: 'border-box' }} />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '200px', overflowY: 'auto' }}>
-              {filteredFacilitators.map(fac => {
-                const isChecked = selectedFacs.includes(fac.email);
-                return (
-                  <div key={fac.email} onClick={() => handleToggleSelect(fac.email)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.8rem', backgroundColor: isChecked ? 'rgba(212,175,55,0.04)' : 'rgba(255,255,255,0.01)', border: '1px solid', borderColor: isChecked ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.04)', borderRadius: '8px', cursor: 'pointer' }}>
-                    <span style={{ color: '#fff', fontSize: '0.8rem' }}>{fac.name} ({fac.email})</span>
-                    <input type="checkbox" checked={isChecked} onChange={() => {}} style={{ accentColor: '#D4AF37' }} />
-                  </div>
-                );
-              })}
+              {filteredFacilitators.length === 0 ? (
+                <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.8rem', color: '#6B7280' }}>No facilitators found.</div>
+              ) : (
+                filteredFacilitators.map(fac => {
+                  const isChecked = selectedFacs.includes(fac.email);
+                  return (
+                    <div key={fac.email} onClick={() => handleToggleSelect(fac.email)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.8rem', backgroundColor: isChecked ? 'rgba(212,160,23,0.06)' : '#FFFFFF', border: '1px solid', borderColor: isChecked ? '#D4A017' : '#E8E2D8', borderRadius: '8px', cursor: 'pointer' }}>
+                      <span style={{ color: '#151515', fontSize: '0.8rem', fontWeight: 600 }}>{fac.name} ({fac.email})</span>
+                      <input type="checkbox" checked={isChecked} onChange={() => {}} style={{ accentColor: '#D4A017' }} />
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button type="button" onClick={() => setShowAssignModal(false)} style={{ flex: 1, padding: '0.65rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
-              <button type="button" onClick={handleSaveFacilitator} style={{ flex: 1, padding: '0.65rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>Save</button>
+              <button type="button" onClick={() => setShowAssignModal(false)} style={{ flex: 1, padding: '0.65rem', background: '#FFFFFF', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+              <button type="button" onClick={handleSaveFacilitator} style={{ flex: 1, padding: '0.65rem', background: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>Save</button>
             </div>
           </div>
         </div>
@@ -855,14 +1070,35 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {/* Create Session Modal */}
       {showCreateSessionModal && (
-        <div onClick={() => setShowCreateSessionModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(5px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '2rem', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0 }}>Schedule Program Session</h3>
+        <div onClick={() => setShowCreateSessionModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(21, 21, 21, 0.4)', backdropFilter: 'blur(4px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 12px 30px rgba(100, 90, 75, 0.15)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Schedule Program Session</h3>
+              <button onClick={() => setShowCreateSessionModal(false)} style={{ background: '#F5F2ED', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={15} />
+              </button>
+            </div>
+            
             <form onSubmit={handleCreateSession} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input required type="text" placeholder="Session Title..." value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-              <input required type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-              <input required type="time" value={sessionTime} onChange={e => setSessionTime(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-              <button type="submit" style={{ padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>Schedule</button>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '0.35rem' }}>Session Title</label>
+                <input required type="text" placeholder="e.g. Kickoff Session" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '0.35rem' }}>Date</label>
+                <input required type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '0.35rem' }}>Time</label>
+                <input required type="time" value={sessionTime} onChange={e => setSessionTime(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="button" onClick={() => setShowCreateSessionModal(false)} style={{ flex: 1, padding: '0.75rem', background: '#FFFFFF', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+                <button type="submit" style={{ flex: 1, padding: '0.75rem', background: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>Schedule</button>
+              </div>
             </form>
           </div>
         </div>
