@@ -207,22 +207,22 @@ export default function ProgramsTab({
   return (
     <div className="animate-fade-in" style={{ 
       padding: '2.5rem 3rem', 
-      backgroundColor: '#0A0A0A', 
+      backgroundColor: '#F8F5EF', 
       minHeight: '100vh',
       display: 'flex', 
       flexDirection: 'column', 
       gap: '2rem', 
       textAlign: 'left',
-      color: '#FFFFFF'
+      color: '#151515'
     }}>
       
       {/* Toast Alert */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: '24px', right: '24px',
-          backgroundColor: '#111111', border: '1px solid #F5C84C',
-          color: '#FFFFFF', padding: '0.8rem 1.25rem', borderRadius: '10px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 2000,
+          backgroundColor: '#FFFFFF', border: '1px solid #D4A017',
+          color: '#151515', padding: '0.8rem 1.25rem', borderRadius: '10px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.08)', zIndex: 2000,
           fontSize: '13px', fontWeight: 600
         }}>
           {toast}
@@ -232,8 +232,8 @@ export default function ProgramsTab({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Inter', sans-serif" }}>Programs</h1>
-          <p style={{ color: '#7E7E7E', fontSize: '1rem', marginTop: '0.4rem' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Programs</h1>
+          <p style={{ color: '#6B7280', fontSize: '1rem', marginTop: '0.4rem' }}>
             Manage every training program from one centralized workspace.
           </p>
         </div>
@@ -241,12 +241,12 @@ export default function ProgramsTab({
           <button
             onClick={() => setShowCreateModal(true)}
             style={{
-              background: '#F5C84C',
+              background: '#D4A017',
               border: 'none', color: '#151515', fontWeight: 700,
               fontSize: '13px', borderRadius: '8px',
               padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center',
               gap: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
-              boxShadow: '0 4px 15px rgba(245, 200, 76, 0.25)',
+              boxShadow: '0 4px 12px rgba(212, 160, 23, 0.25)',
               transition: 'all 0.15s ease'
             }}
           >
@@ -262,50 +262,50 @@ export default function ProgramsTab({
         gap: '1.25rem'
       }}>
         {[
-          { value: programs.length, label: 'Programs', sub: '+3 created this month', icon: <BookOpen size={20} color="#F5C84C" /> },
-          { value: programs.filter(p => p.status === 'Active').length, label: 'Active Programs', sub: 'All systems operational', icon: <Layers size={20} color="#F5C84C" /> },
-          { value: learners.length, label: 'Learners', sub: '+12 active today', icon: <Users size={20} color="#F5C84C" /> },
-          { value: getSessionsTodayCount(), label: 'Sessions Today', sub: 'Interactive live syncs', icon: <Calendar size={20} color="#F5C84C" /> }
+          { value: programs.length, label: 'Programs', sub: '+3 created this month', icon: <BookOpen size={20} color="#D4A017" /> },
+          { value: programs.filter(p => p.status === 'Active').length, label: 'Active Programs', sub: 'All systems operational', icon: <Layers size={20} color="#D4A017" /> },
+          { value: learners.length, label: 'Learners', sub: '+12 active today', icon: <Users size={20} color="#D4A017" /> },
+          { value: getSessionsTodayCount(), label: 'Sessions Today', sub: 'Interactive live syncs', icon: <Calendar size={20} color="#D4A017" /> }
         ].map((card, idx) => (
           <div 
             key={idx}
             style={{ 
-              backgroundColor: '#111111', 
-              border: '1px solid #252525', 
+              backgroundColor: '#FFFFFF', 
+              border: '1px solid #E8E2D8', 
               borderRadius: '16px', 
               padding: '1.5rem', 
               display: 'flex', 
               flexDirection: 'column', 
               gap: '0.5rem',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+              boxShadow: '0 2px 10px rgba(100,90,75,0.04)',
               transition: 'all 0.2s ease',
               cursor: 'pointer'
             }}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.borderColor = '#353535';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(100, 90, 75, 0.08)';
             }}
             onMouseLeave={e => {
               e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.borderColor = '#252525';
+              e.currentTarget.style.boxShadow = '0 2px 10px rgba(100,90,75,0.04)';
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#7E7E7E' }}>{card.label}</span>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(245, 200, 76, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#6B7280' }}>{card.label}</span>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(212, 160, 23, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {card.icon}
               </div>
             </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF' }}>{card.value}</div>
-            <span style={{ fontSize: '0.72rem', color: '#5C5C5C' }}>{card.sub}</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#151515' }}>{card.value}</div>
+            <span style={{ fontSize: '0.72rem', color: '#6B7280' }}>{card.sub}</span>
           </div>
         ))}
       </div>
 
       {/* Toolbar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #252525', paddingBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #E8E2D8', paddingBottom: '1.5rem' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '380px', position: 'relative' }}>
-          <Search size={16} color="#7E7E7E" style={{ position: 'absolute', left: '12px' }} />
+          <Search size={16} color="#6B7280" style={{ position: 'absolute', left: '12px' }} />
           <input 
             type="text" 
             placeholder="Search programs..."
@@ -315,16 +315,16 @@ export default function ProgramsTab({
               width: '100%', 
               padding: '0.6rem 0.75rem 0.6rem 2.4rem', 
               fontSize: '13px', 
-              backgroundColor: '#111111', 
-              border: '1px solid #252525', 
+              backgroundColor: '#FFFFFF', 
+              border: '1px solid #E8E2D8', 
               borderRadius: '10px', 
-              color: '#FFFFFF', 
+              color: '#151515', 
               outline: 'none', 
               fontFamily: 'inherit',
               transition: 'border-color 0.2s'
             }}
-            onFocus={e => e.currentTarget.style.borderColor = '#F5C84C'}
-            onBlur={e => e.currentTarget.style.borderColor = '#252525'}
+            onFocus={e => e.currentTarget.style.borderColor = '#D4A017'}
+            onBlur={e => e.currentTarget.style.borderColor = '#E8E2D8'}
           />
         </div>
 
@@ -340,9 +340,9 @@ export default function ProgramsTab({
                     padding: '0.45rem 0.9rem',
                     borderRadius: '8px',
                     border: '1px solid',
-                    borderColor: isActive ? '#F5C84C' : '#252525',
-                    backgroundColor: isActive ? 'rgba(245, 200, 76, 0.08)' : '#111111',
-                    color: isActive ? '#F5C84C' : '#7E7E7E',
+                    borderColor: isActive ? '#D4A017' : '#E8E2D8',
+                    backgroundColor: isActive ? '#D4A017' : '#FFFFFF',
+                    color: isActive ? '#151515' : '#6B7280',
                     fontSize: '13px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -361,8 +361,8 @@ export default function ProgramsTab({
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.45rem 0.9rem', borderRadius: '8px',
-                border: '1px solid #252525', backgroundColor: '#111111',
-                color: '#7E7E7E', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                border: '1px solid #E8E2D8', backgroundColor: '#FFFFFF',
+                color: '#6B7280', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -373,9 +373,9 @@ export default function ProgramsTab({
                 <div onClick={() => setShowSortDropdown(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
                 <div style={{
                   position: 'absolute', right: 0, marginTop: '0.35rem',
-                  backgroundColor: '#111111', border: '1px solid #252525',
+                  backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8',
                   borderRadius: '10px', width: '160px', zIndex: 100, overflow: 'hidden',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+                  boxShadow: '0 6px 16px rgba(100, 90, 75, 0.08)'
                 }}>
                   {['Newest', 'Oldest', 'Recently Updated', 'Alphabetical'].map(opt => (
                     <button
@@ -383,10 +383,10 @@ export default function ProgramsTab({
                       onClick={() => { setActiveSort(opt); setShowSortDropdown(false); }}
                       style={{
                         width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left',
-                        background: 'none', border: 'none', color: activeSort === opt ? '#F5C84C' : '#7E7E7E',
+                        background: 'none', border: 'none', color: activeSort === opt ? '#D4A017' : '#6B7280',
                         fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center'
                       }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F5F2ED'}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {opt}
@@ -408,8 +408,8 @@ export default function ProgramsTab({
             {paginatedPrograms.map((p) => {
               const statusConfig = {
                 'Active':    { color: '#22C55E', bg: 'rgba(34,197,94,0.08)' },
-                'Completed': { color: '#F5C84C', bg: 'rgba(245,200,76,0.08)' },
-                'Archived':  { color: '#7E7E7E', bg: 'rgba(168,175,185,0.08)' },
+                'Completed': { color: '#D4A017', bg: 'rgba(212,160,23,0.08)' },
+                'Archived':  { color: '#6B7280', bg: 'rgba(168,175,185,0.08)' },
                 'Cancelled': { color: '#EF4444', bg: 'rgba(239,68,68,0.08)' }
               };
               const currentStatus = statusConfig[p.status] || statusConfig['Active'];
@@ -418,23 +418,24 @@ export default function ProgramsTab({
                 <div 
                   key={p.id}
                   style={{ 
-                    backgroundColor: '#111111', 
-                    border: '1px solid #252525', 
+                    backgroundColor: '#FFFFFF', 
+                    border: '1px solid #E8E2D8', 
                     borderRadius: '16px', 
                     padding: '1.5rem', 
                     display: 'flex', 
                     flexDirection: 'column', 
                     gap: '1.25rem', 
                     transition: 'all 0.2s ease', 
-                    position: 'relative'
+                    position: 'relative',
+                    boxShadow: '0 2px 10px rgba(100,90,75,0.02)'
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.borderColor = '#353535';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(100, 90, 75, 0.08)';
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.borderColor = '#252525';
+                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(100,90,75,0.02)';
                   }}
                 >
                   {/* Actions Menu */}
@@ -446,7 +447,7 @@ export default function ProgramsTab({
                           setActiveMenuProgramId(activeMenuProgramId === p.id ? null : p.id);
                         }}
                         style={{ 
-                          background: 'none', border: 'none', color: '#7E7E7E', 
+                          background: 'none', border: 'none', color: '#6B7280', 
                           cursor: 'pointer', padding: '0.2rem', display: 'flex', 
                           alignItems: 'center', justifyContent: 'center' 
                         }}
@@ -459,16 +460,16 @@ export default function ProgramsTab({
                           <div onClick={() => setActiveMenuProgramId(null)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
                           <div style={{
                             position: 'absolute', right: 0, marginTop: '0.35rem',
-                            backgroundColor: '#111111', border: '1px solid #252525',
-                            borderRadius: '10px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                            backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8',
+                            borderRadius: '10px', boxShadow: '0 6px 16px rgba(100, 90, 75, 0.08)',
                             width: '160px', zIndex: 100, overflow: 'hidden'
                           }}>
-                            <button onClick={() => { setActiveMenuProgramId(null); setSelectedProgramId(p.id); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#FFFFFF', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Play size={13} fill="#FFFFFF" /> Open Program</button>
-                            <button onClick={() => { setActiveMenuProgramId(null); setRenameProgramId(p.id); setRenameName(p.name); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#FFFFFF', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Edit2 size={13} /> Edit Program</button>
-                            <button onClick={() => { setActiveMenuProgramId(null); handleDuplicate(p); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#FFFFFF', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Layers size={13} /> Duplicate</button>
-                            <button onClick={() => { setActiveMenuProgramId(null); handleToggleArchive(p); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#FFFFFF', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Clock size={13} /> {p.status === 'Archived' ? 'Restore' : 'Archive'}</button>
-                            <button onClick={() => { setActiveMenuProgramId(null); setSelectedProgramId(p.id); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#FFFFFF', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Users size={13} /> Manage Team</button>
-                            <button onClick={() => { setActiveMenuProgramId(null); setSelectedProgramId(p.id); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#FFFFFF', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Award size={13} /> View Reports</button>
+                            <button onClick={() => { setActiveMenuProgramId(null); setSelectedProgramId(p.id); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#151515', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Play size={13} fill="#151515" /> Open Program</button>
+                            <button onClick={() => { setActiveMenuProgramId(null); setRenameProgramId(p.id); setRenameName(p.name); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#151515', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Edit2 size={13} /> Edit Program</button>
+                            <button onClick={() => { setActiveMenuProgramId(null); handleDuplicate(p); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#151515', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Layers size={13} /> Duplicate</button>
+                            <button onClick={() => { setActiveMenuProgramId(null); handleToggleArchive(p); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#151515', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Clock size={13} /> {p.status === 'Archived' ? 'Restore' : 'Archive'}</button>
+                            <button onClick={() => { setActiveMenuProgramId(null); setSelectedProgramId(p.id); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#151515', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Users size={13} /> Manage Team</button>
+                            <button onClick={() => { setActiveMenuProgramId(null); setSelectedProgramId(p.id); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#151515', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Award size={13} /> View Reports</button>
                             <button onClick={() => { setActiveMenuProgramId(null); setDeleteProgramId(p.id); }} style={{ width: '100%', padding: '0.65rem 0.9rem', textAlign: 'left', background: 'none', border: 'none', color: '#EF4444', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.45rem' }}><Trash2 size={13} /> Delete Program</button>
                           </div>
                         </>
@@ -478,7 +479,7 @@ export default function ProgramsTab({
 
                   {/* Title */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: '2rem' }}>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFFFFF', margin: 0, flex: 1, fontFamily: "'Inter', sans-serif" }}>{p.name}</h4>
+                    <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#151515', margin: 0, flex: 1, fontFamily: "'Inter', sans-serif" }}>{p.name}</h4>
                   </div>
 
                   {/* Status Badge */}
@@ -500,7 +501,7 @@ export default function ProgramsTab({
                   {/* Description */}
                   <p style={{ 
                     fontSize: '0.82rem', 
-                    color: '#7E7E7E', 
+                    color: '#6B7280', 
                     margin: 0, 
                     lineHeight: '1.45', 
                     height: '36px', 
@@ -519,39 +520,39 @@ export default function ProgramsTab({
                     gridTemplateColumns: 'repeat(4, 1fr)',
                     gap: '4px', 
                     fontSize: '0.8rem', 
-                    borderTop: '1px solid #252525', 
-                    borderBottom: '1px solid #252525', 
+                    borderTop: '1px solid #E8E2D8', 
+                    borderBottom: '1px solid #E8E2D8', 
                     padding: '0.75rem 0',
-                    color: '#7E7E7E',
+                    color: '#6B7280',
                     textAlign: 'center'
                   }}>
                     <div>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700 }}>{getLearnerCount(p.name)}</div>
-                      <div style={{ fontSize: '10px', color: '#5C5C5C' }}>Learners</div>
+                      <div style={{ color: '#151515', fontWeight: 700 }}>{getLearnerCount(p.name)}</div>
+                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Learners</div>
                     </div>
                     <div>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700 }}>{p.assignedFacilitators?.length || 2}</div>
-                      <div style={{ fontSize: '10px', color: '#5C5C5C' }}>Facilitators</div>
+                      <div style={{ color: '#151515', fontWeight: 700 }}>{p.assignedFacilitators?.length || 2}</div>
+                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Facilitators</div>
                     </div>
                     <div>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700 }}>{(p.sessions || []).length}</div>
-                      <div style={{ fontSize: '10px', color: '#5C5C5C' }}>Sessions</div>
+                      <div style={{ color: '#151515', fontWeight: 700 }}>{(p.sessions || []).length}</div>
+                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Sessions</div>
                     </div>
                     <div>
-                      <div style={{ color: '#FFFFFF', fontWeight: 700 }}>{(p.resources || []).length}</div>
-                      <div style={{ fontSize: '10px', color: '#5C5C5C' }}>Resources</div>
+                      <div style={{ color: '#151515', fontWeight: 700 }}>{(p.resources || []).length}</div>
+                      <div style={{ fontSize: '10px', color: '#6B7280' }}>Resources</div>
                     </div>
                   </div>
 
                   {/* Next Session & Details */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.78rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#5C5C5C' }}>Next Session</span>
-                      <span style={{ color: '#F5C84C', fontWeight: 600 }}>{getNextSessionText(p)}</span>
+                      <span style={{ color: '#6B7280' }}>Next Session</span>
+                      <span style={{ color: '#D4A017', fontWeight: 600 }}>{getNextSessionText(p)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#5C5C5C' }}>Last Activity</span>
-                      <span style={{ color: '#7E7E7E' }}>{getLastActivityText(p)}</span>
+                      <span style={{ color: '#6B7280' }}>Last Activity</span>
+                      <span style={{ color: '#6B7280' }}>{getLastActivityText(p)}</span>
                     </div>
                   </div>
 
@@ -560,13 +561,13 @@ export default function ProgramsTab({
                     onClick={() => setSelectedProgramId(p.id)}
                     style={{
                       marginTop: '0.25rem', width: '100%', padding: '0.65rem',
-                      background: 'rgba(255,255,255,0.02)', border: '1px solid #252525',
-                      borderRadius: '8px', color: '#F5C84C', fontWeight: 700,
+                      background: '#FFFFFF', border: '1px solid #E8E2D8',
+                      borderRadius: '8px', color: '#D4A017', fontWeight: 700,
                       fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
                       transition: 'all 0.15s'
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(245, 200, 76, 0.08)'; e.currentTarget.style.borderColor = 'rgba(245, 200, 76, 0.2)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = '#252525'; }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F5F2ED'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
                   >
                     Open Program <ArrowRight size={14} />
                   </button>
@@ -577,8 +578,8 @@ export default function ProgramsTab({
 
           {/* Right Sidebar Checklist Panel */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ backgroundColor: '#111111', border: '1px solid #252525', borderRadius: '16px', padding: '1.5rem' }}>
-              <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 1rem 0', fontFamily: "'Inter', sans-serif" }}>Getting Started</h4>
+            <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+              <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#151515', margin: '0 0 1rem 0', fontFamily: "'Inter', sans-serif" }}>Getting Started</h4>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {[
@@ -589,19 +590,19 @@ export default function ProgramsTab({
                   { label: 'Start tracking progress.', done: false }
                 ].map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: item.done ? 'rgba(22,163,74,0.12)' : 'rgba(245,200,76,0.12)', border: item.done ? '1.5px solid #16a34a' : '1.5px solid #F5C84C', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {item.done ? <Check size={9} strokeWidth={3} color="#16a34a" /> : <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#F5C84C', display: 'inline-block' }}></span>}
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: item.done ? 'rgba(22,163,74,0.12)' : 'rgba(212,160,23,0.12)', border: item.done ? '1.5px solid #16a34a' : '1.5px solid #D4A017', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {item.done ? <Check size={9} strokeWidth={3} color="#16a34a" /> : <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D4A017', display: 'inline-block' }}></span>}
                     </div>
-                    <span style={{ fontSize: '0.78rem', color: item.done ? '#7E7E7E' : '#FFFFFF', textDecoration: item.done ? 'line-through' : 'none' }}>{item.label}</span>
+                    <span style={{ fontSize: '0.78rem', color: item.done ? '#6B7280' : '#151515', textDecoration: item.done ? 'line-through' : 'none' }}>{item.label}</span>
                   </div>
                 ))}
               </div>
 
               {/* Progress status */}
-              <div style={{ marginTop: '1.25rem', borderTop: '1px solid #252525', paddingTop: '1rem' }}>
+              <div style={{ marginTop: '1.25rem', borderTop: '1px solid #E8E2D8', paddingTop: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '0.5rem' }}>
-                  <span style={{ color: '#7E7E7E' }}>Progress Status</span>
-                  <span style={{ fontWeight: 600, color: '#F5C84C' }}>
+                  <span style={{ color: '#6B7280' }}>Progress Status</span>
+                  <span style={{ fontWeight: 600, color: '#D4A017' }}>
                     {(() => {
                       const done = [programs.length > 0, teamMembers.length > 0, learners.length > 0, getSessionsTodayCount() > 0, false].filter(Boolean).length;
                       return `${done} / 5 Completed`;
@@ -618,19 +619,19 @@ export default function ProgramsTab({
           
           {/* Empty State */}
           <div style={{
-            backgroundColor: '#111111', border: '1px dashed #252525',
+            backgroundColor: '#FFFFFF', border: '1px dashed #E6E0D5',
             borderRadius: '18px', padding: '4rem 2rem', textAlign: 'center',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem',
-            maxWidth: '500px', margin: '2rem auto'
+            maxWidth: '500px', margin: '2rem auto', boxShadow: '0 2px 10px rgba(100,90,75,0.02)'
           }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(245, 200, 76, 0.05)', border: '1px solid rgba(245, 200, 76, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F5C84C' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(212, 160, 23, 0.05)', border: '1px solid rgba(212, 160, 23, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4A017' }}>
               <FolderOpen size={26} />
             </div>
             <div>
-              <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Inter', sans-serif" }}>
+              <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>
                 No Programs Yet
               </h4>
-              <p style={{ color: '#7E7E7E', fontSize: '13px', marginTop: '0.5rem', lineHeight: 1.5 }}>
+              <p style={{ color: '#6B7280', fontSize: '13px', marginTop: '0.5rem', lineHeight: 1.5 }}>
                 Create your first program to organize learners, facilitators, sessions, assessments, and reporting.
               </p>
             </div>
@@ -638,25 +639,25 @@ export default function ProgramsTab({
               <button
                 onClick={() => setShowCreateModal(true)}
                 style={{
-                  background: '#F5C84C',
+                  background: '#D4A017',
                   border: 'none', color: '#151515', fontWeight: 700,
                   fontSize: '13px', borderRadius: '8px',
                   padding: '0.65rem 1.5rem', cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(245, 200, 76, 0.2)',
+                  boxShadow: '0 4px 12px rgba(212, 160, 23, 0.2)',
                   marginTop: '0.5rem'
                 }}
               >
                 Create First Program
               </button>
             )}
-            <a href="#learn-more" style={{ color: '#F5C84C', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <a href="#learn-more" style={{ color: '#D4A017', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
               Learn how programs work <ArrowRight size={13} />
             </a>
           </div>
 
           {/* What You'll Be Able To Manage */}
-          <div style={{ borderTop: '1px solid #252525', paddingTop: '2.5rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', margin: '0 0 1.25rem 0', textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>What You'll Be Able To Manage</h3>
+          <div style={{ borderTop: '1px solid #E8E2D8', paddingTop: '2.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#151515', margin: '0 0 1.25rem 0', textAlign: 'center', fontFamily: "'Inter', sans-serif" }}>What You'll Be Able To Manage</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
               {[
                 { title: '📅 Sessions', desc: 'Schedule live and virtual sessions.' },
@@ -664,9 +665,9 @@ export default function ProgramsTab({
                 { title: '📊 Analytics', desc: 'Track engagement and completion.' },
                 { title: '📜 Certificates', desc: 'Issue certificates automatically.' }
               ].map((feature, idx) => (
-                <div key={idx} style={{ backgroundColor: '#111111', border: '1px solid #252525', borderRadius: '14px', padding: '1.25rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}>{feature.title}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#7E7E7E', lineHeight: '1.4' }}>{feature.desc}</div>
+                <div key={idx} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '14px', padding: '1.25rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.45rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#151515' }}>{feature.title}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#6B7280', lineHeight: '1.4' }}>{feature.desc}</div>
                 </div>
               ))}
             </div>
@@ -682,20 +683,20 @@ export default function ProgramsTab({
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             style={{
-              padding: '0.45rem 0.9rem', borderRadius: '8px', border: '1px solid #252525',
-              backgroundColor: '#111111', color: currentPage === 1 ? '#5C5C5C' : '#7E7E7E',
+              padding: '0.45rem 0.9rem', borderRadius: '8px', border: '1px solid #E8E2D8',
+              backgroundColor: '#FFFFFF', color: currentPage === 1 ? '#6B7280' : '#151515',
               fontSize: '13px', fontWeight: 600, cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
             }}
           >
             Previous
           </button>
-          <span style={{ fontSize: '13px', color: '#5C5C5C' }}>Page {currentPage} of {totalPages}</span>
+          <span style={{ fontSize: '13px', color: '#6B7280' }}>Page {currentPage} of {totalPages}</span>
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             style={{
-              padding: '0.45rem 0.9rem', borderRadius: '8px', border: '1px solid #252525',
-              backgroundColor: '#111111', color: currentPage === totalPages ? '#5C5C5C' : '#7E7E7E',
+              padding: '0.45rem 0.9rem', borderRadius: '8px', border: '1px solid #E8E2D8',
+              backgroundColor: '#FFFFFF', color: currentPage === totalPages ? '#6B7280' : '#151515',
               fontSize: '13px', fontWeight: 600, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
             }}
           >
