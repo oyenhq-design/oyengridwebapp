@@ -30,6 +30,10 @@ import dashboardHeroIllustration from './assets/dashboard_hero_illustration.jpg'
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
 import BrandingTab from './components/BrandingTab';
+import RolesTab from './components/RolesTab';
+import NotificationsSettingsTab from './components/NotificationsSettingsTab';
+import IntegrationsTab from './components/IntegrationsTab';
+import GeneralSettingsTab from './components/GeneralSettingsTab';
 import AttendanceTab from './components/AttendanceTab';
 import AssessmentsTab from './components/AssessmentsTab';
 import AnnouncementsTab from './components/AnnouncementsTab';
@@ -2772,9 +2776,9 @@ export default function App() {
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                             {[
                               { title: 'Branding', desc: 'Manage your logo and organization profile.', tab: 'Branding' },
-                              { title: 'Roles & Permissions', desc: 'Control workspace access and user roles.', tab: 'Settings' },
-                              { title: 'Notifications', desc: 'Configure email and system notifications.', tab: 'Settings' },
-                              { title: 'Integrations', desc: 'Connect external services and applications.', tab: 'Settings' },
+                              { title: 'Roles & Permissions', desc: 'Control workspace access and user roles.', tab: 'Roles' },
+                              { title: 'General Settings', desc: 'Configure default settings, languages, and regional rules.', tab: 'GeneralSettings' },
+                              { title: 'Integrations', desc: 'Connect external services and applications.', tab: 'Integrations' },
                             ].map((config, idx) => (
                               <div key={idx} style={{ backgroundColor: '#F5F2ED', border: '1px solid #DDD6CB', borderRadius: '18px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem', transition: 'all 0.2s ease', cursor: 'pointer' }} onClick={() => triggerTransition(() => setActiveTab(config.tab))} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(100, 90, 75, 0.08)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                                 <div>
@@ -3070,6 +3074,28 @@ export default function App() {
                 setOrgLogo={setOrgLogo}
                 orgName={orgName}
                 setOrgName={setOrgName}
+                onCancel={() => triggerTransition(() => setActiveTab('Your Workspace'))}
+                addNotification={addNotification}
+              />
+            ) : activeTab === 'Roles' ? (
+              /* Roles & Permissions Tab Component */
+              <RolesTab
+                wsTeam={wsTeam}
+                setWsTeam={setWsTeam}
+                onCancel={() => triggerTransition(() => setActiveTab('Your Workspace'))}
+                addNotification={addNotification}
+              />
+            ) : activeTab === 'GeneralSettings' ? (
+              /* General Settings Tab Component */
+              <GeneralSettingsTab
+                orgName={orgName}
+                setOrgName={setOrgName}
+                onCancel={() => triggerTransition(() => setActiveTab('Your Workspace'))}
+                addNotification={addNotification}
+              />
+            ) : activeTab === 'Integrations' ? (
+              /* Integrations Tab Component */
+              <IntegrationsTab
                 onCancel={() => triggerTransition(() => setActiveTab('Your Workspace'))}
                 addNotification={addNotification}
               />
