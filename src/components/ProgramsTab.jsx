@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   BookOpen, Plus, Play, X, ArrowRight, MoreVertical, Edit2, Trash2, 
-  Search, Calendar, FolderOpen, ChevronDown, Users, Layers, Award, Clock
+  Search, Calendar, FolderOpen, ChevronDown, Users, Layers, Award, Clock, Check
 } from 'lucide-react';
 import ProgramDetail from './ProgramDetail';
 
