@@ -238,7 +238,7 @@ export default function ProgramsTab({
             Manage every training program from one centralized workspace.
           </p>
         </div>
-        {userRole === 'Admin' && (
+        {(userRole === 'Admin' || userRole === 'Workspace Super Admin') && (
           <button
             onClick={() => setShowCreateModal(true)}
             style={{
@@ -440,7 +440,7 @@ export default function ProgramsTab({
                   }}
                 >
                   {/* Actions Menu */}
-                  {userRole === 'Admin' && (
+                  {(userRole === 'Admin' || userRole === 'Workspace Super Admin') && (
                     <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
                       <button
                         onClick={(e) => {
@@ -636,7 +636,7 @@ export default function ProgramsTab({
                 Create your first program to organize learners, facilitators, sessions, assessments, and reporting.
               </p>
             </div>
-            {userRole === 'Admin' && (
+            {(userRole === 'Admin' || userRole === 'Workspace Super Admin') && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 style={{
@@ -942,7 +942,7 @@ export default function ProgramsTab({
               >
                 Close
               </button>
-              {userRole === 'Admin' && (
+              {(userRole === 'Admin' || userRole === 'Workspace Super Admin') && (
                 <button 
                   onClick={() => { setShowLearnModal(false); setShowCreateModal(true); }}
                   style={{ flex: 2, padding: '0.7rem', background: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '13px', boxShadow: '0 4px 12px rgba(212, 160, 23, 0.2)' }}
