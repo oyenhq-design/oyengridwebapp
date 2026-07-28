@@ -401,11 +401,13 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
   // Filter & Search logic
   const getFilteredItems = () => {
     let list = [];
+    const activeEmails = new Set(members.map(m => m.email?.toLowerCase()));
+    
     members.forEach((m, idx) => {
       list.push({ ...m, type: 'active', originalIndex: idx });
     });
     pending.forEach((p, idx) => {
-      if (!p.used) {
+      if (!p.used && !activeEmails.has(p.email?.toLowerCase())) {
         list.push({ ...p, type: 'pending', originalIndex: idx, name: p.name || p.email, status: 'Pending' });
       }
     });
@@ -539,6 +541,14 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
                 const roleStyle = ROLE_COLORS[item.role] || { bg: 'rgba(107,114,128,0.12)', text: '#4B5563' };
                 const statusStyle = STATUS_COLOR[item.status] || { bg: 'rgba(212,175,55,0.1)', text: '#B98C17' };
                 
+                // Helper to resolve invite code
+                const getInviteCodeForMember = (m) => {
+                  if (m.accessCode) return m.accessCode;
+                  if (m.code) return m.code;
+                  const match = pending.find(p => p.email?.toLowerCase() === m.email?.toLowerCase());
+                  return match ? (match.accessCode || match.code) : '—';
+                };
+
                 // Mock visual props
                 const programsList = item.role === 'Admin' ? 'All Programs' : 'Leadership Orientation';
                 const lastActiveStr = item.status === 'Pending' ? 'Pending Invite' : (item.isYou ? 'Active now' : 'Yesterday');
@@ -590,25 +600,28 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
 
                     {/* Invite Code */}
                     <td style={{ padding: '12px 20px' }}>
-                      {item.status === 'Pending' ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 700, color: '#151515', backgroundColor: '#F5F2ED', padding: '4px 8px', borderRadius: '6px', border: '1px solid #E8E2D8' }}>
-                            {item.accessCode || item.code || 'GRID-TEMP'}
-                          </span>
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard?.writeText(item.accessCode || item.code || '').then(() => {
-                                alert('Invite code copied to clipboard!');
-                              });
-                            }}
-                            style={{ background: 'none', border: 'none', color: '#D4A017', fontSize: '11px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
-                          >
-                            Copy
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '11px', color: '#A0AEC0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>Claimed</span>
-                      )}
+                      {(() => {
+                        const codeVal = getInviteCodeForMember(item);
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 700, color: '#151515', backgroundColor: '#F5F2ED', padding: '4px 8px', borderRadius: '6px', border: '1px solid #E8E2D8' }}>
+                              {codeVal}
+                            </span>
+                            {codeVal !== '—' && (
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard?.writeText(codeVal).then(() => {
+                                    alert('Invite code copied to clipboard!');
+                                  });
+                                }}
+                                style={{ background: 'none', border: 'none', color: '#D4A017', fontSize: '11px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                              >
+                                Copy
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* Last Active */}
