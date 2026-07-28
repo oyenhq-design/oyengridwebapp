@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Users, Calendar, FileText, ClipboardList,
-  CheckCircle2, Circle, Search, X, UserPlus, Play, Check, Plus, Send, BarChart3, Award, Upload, Download, RotateCcw, ShieldCheck
+  CheckCircle2, Circle, Search, X, UserPlus, Play, Check, Plus, Send, BarChart3, Award, Upload, Download, RotateCcw, ShieldCheck, ChevronDown
 } from 'lucide-react';
 
 export default function ProgramDetail({ program, programLearners = [], teamMembers = [], setPrograms, setLearners, userRole, onBack }) {
@@ -16,6 +16,16 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   const [sessionTime, setSessionTime] = useState('');
   const [sessionDuration, setSessionDuration] = useState('60 mins');
   const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
+
+  // Extra session form states (attached image 2 fields)
+  const [sessionType, setSessionType] = useState('Live Training');
+  const [facilitatorName, setFacilitatorName] = useState('');
+  const [facilitatorEmail, setFacilitatorEmail] = useState('');
+  const [sessionStartTime, setSessionStartTime] = useState('');
+  const [sessionEndTime, setSessionEndTime] = useState('');
+  const [enableOyenLive, setEnableOyenLive] = useState(false);
+  const [externalMeetingLink, setExternalMeetingLink] = useState('');
+  const [sessionDescription, setSessionDescription] = useState('');
 
   // Resource uploads
   const [resourceName, setResourceName] = useState('');
@@ -118,8 +128,16 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     const newSession = {
       id: Date.now(),
       title: sessionTitle.trim(),
+      type: sessionType,
+      facilitatorName: facilitatorName.trim(),
+      facilitatorEmail: facilitatorEmail.trim(),
       date: sessionDate || 'TBD',
-      time: sessionTime || '10:00 AM',
+      time: sessionStartTime || '10:00 AM',
+      startTime: sessionStartTime,
+      endTime: sessionEndTime,
+      enableOyenLive,
+      externalMeetingLink: externalMeetingLink.trim(),
+      description: sessionDescription.trim(),
       duration: sessionDuration,
       status: 'Upcoming',
       attendance: {},
@@ -134,8 +152,15 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
       ));
     }
     setSessionTitle('');
+    setSessionType('Live Training');
+    setFacilitatorName('');
+    setFacilitatorEmail('');
     setSessionDate('');
-    setSessionTime('');
+    setSessionStartTime('');
+    setSessionEndTime('');
+    setEnableOyenLive(false);
+    setExternalMeetingLink('');
+    setSessionDescription('');
     setShowCreateSessionModal(false);
   };
 
@@ -1060,7 +1085,8 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
               <button type="button" onClick={() => setShowAssignModal(false)} style={{ flex: 1, padding: '0.65rem', background: '#FFFFFF', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
               <button type="button" onClick={handleSaveFacilitator} style={{ flex: 1, padding: '0.65rem', background: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>Save</button>
             </div>
@@ -1070,34 +1096,82 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {/* Create Session Modal */}
       {showCreateSessionModal && (
-        <div onClick={() => setShowCreateSessionModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(21, 21, 21, 0.4)', backdropFilter: 'blur(4px)', zIndex: 1300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 12px 30px rgba(100, 90, 75, 0.15)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Schedule Program Session</h3>
-              <button onClick={() => setShowCreateSessionModal(false)} style={{ background: '#F5F2ED', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={15} />
+        <div onClick={() => setShowCreateSessionModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.78)', backdropFilter: 'blur(6px)', zIndex: 1400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 30px 70px rgba(0,0,0,0.7)', textAlign: 'left' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Schedule Session</h3>
+                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem', margin: '0.2rem 0 0 0' }}>Configure session properties for {program.name}</p>
+              </div>
+              <button onClick={() => setShowCreateSessionModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={14} />
               </button>
             </div>
             
-            <form onSubmit={handleCreateSession} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleCreateSession} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '0.35rem' }}>Session Title</label>
-                <input required type="text" placeholder="e.g. Kickoff Session" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', outline: 'none', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Title</label>
+                <input required autoFocus type="text" placeholder="e.g. Orientation & Onboarding" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
               </div>
               
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '0.35rem' }}>Date</label>
-                <input required type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', outline: 'none', boxSizing: 'border-box' }} />
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Type</label>
+                <div style={{ position: 'relative' }}>
+                  <select value={sessionType} onChange={e => setSessionType(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', appearance: 'none', cursor: 'pointer' }}>
+                    {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
+                  </select>
+                  <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', pointerEvents: 'none' }} />
+                </div>
               </div>
               
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '0.35rem' }}>Time</label>
-                <input required type="time" value={sessionTime} onChange={e => setSessionTime(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', outline: 'none', boxSizing: 'border-box' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Name</label>
+                  <input type="text" placeholder="e.g. Dr. Jane" value={facilitatorName} onChange={e => setFacilitatorName(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Email</label>
+                  <input type="email" placeholder="jane@domain.com" value={facilitatorEmail} onChange={e => setFacilitatorEmail(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                </div>
               </div>
-
+ 
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</label>
+                  <input required type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Start</label>
+                  <input required type="time" value={sessionStartTime} onChange={e => setSessionStartTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>End</label>
+                  <input required type="time" value={sessionEndTime} onChange={e => setSessionEndTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
+                </div>
+              </div>
+ 
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Meeting Platform</label>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', margin: '0.2rem 0' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#fff', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={enableOyenLive} onChange={e => setEnableOyenLive(e.target.checked)} style={{ accentColor: '#D4AF37' }} />
+                    Enable OYEN Live
+                  </label>
+                </div>
+                {!enableOyenLive && (
+                  <input type="text" placeholder="e.g. https://zoom.us/j/123456" value={externalMeetingLink} onChange={e => setExternalMeetingLink(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginTop: '0.35rem' }} />
+                )}
+              </div>
+ 
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description <span style={{ textTransform: 'none', opacity: 0.6 }}>(optional)</span></label>
+                <textarea rows={2} placeholder="Brief summary of discussion topic..." value={sessionDescription} onChange={e => setSessionDescription(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none' }} />
+              </div>
+ 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowCreateSessionModal(false)} style={{ flex: 1, padding: '0.75rem', background: '#FFFFFF', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-                <button type="submit" style={{ flex: 1, padding: '0.75rem', background: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>Schedule</button>
+                <button type="button" onClick={() => setShowCreateSessionModal(false)} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
+                <button type="submit" style={{ flex: 2, padding: '0.7rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>Schedule Session</button>
               </div>
             </form>
           </div>
