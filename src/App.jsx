@@ -29,6 +29,7 @@ import onboardingBg from './assets/onboarding_bg_v2.png';
 import dashboardHeroIllustration from './assets/dashboard_hero_illustration.jpg';
 import ReportsTab from './components/ReportsTab';
 import SettingsTab from './components/SettingsTab';
+import BrandingTab from './components/BrandingTab';
 import AttendanceTab from './components/AttendanceTab';
 import AssessmentsTab from './components/AssessmentsTab';
 import AnnouncementsTab from './components/AnnouncementsTab';
@@ -2770,7 +2771,7 @@ export default function App() {
                           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#151515', margin: '0 0 1.25rem 0', fontFamily: "'Inter', sans-serif" }}>Workspace Configuration</h2>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                             {[
-                              { title: 'Branding', desc: 'Manage your logo and organization profile.', tab: 'Settings' },
+                              { title: 'Branding', desc: 'Manage your logo and organization profile.', tab: 'Branding' },
                               { title: 'Roles & Permissions', desc: 'Control workspace access and user roles.', tab: 'Settings' },
                               { title: 'Notifications', desc: 'Configure email and system notifications.', tab: 'Settings' },
                               { title: 'Integrations', desc: 'Connect external services and applications.', tab: 'Settings' },
@@ -3062,6 +3063,16 @@ export default function App() {
                   </div>
                 );
               })()
+            ) : activeTab === 'Branding' ? (
+              /* Branding Tab Component */
+              <BrandingTab
+                orgLogo={orgLogo}
+                setOrgLogo={setOrgLogo}
+                orgName={orgName}
+                setOrgName={setOrgName}
+                onCancel={() => triggerTransition(() => setActiveTab('Your Workspace'))}
+                addNotification={addNotification}
+              />
             ) : activeTab === 'Settings' ? (
               /* Settings Tab Component */
               <SettingsTab
