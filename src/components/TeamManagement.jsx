@@ -434,6 +434,21 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
 
   const filteredList = getFilteredItems();
 
+  if (viewingProfileMember) {
+    return (
+      <MemberProfilePage 
+        member={viewingProfileMember} 
+        onBack={() => setViewingProfileMember(null)}
+        pending={pending}
+        setPending={setPending}
+        members={members}
+        setMembers={setMembers}
+        showToast={showToast}
+        addNotification={addNotification}
+      />
+    );
+  }
+
   return (
     <>
       {/* Modals */}
@@ -847,5 +862,308 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
         </div>
       </div>
     </>
+  );
+}
+
+function MemberProfilePage({ 
+  member, 
+  onBack, 
+  pending, 
+  setPending, 
+  members, 
+  setMembers, 
+  showToast, 
+  addNotification 
+}) {
+  const [role, setRole] = useState(member.role);
+  const [status, setStatus] = useState(member.status);
+
+  const handleSave = () => {
+    if (member.type === 'active') {
+      setMembers(prev => prev.map((m, idx) => idx === member.originalIndex ? { ...m, role, status } : m));
+      addNotification?.(`Updated profile and settings for ${member.email}`);
+    } else {
+      setPending(prev => prev.map((p, idx) => idx === member.originalIndex ? { ...p, role } : p));
+      addNotification?.(`Updated pending invitation role for ${member.email} to ${role}`);
+    }
+    showToast("Changes saved successfully!");
+    onBack();
+  };
+
+  const handleResend = () => {
+    showToast(`Invitation resent to ${member.email}! Code: ${member.accessCode || 'OYEN-FAC-KY6PQH'}`);
+    addNotification?.(`Resent invitation to ${member.email}.`);
+  };
+
+  const handleToggleDeactivate = () => {
+    const nextStatus = status === 'Active' ? 'Suspended' : 'Active';
+    setStatus(nextStatus);
+    showToast(nextStatus === 'Suspended' ? 'Member deactivated' : 'Member activated');
+  };
+
+  // Resolve programs based on role
+  const isFacilitator = role === 'Facilitator';
+  const isAdmin = role === 'Admin';
+  const hasPrograms = isAdmin || isFacilitator;
+
+  // Resolve permissions
+  const getPermissionsForRole = (r) => {
+    if (r === 'Admin') return ['Manage Workspace', 'Manage Team', 'Create Programmes', 'Edit Programmes', 'Manage Learners', 'Schedule Sessions', 'View Reports', 'Manage Certificates'];
+    if (r === 'Facilitator' || r === 'Program Manager') return ['Create Sessions', 'Upload Resources', 'View Reports', 'Manage Learners', 'Grade Assessments'];
+    return ['View Workspace', 'View Reports'];
+  };
+
+  const permissions = getPermissionsForRole(role);
+
+  return (
+    <div className="animate-fade-in" style={{ backgroundColor: '#F8F5EF', minHeight: '100vh', padding: '2rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
+      
+      {/* Navigation */}
+      <div>
+        <button 
+          onClick={onBack}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#6B7280', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: '0.75rem' }}
+          onMouseEnter={e => e.currentTarget.style.color = '#D4A017'}
+          onMouseLeave={e => e.currentTarget.style.color = '#6B7280'}
+        >
+          ← Back to Team
+        </button>
+        <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Member Profile</h2>
+        <p style={{ color: '#6B7280', fontSize: '0.9rem', marginTop: '0.25rem', margin: 0 }}>
+          View member information, assigned programs, and account activity.
+        </p>
+      </div>
+
+      {/* Grid Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* Left Side: Profile Details, Assigned Programs, Permissions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Profile Card */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', gap: '1.5rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: member.color || '#DDD', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
+              {member.initials}
+            </div>
+            
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#151515', margin: 0 }}>{member.name}</h3>
+                <span style={{ fontSize: '0.85rem', color: '#6B7280' }}>{member.email}</span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1.5rem', borderTop: '1px solid #F3EFE6', paddingTop: '1rem', fontSize: '0.82rem', color: '#6B7280' }}>
+                <div>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Role</span>
+                  <strong style={{ color: '#151515' }}>{role}</strong>
+                </div>
+                <div>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Status</span>
+                  <span style={{ 
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    color: status === 'Active' ? '#16A34A' : (status === 'Pending' ? '#B98C17' : '#DC2626'),
+                    fontWeight: 700
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: status === 'Active' ? '#16A34A' : (status === 'Pending' ? '#B98C17' : '#DC2626') }} />
+                    {status === 'Pending' ? 'Pending Invite' : status}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Invitation Status</span>
+                  <strong style={{ color: '#151515' }}>{member.type === 'pending' ? 'Pending' : 'Claimed'}</strong>
+                </div>
+                <div>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Joined Date</span>
+                  <strong style={{ color: '#151515' }}>{member.joined || member.invitedAt || '—'}</strong>
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Last Active</span>
+                  <strong style={{ color: '#151515' }}>{status === 'Pending' ? 'Pending Invite' : (member.isYou ? 'Active now' : 'Yesterday')}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Assigned Programs */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Assigned Programs</h3>
+            
+            {hasPrograms ? (
+              <div style={{ border: '1px solid #E8E2D8', borderRadius: '12px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#F8F5EF', borderBottom: '1px solid #E8E2D8', color: '#6B7280', fontWeight: 700 }}>
+                      <th style={{ padding: '0.75rem 1rem' }}>Program Name</th>
+                      <th style={{ padding: '0.75rem 1rem' }}>Role</th>
+                      <th style={{ padding: '0.75rem 1rem' }}>Status</th>
+                      <th style={{ padding: '0.75rem 1rem' }}>Joined</th>
+                      <th style={{ padding: '0.75rem 1rem', width: '120px' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ color: '#151515' }}>
+                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700 }}>
+                        {isAdmin ? 'All Programs' : 'Leadership Orientation'}
+                      </td>
+                      <td style={{ padding: '0.85rem 1rem' }}>{role}</td>
+                      <td style={{ padding: '0.85rem 1rem' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#16A34A', fontWeight: 600 }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#16A34A' }} />
+                          Active
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.85rem 1rem' }}>{member.joined || member.invitedAt || '—'}</td>
+                      <td style={{ padding: '0.85rem 1rem' }}>
+                        <span style={{ color: '#D4A017', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          Open Program <ExternalLink size={11} />
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#6B7280', border: '1px dashed #E8E2D8', borderRadius: '12px', fontSize: '0.82rem' }}>
+                This member has not been assigned to any programs yet.
+              </div>
+            )}
+          </div>
+
+          {/* Permissions Section */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Permissions</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
+              {permissions.map((perm, idx) => (
+                <span key={idx} style={{ fontSize: '11px', fontWeight: 700, color: '#D4A017', backgroundColor: 'rgba(212, 160, 23, 0.08)', border: '1px solid rgba(212, 160, 23, 0.2)', padding: '0.35rem 0.75rem', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                  {perm}
+                </span>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Side: Quick Actions, Contact Info, Activity */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Actions Card */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Manage Member</h3>
+            
+            <div style={{ borderTop: '1px solid #F3EFE6', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem' }}>Edit Role</label>
+                <select 
+                  value={role} 
+                  onChange={e => setRole(e.target.value)}
+                  style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '8px', color: '#151515', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
+                >
+                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+
+              {member.type === 'pending' ? (
+                <div>
+                  <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem' }}>Invitation Action</span>
+                  <button 
+                    onClick={handleResend}
+                    style={{ width: '100%', padding: '0.65rem', background: 'transparent', border: '1px solid #D4A017', color: '#D4A017', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 700, transition: 'all 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(212,160,23,0.06)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    Resend Invite
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem' }}>Deactivate Account</span>
+                  <button 
+                    onClick={handleToggleDeactivate}
+                    style={{ 
+                      width: '100%', padding: '0.65rem', 
+                      background: status === 'Active' ? 'rgba(220,38,38,0.06)' : 'rgba(34,197,94,0.06)', 
+                      border: `1px solid ${status === 'Active' ? '#DC2626' : '#22C55E'}`, 
+                      color: status === 'Active' ? '#DC2626' : '#22C55E', 
+                      borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 700, transition: 'all 0.15s' 
+                    }}
+                  >
+                    {status === 'Active' ? 'Deactivate Member' : 'Activate Member'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Contact Details */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Contact Information</h3>
+            <div style={{ borderTop: '1px solid #F3EFE6', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.9rem', fontSize: '0.82rem', color: '#6B7280' }}>
+              <div>
+                <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Email Address</span>
+                <strong style={{ color: '#151515' }}>{member.email}</strong>
+              </div>
+              <div>
+                <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Phone Number (Optional)</span>
+                <strong style={{ color: '#151515' }}>+1 (555) 019-2834</strong>
+              </div>
+              <div>
+                <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Time Zone</span>
+                <strong style={{ color: '#151515' }}>GMT+1 (West Africa Time)</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Account Activity */}
+          <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>Recent Activity</h3>
+            <div style={{ borderTop: '1px solid #F3EFE6', paddingTop: '1rem' }}>
+              {status === 'Pending' ? (
+                <div style={{ fontSize: '0.8rem', color: '#6B7280', fontStyle: 'italic' }}>
+                  No recent activity available.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.82rem', color: '#6B7280' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: '#16A34A', fontWeight: 700 }}>✓</span>
+                    <span>Joined workspace (28 Jul 2026)</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: '#16A34A', fontWeight: 700 }}>✓</span>
+                    <span>Accepted invitation (28 Jul 2026)</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: '#16A34A', fontWeight: 700 }}>✓</span>
+                    <span>Hosted a live cohort session (28 Jul 2026)</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: '#16A34A', fontWeight: 700 }}>✓</span>
+                    <span>Marked session attendance (28 Jul 2026)</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Bottom Buttons */}
+      <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid #E8E2D8', paddingTop: '1.5rem', marginTop: '1rem' }}>
+        <button 
+          onClick={handleSave}
+          style={{ padding: '0.75rem 2rem', backgroundColor: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '14px', boxShadow: '0 4px 12px rgba(212,160,23,0.2)' }}
+        >
+          Save Changes
+        </button>
+        <button 
+          onClick={onBack}
+          style={{ padding: '0.75rem 2rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}
+        >
+          Back to Team
+        </button>
+      </div>
+
+    </div>
   );
 }
