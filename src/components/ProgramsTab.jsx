@@ -15,6 +15,7 @@ export default function ProgramsTab({
   userRole 
 }) {
   const [showCreateModal, setShowCreateModal]   = useState(false);
+  const [showLearnModal, setShowLearnModal]     = useState(false);
   const [newProgName, setNewProgName]           = useState('');
   const [newProgDesc, setNewProgDesc]           = useState('');
   const [selectedProgramId, setSelectedProgramId] = useState(null);
@@ -650,9 +651,12 @@ export default function ProgramsTab({
                 Create First Program
               </button>
             )}
-            <a href="#learn-more" style={{ color: '#D4A017', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <button 
+              onClick={(e) => { e.preventDefault(); setShowLearnModal(true); }} 
+              style={{ background: 'none', border: 'none', color: '#D4A017', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}
+            >
               Learn how programs work <ArrowRight size={13} />
-            </a>
+            </button>
           </div>
 
           {/* What You'll Be Able To Manage */}
@@ -852,6 +856,105 @@ export default function ProgramsTab({
           </div>
         );
       })()}
+
+      {/* Walkthrough Modal: How Programs Work */}
+      {showLearnModal && (
+        <div 
+          onClick={() => setShowLearnModal(false)}
+          style={{ 
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', 
+            backdropFilter: 'blur(4px)', zIndex: 1400, 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            padding: '1rem' 
+          }}
+        >
+          <div 
+            onClick={e => e.stopPropagation()}
+            style={{ 
+              backgroundColor: '#F8F5EF', border: '1px solid #E8E2D8', 
+              borderRadius: '16px', padding: '2rem', width: '92%', maxWidth: '460px', 
+              boxShadow: '0 20px 50px rgba(0,0,0,0.15)', color: '#151515',
+              maxHeight: '90vh', overflowY: 'auto'
+            }}
+          >
+            {/* Title */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>How Programs Work</h3>
+                <p style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.4rem', lineHeight: 1.4 }}>
+                  A Program is your central workspace for organizing learners, facilitators, sessions, resources, assessments, certificates, and reports. Everything related to one training initiative is managed in a single place.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowLearnModal(false)} 
+                style={{ background: '#FFFFFF', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Vertically connected steps */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', marginTop: '1rem' }}>
+              {[
+                { title: '1. Create a Program', desc: 'Give your program a name and basic details.', icon: <Plus size={16} color="#D4A017" /> },
+                { title: '2. Invite Learners', desc: 'Add learners manually or send them an invitation.', icon: <Users size={16} color="#D4A017" /> },
+                { title: '3. Add Facilitators', desc: 'Assign trainers or instructors to your program.', icon: <Users size={16} color="#D4A017" /> },
+                { title: '4. Schedule Sessions', desc: 'Plan live classes, workshops, or meetings.', icon: <Calendar size={16} color="#D4A017" /> },
+                { title: '5. Share Resources', desc: 'Upload learning materials, assignments, and documents.', icon: <FolderOpen size={16} color="#D4A017" /> },
+                { title: '6. Track Progress', desc: 'Monitor attendance, engagement, assessments, and completion.', icon: <Award size={16} color="#D4A017" /> }
+              ].map((step, idx) => (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ 
+                    backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', 
+                    borderRadius: '12px', padding: '0.85rem 1rem', width: '100%',
+                    display: 'flex', alignItems: 'center', gap: '0.9rem', boxSizing: 'border-box'
+                  }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(212, 160, 23, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {step.icon}
+                    </div>
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#151515' }}>{step.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.1rem' }}>{step.desc}</div>
+                    </div>
+                  </div>
+                  {idx < 5 && (
+                    <div style={{ color: '#D4A017', fontSize: '0.9rem', margin: '0.2rem 0', fontWeight: 'bold' }}>↓</div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Tip box */}
+            <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'left' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#151515', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                💡 Tip
+              </div>
+              <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: '0.3rem 0 0 0', lineHeight: 1.45 }}>
+                You can always return later to edit your program, invite more learners, schedule additional sessions, or upload new resources.
+              </p>
+            </div>
+
+            {/* Footer Buttons */}
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button 
+                onClick={() => setShowLearnModal(false)}
+                style={{ flex: 1, padding: '0.7rem', background: '#FFFFFF', border: '1px solid #E8E2D8', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+              >
+                Close
+              </button>
+              {userRole === 'Admin' && (
+                <button 
+                  onClick={() => { setShowLearnModal(false); setShowCreateModal(true); }}
+                  style={{ flex: 2, padding: '0.7rem', background: '#D4A017', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '13px', boxShadow: '0 4px 12px rgba(212, 160, 23, 0.2)' }}
+                >
+                  Create First Program
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
