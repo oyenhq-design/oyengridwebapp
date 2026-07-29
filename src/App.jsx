@@ -581,6 +581,25 @@ export default function App() {
     }
   }, [user, userRole, activeTemplate, enabledTemplates, wsPrograms, wsLearners, wsTeam, wsInvitations]);
 
+  // Synchronize logged-in user's role from wsTeam if their role is modified by the admin
+  useEffect(() => {
+    if (user && wsTeam.length > 0) {
+      const isOwner = user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com';
+      if (!isOwner) {
+        const currentUserInTeam = wsTeam.find(m => m.email?.toLowerCase() === user.toLowerCase());
+        if (currentUserInTeam && currentUserInTeam.role && currentUserInTeam.role !== userRole) {
+          setUserRole(currentUserInTeam.role);
+          addNotification(`Your role has been updated to ${currentUserInTeam.role}`);
+          if (currentUserInTeam.role === 'Facilitator' || currentUserInTeam.role === 'Team Member' || currentUserInTeam.role === 'Viewer') {
+            setActiveTab('Overview');
+          } else {
+            setActiveTab('Dashboard');
+          }
+        }
+      }
+    }
+  }, [wsTeam, user, userRole, ownerEmail]);
+
   // Dynamically ensure only real logged-in owner is active and demo members are excluded
   useEffect(() => {
     if (user) {
