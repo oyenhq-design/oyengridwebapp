@@ -201,11 +201,10 @@ export default function App() {
     
     const member = wsTeam.find(m => m.email && m.email.trim().toLowerCase() === currentEmail);
     
-    // Invalidation check (deleted, suspended/inactive, or role mismatch)
+    // Invalidation check (deleted, suspended/inactive)
     const isInvalid = !member || 
                       member.status === 'Suspended' || 
-                      member.status === 'Inactive' ||
-                      member.role !== userRole;
+                      member.status === 'Inactive';
                       
     if (isInvalid) {
       isLoggingOutRef.current = true;
@@ -219,6 +218,14 @@ export default function App() {
       setUserRole(null);
       setActiveRoute('signin');
       addNotification('Your access to this organization has been removed. Please contact your Admin.');
+    } else if (member.role !== userRole) {
+      setUserRole(member.role);
+      addNotification(`Your role has been updated to ${member.role}`);
+      if (member.role === 'Facilitator' || member.role === 'Team Member' || member.role === 'Viewer') {
+        setActiveTab('Overview');
+      } else {
+        setActiveTab('Dashboard');
+      }
     }
   }, [wsTeam, user, userRole, ownerEmail]);
 
