@@ -345,6 +345,11 @@ export default function App() {
 
 
 
+  const [ownerTimezone, setOwnerTimezone] = useState('Africa/Lagos');
+  const [ownerLanguage, setOwnerLanguage] = useState('English');
+  const [ownerEmailNotifs, setOwnerEmailNotifs] = useState(true);
+  const [ownerDesktopNotifs, setOwnerDesktopNotifs] = useState(false);
+
   const getLoggedInUserInfo = () => {
     if (!user) {
       return {
@@ -352,7 +357,13 @@ export default function App() {
         initials: 'GU',
         role: 'Guest',
         email: '',
-        photo: null
+        photo: null,
+        phone: '',
+        jobTitle: '',
+        timezone: 'Africa/Lagos',
+        language: 'English',
+        emailNotifs: true,
+        desktopNotifs: false,
       };
     }
     if (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com') {
@@ -361,7 +372,13 @@ export default function App() {
         initials: `${ownerFirstName?.[0] || 'J'}${ownerLastName?.[0] || 'D'}`,
         role: userRole || 'Admin',
         email: user,
-        photo: ownerPhoto
+        photo: ownerPhoto,
+        phone: ownerPhone,
+        jobTitle: ownerTitle,
+        timezone: ownerTimezone,
+        language: ownerLanguage,
+        emailNotifs: ownerEmailNotifs,
+        desktopNotifs: ownerDesktopNotifs,
       };
     }
     const member = wsTeam.find(m => m.email?.toLowerCase() === user?.toLowerCase());
@@ -375,7 +392,13 @@ export default function App() {
         initials: init.toUpperCase() || 'U',
         role: member.role || userRole || 'Team Member',
         email: user,
-        photo: null
+        photo: member.photo || null,
+        phone: member.phone || '',
+        jobTitle: member.jobTitle || '',
+        timezone: member.timezone || 'Africa/Lagos',
+        language: member.language || 'English',
+        emailNotifs: member.emailNotifs !== undefined ? member.emailNotifs : true,
+        desktopNotifs: member.desktopNotifs !== undefined ? member.desktopNotifs : false,
       };
     }
     return {
@@ -383,7 +406,13 @@ export default function App() {
       initials: (user?.[0] || 'U').toUpperCase(),
       role: userRole || 'Workspace Facilitator',
       email: user,
-      photo: null
+      photo: null,
+      phone: '',
+      jobTitle: '',
+      timezone: 'Africa/Lagos',
+      language: 'English',
+      emailNotifs: true,
+      desktopNotifs: false,
     };
   };
 
@@ -3126,13 +3155,37 @@ export default function App() {
                 info={getLoggedInUserInfo()} 
                 userRole={userRole}
                 organizationName={orgName}
-                onSaveName={(newName) => {
+                onSaveProfile={(updates) => {
+                  const { name, phone, jobTitle, timezone, language, emailNotifs, desktopNotifs, photo } = updates;
                   if (user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com') {
-                    const parts = newName.trim().split(' ');
-                    setOwnerFirstName(parts[0] || '');
-                    setOwnerLastName(parts.slice(1).join(' ') || '');
+                    if (name !== undefined) {
+                      const parts = name.trim().split(' ');
+                      setOwnerFirstName(parts[0] || '');
+                      setOwnerLastName(parts.slice(1).join(' ') || '');
+                    }
+                    if (phone !== undefined) setOwnerPhone(phone);
+                    if (jobTitle !== undefined) setOwnerTitle(jobTitle);
+                    if (timezone !== undefined) setOwnerTimezone(timezone);
+                    if (language !== undefined) setOwnerLanguage(language);
+                    if (emailNotifs !== undefined) setOwnerEmailNotifs(emailNotifs);
+                    if (desktopNotifs !== undefined) setOwnerDesktopNotifs(desktopNotifs);
+                    if (photo !== undefined) setOwnerPhoto(photo);
                   } else {
-                    setWsTeam(prev => prev.map(m => m.email.toLowerCase() === user.toLowerCase() ? { ...m, name: newName } : m));
+                    setWsTeam(prev => prev.map(m => {
+                      if (m.email.toLowerCase() === user.toLowerCase()) {
+                        const newM = { ...m };
+                        if (name !== undefined) newM.name = name;
+                        if (phone !== undefined) newM.phone = phone;
+                        if (jobTitle !== undefined) newM.jobTitle = jobTitle;
+                        if (timezone !== undefined) newM.timezone = timezone;
+                        if (language !== undefined) newM.language = language;
+                        if (emailNotifs !== undefined) newM.emailNotifs = emailNotifs;
+                        if (desktopNotifs !== undefined) newM.desktopNotifs = desktopNotifs;
+                        if (photo !== undefined) newM.photo = photo;
+                        return newM;
+                      }
+                      return m;
+                    }));
                   }
                   addNotification('Profile updated successfully');
                 }}
@@ -3952,10 +4005,10 @@ export default function App() {
   );
 }
 
-function ProfileTab({ info, onSaveName, addNotification, userRole, organizationName }) {
+function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizationName }) {
   const [name, setName]                   = React.useState(info.fullName);
-  const [phone, setPhone]                 = React.useState('');
-  const [jobTitle, setJobTitle]           = React.useState('');
+  const [phone, setPhone]                 = React.useState(info.phone || '');
+  const [jobTitle, setJobTitle]           = React.useState(info.jobTitle || '');
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword]     = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
@@ -3963,19 +4016,39 @@ function ProfileTab({ info, onSaveName, addNotification, userRole, organizationN
   const [passwordError, setPasswordError] = React.useState('');
   const [profileSaved, setProfileSaved]   = React.useState(false);
   const [prefSaved, setPrefSaved]         = React.useState(false);
-  const [timezone, setTimezone]           = React.useState('Africa/Lagos');
-  const [language, setLanguage]           = React.useState('English');
-  const [emailNotifs, setEmailNotifs]     = React.useState(true);
-  const [desktopNotifs, setDesktopNotifs] = React.useState(false);
+  const [timezone, setTimezone]           = React.useState(info.timezone || 'Africa/Lagos');
+  const [language, setLanguage]           = React.useState(info.language || 'English');
+  const [emailNotifs, setEmailNotifs]     = React.useState(info.emailNotifs !== undefined ? info.emailNotifs : true);
+  const [desktopNotifs, setDesktopNotifs] = React.useState(info.desktopNotifs !== undefined ? info.desktopNotifs : false);
   const fileInputRef = React.useRef(null);
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSaveName(name);
+    onSaveProfile({
+      name,
+      phone,
+      jobTitle,
+    });
     setProfileSaved(true);
     addNotification?.('Profile updated successfully');
     setTimeout(() => setProfileSaved(false), 3500);
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        onSaveProfile({
+          name,
+          phone,
+          jobTitle,
+          photo: event.target.result
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSavePassword = (e) => {
@@ -4001,6 +4074,15 @@ function ProfileTab({ info, onSaveName, addNotification, userRole, organizationN
 
   const handleSavePrefs = (e) => {
     e.preventDefault();
+    onSaveProfile({
+      name,
+      phone,
+      jobTitle,
+      timezone,
+      language,
+      emailNotifs,
+      desktopNotifs
+    });
     setPrefSaved(true);
     addNotification?.('Preferences saved');
     setTimeout(() => setPrefSaved(false), 3000);
@@ -4132,7 +4214,7 @@ function ProfileTab({ info, onSaveName, addNotification, userRole, organizationN
             >
               Change Photo
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} />
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
           </div>
         </div>
 

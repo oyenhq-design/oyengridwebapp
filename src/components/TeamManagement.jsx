@@ -942,13 +942,24 @@ function MemberProfilePage({
           
           {/* Profile Card */}
           <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '16px', padding: '2rem', display: 'flex', gap: '1.5rem', boxShadow: '0 2px 10px rgba(100,90,75,0.02)' }}>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: member.color || '#DDD', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
-              {member.initials}
-            </div>
+            {member.photo ? (
+              <img src={member.photo} alt={member.name} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #E8E2D8', flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: member.color || '#DDD', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, color: '#FFF', flexShrink: 0 }}>
+                {member.initials}
+              </div>
+            )}
             
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#151515', margin: 0 }}>{member.name}</h3>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#151515', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {member.name}
+                  {member.jobTitle && (
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#D4A017', backgroundColor: '#FFFBEB', padding: '0.15rem 0.45rem', borderRadius: '5px', border: '1px solid #FDE68A' }}>
+                      {member.jobTitle}
+                    </span>
+                  )}
+                </h3>
                 <span style={{ fontSize: '0.85rem', color: '#6B7280' }}>{member.email}</span>
               </div>
               
@@ -1104,11 +1115,11 @@ function MemberProfilePage({
               </div>
               <div>
                 <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Phone Number (Optional)</span>
-                <strong style={{ color: '#151515' }}>+1 (555) 019-2834</strong>
+                <strong style={{ color: '#151515' }}>{member.phone || '—'}</strong>
               </div>
               <div>
                 <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Time Zone</span>
-                <strong style={{ color: '#151515' }}>GMT+1 (West Africa Time)</strong>
+                <strong style={{ color: '#151515' }}>{member.timezone ? (member.timezone.includes('/') ? `GMT+1 (${member.timezone.split('/')[1].replace('_', ' ')})` : member.timezone) : 'GMT+1 (West Africa Time)'}</strong>
               </div>
             </div>
           </div>
