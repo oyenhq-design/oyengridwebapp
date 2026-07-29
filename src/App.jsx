@@ -3953,17 +3953,29 @@ export default function App() {
 }
 
 function ProfileTab({ info, onSaveName, addNotification, userRole, organizationName }) {
-  const [name, setName] = useState(info.fullName);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
+  const [name, setName]                   = React.useState(info.fullName);
+  const [phone, setPhone]                 = React.useState('');
+  const [jobTitle, setJobTitle]           = React.useState('');
+  const [currentPassword, setCurrentPassword] = React.useState('');
+  const [newPassword, setNewPassword]     = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [passwordSuccess, setPasswordSuccess] = React.useState(false);
+  const [passwordError, setPasswordError] = React.useState('');
+  const [profileSaved, setProfileSaved]   = React.useState(false);
+  const [prefSaved, setPrefSaved]         = React.useState(false);
+  const [timezone, setTimezone]           = React.useState('Africa/Lagos');
+  const [language, setLanguage]           = React.useState('English');
+  const [emailNotifs, setEmailNotifs]     = React.useState(true);
+  const [desktopNotifs, setDesktopNotifs] = React.useState(false);
+  const fileInputRef = React.useRef(null);
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
     onSaveName(name);
+    setProfileSaved(true);
+    addNotification?.('Profile updated successfully');
+    setTimeout(() => setProfileSaved(false), 3500);
   };
 
   const handleSavePassword = (e) => {
@@ -3972,159 +3984,375 @@ function ProfileTab({ info, onSaveName, addNotification, userRole, organizationN
       setPasswordError('All password fields are required.');
       return;
     }
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters.');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setPasswordError('New passwords do not match.');
       return;
     }
     setPasswordError('');
     setPasswordSuccess(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    addNotification('Password changed successfully');
+    setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+    addNotification?.('Password changed successfully');
     setTimeout(() => setPasswordSuccess(false), 4000);
   };
 
+  const handleSavePrefs = (e) => {
+    e.preventDefault();
+    setPrefSaved(true);
+    addNotification?.('Preferences saved');
+    setTimeout(() => setPrefSaved(false), 3000);
+  };
+
+  /* shared light-theme field styles */
+  const field = {
+    width: '100%', padding: '0.75rem 1rem', fontSize: '0.85rem',
+    backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8',
+    borderRadius: '10px', color: '#151515', outline: 'none',
+    boxSizing: 'border-box', fontFamily: 'inherit',
+  };
+  const readonlyField = {
+    ...field,
+    backgroundColor: '#F9F7F4', color: '#9CA3AF',
+    cursor: 'not-allowed', border: '1px solid #F0EDE8',
+  };
+  const lbl = {
+    display: 'block', fontSize: '0.72rem', fontWeight: 700,
+    color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px',
+    marginBottom: '0.4rem',
+  };
+  const card = {
+    backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8',
+    borderRadius: '16px', padding: '1.75rem 2rem',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+  };
+  const sectionTitle = {
+    fontSize: '1rem', fontWeight: 800, color: '#151515',
+    margin: '0 0 0.25rem', fontFamily: "'Outfit', sans-serif",
+  };
+  const sectionDesc = {
+    fontSize: '0.8rem', color: '#6B7280', margin: 0,
+  };
+  const goldBtn = {
+    padding: '0.7rem 1.5rem', background: 'linear-gradient(135deg,#D4A017,#C49A2A)',
+    border: 'none', color: '#fff', borderRadius: '10px', fontWeight: 700,
+    fontSize: '0.83rem', cursor: 'pointer', display: 'inline-flex',
+    alignItems: 'center', gap: '0.4rem',
+    boxShadow: '0 4px 14px rgba(212,160,23,0.25)',
+  };
+  const outlineBtn = {
+    padding: '0.65rem 1.25rem', background: '#FFFFFF',
+    border: '1px solid #E8E2D8', color: '#374151', borderRadius: '10px',
+    fontWeight: 600, fontSize: '0.83rem', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+  };
+  const dangerBtn = {
+    padding: '0.65rem 1.25rem', background: '#FEF2F2',
+    border: '1px solid #FECACA', color: '#DC2626', borderRadius: '10px',
+    fontWeight: 600, fontSize: '0.83rem', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+  };
+
+  const Toggle = ({ checked, onChange }) => (
+    <div
+      onClick={() => onChange(!checked)}
+      style={{
+        width: '44px', height: '24px', borderRadius: '99px', cursor: 'pointer',
+        backgroundColor: checked ? '#D4A017' : '#E5E7EB',
+        position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+      }}
+    >
+      <div style={{
+        position: 'absolute', top: '3px',
+        left: checked ? '23px' : '3px',
+        width: '18px', height: '18px', borderRadius: '50%',
+        backgroundColor: '#FFFFFF', transition: 'left 0.2s',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+      }} />
+    </div>
+  );
+
+  /* avatar */
+  const hue = (() => {
+    let h = 0;
+    for (let i = 0; i < info.fullName.length; i++) h = info.fullName.charCodeAt(i) + ((h << 5) - h);
+    return [215,168,142,280,32,195,330,260][Math.abs(h) % 8];
+  })();
+
   return (
-    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', maxWidth: '600px' }}>
+    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem', textAlign: 'left', maxWidth: '720px', fontFamily: "'Inter', sans-serif" }}>
+
+      <style>{`
+        .prof-input:focus { border-color: #D4A017 !important; box-shadow: 0 0 0 3px rgba(212,160,23,0.1); }
+        .prof-card-hover { transition: box-shadow 0.2s; }
+      `}</style>
+
+      {/* ── PAGE HEADER ── */}
       <div>
-        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Personal Profile</h2>
-        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-          Manage your personal account details, avatar, and security settings.
+        <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.3px' }}>
+          Personal Profile
+        </h2>
+        <p style={{ color: '#6B7280', fontSize: '0.88rem', marginTop: '0.3rem', margin: '0.3rem 0 0' }}>
+          Manage your personal information, account security, and preferences.
         </p>
       </div>
 
-      <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          {info.photo ? (
-            <img src={info.photo} alt={name} style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #F5D76E' }} />
-          ) : (
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#F5D76E', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.4rem' }}>
-              {info.initials}
-            </div>
-          )}
+      {/* ════════ SECTION 1 — Personal Information ════════ */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#D4A017" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </div>
           <div>
-            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>{info.fullName}</div>
-            <div style={{ fontSize: '0.8rem', color: '#F5D76E', marginTop: '0.15rem' }}>{info.role}</div>
+            <div style={sectionTitle}>Personal Information</div>
+            <div style={sectionDesc}>Update your name, photo, and contact details.</div>
           </div>
         </div>
 
-        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Full Name</label>
-            <input 
-              type="text" 
-              value={name} 
-              onChange={e => setName(e.target.value)} 
-              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: userRole === 'Facilitator' ? 'rgba(255,255,255,0.02)' : '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: userRole === 'Facilitator' ? 'rgba(255,255,255,0.4)' : '#fff', fontSize: '0.85rem', outline: 'none', cursor: userRole === 'Facilitator' ? 'not-allowed' : 'text' }}
-              required
-              readOnly={userRole === 'Facilitator'}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Email Address</label>
-            <input 
-              type="email" 
-              value={info.email} 
-              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
-              readOnly
-            />
-          </div>
-
-          {userRole === 'Facilitator' && (
-            <>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Organization</label>
-                <input 
-                  type="text" 
-                  value={organizationName || 'ABC Energy'} 
-                  style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Assigned Role</label>
-                <input 
-                  type="text" 
-                  value={info.role || 'Facilitator'} 
-                  style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', cursor: 'not-allowed' }}
-                  readOnly
-                />
-              </div>
-            </>
-          )}
-          {userRole !== 'Facilitator' && (
-            <button 
-              type="submit" 
-              style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}
-            >
-              Save Changes
-            </button>
-          )}
-        </form>
-
-        <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>Change Password</h3>
-          
-          {passwordSuccess && (
-            <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '6px', color: '#22c55e', fontSize: '0.8rem' }}>
-              Password updated successfully.
+        {/* Avatar row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', padding: '1.25rem', backgroundColor: '#FDFAF5', borderRadius: '12px', border: '1px solid #F0EDE8' }}>
+          {info.photo ? (
+            <img src={info.photo} alt={name} style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #D4A017' }} />
+          ) : (
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: `hsl(${hue},65%,92%)`, border: `2px solid hsl(${hue},50%,80%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: `hsl(${hue},50%,35%)`, fontWeight: 800, fontSize: '1.2rem', flexShrink: 0 }}>
+              {info.initials}
             </div>
           )}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515' }}>{info.fullName}</div>
+            <div style={{ fontSize: '0.8rem', color: '#D4A017', fontWeight: 600, marginTop: '0.1rem' }}>{info.role}</div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ ...outlineBtn, fontSize: '0.75rem', padding: '0.5rem 0.9rem' }}
+            >
+              Change Photo
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} />
+          </div>
+        </div>
 
+        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={lbl}>Full Name</label>
+              <input className="prof-input" required type="text" value={name} onChange={e => setName(e.target.value)} style={field} placeholder="Your full name" />
+            </div>
+            <div>
+              <label style={lbl}>Phone Number</label>
+              <input className="prof-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} style={field} placeholder="+234 800 000 0000" />
+            </div>
+          </div>
+
+          <div>
+            <label style={lbl}>Email Address <span style={{ color: '#9CA3AF', textTransform: 'none', fontWeight: 400, letterSpacing: 0 }}>(verification required to change)</span></label>
+            <input type="email" value={info.email} readOnly style={readonlyField} />
+          </div>
+
+          <div>
+            <label style={lbl}>Job Title <span style={{ color: '#9CA3AF', textTransform: 'none', fontWeight: 400, letterSpacing: 0 }}>(optional)</span></label>
+            <input className="prof-input" type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)} style={field} placeholder="e.g. Senior Trainer" />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingTop: '0.5rem' }}>
+            <button type="submit" style={goldBtn}>
+              Save Changes
+            </button>
+            {profileSaved && (
+              <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                ✓ Saved
+              </span>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {/* ════════ SECTION 2 — Workspace Information (Read Only) ════════ */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#2563EB" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+          </div>
+          <div>
+            <div style={sectionTitle}>Workspace Information</div>
+            <div style={sectionDesc}>Your workspace assignment managed by the administrator.</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          {[
+            { label: 'Organization', value: organizationName || 'OYEN GRID' },
+            { label: 'Workspace', value: 'Main Workspace' },
+            { label: 'Assigned Role', value: info.role || 'Facilitator' },
+            { label: 'Date Joined', value: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) },
+          ].map(item => (
+            <div key={item.label}>
+              <label style={lbl}>{item.label}</label>
+              <input type="text" value={item.value} readOnly style={readonlyField} />
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', padding: '0.85rem 1rem', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '10px' }}>
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#0284C7" strokeWidth="2" style={{ flexShrink: 0, marginTop: '0.05rem' }}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span style={{ fontSize: '0.78rem', color: '#0369A1' }}>These details are managed by your workspace administrator and cannot be changed here.</span>
+        </div>
+      </div>
+
+      {/* ════════ SECTION 3 — Security ════════ */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#D97706" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div>
+            <div style={sectionTitle}>Security</div>
+            <div style={sectionDesc}>Update your password to keep your account secure.</div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {passwordSuccess && (
+            <div style={{ padding: '0.75rem 1rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '9px', color: '#16a34a', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              ✓ Password updated successfully.
+            </div>
+          )}
           {passwordError && (
-            <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '6px', color: '#ef4444', fontSize: '0.8rem' }}>
+            <div style={{ padding: '0.75rem 1rem', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '9px', color: '#DC2626', fontSize: '0.82rem' }}>
               {passwordError}
             </div>
           )}
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Current Password</label>
-            <input 
-              type="password" 
-              value={currentPassword} 
-              onChange={e => setCurrentPassword(e.target.value)} 
-              placeholder="Enter current password"
-              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
-            />
+            <label style={lbl}>Current Password</label>
+            <input className="prof-input" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="Enter current password" style={field} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={lbl}>New Password</label>
+              <input className="prof-input" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Enter new password" style={field} />
+            </div>
+            <div>
+              <label style={lbl}>Confirm New Password</label>
+              <input className="prof-input" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat new password" style={field} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.1rem' }}>
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>Use a strong password with at least 8 characters.</span>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>New Password</label>
-            <input 
-              type="password" 
-              value={newPassword} 
-              onChange={e => setNewPassword(e.target.value)} 
-              placeholder="Enter new password"
-              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
-            />
+            <button type="submit" style={goldBtn}>Update Password</button>
           </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.4rem', fontWeight: 600 }}>Confirm New Password</label>
-            <input 
-              type="password" 
-              value={confirmPassword} 
-              onChange={e => setConfirmPassword(e.target.value)} 
-              placeholder="Confirm new password"
-              style={{ width: '100%', padding: '0.75rem 1rem', backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', border: '1px solid #F5D76E', color: '#F5D76E', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', alignSelf: 'flex-start' }}
-          >
-            Change Password
-          </button>
         </form>
-
       </div>
+
+      {/* ════════ SECTION 4 — Preferences ════════ */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          </div>
+          <div>
+            <div style={sectionTitle}>Preferences</div>
+            <div style={sectionDesc}>Customize your workspace experience and notification settings.</div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSavePrefs} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <label style={lbl}>Time Zone</label>
+              <div style={{ position: 'relative' }}>
+                <select value={timezone} onChange={e => setTimezone(e.target.value)} style={{ ...field, appearance: 'none', cursor: 'pointer', paddingRight: '2.5rem' }}>
+                  {['Africa/Lagos', 'Africa/Accra', 'Europe/London', 'America/New_York', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Singapore'].map(tz => (
+                    <option key={tz}>{tz}</option>
+                  ))}
+                </select>
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div>
+              <label style={lbl}>Language</label>
+              <div style={{ position: 'relative' }}>
+                <select value={language} onChange={e => setLanguage(e.target.value)} style={{ ...field, appearance: 'none', cursor: 'pointer', paddingRight: '2.5rem' }}>
+                  {['English', 'French', 'Spanish', 'Arabic', 'Portuguese', 'Yoruba', 'Igbo', 'Hausa'].map(l => (
+                    <option key={l}>{l}</option>
+                  ))}
+                </select>
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', padding: '1.25rem', backgroundColor: '#FDFAF5', borderRadius: '12px', border: '1px solid #F0EDE8' }}>
+            {[
+              { label: 'Email Notifications', desc: 'Receive updates on sessions, participants, and programs via email.', value: emailNotifs, set: setEmailNotifs },
+              { label: 'Desktop Notifications', desc: 'Get browser push notifications for important workspace events.', value: desktopNotifs, set: setDesktopNotifs },
+            ].map(item => (
+              <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#151515' }}>{item.label}</div>
+                  <div style={{ fontSize: '0.77rem', color: '#9CA3AF', marginTop: '0.15rem' }}>{item.desc}</div>
+                </div>
+                <Toggle checked={item.value} onChange={item.set} />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button type="submit" style={goldBtn}>Save Preferences</button>
+            {prefSaved && <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600 }}>✓ Saved</span>}
+          </div>
+        </form>
+      </div>
+
+      {/* ════════ SECTION 5 — Account ════════ */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#DC2626" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          </div>
+          <div>
+            <div style={sectionTitle}>Account</div>
+            <div style={sectionDesc}>Manage your account sessions and data.</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', backgroundColor: '#FDFAF5', borderRadius: '12px', border: '1px solid #F0EDE8' }}>
+            <div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#151515' }}>Sign Out of All Devices</div>
+              <div style={{ fontSize: '0.76rem', color: '#9CA3AF', marginTop: '0.1rem' }}>Terminate all active sessions across devices immediately.</div>
+            </div>
+            <button type="button" style={outlineBtn} onClick={() => addNotification?.('Signed out of all devices')}>
+              Sign Out All
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', backgroundColor: '#FDFAF5', borderRadius: '12px', border: '1px solid #F0EDE8' }}>
+            <div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#151515' }}>Download My Account Data</div>
+              <div style={{ fontSize: '0.76rem', color: '#9CA3AF', marginTop: '0.1rem' }}>Export a copy of your personal profile and activity data.</div>
+            </div>
+            <button type="button" style={outlineBtn} onClick={() => addNotification?.('Data export request submitted')}>
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
+
+
 
 function HelpTab() {
   const [search, setSearch] = useState('');
