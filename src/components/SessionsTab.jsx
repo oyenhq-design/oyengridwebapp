@@ -5,15 +5,23 @@ import {
   Sparkles, Check, List, ShieldAlert, Award, FileSpreadsheet, Share2, Copy, Eye
 } from 'lucide-react';
 
-export default function SessionsTab({ 
-  programs = [], 
-  setPrograms, 
-  learners = [], 
-  addNotification, 
-  onNavigateToPrograms, 
-  userRole,
-  teamMembers = []
-}) {
+import SessionsTabFacilitator from './SessionsTabFacilitator';
+
+export default function SessionsTab(props) {
+  const { 
+    programs = [], 
+    setPrograms, 
+    learners = [], 
+    addNotification, 
+    onNavigateToPrograms, 
+    userRole,
+    teamMembers = []
+  } = props;
+
+  if (userRole !== 'Admin') {
+    return <SessionsTabFacilitator {...props} />;
+  }
+
   const [selectedProgId, setSelectedProgId] = useState(() => {
     return programs.length > 0 ? programs[0].id : null;
   });
