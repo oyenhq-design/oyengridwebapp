@@ -8,7 +8,7 @@ import {
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
   Shield, Rocket, FileText, Mail, HardDrive,
   Presentation, Folder, Image, Eye, Download, Book, Video, MessageSquare,
-  Play, Zap, Plus
+  Play, Zap, Plus, X, File
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
 import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser } from './domain/workspace/selectors';
