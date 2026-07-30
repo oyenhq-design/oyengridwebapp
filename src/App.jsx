@@ -3344,13 +3344,17 @@ export default function App() {
                           },
                           {
                             step: 'Step 3',
-                            title: 'Invite Learners',
+                            title: 'Invite Participants',
                             icon: <UserPlus size={16} />,
                             color: '#16A34A',
                             bg: '#F0FDF4',
-                            desc: 'Add learners by:',
+                            desc: 'Add participants by:',
                             details: ['Email invitation', 'CSV upload', 'Registration link'],
-                            note: 'Learners automatically receive access to the program.',
+                            note: 'Participants automatically receive access to the program.',
+                            action: () => {
+                              setShowSetupGuideModal(false);
+                              triggerTransition(() => setActiveTab('Learners'));
+                            }
                           },
                           {
                             step: 'Step 4',
@@ -3415,6 +3419,26 @@ export default function App() {
                               
                               {item.note && <div style={{ fontSize: '0.78rem', color: '#9CA3AF', marginTop: '0.25rem', fontStyle: 'italic' }}>{item.note}</div>}
                               {item.time && <div style={{ fontSize: '0.76rem', color: '#B8891A', fontWeight: 600, marginTop: '0.35rem' }}>{item.time}</div>}
+                              {item.action && (
+                                <button
+                                  type="button"
+                                  onClick={item.action}
+                                  style={{
+                                    marginTop: '0.65rem',
+                                    padding: '0.45rem 1rem',
+                                    backgroundColor: item.color,
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    color: '#FFFFFF',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(22,163,74,0.15)'
+                                  }}
+                                >
+                                  Invite Participants
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -3426,7 +3450,7 @@ export default function App() {
                       <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', marginBottom: '1rem', fontFamily: "'Outfit', sans-serif" }}>During Your Program</h3>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
                         {[
-                          'Attendance Tracking', 'Learner Progress', 'Session Analytics', 
+                          'Attendance Tracking', 'Participant Progress', 'Session Analytics', 
                           'Resource Management', 'Certificates', 'Reports & Insights', 'AI Assistance'
                         ].map((feat, idx) => (
                           <div key={idx} className="check-card">
