@@ -256,6 +256,7 @@ export default function App() {
   // Header Search & Notification States
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSetupGuideModal, setShowSetupGuideModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -2998,7 +2999,7 @@ export default function App() {
                         <p style={{ color: '#5C5C5C', fontSize: '1rem', maxWidth: '520px', lineHeight: '1.65', margin: 0 }}>Complete a few simple steps to prepare your workspace before launching your first programme.</p>
                         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
                           <button onClick={() => nextStep && nextStep.tab && triggerTransition(() => setActiveTab(nextStep.tab))} style={{ background: '#F5C84C', border: '1px solid #F5C84C', color: '#151515', fontFamily: "'Inter', sans-serif", fontWeight: 700, padding: '0.75rem 1.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,200,76,0.25)', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>Continue Setup <ArrowRight size={16} /></button>
-                          <button style={{ background: 'transparent', border: '1px solid #DDD6CB', color: '#5C5C5C', fontFamily: "'Inter', sans-serif", fontWeight: 600, padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F0EDE8'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}>View Setup Guide</button>
+                          <button onClick={() => setShowSetupGuideModal(true)} style={{ background: 'transparent', border: '1px solid #DDD6CB', color: '#5C5C5C', fontFamily: "'Inter', sans-serif", fontWeight: 600, padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F0EDE8'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}>View Setup Guide</button>
                         </div>
                       </div>
                       {/* Progress Card */}
@@ -3281,6 +3282,201 @@ export default function App() {
                 Secure. Scalable. Intelligent.
               </span>
             </footer>
+
+            {/* ── ONBOARDING SETUP GUIDE MODAL ── */}
+            {showSetupGuideModal && (
+              <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(21, 21, 21, 0.45)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }} onClick={() => setShowSetupGuideModal(false)}>
+                <style>{`
+                  @keyframes guideFadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+                  .guide-modal { animation: guideFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; max-height: 90vh; display: flex; flex-direction: column; }
+                  .guide-step { position: relative; display: flex; gap: 1.25rem; }
+                  .guide-step:not(:last-child)::after { content: ''; position: absolute; left: 1.25rem; top: 2.75rem; bottom: -1rem; width: 2px; background-color: #E8E2D8; }
+                  .check-card { background: #FDFAF5; border: 1px solid #E8E2D8; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; alignItems: center; gap: 0.65rem; box-shadow: 0 1px 4px rgba(0,0,0,0.03); transition: all 0.15s; }
+                  .check-card:hover { border-color: #D4A017; background: #FFFBEB; }
+                `}</style>
+                <div className="guide-modal" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '18px', width: '100%', maxWidth: '780px', boxShadow: '0 24px 60px rgba(0,0,0,0.12)', textAlign: 'left' }} onClick={e => e.stopPropagation()}>
+                  {/* Modal Header */}
+                  <div style={{ padding: '2rem 2.5rem 1.5rem', borderBottom: '1px solid #F3F0EA', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.3px' }}>Getting Started Guide</h2>
+                      <p style={{ color: '#6B7280', fontSize: '0.85rem', marginTop: '0.35rem', margin: '0.35rem 0 0', lineHeight: 1.4 }}>Learn how to prepare your workspace and launch your first program with OYEN GROUP.</p>
+                    </div>
+                    <button onClick={() => setShowSetupGuideModal(false)} style={{ background: '#F5F2ED', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* Modal Scrollable Content */}
+                  <div style={{ padding: '2rem 2.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* Introduction */}
+                    <div style={{ padding: '1.25rem 1.5rem', backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '14px', color: '#78350F' }}>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 0.35rem' }}>Welcome to OYEN GROUP</h4>
+                      <p style={{ fontSize: '0.82rem', margin: 0, lineHeight: 1.5, color: '#92400E' }}>
+                        This short guide walks you through the recommended setup process. Complete these steps in order to prepare your workspace before inviting learners.
+                      </p>
+                    </div>
+
+                    {/* Steps timeline */}
+                    <div>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', marginBottom: '1.5rem', fontFamily: "'Outfit', sans-serif" }}>Step-by-Step Setup</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+                        {[
+                          {
+                            step: 'Step 1',
+                            title: 'Create Your First Program',
+                            icon: <Folder size={16} />,
+                            color: '#2563EB',
+                            bg: '#EFF6FF',
+                            desc: "Create the program you'll manage inside your workspace.",
+                            details: ['Program name', 'Description', 'Start & End dates', 'Program status'],
+                            time: 'Estimated time: 2 minutes',
+                          },
+                          {
+                            step: 'Step 2',
+                            title: 'Assign Your Team',
+                            icon: <Users size={16} />,
+                            color: '#7C3AED',
+                            bg: '#F5F3FF',
+                            desc: 'Invite the people who will help manage the program.',
+                            details: ['Facilitators', 'Coordinators', 'Administrators'],
+                            note: 'Each team member receives an invitation.',
+                            time: 'Estimated time: 2 minutes',
+                          },
+                          {
+                            step: 'Step 3',
+                            title: 'Invite Learners',
+                            icon: <UserPlus size={16} />,
+                            color: '#16A34A',
+                            bg: '#F0FDF4',
+                            desc: 'Add learners by:',
+                            details: ['Email invitation', 'CSV upload', 'Registration link'],
+                            note: 'Learners automatically receive access to the program.',
+                          },
+                          {
+                            step: 'Step 4',
+                            title: 'Schedule Sessions',
+                            icon: <Calendar size={16} />,
+                            color: '#D97706',
+                            bg: '#FFFBEB',
+                            desc: 'Create live sessions for your program.',
+                            details: ['Classes', 'Workshops', 'Webinars', 'Meetings', 'Assessments'],
+                            note: 'Configure: Date, Time, Duration, Facilitator',
+                          },
+                          {
+                            step: 'Step 5',
+                            title: 'Upload Resources',
+                            icon: <File size={16} />,
+                            color: '#0891B2',
+                            bg: '#ECFEFF',
+                            desc: 'Upload learning materials.',
+                            details: ['PDFs', 'Documents', 'Videos', 'Slides', 'External links'],
+                            note: 'Everything is organized inside your program.',
+                          },
+                          {
+                            step: 'Step 6',
+                            title: 'Create Assessments',
+                            icon: <ClipboardCheck size={16} />,
+                            color: '#DB2777',
+                            bg: '#FDF2F8',
+                            desc: 'Evaluate learner progress using:',
+                            details: ['Quizzes', 'Assignments', 'Exams', 'Practical assessments'],
+                            note: 'Automatic grading is available where supported.',
+                          },
+                          {
+                            step: 'Step 7',
+                            title: 'Launch Your Program',
+                            icon: <Rocket size={16} />,
+                            color: '#D4A017',
+                            bg: '#FFFBEB',
+                            desc: 'When setup is complete:',
+                            details: ['Learners can join', 'Sessions become available', 'Resources are published', 'Attendance tracking begins', 'Reports become available'],
+                            note: 'Your program is now ready to run.',
+                          }
+                        ].map((item, idx) => (
+                          <div key={idx} className="guide-step">
+                            {/* Badge Icon */}
+                            <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: item.bg, border: `1.5px solid ${item.bg}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.color, flexShrink: 0, zIndex: 2 }}>
+                              {item.icon}
+                            </div>
+                            
+                            {/* Text */}
+                            <div style={{ flex: 1, paddingBottom: '0.5rem' }}>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: item.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.step}</span>
+                              <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#151515', margin: '0.1rem 0 0.35rem' }}>{item.title}</h4>
+                              <p style={{ color: '#5C5C5C', fontSize: '0.84rem', margin: '0 0 0.5rem', lineHeight: 1.45 }}>{item.desc}</p>
+                              
+                              {item.details && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.5rem 0' }}>
+                                  {item.details.map((d, i) => (
+                                    <span key={i} style={{ fontSize: '0.72rem', backgroundColor: '#F3F0EA', border: '1px solid #E8E2D8', color: '#4B5563', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 500 }}>{d}</span>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {item.note && <div style={{ fontSize: '0.78rem', color: '#9CA3AF', marginTop: '0.25rem', fontStyle: 'italic' }}>{item.note}</div>}
+                              {item.time && <div style={{ fontSize: '0.76rem', color: '#B8891A', fontWeight: 600, marginTop: '0.35rem' }}>{item.time}</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* During program checklist */}
+                    <div style={{ borderTop: '1px solid #F3F0EA', paddingTop: '1.5rem' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', marginBottom: '1rem', fontFamily: "'Outfit', sans-serif" }}>During Your Program</h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                        {[
+                          'Attendance Tracking', 'Learner Progress', 'Session Analytics', 
+                          'Resource Management', 'Certificates', 'Reports & Insights', 'AI Assistance'
+                        ].map((feat, idx) => (
+                          <div key={idx} className="check-card">
+                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#DEF7EC', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#03543F', flexShrink: 0 }}>
+                              <Check size={11} strokeWidth={3} />
+                            </div>
+                            <span style={{ fontSize: '0.8rem', color: '#374151', fontWeight: 600 }}>{feat}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Need help footer section */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.25rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '14px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16A34A', flexShrink: 0 }}>
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h5 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#14532D', margin: '0 0 0.15rem' }}>Need Help?</h5>
+                        <p style={{ fontSize: '0.78rem', color: '#166534', margin: 0, lineHeight: 1.4 }}>
+                          If you need assistance during setup, use the built-in AI Assistant or visit the Help Center for detailed documentation.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div style={{ padding: '1.25rem 2.5rem 1.75rem', borderTop: '1px solid #F3F0EA', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', backgroundColor: '#FDFAF5', borderBottomLeftRadius: '18px', borderBottomRightRadius: '18px' }}>
+                    <button
+                      onClick={() => setShowSetupGuideModal(false)}
+                      style={{ padding: '0.65rem 1.25rem', background: '#FFFFFF', border: '1px solid #E8E2D8', color: '#374151', borderRadius: '9px', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}
+                    >
+                      Close Guide
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSetupGuideModal(false);
+                        const nextStep = setupSteps.find(s => !s.done);
+                        if (nextStep && nextStep.tab) {
+                          triggerTransition(() => setActiveTab(nextStep.tab));
+                        }
+                      }}
+                      style={{ padding: '0.7rem 1.5rem', background: 'linear-gradient(135deg,#F5C84C,#E2A020)', border: 'none', color: '#151515', borderRadius: '9px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,200,76,0.2)' }}
+                    >
+                      Continue Setup
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
