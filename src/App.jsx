@@ -2998,7 +2998,7 @@ export default function App() {
                         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif", lineHeight: 1.2 }}>Getting Started</h1>
                         <p style={{ color: '#5C5C5C', fontSize: '1rem', maxWidth: '520px', lineHeight: '1.65', margin: 0 }}>Complete a few simple steps to prepare your workspace before launching your first programme.</p>
                         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
-                          <button onClick={() => nextStep && nextStep.tab && triggerTransition(() => setActiveTab(nextStep.tab))} style={{ background: '#F5C84C', border: '1px solid #F5C84C', color: '#151515', fontFamily: "'Inter', sans-serif", fontWeight: 700, padding: '0.75rem 1.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,200,76,0.25)', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>Continue Setup <ArrowRight size={16} /></button>
+                          <button onClick={() => triggerTransition(() => setActiveTab('Team'))} style={{ background: '#F5C84C', border: '1px solid #F5C84C', color: '#151515', fontFamily: "'Inter', sans-serif", fontWeight: 700, padding: '0.75rem 1.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,200,76,0.25)', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>Continue Setup <ArrowRight size={16} /></button>
                           <button onClick={() => setShowSetupGuideModal(true)} style={{ background: 'transparent', border: '1px solid #DDD6CB', color: '#5C5C5C', fontFamily: "'Inter', sans-serif", fontWeight: 600, padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease', fontSize: '0.9rem' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F0EDE8'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}>View Setup Guide</button>
                         </div>
                       </div>
@@ -3464,10 +3464,7 @@ export default function App() {
                     <button
                       onClick={() => {
                         setShowSetupGuideModal(false);
-                        const nextStep = setupSteps.find(s => !s.done);
-                        if (nextStep && nextStep.tab) {
-                          triggerTransition(() => setActiveTab(nextStep.tab));
-                        }
+                        triggerTransition(() => setActiveTab('Team'));
                       }}
                       style={{ padding: '0.7rem 1.5rem', background: 'linear-gradient(135deg,#F5C84C,#E2A020)', border: 'none', color: '#151515', borderRadius: '9px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,200,76,0.2)' }}
                     >
