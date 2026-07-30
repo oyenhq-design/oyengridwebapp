@@ -45,6 +45,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   // Attendance marking
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [attendanceState, setAttendanceState] = useState({});
+  const [successScreen, setSuccessScreen] = useState(false);
 
   // Team Member Register Learner
   const [newLearnerName, setNewLearnerName] = useState('');
@@ -154,17 +155,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
           : p
       ));
     }
-    setSessionTitle('');
-    setSessionType('Live Training');
-    setFacilitatorName('');
-    setFacilitatorEmail('');
-    setSessionDate('');
-    setSessionStartTime('');
-    setSessionEndTime('');
-    setEnableOyenLive(false);
-    setExternalMeetingLink('');
-    setSessionDescription('');
-    setShowCreateSessionModal(false);
+    setSuccessScreen(true);
   };
 
   // Upload Resource
@@ -1136,93 +1127,246 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
       {/* Create Session Modal */}
       {showCreateSessionModal && (
-        <div onClick={() => setShowCreateSessionModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.35)', backdropFilter: 'blur(10px)', zIndex: 1400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: 'rgba(20, 20, 20, 0.55)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '16px', padding: '2rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)', textAlign: 'left' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(10, 10, 10, 0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#111111', border: '1px solid #1F1F1F', borderRadius: '16px', width: '100%', maxWidth: '900px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter', sans-serif", color: '#fff' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Schedule Session</h3>
-                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.2rem', margin: '0.2rem 0 0 0' }}>Configure session properties for {program.name}</p>
-              </div>
-              <button onClick={() => setShowCreateSessionModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={14} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateSession} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Title</label>
-                <input required autoFocus type="text" placeholder="e.g. Orientation & Onboarding" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Type</label>
-                <div style={{ position: 'relative' }}>
-                  <select value={sessionType} onChange={e => setSessionType(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', appearance: 'none', cursor: 'pointer' }}>
-                    {['Live Training', 'Workshop', 'Webinar', 'Mentoring', 'Other'].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
-                  </select>
-                  <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.6)', pointerEvents: 'none' }} />
+            {successScreen ? (
+              <div style={{ padding: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                  <CheckCircle2 size={32} />
+                </div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>✓ Session Scheduled Successfully</h2>
+                <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '2rem' }}>{sessionTitle} • {sessionDate} at {sessionStartTime}</p>
+                
+                <div style={{ backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '12px', padding: '1.5rem', width: '100%', maxWidth: '400px', marginBottom: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.8rem' }}>
+                    <span style={{ color: '#94A3B8' }}>Participants:</span>
+                    <span style={{ fontWeight: 600 }}>All Registered</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                    <span style={{ color: '#94A3B8' }}>Facilitator:</span>
+                    <span style={{ fontWeight: 600 }}>{facilitatorName || 'Unassigned'}</span>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button onClick={() => { setShowCreateSessionModal(false); setSuccessScreen(false); setSessionTitle(''); setSessionDate(''); setSessionStartTime(''); setSessionEndTime(''); setFacilitatorName(''); setSessionDescription(''); }} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5C542', color: '#0A0A0A', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Done</button>
+                  <button style={{ padding: '0.75rem 1.5rem', backgroundColor: '#1A1A1A', color: '#FFF', border: '1px solid #2A2A2A', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Open Session</button>
+                  <button style={{ padding: '0.75rem 1.5rem', backgroundColor: '#1A1A1A', color: '#FFF', border: '1px solid #2A2A2A', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Copy Join Link</button>
+                  <button style={{ padding: '0.75rem 1.5rem', backgroundColor: '#1A1A1A', color: '#FFF', border: '1px solid #2A2A2A', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>View Details</button>
                 </div>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Name</label>
-                  <input type="text" placeholder="e.g. Dr. Jane" value={facilitatorName} onChange={e => setFacilitatorName(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+            ) : (
+              <>
+                <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #1F1F1F', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Schedule Session</h2>
+                    <p style={{ color: '#94A3B8', fontSize: '0.85rem', margin: '0.2rem 0 0 0' }}>Plan and configure your next training session.</p>
+                  </div>
+                  <button onClick={() => setShowCreateSessionModal(false)} style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={20} /></button>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Email</label>
-                  <input type="email" placeholder="jane@domain.com" value={facilitatorEmail} onChange={e => {
-                    const val = e.target.value;
-                    setFacilitatorEmail(val);
-                    if (teamMembers) {
-                      const match = teamMembers.find(t => (t.email || '').toLowerCase().trim() === val.toLowerCase().trim());
-                      if (match && match.name) {
-                        setFacilitatorName(match.name);
-                      }
-                    }
-                  }} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                  <div style={{ flex: 2, overflowY: 'auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>1. Session Info</h3>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Title</label>
+                        <input type="text" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none' }} placeholder="Session Title" />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Description</label>
+                        <textarea value={sessionDescription} onChange={e => setSessionDescription(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none', minHeight: '80px' }} placeholder="What is this session about?" />
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Type</label>
+                          <select value={sessionType} onChange={e => setSessionType(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none' }}>
+                            <option value="Live Training">Live Training</option>
+                            <option value="Webinar">Webinar</option>
+                            <option value="Workshop">Workshop</option>
+                          </select>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Programme</label>
+                          <input disabled value={program?.name || 'Default'} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#6B7280', fontSize: '0.85rem', outline: 'none' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Status</label>
+                          <select style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none' }}>
+                            <option>Draft</option>
+                            <option>Published</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>2. Date & Time</h3>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Date</label>
+                          <input type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none', colorScheme: 'dark' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Start Time</label>
+                          <input type="time" value={sessionStartTime} onChange={e => setSessionStartTime(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none', colorScheme: 'dark' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>End Time</label>
+                          <input type="time" value={sessionEndTime} onChange={e => setSessionEndTime(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none', colorScheme: 'dark' }} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Timezone: Africa/Lagos (UTC+1)</span>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#FFF' }}>
+                          <input type="checkbox" style={{ accentColor: '#F5C542' }} /> Recurring Session
+                        </label>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>3. Facilitator</h3>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Name</label>
+                          <input type="text" value={facilitatorName} onChange={e => setFacilitatorName(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none' }} placeholder="Facilitator Name" />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', color: '#94A3B8', marginBottom: '0.4rem' }}>Email</label>
+                          <input type="email" value={facilitatorEmail} onChange={e => setFacilitatorEmail(e.target.value)} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none' }} placeholder="Email" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>4. Participants</h3>
+                      <select style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem', outline: 'none' }}>
+                        <option>All Enrolled Learners</option>
+                        <option>Specific Cohort</option>
+                        <option>Select Manually</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>5. Live Settings</h3>
+                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}><input type="radio" name="platform" defaultChecked style={{ accentColor: '#F5C542' }} /> OYEN Live</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}><input type="radio" name="platform" style={{ accentColor: '#F5C542' }} /> Zoom</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}><input type="radio" name="platform" style={{ accentColor: '#F5C542' }} /> Google Meet</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}><input type="radio" name="platform" style={{ accentColor: '#F5C542' }} /> Teams</label>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', backgroundColor: '#1A1A1A', padding: '1rem', borderRadius: '8px', border: '1px solid #2A2A2A' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#D1D5DB' }}><input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> Enable Waiting Room</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#D1D5DB' }}><input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> Auto-Record Session</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#D1D5DB' }}><input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> Mute Participants on Entry</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#D1D5DB' }}><input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> Allow Chat & Reactions</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#D1D5DB' }}><input type="checkbox" style={{ accentColor: '#F5C542' }} /> Enable Breakout Rooms</label>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>6. Attendance</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#1A1A1A', padding: '1rem', borderRadius: '8px', border: '1px solid #2A2A2A' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#FFF' }}>
+                          <input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> Auto-capture Attendance
+                        </label>
+                        <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>|</span>
+                        <span style={{ fontSize: '0.8rem', color: '#D1D5DB' }}>Grace Period: <input type="number" defaultValue={5} style={{ width: '40px', background: 'transparent', border: '1px solid #374151', color: '#FFF', padding: '0.2rem', borderRadius: '4px', textAlign: 'center' }} /> mins</span>
+                        <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>|</span>
+                        <span style={{ fontSize: '0.8rem', color: '#D1D5DB' }}>Rule: <input type="number" defaultValue={75} style={{ width: '45px', background: 'transparent', border: '1px solid #374151', color: '#FFF', padding: '0.2rem', borderRadius: '4px', textAlign: 'center' }} /> %</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>7. Resources</h3>
+                      <div style={{ border: '1px dashed #374151', padding: '1.5rem', borderRadius: '8px', textAlign: 'center', backgroundColor: '#1A1A1A' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: '#94A3B8' }}>Drag & drop files or click to upload</p>
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#6B7280' }}>PDF, slides, homework, or links</p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, color: '#F5C542' }}>8. Reminders</h3>
+                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        {['Immediate', '24 hours', '1 hour', '15 minutes'].map(t => (
+                          <label key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#D1D5DB', backgroundColor: '#1A1A1A', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #2A2A2A' }}>
+                            <input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> {t}
+                          </label>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}><input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> Email</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}><input type="checkbox" defaultChecked style={{ accentColor: '#F5C542' }} /> In-app</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}><input type="checkbox" style={{ accentColor: '#F5C542' }} /> SMS</label>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#60A5FA' }}>
+                        <Sparkles size={16} />
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>AI Assistant Insights</h3>
+                      </div>
+                      <div style={{ backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem', color: '#D1D5DB' }}>
+                        💡 Tuesday mornings have the highest attendance for this cohort. Consider adjusting the time.
+                      </div>
+                    </div>
+                    
+                  </div>
+
+                  <div style={{ flex: 1, backgroundColor: '#0A0A0A', borderLeft: '1px solid #1F1F1F', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'auto' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#FFF' }}>Summary Preview</h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: '#6B7280', textTransform: 'uppercase' }}>Programme</span>
+                        <div style={{ fontSize: '0.9rem', color: '#FFF', fontWeight: 500, marginTop: '0.2rem' }}>{program?.name || 'Default'}</div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: '#6B7280', textTransform: 'uppercase' }}>Type</span>
+                        <div style={{ fontSize: '0.9rem', color: '#FFF', fontWeight: 500, marginTop: '0.2rem' }}>{sessionType || 'Live Training'}</div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: '#6B7280', textTransform: 'uppercase' }}>Date & Duration</span>
+                        <div style={{ fontSize: '0.9rem', color: '#FFF', fontWeight: 500, marginTop: '0.2rem' }}>{sessionDate || 'TBD'} • {(sessionStartTime && sessionEndTime) ? `${sessionStartTime} - ${sessionEndTime}` : '0h 0m'}</div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: '#6B7280', textTransform: 'uppercase' }}>Facilitator</span>
+                        <div style={{ fontSize: '0.9rem', color: '#FFF', fontWeight: 500, marginTop: '0.2rem' }}>{facilitatorName || 'Unassigned'}</div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: '#6B7280', textTransform: 'uppercase' }}>Platform</span>
+                        <div style={{ fontSize: '0.9rem', color: '#FFF', fontWeight: 500, marginTop: '0.2rem' }}>OYEN Live</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+                        <span style={{ fontSize: '0.85rem', color: '#D1D5DB' }}>Recording Enabled</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3b82f6' }} />
+                        <span style={{ fontSize: '0.85rem', color: '#D1D5DB' }}>Auto-Attendance</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#F5C542' }} />
+                        <span style={{ fontSize: '0.85rem', color: '#D1D5DB' }}>Notifications Scheduled</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
- 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</label>
-                  <input required type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
+                
+                <div style={{ padding: '1.25rem 2rem', borderTop: '1px solid #1F1F1F', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0A0A0A' }}>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button style={{ padding: '0.75rem 1.25rem', backgroundColor: 'transparent', border: '1px solid #2A2A2A', color: '#FFF', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Save Draft</button>
+                    <button onClick={() => setShowCreateSessionModal(false)} style={{ padding: '0.75rem 1.25rem', backgroundColor: 'transparent', border: 'none', color: '#94A3B8', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button style={{ padding: '0.75rem 1.25rem', backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', color: '#FFF', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Preview</button>
+                    <button onClick={handleCreateSession} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#F5C542', border: 'none', color: '#0A0A0A', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Schedule Session</button>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Start</label>
-                  <input required type="time" value={sessionStartTime} onChange={e => setSessionStartTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>End</label>
-                  <input required type="time" value={sessionEndTime} onChange={e => setSessionEndTime(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'dark' }} />
-                </div>
-              </div>
- 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Meeting Platform</label>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', margin: '0.2rem 0' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#fff', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={enableOyenLive} onChange={e => setEnableOyenLive(e.target.checked)} style={{ accentColor: '#D4AF37' }} />
-                    Enable OYEN Live
-                  </label>
-                </div>
-                {!enableOyenLive && (
-                  <input type="text" placeholder="e.g. https://zoom.us/j/123456" value={externalMeetingLink} onChange={e => setExternalMeetingLink(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginTop: '0.35rem' }} />
-                )}
-              </div>
- 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description <span style={{ textTransform: 'none', opacity: 0.6 }}>(optional)</span></label>
-                <textarea rows={2} placeholder="Brief summary of discussion topic..." value={sessionDescription} onChange={e => setSessionDescription(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none' }} />
-              </div>
- 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowCreateSessionModal(false)} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
-                <button type="submit" style={{ flex: 2, padding: '0.7rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>Schedule Session</button>
-              </div>
-            </form>
+              </>
+            )}
           </div>
         </div>
       )}
