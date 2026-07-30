@@ -247,10 +247,10 @@ export default function SessionsTab({
           <div>Total: <span style={{ color: '#FFFFFF', fontWeight: 800 }}>{sessions.length} Sessions</span></div>
           <div style={{ color: 'rgba(255,255,255,0.1)' }}>|</div>
           <div>Attendance: <span style={{ color: '#F5C84C', fontWeight: 800 }}>94% Avg</span></div>
-          <div style={{ color: 'rgba(255,255,255,0.1)' }}>|</div>
           <div>Live: <span style={{ color: '#10B981', fontWeight: 800 }}>{liveCount} Active Now</span></div>
           <div style={{ color: 'rgba(255,255,255,0.1)' }}>|</div>
-          <div>Audience: <span style={{ color: '#3B82F6', fontWeight: 800 }}>{participants.length} Active Participants</span></div>
+          <div>Audience: <span style={{ color: '#3B82F6', fontWeight: 800 }}>{learners.length} Active Participants</span></div>
+
         </div>
         
         <button 
@@ -335,7 +335,7 @@ export default function SessionsTab({
                       <div style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700 }}>{timeItem.day} · {timeItem.time}</div>
                       <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#FFFFFF', margin: '0.15rem 0' }}>{timeItem.title}</h4>
                       <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: 0 }}>{timeItem.platform} · Facilitator: <strong style={{ color: '#FFFFFF' }}>{timeItem.fac}</strong></p>
-                      <span style={{ fontSize: '0.75rem', color: '#F5C84C', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>{timeItem.participants}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#F5C84C', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>{timeItem.learners}</span>
                     </div>
                     
                     {timeItem.status === 'Live' ? (
