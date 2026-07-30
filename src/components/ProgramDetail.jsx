@@ -4,7 +4,7 @@ import {
   CheckCircle2, Circle, Search, X, UserPlus, Play, Check, Plus, Send, BarChart3, Award, Upload, Download, RotateCcw, ShieldCheck, ChevronDown
 } from 'lucide-react';
 
-export default function ProgramDetail({ program, programLearners = [], teamMembers = [], setPrograms, setLearners, userRole, onBack }) {
+export default function ProgramDetail({ program, programLearners = [], teamMembers = [], setPrograms, setLearners, userRole, onBack, setActiveTab, triggerTransition }) {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFacs, setSelectedFacs] = useState([]);
@@ -331,7 +331,17 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     nextActionTitle = 'Invite Participants';
     nextActionDesc = 'Invite participants to enroll in this program. You can add them manually or import a list via CSV.';
     nextActionBtnText = 'Invite Participants';
-    nextActionHandler = () => setActiveSubTab('Participants');
+    nextActionHandler = () => {
+      if (setActiveTab) {
+        if (triggerTransition) {
+          triggerTransition(() => setActiveTab('Learners'));
+        } else {
+          setActiveTab('Learners');
+        }
+      } else {
+        setActiveSubTab('Participants');
+      }
+    };
   } else if (sessionCount === 0) {
     nextActionTitle = 'Schedule Session';
     nextActionDesc = 'Plan and schedule your first virtual or live session. This creates calendar invites and links for participants.';
@@ -462,7 +472,17 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                 {[
                   { label: 'Program Created', done: true, optional: false },
                   { label: 'Add Facilitators', done: assignedFacs.length > 0, optional: false, tab: 'Overview', handler: () => setShowAssignModal(true), btnText: 'Assign' },
-                  { label: 'Invite Participants', done: learnerCount > 0, optional: false, tab: 'Participants', handler: () => setActiveSubTab('Participants'), btnText: 'Invite' },
+                  { label: 'Invite Participants', done: learnerCount > 0, optional: false, tab: 'Participants', handler: () => {
+                    if (setActiveTab) {
+                      if (triggerTransition) {
+                        triggerTransition(() => setActiveTab('Learners'));
+                      } else {
+                        setActiveTab('Learners');
+                      }
+                    } else {
+                      setActiveSubTab('Participants');
+                    }
+                  }, btnText: 'Invite' },
                   { label: 'Schedule Your First Session', done: hasSession, optional: false, tab: 'Sessions', handler: () => setShowCreateSessionModal(true), btnText: 'Schedule' },
                   { label: 'Upload Learning Resources', done: hasResource, optional: false, tab: 'Resources', handler: () => setActiveSubTab('Resources'), btnText: 'Upload' },
                   { label: 'Create an Assessment', done: hasAssessment, optional: true, tab: 'Assessments', handler: () => setActiveSubTab('Assessments'), btnText: 'Create' },
@@ -608,7 +628,17 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem' }}>
               {[
                 { title: 'Assign Facilitators', icon: <Users size={18} color="#D4A017" />, handler: () => setShowAssignModal(true) },
-                { title: 'Invite Participants', icon: <UserPlus size={18} color="#D4A017" />, handler: () => setActiveSubTab('Learners') },
+                { title: 'Invite Participants', icon: <UserPlus size={18} color="#D4A017" />, handler: () => {
+                  if (setActiveTab) {
+                    if (triggerTransition) {
+                      triggerTransition(() => setActiveTab('Learners'));
+                    } else {
+                      setActiveTab('Learners');
+                    }
+                  } else {
+                    setActiveSubTab('Participants');
+                  }
+                } },
                 { title: 'Schedule Session', icon: <Calendar size={18} color="#D4A017" />, handler: () => setShowCreateSessionModal(true) },
                 { title: 'Upload Resources', icon: <Upload size={18} color="#D4A017" />, handler: () => setActiveSubTab('Resources') },
                 { title: 'Create Assessment', icon: <ClipboardList size={18} color="#D4A017" />, handler: () => setActiveSubTab('Assessments') },

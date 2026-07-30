@@ -12,7 +12,9 @@ export default function ProgramsTab({
   setLearners, 
   teamMembers = [], 
   addNotification, 
-  userRole 
+  userRole,
+  setActiveTab,
+  triggerTransition
 }) {
   const [showCreateModal, setShowCreateModal]   = useState(false);
   const [showLearnModal, setShowLearnModal]     = useState(false);
@@ -201,6 +203,8 @@ export default function ProgramsTab({
         teamMembers={teamMembers}
         userRole={userRole}
         onBack={() => setSelectedProgramId(null)}
+        setActiveTab={setActiveTab}
+        triggerTransition={triggerTransition}
       />
     );
   }

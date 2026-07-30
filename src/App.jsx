@@ -2661,6 +2661,7 @@ export default function App() {
                 addNotification={addNotification}
                 onNavigateHome={() => triggerTransition(() => setActiveTab('Welcome'))}
               />
+
             ) : (activeTab === 'Programmes' || activeTab === 'Programs' || activeTab === 'My Programs' || activeTab === 'Assigned Programs') ? (
               /* Programmes Tab Component */
               <ProgramsTab
@@ -2671,6 +2672,8 @@ export default function App() {
                 teamMembers={wsTeam}
                 addNotification={addNotification}
                 userRole={userRole}
+                setActiveTab={setActiveTab}
+                triggerTransition={triggerTransition}
               />
             ) : (activeTab === 'Learners' || activeTab === 'Participants') ? (
               /* Learners Tab Component */
