@@ -2696,6 +2696,7 @@ export default function App() {
                 onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
                 userRole={userRole}
                 onSelectSession={setActiveSession}
+                teamMembers={wsTeam}
               />
             ) : activeTab === 'Reports' ? (
               /* Reports Tab Component */

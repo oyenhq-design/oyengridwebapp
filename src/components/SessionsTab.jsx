@@ -11,7 +11,8 @@ export default function SessionsTab({
   learners = [], 
   addNotification, 
   onNavigateToPrograms, 
-  userRole 
+  userRole,
+  teamMembers = []
 }) {
   const [selectedProgId, setSelectedProgId] = useState(() => {
     return programs.length > 0 ? programs[0].id : null;
@@ -863,9 +864,27 @@ export default function SessionsTab({
                 </div>
               </div>
               
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Facilitator Name (Optional)</label>
-                <input type="text" value={sessionForm.facilitatorName} onChange={e => setSessionForm(prev => ({ ...prev, facilitatorName: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} placeholder="e.g. Sarah Ahmed" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Facilitator Email (Optional)</label>
+                  <input type="email" value={sessionForm.facilitatorEmail} onChange={e => {
+                    const val = e.target.value;
+                    setSessionForm(prev => {
+                      const updated = { ...prev, facilitatorEmail: val };
+                      if (teamMembers) {
+                        const match = teamMembers.find(t => (t.email || '').toLowerCase().trim() === val.toLowerCase().trim());
+                        if (match && match.name) {
+                          updated.facilitatorName = match.name;
+                        }
+                      }
+                      return updated;
+                    });
+                  }} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} placeholder="e.g. sarah@domain.com" />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Facilitator Name</label>
+                  <input type="text" value={sessionForm.facilitatorName} onChange={e => setSessionForm(prev => ({ ...prev, facilitatorName: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} placeholder="e.g. Sarah Ahmed" />
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', paddingTop: '1.25rem', borderTop: '1px solid #1F2937' }}>

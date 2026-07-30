@@ -1172,7 +1172,16 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator Email</label>
-                  <input type="email" placeholder="jane@domain.com" value={facilitatorEmail} onChange={e => setFacilitatorEmail(e.target.value)} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                  <input type="email" placeholder="jane@domain.com" value={facilitatorEmail} onChange={e => {
+                    const val = e.target.value;
+                    setFacilitatorEmail(val);
+                    if (teamMembers) {
+                      const match = teamMembers.find(t => (t.email || '').toLowerCase().trim() === val.toLowerCase().trim());
+                      if (match && match.name) {
+                        setFacilitatorName(match.name);
+                      }
+                    }
+                  }} style={{ width: '100%', padding: '0.7rem 0.9rem', fontSize: '0.85rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                 </div>
               </div>
  
