@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   Calendar, Plus, X, ChevronDown, Video, FileText, CheckCircle,
   ArrowRight, ArrowLeft, MoreVertical, Edit, Download, Clock, ExternalLink, Play, Trash2, Search, Users, Book,
-  Sparkles, Check, List, ShieldAlert, Award, FileSpreadsheet, Share2, Copy
+  Sparkles, Check, List, ShieldAlert, Award, FileSpreadsheet, Share2, Copy, FileUp, CheckSquare, MessageSquare, ClipboardList, RefreshCw, Upload, File
 } from 'lucide-react';
 
 export default function SessionsTabFacilitator({ 
@@ -31,6 +31,10 @@ export default function SessionsTabFacilitator({
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'attendance' | 'resources' | 'assessments'
   const [activeMenuId, setActiveMenuId] = useState(null);
+
+  // Facilitator tools state
+  const [privateNotes, setPrivateNotes] = useState('');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
 
   // New session modal states
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -503,70 +507,185 @@ export default function SessionsTabFacilitator({
             </div>
           </div>
 
-          {/* Attendance Overview Widget */}
+          {/* My Tasks Widget */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Attendance Overview</h4>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.78rem', color: '#94A3B8' }}>
-              <div>Average: <strong style={{ color: '#FFFFFF', display: 'block', fontSize: '1rem' }}>94%</strong></div>
-              <div>Highest: <strong style={{ color: '#10B981', display: 'block', fontSize: '1rem' }}>100%</strong></div>
-              <div>Lowest: <strong style={{ color: '#EF4444', display: 'block', fontSize: '1rem' }}>72%</strong></div>
-              <div>Late Joiners: <strong style={{ color: '#F5C84C', display: 'block', fontSize: '1rem' }}>18</strong></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ClipboardList size={16} color="#F5C84C" />
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>My Tasks</h4>
             </div>
             
-            {/* Sparkline */}
-            <svg viewBox="0 0 100 20" style={{ width: '100%', height: '20px' }}>
-              <path d="M 0 15 Q 25 5 50 12 T 100 2" fill="none" stroke="#F5C84C" strokeWidth="1.5" />
-            </svg>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                { task: 'Upload presentation slides', session: 'Leadership Kickoff', due: 'Today, 08:30 AM', priority: 'High', status: 'Pending' },
+                { task: 'Publish attendance log', session: 'Cohort Retrospective', due: 'Today, 05:00 PM', priority: 'Medium', status: 'Pending' }
+              ].map((task, idx) => (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF' }}>{task.task}</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: task.priority === 'High' ? '#EF4444' : '#F5C84C', padding: '0.15rem 0.4rem', backgroundColor: task.priority === 'High' ? 'rgba(239,68,68,0.1)' : 'rgba(245,200,76,0.1)', borderRadius: '4px' }}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{task.session} · Due {task.due}</div>
+                  <button onClick={() => addNotification?.(`Marking task "${task.task}" as complete`)} style={{ marginTop: '0.25rem', alignSelf: 'flex-start', padding: '0.35rem 0.65rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid #1F2937', color: '#E2E8F0', borderRadius: '6px', fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckCircle size={12} /> Mark Complete
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Facilitator Workload Widget */}
-          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Facilitator Workload</h4>
-            
-            {[
-              { name: 'Sarah Ahmed', count: 8, pct: 80 },
-              { name: 'John Doe', count: 6, pct: 60 },
-              { name: 'Blessing Kalu', count: 4, pct: 40 }
-            ].map((wk, idx) => (
-              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.75rem', color: '#94A3B8' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{wk.name}</span>
-                  <span>{wk.count} Sessions</span>
-                </div>
-                <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${wk.pct}%`, backgroundColor: '#F5C84C' }} />
-                </div>
+          {/* Session Resources Widget */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <File size={16} color="#F5C84C" />
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Session Resources</h4>
               </div>
-            ))}
+              <button onClick={() => addNotification?.('Opening file upload dialog...')} style={{ background: 'none', border: 'none', color: '#F5C84C', cursor: 'pointer' }}>
+                <Upload size={14} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                { name: 'Kickoff_Deck_v2.pdf', type: 'PDF', uploader: 'Sarah Ahmed', date: 'Aug 1' },
+                { name: 'Participant_Guide.docx', type: 'DOCX', uploader: 'Admin', date: 'Jul 28' }
+              ].map((res, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FileText size={14} color="#94A3B8" />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#FFFFFF', fontWeight: 600 }}>{res.name}</span>
+                      <span style={{ fontSize: '0.65rem', color: '#6B7280' }}>Uploaded by {res.uploader} · {res.date}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => addNotification?.(`Downloading ${res.name}...`)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}>
+                    <Download size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Session Checklist Widget */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CheckSquare size={16} color="#F5C84C" />
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Session Checklist</h4>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: '#94A3B8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10B981' }}>
+                <CheckCircle size={14} /> Session Scheduled
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10B981' }}>
+                <CheckCircle size={14} /> Facilitator Assigned
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10B981' }}>
+                <CheckCircle size={14} /> Learners Invited ({learners.length})
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '14px', height: '14px', border: '1px solid #94A3B8', borderRadius: '4px' }} /> Resources Uploaded
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '14px', height: '14px', border: '1px solid #94A3B8', borderRadius: '4px' }} /> Attendance Started
+              </div>
+            </div>
+          </div>
+
+          {/* Private Session Notes Widget */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <MessageSquare size={16} color="#F5C84C" />
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Private Notes</h4>
+              </div>
+              <button onClick={() => {
+                if (isEditingNotes) {
+                  addNotification?.('Private notes saved securely.');
+                }
+                setIsEditingNotes(!isEditingNotes);
+              }} style={{ background: 'none', border: 'none', color: '#F5C84C', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+                {isEditingNotes ? 'Save Notes' : 'Edit Notes'}
+              </button>
+            </div>
+            
+            {isEditingNotes ? (
+              <textarea 
+                value={privateNotes} 
+                onChange={e => setPrivateNotes(e.target.value)} 
+                placeholder="Write private reminders, observation points, or agenda notes..."
+                style={{ width: '100%', minHeight: '100px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', padding: '0.75rem', color: '#E2E8F0', fontSize: '0.82rem', resize: 'vertical', outline: 'none' }}
+              />
+            ) : (
+              <div style={{ fontSize: '0.82rem', color: privateNotes ? '#E2E8F0' : '#6B7280', minHeight: '60px', whiteSpace: 'pre-wrap' }}>
+                {privateNotes || 'No notes added yet. Click Edit Notes to add reminders.'}
+              </div>
+            )}
           </div>
 
           {/* Recent Activity Widget */}
-          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h4>
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Clock size={16} color="#F5C84C" />
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h4>
+            </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.78rem', color: '#94A3B8' }}>
-              <div><strong style={{ color: '#FFFFFF' }}>Sarah</strong> started Leadership Kickoff <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>10 mins ago</span></div>
-              <div>Attendance finalized <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>Yesterday</span></div>
-              <div>Recording uploaded <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>Yesterday</span></div>
-              <div>Assessment linked <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>2 days ago</span></div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                <CheckCircle size={14} color="#10B981" style={{ marginTop: '0.1rem' }} />
+                <div>
+                  <span style={{ color: '#E2E8F0' }}>Attendance finalized</span> for Cohort Retrospective
+                  <div style={{ fontSize: '0.65rem', color: '#6B7280', marginTop: '0.1rem' }}>Yesterday</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                <Edit size={14} color="#3B82F6" style={{ marginTop: '0.1rem' }} />
+                <div>
+                  <span style={{ color: '#E2E8F0' }}>Session edited</span>: Leadership Kickoff time updated
+                  <div style={{ fontSize: '0.65rem', color: '#6B7280', marginTop: '0.1rem' }}>2 days ago</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                <RefreshCw size={14} color="#F5C84C" style={{ marginTop: '0.1rem' }} />
+                <div>
+                  <span style={{ color: '#E2E8F0' }}>Reminders sent</span> to 38 learners
+                  <div style={{ fontSize: '0.65rem', color: '#6B7280', marginTop: '0.1rem' }}>3 days ago</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* AI Insights Widget */}
-          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          {/* OYEN AI Assistant (Action Center) Widget */}
+          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Sparkles size={16} color="#F5C84C" />
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>OYEN AI Insights</h4>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>OYEN AI Assistant</h4>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.8rem', color: '#94A3B8' }}>
-              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Attendance increased 14% this month.</div>
-              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Tuesday sessions have the highest participation.</div>
-              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Average participant joins 6 minutes early.</div>
-              <div style={{ padding: '0.5rem', backgroundColor: 'rgba(245,200,76,0.05)', border: '1px solid rgba(245,200,76,0.15)', borderRadius: '6px', color: '#F5C84C', fontSize: '0.72rem', fontWeight: 600, marginTop: '0.25rem' }}>
-                Recommendation: Schedule more sessions between 9AM–11AM.
-              </div>
+            <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: 0 }}>
+              Need help preparing for your session? Ask OYEN to generate content.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                'Generate Session Agenda',
+                'Generate Icebreaker',
+                'Create Quiz',
+                'Generate Poll Questions'
+              ].map((action, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => addNotification?.(`AI is generating: ${action}...`)}
+                  style={{ width: '100%', padding: '0.6rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.78rem', fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(245,200,76,0.05)'; e.currentTarget.style.borderColor = 'rgba(245,200,76,0.3)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
+                >
+                  {action}
+                  <ArrowRight size={14} color="#6B7280" />
+                </button>
+              ))}
             </div>
           </div>
 
