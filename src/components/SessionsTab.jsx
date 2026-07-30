@@ -475,21 +475,44 @@ export default function SessionsTab(props) {
                           <span style={{ fontSize: '0.75rem', color: '#F5C84C', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>{totalLearners} Learners Registered</span>
                         </div>
                         
-                        {session.status === 'Live' ? (
-                          <button 
-                            onClick={() => addNotification?.('Launching live virtual classroom environment...')}
-                            style={{ padding: '0.45rem 1rem', backgroundColor: '#10B981', border: 'none', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          {session.status === 'Live' ? (
+                            <button 
+                              onClick={() => addNotification?.('Launching live virtual classroom environment...')}
+                              style={{ padding: '0.45rem 1rem', backgroundColor: '#10B981', border: 'none', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Join Session
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => { setSelectedSession(session); setActiveTab('overview'); }}
+                              style={{ padding: '0.45rem 1rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', cursor: 'pointer' }}
+                            >
+                              View Details
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteSession(session.id)}
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              color: '#EF4444',
+                              borderRadius: '8px',
+                              width: '32px',
+                              height: '32px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                            title="Delete Session"
                           >
-                            Join Session
+                            <Trash2 size={14} />
                           </button>
-                        ) : (
-                          <button 
-                            onClick={() => { setSelectedSession(session); setActiveTab('overview'); }}
-                            style={{ padding: '0.45rem 1rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', cursor: 'pointer' }}
-                          >
-                            View Details
-                          </button>
-                        )}
+                        </div>
                       </div>
                     </div>
                   )
