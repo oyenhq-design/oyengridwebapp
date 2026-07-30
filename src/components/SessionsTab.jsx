@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   Calendar, Plus, X, ChevronDown, Video, FileText, CheckCircle,
   ArrowRight, ArrowLeft, MoreVertical, Edit, Download, Clock, ExternalLink, Play, Trash2, Search, Users, Book,
-  Sparkles, Check, List, ShieldAlert, Award, FileSpreadsheet, Share2, Copy
+  Sparkles, Check, List, ShieldAlert, Award, FileSpreadsheet, Share2, Copy, Eye
 } from 'lucide-react';
 
 export default function SessionsTab({ 
@@ -13,13 +13,11 @@ export default function SessionsTab({
   onNavigateToPrograms, 
   userRole 
 }) {
-  // Navigation State
   const [selectedProgId, setSelectedProgId] = useState(() => {
     return programs.length > 0 ? programs[0].id : null;
   });
   
-  // View states
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'calendar'
+  const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [facilitatorFilter, setFacilitatorFilter] = useState('All');
@@ -28,26 +26,13 @@ export default function SessionsTab({
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   
-  // Drawer states
   const [selectedSession, setSelectedSession] = useState(null);
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'attendance' | 'resources' | 'assessments'
+  const [activeTab, setActiveTab] = useState('overview');
   const [activeMenuId, setActiveMenuId] = useState(null);
-
-  // New session modal states
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [sessionForm, setSessionForm] = useState({
-    title: '',
-    type: 'Live Session',
-    date: '',
-    startTime: '',
-    endTime: '',
-    description: '',
-    facilitatorName: '',
-    facilitatorEmail: '',
-    enableOyenLive: true,
-    externalMeetingLink: '',
-    location: 'Virtual'
+    title: '', type: 'Live Session', date: '', startTime: '', endTime: '', description: '',
+    facilitatorName: '', facilitatorEmail: '', enableOyenLive: true, externalMeetingLink: '', location: 'Virtual'
   });
 
   const currentProgram = useMemo(() => {
@@ -59,16 +44,77 @@ export default function SessionsTab({
     return currentProgram.sessions || [];
   }, [currentProgram]);
 
-  // Derived metrics
-  const upcomingCount = sessions.filter(s => s.status !== 'Completed' && s.status !== 'Cancelled').length;
+  const totalSessionsCount = sessions.length;
+  const upcomingCount = sessions.filter(s => s.status === 'Upcoming' || !s.status).length;
   const liveCount = sessions.filter(s => s.status === 'Live').length;
-  const completedCount = sessions.filter(s => s.status === 'Completed').length;
+  const completedSessions = sessions.filter(s => s.status === 'Completed');
+  const cancelledCount = sessions.filter(s => s.status === 'Cancelled').length;
+  const completedCount = completedSessions.length;
+  const totalLearners = learners.length;
+
+  const getSessionAttendance = (session) => {
+    if (!session.attendance) return { present: 0, total: totalLearners, percentage: 0 };
+    let presentCount = 0;
+    if (Array.isArray(session.attendance)) {
+      presentCount = session.attendance.filter(a => a.status === 'Present' || a.status === 'Late').length;
+    } else {
+      presentCount = Object.values(session.attendance).filter(status => status === 'Present' || status === 'Late').length;
+    }
+    const total = totalLearners > 0 ? totalLearners : (Object.keys(session.attendance || {}).length || 1);
+    return {
+      present: presentCount,
+      total: total,
+      percentage: total > 0 ? (presentCount / total) * 100 : 0
+    };
+  };
+
+  const completedAttendanceStats = completedSessions.map(getSessionAttendance);
+  const avgAttendance = completedCount > 0 
+    ? (completedAttendanceStats.reduce((sum, stat) => sum + stat.percentage, 0) / completedCount)
+    : null;
+    
+  const highestAttendance = completedCount > 0 ? Math.max(...completedAttendanceStats.map(s => s.percentage)) : null;
+  const lowestAttendance = completedCount > 0 ? Math.min(...completedAttendanceStats.map(s => s.percentage)) : null;
+
+  const calculateDurationStr = (start, end) => {
+    if (!start || !end) return 'N/A';
+    const s = new Date(`1970-01-01T${start}`);
+    const e = new Date(`1970-01-01T${end}`);
+    if(isNaN(s) || isNaN(e)) return 'N/A';
+    let diff = (e - s) / 60000;
+    if (diff < 0) diff += 24 * 60;
+    const hrs = Math.floor(diff / 60);
+    const mins = diff % 60;
+    return `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
+  };
+
+  const avgDuration = completedCount > 0 ? (() => {
+    let totalMins = 0;
+    let validCount = 0;
+    completedSessions.forEach(s => {
+      if (s.startTime && s.endTime) {
+        const start = new Date(`1970-01-01T${s.startTime}`);
+        const end = new Date(`1970-01-01T${s.endTime}`);
+        if(!isNaN(start) && !isNaN(end)) {
+          let diff = (end - start) / 60000;
+          if (diff < 0) diff += 24 * 60;
+          totalMins += diff;
+          validCount++;
+        }
+      }
+    });
+    if (validCount === 0) return 'N/A';
+    const avg = totalMins / validCount;
+    const hrs = Math.floor(avg / 60);
+    const mins = Math.round(avg % 60);
+    return `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
+  })() : null;
 
   const filteredSessions = useMemo(() => {
     return sessions.filter(s => {
       const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             (s.facilitatorName || '').toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || s.status === statusFilter;
+      const matchesStatus = statusFilter === 'All' || s.status === statusFilter || (!s.status && statusFilter === 'Upcoming');
       const matchesFacilitator = facilitatorFilter === 'All' || s.facilitatorName === facilitatorFilter;
       const matchesDate = !dateFilter || s.date === dateFilter;
       return matchesSearch && matchesStatus && matchesFacilitator && matchesDate;
@@ -83,7 +129,41 @@ export default function SessionsTab({
     sessions.forEach(s => {
       if (s.facilitatorName) set.add(s.facilitatorName);
     });
-    return Array.from(set);
+    return Array.from(set).filter(Boolean);
+  }, [sessions]);
+
+  const facilitatorWorkload = useMemo(() => {
+    const workload = {};
+    sessions.forEach(s => {
+      if (s.facilitatorName) {
+        if (!workload[s.facilitatorName]) workload[s.facilitatorName] = { count: 0, completed: 0, attendanceSum: 0 };
+        workload[s.facilitatorName].count += 1;
+        if (s.status === 'Completed') {
+          workload[s.facilitatorName].completed += 1;
+          workload[s.facilitatorName].attendanceSum += getSessionAttendance(s).percentage;
+        }
+      }
+    });
+    return Object.entries(workload).map(([name, data]) => ({
+      name,
+      count: data.count,
+      pct: totalSessionsCount > 0 ? (data.count / totalSessionsCount) * 100 : 0,
+      avgAttendance: data.completed > 0 ? data.attendanceSum / data.completed : null
+    }));
+  }, [sessions, totalSessionsCount, totalLearners]);
+  
+  const recentActivity = useMemo(() => {
+    const history = [];
+    sessions.forEach(s => {
+      if (s.status === 'Completed') {
+        history.push({ msg: `Session "${s.title}" completed`, time: s.date || 'Recent' });
+      } else if (s.status === 'Live') {
+        history.push({ msg: `Session "${s.title}" is currently live`, time: 'Now' });
+      } else if (s.status === 'Upcoming' || !s.status) {
+        history.push({ msg: `Session "${s.title}" created`, time: s.date || 'Recent' });
+      }
+    });
+    return history.sort((a,b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
   }, [sessions]);
 
   const handleScheduleSubmit = (e) => {
@@ -98,7 +178,7 @@ export default function SessionsTab({
       startTime: sessionForm.startTime,
       endTime: sessionForm.endTime,
       description: sessionForm.description.trim(),
-      facilitatorName: sessionForm.facilitatorName.trim() || 'Sarah Ahmed',
+      facilitatorName: sessionForm.facilitatorName.trim() || 'Unassigned',
       facilitatorEmail: sessionForm.facilitatorEmail.trim(),
       enableOyenLive: sessionForm.enableOyenLive,
       externalMeetingLink: sessionForm.externalMeetingLink.trim(),
@@ -122,17 +202,8 @@ export default function SessionsTab({
     addNotification?.(`Session "${newSession.title}" scheduled successfully!`);
     setShowScheduleModal(false);
     setSessionForm({
-      title: '',
-      type: 'Live Session',
-      date: '',
-      startTime: '',
-      endTime: '',
-      description: '',
-      facilitatorName: '',
-      facilitatorEmail: '',
-      enableOyenLive: true,
-      externalMeetingLink: '',
-      location: 'Virtual'
+      title: '', type: 'Live Session', date: '', startTime: '', endTime: '', description: '',
+      facilitatorName: '', facilitatorEmail: '', enableOyenLive: true, externalMeetingLink: '', location: 'Virtual'
     });
   };
 
@@ -189,7 +260,57 @@ export default function SessionsTab({
     addNotification?.('Session duplicated successfully');
   };
 
-  // If no program selected, show program selector screen
+  const downloadCSV = (filename, rows) => {
+    const csvContent = rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const exportAttendance = () => {
+    const rows = [['Session Title', 'Date', 'Total Registered', 'Total Present', 'Attendance %']];
+    completedSessions.forEach(s => {
+      const stat = getSessionAttendance(s);
+      rows.push([s.title, s.date || 'N/A', stat.total, stat.present, stat.percentage.toFixed(1) + '%']);
+    });
+    if (rows.length === 1) {
+      addNotification?.('No completed sessions available to export attendance.');
+      return;
+    }
+    downloadCSV('Attendance_Report.csv', rows);
+    addNotification?.('Attendance Report downloaded.');
+  };
+
+  const exportSessionHistory = () => {
+    const rows = [['Title', 'Facilitator', 'Date', 'Start Time', 'End Time', 'Status']];
+    sessions.forEach(s => {
+      rows.push([s.title, s.facilitatorName || 'Unassigned', s.date || 'N/A', s.startTime || 'N/A', s.endTime || 'N/A', s.status || 'Upcoming']);
+    });
+    downloadCSV('Session_History.csv', rows);
+    addNotification?.('Session History downloaded.');
+  };
+
+  const exportFacilitatorReport = () => {
+    const rows = [['Facilitator Name', 'Total Sessions Handled', 'Completed Sessions', 'Average Attendance %']];
+    facilitatorWorkload.forEach(f => {
+      rows.push([f.name, f.count, f.completed || 0, f.avgAttendance !== null ? f.avgAttendance.toFixed(1) + '%' : 'N/A']);
+    });
+    downloadCSV('Facilitator_Report.csv', rows);
+    addNotification?.('Facilitator Report downloaded.');
+  };
+
+  const exportEngagementReport = () => {
+    addNotification?.('Engagement Report generation is currently processing...');
+    setTimeout(() => {
+        downloadCSV('Engagement_Report.csv', [['Metric', 'Value'], ['Avg Join Delay', 'N/A'], ['Avg Session Duration', avgDuration || 'N/A'], ['Highest Attendance', highestAttendance !== null ? highestAttendance.toFixed(1) + '%' : 'N/A']]);
+        addNotification?.('Engagement Report downloaded.');
+    }, 1000);
+  };
+
   if (!selectedProgId || !currentProgram) {
     return (
       <div className="animate-fade-in" style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', padding: '2rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
@@ -243,16 +364,14 @@ export default function SessionsTab({
   return (
     <div className="animate-fade-in" style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', padding: '2rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', fontFamily: "'Inter', sans-serif", position: 'relative' }}>
       
-      {/* ── STICKY FLOATING ANALYTICS BAR ── */}
       <div style={{ position: 'sticky', top: '0', zIndex: 999, backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '12px', padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 30px rgba(0,0,0,0.15)', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.78rem', color: '#94A3B8', fontWeight: 600 }}>
-          <div>Total: <span style={{ color: '#FFFFFF', fontWeight: 800 }}>{sessions.length} Sessions</span></div>
+          <div>Total: <span style={{ color: '#FFFFFF', fontWeight: 800 }}>{totalSessionsCount} Sessions</span></div>
           <div style={{ color: 'rgba(255,255,255,0.1)' }}>|</div>
-          <div>Attendance: <span style={{ color: '#F5C84C', fontWeight: 800 }}>94% Avg</span></div>
+          <div>Attendance: <span style={{ color: '#F5C84C', fontWeight: 800 }}>{avgAttendance !== null ? `${avgAttendance.toFixed(1)}% Avg` : 'No data yet'}</span></div>
           <div>Live: <span style={{ color: '#10B981', fontWeight: 800 }}>{liveCount} Active Now</span></div>
           <div style={{ color: 'rgba(255,255,255,0.1)' }}>|</div>
-          <div>Audience: <span style={{ color: '#3B82F6', fontWeight: 800 }}>{learners.length} Active Participants</span></div>
-
+          <div>Audience: <span style={{ color: '#3B82F6', fontWeight: 800 }}>{totalLearners} Active Participants</span></div>
         </div>
         
         <button 
@@ -263,7 +382,6 @@ export default function SessionsTab({
         </button>
       </div>
 
-      {/* ── BREADCRUMB & HEADER LAYER ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6B7280', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -274,9 +392,11 @@ export default function SessionsTab({
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
             <h1 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.5px' }}>Sessions</h1>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '0.2rem 0.5rem', borderRadius: '5px', textTransform: 'uppercase' }}>
-              Active
-            </span>
+            {liveCount > 0 && (
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '0.2rem 0.5rem', borderRadius: '5px', textTransform: 'uppercase' }}>
+                Live Active
+              </span>
+            )}
           </div>
           <p style={{ color: '#5C5C5C', fontSize: '0.92rem', marginTop: '0.35rem', margin: 0 }}>
             Manage every training session, webinar, and live class for this program.
@@ -291,15 +411,14 @@ export default function SessionsTab({
         </button>
       </div>
 
-      {/* ── KPI SECTION ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.25rem' }}>
         {[
-          { label: 'Total Sessions', value: sessions.length, sub: 'All items', color: '#3B82F6' },
+          { label: 'Total Sessions', value: totalSessionsCount, sub: 'All items', color: '#3B82F6' },
           { label: 'Upcoming', value: upcomingCount, sub: 'Planned classes', color: '#F5C84C' },
           { label: 'Live Now', value: liveCount, sub: 'Active sessions', color: '#10B981' },
           { label: 'Completed', value: completedCount, sub: 'Archive logs', color: '#94A3B8' },
-          { label: 'Attendance Rate', value: '94%', sub: 'Target 90%+', color: '#8b5cf6' },
-          { label: 'Avg Duration', value: '1h 48m', sub: 'Standard length', color: '#0891B2' }
+          { label: 'Cancelled', value: cancelledCount, sub: 'Inactive logs', color: '#EF4444' },
+          { label: 'Attendance Rate', value: avgAttendance !== null ? `${avgAttendance.toFixed(1)}%` : 'No data yet', sub: 'Completed Avg', color: '#8b5cf6' },
         ].map((kpi, idx) => (
           <div 
             key={idx} 
@@ -312,56 +431,64 @@ export default function SessionsTab({
         ))}
       </div>
 
-      {/* ── SESSION TIMELINE & QUICK ACTIONS COLUMN ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
         
-        {/* Left timeline layout */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* Timeline header */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Session Timeline</h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', borderLeft: '2px solid #1F2937', paddingLeft: '1.5rem', marginLeft: '0.5rem' }}>
-              {[
-                { time: '09:00 AM', title: 'Leadership Kickoff', platform: 'Zoom-like Live Session', fac: 'Sarah Ahmed', learners: '38 Learners', day: 'Today', status: 'Live', badgeColor: '#10B981' },
-                { time: '10:00 AM', title: 'Module 2: Problem Solving', platform: 'Oyen Live Virtual Room', fac: 'Sarah Ahmed', learners: '42 Learners', day: 'Tomorrow', status: 'Upcoming', badgeColor: '#3B82F6' },
-                { time: '02:00 PM', title: 'Cohort Retrospective', platform: 'Oyen Live Room', fac: 'John Doe', learners: '35 Learners', day: '02 Aug', status: 'Completed', badgeColor: '#94A3B8' }
-              ].map((timeItem, idx) => (
-                <div key={idx} style={{ position: 'relative' }}>
-                  {/* Timeline dot */}
-                  <div style={{ position: 'absolute', left: '-2.05rem', top: '0.25rem', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: timeItem.badgeColor, border: '3px solid #111111' }} />
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700 }}>{timeItem.day} · {timeItem.time}</div>
-                      <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#FFFFFF', margin: '0.15rem 0' }}>{timeItem.title}</h4>
-                      <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: 0 }}>{timeItem.platform} · Facilitator: <strong style={{ color: '#FFFFFF' }}>{timeItem.fac}</strong></p>
-                      <span style={{ fontSize: '0.75rem', color: '#F5C84C', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>{timeItem.learners}</span>
-                    </div>
-                    
-                    {timeItem.status === 'Live' ? (
-                      <button 
-                        onClick={() => addNotification?.('Launching live virtual classroom environment...')}
-                        style={{ padding: '0.45rem 1rem', backgroundColor: '#10B981', border: 'none', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Start Session
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => addNotification?.('Opening session information panel...')}
-                        style={{ padding: '0.45rem 1rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', cursor: 'pointer' }}
-                      >
-                        View
-                      </button>
-                    )}
+              {sessions.length === 0 ? (
+                <div style={{ color: '#94A3B8', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px' }}>
+                  <Calendar size={20} color="#F5C84C" />
+                  <div>
+                    <h4 style={{ margin: 0, color: '#FFFFFF' }}>No sessions yet</h4>
+                    <span style={{ fontSize: '0.75rem' }}>Get started by scheduling your first session.</span>
                   </div>
+                  <button onClick={() => setShowScheduleModal(true)} style={{ marginLeft: 'auto', background: '#F5C84C', border: 'none', color: '#111111', fontWeight: 600, padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer' }}>Schedule Session</button>
                 </div>
-              ))}
+              ) : (
+                [...sessions].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 5).map((session, idx) => {
+                  let badgeColor = '#94A3B8';
+                  if (session.status === 'Live') badgeColor = '#10B981';
+                  if (session.status === 'Upcoming' || !session.status) badgeColor = '#3B82F6';
+                  
+                  return (
+                    <div key={idx} style={{ position: 'relative' }}>
+                      <div style={{ position: 'absolute', left: '-2.05rem', top: '0.25rem', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: badgeColor, border: '3px solid #111111' }} />
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700 }}>{session.date || 'TBD'} · {session.startTime || 'TBD'}</div>
+                          <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#FFFFFF', margin: '0.15rem 0' }}>{session.title}</h4>
+                          <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: 0 }}>{session.type || 'Session'} · Facilitator: <strong style={{ color: '#FFFFFF' }}>{session.facilitatorName || 'Unassigned'}</strong></p>
+                          <span style={{ fontSize: '0.75rem', color: '#F5C84C', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>{totalLearners} Learners Registered</span>
+                        </div>
+                        
+                        {session.status === 'Live' ? (
+                          <button 
+                            onClick={() => addNotification?.('Launching live virtual classroom environment...')}
+                            style={{ padding: '0.45rem 1rem', backgroundColor: '#10B981', border: 'none', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            Join Session
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => { setSelectedSession(session); setActiveTab('overview'); }}
+                            style={{ padding: '0.45rem 1rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.75rem', cursor: 'pointer' }}
+                          >
+                            View Details
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           </div>
 
-          {/* Sessions Filter, Table & Options */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -377,7 +504,6 @@ export default function SessionsTab({
               </div>
             </div>
 
-            {/* Filters row */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #1F2937', paddingBottom: '1.25rem' }}>
               <div style={{ position: 'relative', flex: 1, minWidth: '160px' }}>
                 <Search size={14} color="#6B7280" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -395,6 +521,7 @@ export default function SessionsTab({
                 <option value="Upcoming">Upcoming</option>
                 <option value="Live">Live</option>
                 <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
 
               <select value={facilitatorFilter} onChange={e => setFacilitatorFilter(e.target.value)} style={{ padding: '0.45rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', cursor: 'pointer', outline: 'none' }}>
@@ -403,7 +530,6 @@ export default function SessionsTab({
               </select>
             </div>
 
-            {/* List / Calendar Graphic Render */}
             {viewMode === 'calendar' ? (
               (() => {
                 const monthNames = [
@@ -433,7 +559,6 @@ export default function SessionsTab({
 
                 return (
                   <div style={{ backgroundColor: '#161616', border: '1px solid #1F2937', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', boxSizing: 'border-box' }}>
-                    {/* Calendar Month Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <button type="button" onClick={handlePrevMonth} style={{ background: 'transparent', border: 'none', color: '#F5C84C', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>&larr; Prev</button>
                       <h4 style={{ color: '#FFFFFF', fontSize: '1rem', fontWeight: 800, margin: 0, fontFamily: "'Outfit', sans-serif" }}>
@@ -442,19 +567,15 @@ export default function SessionsTab({
                       <button type="button" onClick={handleNextMonth} style={{ background: 'transparent', border: 'none', color: '#F5C84C', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>Next &rarr;</button>
                     </div>
 
-                    {/* Weekday headers */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.4rem', textAlign: 'center', fontWeight: 700, fontSize: '0.7rem', color: '#6B7280', borderBottom: '1px solid #1F2937', paddingBottom: '0.5rem' }}>
                       {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <span key={d}>{d}</span>)}
                     </div>
 
-                    {/* Days grid */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.4rem' }}>
-                      {/* Blank spaces for day offset */}
                       {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                         <div key={`blank-${i}`} style={{ height: '38px' }} />
                       ))}
 
-                      {/* Actual day cells */}
                       {Array.from({ length: daysInMonth }).map((_, i) => {
                         const dayNum = i + 1;
                         const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
@@ -474,20 +595,12 @@ export default function SessionsTab({
                               }
                             }}
                             style={{ 
-                              height: '38px', 
-                              borderRadius: '8px', 
+                              height: '38px', borderRadius: '8px', 
                               backgroundColor: hasSessions ? 'rgba(245,200,76,0.1)' : 'rgba(255,255,255,0.02)', 
                               border: hasSessions ? '1.5px solid #F5C84C' : '1px solid #1F2937', 
-                              display: 'flex', 
-                              flexDirection: 'column',
-                              alignItems: 'center', 
-                              justifyContent: 'center', 
-                              fontSize: '0.8rem', 
-                              fontWeight: hasSessions ? 800 : 500,
-                              color: hasSessions ? '#F5C84C' : '#94A3B8', 
-                              cursor: 'pointer',
-                              position: 'relative',
-                              transition: 'all 0.15s'
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                              fontSize: '0.8rem', fontWeight: hasSessions ? 800 : 500,
+                              color: hasSessions ? '#F5C84C' : '#94A3B8', cursor: 'pointer', position: 'relative', transition: 'all 0.15s'
                             }}
                             onMouseEnter={e => {
                               e.currentTarget.style.transform = 'scale(1.05)';
@@ -524,49 +637,52 @@ export default function SessionsTab({
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSessions.map((s, idx) => (
-                      <tr 
-                        key={s.id || idx} 
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', color: '#E2E8F0', cursor: 'pointer' }}
-                        onClick={() => {
-                          setSelectedSession(s);
-                          setActiveTab('overview');
-                        }}
-                      >
-                        <td style={{ padding: '1rem', fontWeight: 600, color: '#FFFFFF' }}>{s.title}</td>
-                        <td style={{ padding: '1rem' }}>{s.facilitatorName || 'Sarah Ahmed'}</td>
-                        <td style={{ padding: '1rem' }}>{s.date || '12 Aug'}</td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>42/50</td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>2 hrs</td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                          <span style={{ 
-                            fontSize: '0.68rem', fontWeight: 700, 
-                            color: s.status === 'Completed' ? '#94A3B8' : (s.status === 'Live' ? '#10B981' : '#3B82F6'),
-                            backgroundColor: s.status === 'Completed' ? 'rgba(148,163,184,0.1)' : (s.status === 'Live' ? 'rgba(16,185,129,0.1)' : 'rgba(59,130,246,0.1)'),
-                            padding: '0.2rem 0.5rem', borderRadius: '5px' 
-                          }}>
-                            {s.status}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
-                          <div style={{ position: 'relative', display: 'inline-block' }}>
-                            <button 
-                              onClick={() => setActiveMenuId(activeMenuId === s.id ? null : s.id)}
-                              style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-                            {activeMenuId === s.id && (
-                              <div style={{ position: 'absolute', right: 0, marginTop: '0.35rem', backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '8px', zIndex: 100, width: '160px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                                <button onClick={() => { setSelectedSession(s); setActiveMenuId(null); }} style={{ width: '100%', padding: '0.5rem 0.75rem', backgroundColor: 'transparent', border: 'none', color: '#FFFFFF', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem' }}><Eye size={12} /> View</button>
-                                <button onClick={() => { handleDuplicateSession(s); setActiveMenuId(null); }} style={{ width: '100%', padding: '0.5rem 0.75rem', backgroundColor: 'transparent', border: 'none', color: '#FFFFFF', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem' }}><Copy size={12} /> Duplicate</button>
-                                <button onClick={() => { handleDeleteSession(s.id); setActiveMenuId(null); }} style={{ width: '100%', padding: '0.5rem 0.75rem', backgroundColor: 'transparent', border: 'none', color: '#EF4444', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', borderTop: '1px solid #1F2937' }}><Trash2 size={12} /> Delete</button>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredSessions.map((s, idx) => {
+                      const att = getSessionAttendance(s);
+                      return (
+                        <tr 
+                          key={s.id || idx} 
+                          style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', color: '#E2E8F0', cursor: 'pointer' }}
+                          onClick={() => {
+                            setSelectedSession(s);
+                            setActiveTab('overview');
+                          }}
+                        >
+                          <td style={{ padding: '1rem', fontWeight: 600, color: '#FFFFFF' }}>{s.title}</td>
+                          <td style={{ padding: '1rem' }}>{s.facilitatorName || 'Unassigned'}</td>
+                          <td style={{ padding: '1rem' }}>{s.date || 'TBD'}</td>
+                          <td style={{ padding: '1rem', textAlign: 'center' }}>{s.status === 'Completed' ? `${att.present}/${att.total}` : '-'}</td>
+                          <td style={{ padding: '1rem', textAlign: 'center' }}>{calculateDurationStr(s.startTime, s.endTime)}</td>
+                          <td style={{ padding: '1rem', textAlign: 'center' }}>
+                            <span style={{ 
+                              fontSize: '0.68rem', fontWeight: 700, 
+                              color: s.status === 'Completed' ? '#94A3B8' : (s.status === 'Live' ? '#10B981' : (s.status === 'Cancelled' ? '#EF4444' : '#3B82F6')),
+                              backgroundColor: s.status === 'Completed' ? 'rgba(148,163,184,0.1)' : (s.status === 'Live' ? 'rgba(16,185,129,0.1)' : (s.status === 'Cancelled' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)')),
+                              padding: '0.2rem 0.5rem', borderRadius: '5px' 
+                            }}>
+                              {s.status || 'Upcoming'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '1rem', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                            <div style={{ position: 'relative', display: 'inline-block' }}>
+                              <button 
+                                onClick={() => setActiveMenuId(activeMenuId === s.id ? null : s.id)}
+                                style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                              {activeMenuId === s.id && (
+                                <div style={{ position: 'absolute', right: 0, marginTop: '0.35rem', backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '8px', zIndex: 100, width: '160px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                                  <button onClick={() => { setSelectedSession(s); setActiveMenuId(null); }} style={{ width: '100%', padding: '0.5rem 0.75rem', backgroundColor: 'transparent', border: 'none', color: '#FFFFFF', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem' }}><Eye size={12} /> View</button>
+                                  <button onClick={() => { handleDuplicateSession(s); setActiveMenuId(null); }} style={{ width: '100%', padding: '0.5rem 0.75rem', backgroundColor: 'transparent', border: 'none', color: '#FFFFFF', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem' }}><Copy size={12} /> Duplicate</button>
+                                  <button onClick={() => { handleDeleteSession(s.id); setActiveMenuId(null); }} style={{ width: '100%', padding: '0.5rem 0.75rem', backgroundColor: 'transparent', border: 'none', color: '#EF4444', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', borderTop: '1px solid #1F2937' }}><Trash2 size={12} /> Delete</button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -580,13 +696,10 @@ export default function SessionsTab({
               </div>
             )}
           </div>
-
         </div>
 
-        {/* Right side widgets column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
-          {/* Quick Actions Widget */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Quick Actions</h4>
             
@@ -598,108 +711,111 @@ export default function SessionsTab({
             </div>
           </div>
 
-          {/* Attendance Overview Widget */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Attendance Overview</h4>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.78rem', color: '#94A3B8' }}>
-              <div>Average: <strong style={{ color: '#FFFFFF', display: 'block', fontSize: '1rem' }}>94%</strong></div>
-              <div>Highest: <strong style={{ color: '#10B981', display: 'block', fontSize: '1rem' }}>100%</strong></div>
-              <div>Lowest: <strong style={{ color: '#EF4444', display: 'block', fontSize: '1rem' }}>72%</strong></div>
-              <div>Late Joiners: <strong style={{ color: '#F5C84C', display: 'block', fontSize: '1rem' }}>18</strong></div>
-            </div>
-            
-            {/* Sparkline */}
-            <svg viewBox="0 0 100 20" style={{ width: '100%', height: '20px' }}>
-              <path d="M 0 15 Q 25 5 50 12 T 100 2" fill="none" stroke="#F5C84C" strokeWidth="1.5" />
-            </svg>
+            {completedCount > 0 ? (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.78rem', color: '#94A3B8' }}>
+                  <div>Average: <strong style={{ color: '#FFFFFF', display: 'block', fontSize: '1rem' }}>{avgAttendance !== null ? avgAttendance.toFixed(1) + '%' : 'N/A'}</strong></div>
+                  <div>Highest: <strong style={{ color: '#10B981', display: 'block', fontSize: '1rem' }}>{highestAttendance !== null ? highestAttendance.toFixed(1) + '%' : 'N/A'}</strong></div>
+                  <div>Lowest: <strong style={{ color: '#EF4444', display: 'block', fontSize: '1rem' }}>{lowestAttendance !== null ? lowestAttendance.toFixed(1) + '%' : 'N/A'}</strong></div>
+                  <div>Avg Duration: <strong style={{ color: '#F5C84C', display: 'block', fontSize: '1rem' }}>{avgDuration || 'N/A'}</strong></div>
+                </div>
+                <svg viewBox="0 0 100 20" style={{ width: '100%', height: '20px' }}>
+                  <path d="M 0 15 Q 25 5 50 12 T 100 2" fill="none" stroke="#F5C84C" strokeWidth="1.5" />
+                </svg>
+              </>
+            ) : (
+              <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: 0 }}>Attendance insights will appear after sessions are completed.</p>
+            )}
           </div>
 
-          {/* Facilitator Workload Widget */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Facilitator Workload</h4>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Facilitator Performance</h4>
             
-            {[
-              { name: 'Sarah Ahmed', count: 8, pct: 80 },
-              { name: 'John Doe', count: 6, pct: 60 },
-              { name: 'Blessing Kalu', count: 4, pct: 40 }
-            ].map((wk, idx) => (
+            {facilitatorWorkload.length > 0 ? facilitatorWorkload.map((wk, idx) => (
               <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.75rem', color: '#94A3B8' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{wk.name}</span>
-                  <span>{wk.count} Sessions</span>
+                  <span>{wk.count} Sessions {wk.avgAttendance !== null && `(${wk.avgAttendance.toFixed(0)}% Att.)`}</span>
                 </div>
                 <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${wk.pct}%`, backgroundColor: '#F5C84C' }} />
                 </div>
               </div>
-            ))}
+            )) : (
+              <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: 0 }}>No facilitator performance data available.</p>
+            )}
           </div>
 
-          {/* Recent Activity Widget */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h4>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.78rem', color: '#94A3B8' }}>
-              <div><strong style={{ color: '#FFFFFF' }}>Sarah</strong> started Leadership Kickoff <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>10 mins ago</span></div>
-              <div>Attendance finalized <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>Yesterday</span></div>
-              <div>Recording uploaded <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>Yesterday</span></div>
-              <div>Assessment linked <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>2 days ago</span></div>
-            </div>
+            {recentActivity.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.78rem', color: '#94A3B8' }}>
+                {recentActivity.map((act, i) => (
+                  <div key={i}><strong style={{ color: '#FFFFFF' }}>{act.msg}</strong> <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>{act.time}</span></div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: 0 }}>No recent activity to show.</p>
+            )}
           </div>
 
-          {/* AI Insights Widget */}
           <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <Sparkles size={16} color="#F5C84C" />
               <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>OYEN AI Insights</h4>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.8rem', color: '#94A3B8' }}>
-              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Attendance increased 14% this month.</div>
-              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Tuesday sessions have the highest participation.</div>
-              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Average participant joins 6 minutes early.</div>
-              <div style={{ padding: '0.5rem', backgroundColor: 'rgba(245,200,76,0.05)', border: '1px solid rgba(245,200,76,0.15)', borderRadius: '6px', color: '#F5C84C', fontSize: '0.72rem', fontWeight: 600, marginTop: '0.25rem' }}>
-                Recommendation: Schedule more sessions between 9AM–11AM.
+            {completedCount >= 3 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.8rem', color: '#94A3B8' }}>
+                <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Attendance is tracking well overall at {avgAttendance?.toFixed(0)}%.</div>
+                <div style={{ padding: '0.5rem', backgroundColor: 'rgba(245,200,76,0.05)', border: '1px solid rgba(245,200,76,0.15)', borderRadius: '6px', color: '#F5C84C', fontSize: '0.72rem', fontWeight: 600, marginTop: '0.25rem' }}>
+                  Recommendation: Review engagement strategies for upcoming sessions.
+                </div>
               </div>
-            </div>
+            ) : (
+              <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: 0 }}>AI insights will become available after more session activity.</p>
+            )}
           </div>
 
         </div>
 
       </div>
 
-      {/* ── GENERATE SESSION REPORTS SECTION ── */}
       <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Session Reports Generator</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-          {[
-            { label: 'Export Attendance', action: 'attendance' },
-            { label: 'Export Session History', action: 'history' },
-            { label: 'Export Facilitator Report', action: 'facilitator' },
-            { label: 'Export Engagement Report', action: 'engagement' }
-          ].map((rep, idx) => (
-            <button 
-              key={idx} 
-              onClick={() => addNotification?.(`Generating session ${rep.action} report...`)}
-              style={{ padding: '0.65rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = '#F5C84C'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = '#1F2937'}
-            >
-              {rep.label}
-            </button>
-          ))}
           <button 
-            onClick={() => addNotification?.('Generating OYEN AI Session Synthesis...')}
-            style={{ padding: '0.65rem 1rem', backgroundColor: '#F5C84C', border: 'none', borderRadius: '8px', color: '#111111', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+            onClick={exportAttendance}
+            style={{ padding: '0.65rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
           >
-            <Sparkles size={13} /> Generate AI Summary
+            Export Attendance
+          </button>
+          <button 
+            onClick={exportSessionHistory}
+            style={{ padding: '0.65rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+          >
+            Export Session History
+          </button>
+          <button 
+            onClick={exportFacilitatorReport}
+            style={{ padding: '0.65rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+          >
+            Export Facilitator Report
+          </button>
+          <button 
+            onClick={exportEngagementReport}
+            style={{ padding: '0.65rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+          >
+            Export Engagement Report
           </button>
         </div>
       </div>
 
-      {/* ── SESSION SCHEDULER MODAL ── */}
       {showScheduleModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setShowScheduleModal(false)}>
           <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '18px', width: '100%', maxWidth: '460px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
@@ -717,129 +833,49 @@ export default function SessionsTab({
             <form onSubmit={handleScheduleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Session Title</label>
-                <input required type="text" value={sessionForm.title} onChange={e => setSessionForm(prev => ({ ...prev, title: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }} placeholder="e.g. Kickoff & Orientation" />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Type</label>
-                <select value={sessionForm.type} onChange={e => setSessionForm(prev => ({ ...prev, type: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', outline: 'none', cursor: 'pointer' }}>
-                  <option style={{ backgroundColor: '#111111' }}>Live Session</option>
-                  <option style={{ backgroundColor: '#111111' }}>Webinar</option>
-                  <option style={{ backgroundColor: '#111111' }}>Workshop</option>
-                  <option style={{ backgroundColor: '#111111' }}>Assessment</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Facilitator Name</label>
-                <input type="text" value={sessionForm.facilitatorName} onChange={e => setSessionForm(prev => ({ ...prev, facilitatorName: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', outline: 'none' }} placeholder="e.g. Sarah Ahmed" />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Date</label>
-                  <input required type="date" value={sessionForm.date} onChange={e => setSessionForm(prev => ({ ...prev, date: e.target.value }))} style={{ width: '100%', padding: '0.55rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', colorScheme: 'dark' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Start Time</label>
-                  <input required type="time" value={sessionForm.startTime} onChange={e => setSessionForm(prev => ({ ...prev, startTime: e.target.value }))} style={{ width: '100%', padding: '0.55rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', colorScheme: 'dark' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
-                <button type="button" onClick={() => setShowScheduleModal(false)} style={{ flex: 1, padding: '0.65rem', backgroundColor: 'transparent', border: '1px solid #1F2937', color: '#94A3B8', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>Cancel</button>
-                <button type="submit" style={{ flex: 2, padding: '0.65rem', backgroundColor: '#F5C84C', border: 'none', color: '#111111', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Schedule</button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      )}
-
-      {/* ── SESSION DETAIL DRAWERS ── */}
-      {selectedSession && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', zIndex: 9999, display: 'flex', justifyContent: 'flex-end' }} onClick={() => setSelectedSession(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '440px', height: '100vh', backgroundColor: '#111111', borderLeft: '1px solid #1F2937', padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '-10px 0 30px rgba(0,0,0,0.25)', textAlign: 'left', overflowY: 'auto' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#F5C84C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Session Workspace</span>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#FFFFFF', margin: '0.2rem 0 0 0', fontFamily: "'Outfit', sans-serif" }}>{selectedSession.title}</h3>
+                <input required type="text" value={sessionForm.title} onChange={e => setSessionForm(prev => ({ ...prev, title: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} placeholder="e.g. Leadership Strategy Kickoff" />
               </div>
               
-              <button onClick={() => setSelectedSession(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #374151', color: '#94A3B8', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={15} />
-              </button>
-            </div>
-
-            {/* Tabs selection */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #1F2937', gap: '1rem', fontSize: '0.8rem' }}>
-              {['overview', 'attendance', 'resources'].map(tb => (
-                <span 
-                  key={tb} 
-                  onClick={() => setActiveTab(tb)}
-                  style={{ paddingBottom: '0.5rem', color: activeTab === tb ? '#F5C84C' : '#94A3B8', fontWeight: activeTab === tb ? 700 : 400, borderBottom: activeTab === tb ? '2px solid #F5C84C' : 'none', cursor: 'pointer', textTransform: 'capitalize' }}
-                >
-                  {tb}
-                </span>
-              ))}
-            </div>
-
-            {activeTab === 'overview' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.82rem', color: '#94A3B8' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' }}>Facilitator</span>
-                  <strong style={{ color: '#FFFFFF', fontSize: '0.9rem' }}>{selectedSession.facilitatorName || 'Sarah Ahmed'}</strong>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Date</label>
+                  <input required type="date" value={sessionForm.date} onChange={e => setSessionForm(prev => ({ ...prev, date: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} />
                 </div>
                 <div>
-                  <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' }}>Timeline</span>
-                  <strong style={{ color: '#FFFFFF', fontSize: '0.9rem' }}>{selectedSession.date || '12 Aug'} · {selectedSession.startTime || '10:00 AM'}</strong>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Type</label>
+                  <select value={sessionForm.type} onChange={e => setSessionForm(prev => ({ ...prev, type: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }}>
+                    <option value="Live Session">Live Session</option>
+                    <option value="Webinar">Webinar</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Q&A">Q&A</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Start Time</label>
+                  <input required type="time" value={sessionForm.startTime} onChange={e => setSessionForm(prev => ({ ...prev, startTime: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} />
                 </div>
                 <div>
-                  <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' }}>Status</span>
-                  <strong style={{ color: '#FFFFFF', fontSize: '0.9rem' }}>{selectedSession.status}</strong>
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.50rem', marginTop: '1rem' }}>
-                  <button onClick={() => { handleStatusChange(selectedSession.id, 'Live'); }} style={{ width: '100%', padding: '0.6rem', backgroundColor: '#10B981', border: 'none', color: '#FFFFFF', fontWeight: 700, borderRadius: '8px', cursor: 'pointer' }}>Start Session</button>
-                  <button onClick={() => { handleStatusChange(selectedSession.id, 'Completed'); }} style={{ width: '100%', padding: '0.6rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid #1F2937', color: '#FFFFFF', fontWeight: 600, borderRadius: '8px', cursor: 'pointer' }}>Mark Completed</button>
-                  <button onClick={() => { handleStatusChange(selectedSession.id, 'Cancelled'); }} style={{ width: '100%', padding: '0.6rem', backgroundColor: 'transparent', border: '1px solid #EF4444', color: '#EF4444', fontWeight: 600, borderRadius: '8px', cursor: 'pointer' }}>Cancel Session</button>
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>End Time</label>
+                  <input required type="time" value={sessionForm.endTime} onChange={e => setSessionForm(prev => ({ ...prev, endTime: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} />
                 </div>
               </div>
-            )}
-
-            {activeTab === 'attendance' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <span style={{ fontSize: '0.82rem', color: '#94A3B8' }}>Quick attendance logger:</span>
-                <div style={{ border: '1px solid #1F2937', borderRadius: '10px', overflow: 'hidden' }}>
-                  {learners.slice(0, 8).map(l => (
-                    <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.78rem' }}>
-                      <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{l.name}</span>
-                      <button onClick={() => addNotification?.(`Updated attendance for ${l.name}`)} style={{ padding: '0.2rem 0.5rem', backgroundColor: 'rgba(34,197,94,0.1)', border: 'none', borderRadius: '5px', color: '#10B981', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>Present</button>
-                    </div>
-                  ))}
-                </div>
+              
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Facilitator Name (Optional)</label>
+                <input type="text" value={sessionForm.facilitatorName} onChange={e => setSessionForm(prev => ({ ...prev, facilitatorName: e.target.value }))} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '0.85rem', outline: 'none' }} placeholder="e.g. Sarah Ahmed" />
               </div>
-            )}
 
-            {activeTab === 'resources' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <span style={{ fontSize: '0.82rem', color: '#94A3B8' }}>Materials linked to session:</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.78rem', color: '#FFFFFF' }}>
-                    <FileText size={14} color="#F5C84C" /> Orientation_Handout.pdf
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.78rem', color: '#FFFFFF' }}>
-                    <FileText size={14} color="#F5C84C" /> Curriculum_Syllabus.docx
-                  </div>
-                </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', paddingTop: '1.25rem', borderTop: '1px solid #1F2937' }}>
+                <button type="button" onClick={() => setShowScheduleModal(false)} style={{ flex: 1, padding: '0.75rem', backgroundColor: 'transparent', border: '1px solid #374151', borderRadius: '8px', color: '#FFFFFF', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" style={{ flex: 1, padding: '0.75rem', backgroundColor: '#F5C84C', border: 'none', borderRadius: '8px', color: '#111111', fontWeight: 700, cursor: 'pointer' }}>Schedule Session</button>
               </div>
-            )}
-
+            </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }
