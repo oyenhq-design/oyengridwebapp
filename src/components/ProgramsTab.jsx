@@ -265,7 +265,7 @@ export default function ProgramsTab({
         {[
           { value: programs.length, label: 'Programs', sub: '+3 created this month', icon: <BookOpen size={20} color="#D4A017" /> },
           { value: programs.filter(p => p.status === 'Active').length, label: 'Active Programs', sub: 'All systems operational', icon: <Layers size={20} color="#D4A017" /> },
-          { value: learners.length, label: 'Learners', sub: '+12 active today', icon: <Users size={20} color="#D4A017" /> },
+          { value: learners.length, label: 'Participants', sub: '+12 active today', icon: <Users size={20} color="#D4A017" /> },
           { value: getSessionsTodayCount(), label: 'Sessions Today', sub: 'Interactive live syncs', icon: <Calendar size={20} color="#D4A017" /> }
         ].map((card, idx) => (
           <div 
@@ -529,13 +529,13 @@ export default function ProgramsTab({
                           <div style={{ backgroundColor: '#F8F5EF', border: '1px solid #E8E2D8', borderRadius: '12px', padding: '1rem', textAlign: 'left' }}>
                             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#151515', marginBottom: '0.35rem' }}>Finish setting up this program</div>
                             <p style={{ fontSize: '0.76rem', color: '#6B7280', margin: 0, lineHeight: 1.4 }}>
-                              This program has been created successfully. Complete the remaining setup steps before inviting learners.
+                              This program has been created successfully. Complete the remaining setup steps before inviting participants.
                             </p>
                             <div style={{ marginTop: '0.75rem', borderTop: '1px solid #E8E2D8', paddingTop: '0.6rem' }}>
                               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#151515', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Remaining steps</div>
                               <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.75rem', color: '#6B7280', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                 <li>Add facilitators</li>
-                                <li>Invite learners</li>
+                                <li>Invite participants</li>
                                 <li>Create your first session</li>
                                 <li>Upload learning resources</li>
                               </ul>
@@ -572,7 +572,7 @@ export default function ProgramsTab({
 
                     // Build array of visible metrics dynamically
                     const visibleMetrics = [];
-                    if (learnersCount > 0) visibleMetrics.push({ value: learnersCount, label: 'Learners' });
+                    if (learnersCount > 0) visibleMetrics.push({ value: learnersCount, label: 'Participants' });
                     if (facilitatorsCount > 0) visibleMetrics.push({ value: facilitatorsCount, label: 'Facilitators' });
                     if (sessionsCount > 0) visibleMetrics.push({ value: sessionsCount, label: 'Sessions' });
                     if (resourcesCount > 0) visibleMetrics.push({ value: resourcesCount, label: 'Resources' });
@@ -646,7 +646,7 @@ export default function ProgramsTab({
                 {[
                   { label: 'Create your first program.', done: programs.length > 0 },
                   { label: 'Add facilitators.', done: teamMembers.length > 0 },
-                  { label: 'Invite learners.', done: learners.length > 0 },
+                  { label: 'Invite participants.', done: learners.length > 0 },
                   { label: 'Schedule sessions.', done: getSessionsTodayCount() > 0 },
                   { label: 'Start tracking progress.', done: false }
                 ].map((item, idx) => (
@@ -725,7 +725,7 @@ export default function ProgramsTab({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
               {[
                 { title: '📅 Sessions', desc: 'Schedule live and virtual sessions.' },
-                { title: '👥 Learners', desc: 'Manage enrolment and participation.' },
+                { title: '👥 Participants', desc: 'Manage enrolment and participation.' },
                 { title: '📊 Analytics', desc: 'Track engagement and completion.' },
                 { title: '📜 Certificates', desc: 'Issue certificates automatically.' }
               ].map((feature, idx) => (
@@ -898,7 +898,7 @@ export default function ProgramsTab({
                   Are you sure you want to delete <strong style={{ color: '#C89A2B' }}>{prog?.name}</strong>?
                 </p>
                 <div style={{ backgroundColor: 'rgba(239,68,68,0.05)', border: '1px solid #E7E1D7', borderRadius: '10px', padding: '0.9rem 1.1rem', fontSize: '13px', color: '#EF4444', lineHeight: '1.5' }}>
-                  <strong>Warning:</strong> This will permanently delete the program and remove all program-related data, including all sessions, resources, assessments, and any assigned learners. This action cannot be undone.
+                  <strong>Warning:</strong> This will permanently delete the program and remove all program-related data, including all sessions, resources, assessments, and any assigned participants. This action cannot be undone.
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                   <button type="button" onClick={() => setDeleteProgramId(null)} style={{ flex: 1, padding: '0.75rem', background: '#FFFFFF', border: '1px solid #DDD6CA', color: '#1E2A3B', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
@@ -942,7 +942,7 @@ export default function ProgramsTab({
               <div>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Inter', sans-serif" }}>How Programs Work</h3>
                 <p style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.4rem', lineHeight: 1.4 }}>
-                  A Program is your central workspace for organizing learners, facilitators, sessions, resources, assessments, certificates, and reports. Everything related to one training initiative is managed in a single place.
+                  A Program is your central workspace for organizing participants, facilitators, sessions, resources, assessments, certificates, and reports. Everything related to one training initiative is managed in a single place.
                 </p>
               </div>
               <button 
@@ -957,7 +957,7 @@ export default function ProgramsTab({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', marginTop: '1rem' }}>
               {[
                 { title: '1. Create a Program', desc: 'Give your program a name and basic details.', icon: <Plus size={16} color="#D4A017" /> },
-                { title: '2. Invite Learners', desc: 'Add learners manually or send them an invitation.', icon: <Users size={16} color="#D4A017" /> },
+                { title: '2. Invite Participants', desc: 'Add learners manually or send them an invitation.', icon: <Users size={16} color="#D4A017" /> },
                 { title: '3. Add Facilitators', desc: 'Assign trainers or instructors to your program.', icon: <Users size={16} color="#D4A017" /> },
                 { title: '4. Schedule Sessions', desc: 'Plan live classes, workshops, or meetings.', icon: <Calendar size={16} color="#D4A017" /> },
                 { title: '5. Share Resources', desc: 'Upload learning materials, assignments, and documents.', icon: <FolderOpen size={16} color="#D4A017" /> },
@@ -990,7 +990,7 @@ export default function ProgramsTab({
                 💡 Tip
               </div>
               <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: '0.3rem 0 0 0', lineHeight: 1.45 }}>
-                You can always return later to edit your program, invite more learners, schedule additional sessions, or upload new resources.
+                You can always return later to edit your program, invite more participants, schedule additional sessions, or upload new resources.
               </p>
             </div>
 

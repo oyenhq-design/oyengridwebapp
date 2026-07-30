@@ -44,7 +44,7 @@ export default function AnnouncementsTab({ programs = [], addNotification }) {
       <div>
         <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Announcements</h2>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-          Broadcast news, schedule warnings, and alert learners about upcoming changes.
+          Broadcast news, schedule warnings, and alert participants about upcoming changes.
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export default function AnnouncementsTab({ programs = [], addNotification }) {
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Message Content</label>
               <textarea
                 required
-                placeholder="Type your message to all learners enrolled in this program..."
+                placeholder="Type your message to all participants enrolled in this program..."
                 value={announcementText}
                 onChange={e => setAnnouncementText(e.target.value)}
                 rows={4}

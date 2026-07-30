@@ -1577,7 +1577,7 @@ export default function App() {
                       <option value="Facilitator">Facilitator</option>
                       <option value="Trainer">Trainer</option>
                       <option value="Employee">Employee</option>
-                      <option value="Participant">Participant / Learner</option>
+                      <option value="Participant">Participant / Participant</option>
                     </select>
                   </div>
                 </div>
@@ -1732,7 +1732,7 @@ export default function App() {
       sidebarItems = [
         { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
         { id: 'Assigned Programs', label: 'Assigned Programs', icon: <BookOpen size={18} /> },
-        { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
+        { id: 'Learners', label: 'Participants', icon: <UserCheck size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
         { id: 'Announcements', label: 'Announcements', icon: <Bell size={18} /> },
@@ -2801,7 +2801,7 @@ export default function App() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
                       {[
                         { label: 'Programmes', value: `${displayPrograms.length} / 3 Created`, pct: (displayPrograms.length / 3) * 100, barColor: 'linear-gradient(90deg, #F5C84C, #E2A020)', icon: <BookOpen size={20} color="#E2B235" /> },
-                        { label: 'Learners', value: `${wsLearners.length} / 50 Enrolled`, pct: (wsLearners.length / 50) * 100, barColor: 'linear-gradient(90deg, #22c55e, #16a34a)', icon: <Users size={20} color="#22c55e" /> },
+                        { label: 'Participants', value: `${wsLearners.length} / 50 Enrolled`, pct: (wsLearners.length / 50) * 100, barColor: 'linear-gradient(90deg, #22c55e, #16a34a)', icon: <Users size={20} color="#22c55e" /> },
                         { label: 'Team Members', value: `${wsTeam.length} Active Member${wsTeam.length !== 1 ? 's' : ''}`, pct: 100, barColor: 'linear-gradient(90deg, #A855F7, #7E22CE)', icon: <UserCheck size={20} color="#A855F7" /> },
                         { label: 'Storage', value: `${storageText} / 10 GB`, pct: storagePercent, barColor: 'linear-gradient(90deg, #3b82f6, #2563eb)', icon: <HardDrive size={20} color="#3b82f6" /> },
                       ].map((card, i) => (
@@ -2878,7 +2878,7 @@ export default function App() {
                                 <div>
                                   <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: 0 }}>No recent activity yet</h4>
                                   <p style={{ color: '#5C5C5C', fontSize: '0.8rem', marginTop: '0.3rem', maxWidth: '320px', lineHeight: '1.4' }}>
-                                    Activity from programmes, learners, sessions, and workspace updates will appear here once you begin using OYEN GRID.
+                                    Activity from programmes, participants, sessions, and workspace updates will appear here once you begin using OYEN GRID.
                                   </p>
                                 </div>
                                 <button onClick={() => triggerTransition(() => setActiveTab('Programmes'))} style={{ background: '#F5C84C', border: 'none', color: '#151515', borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", marginTop: '0.5rem' }}>
@@ -2919,7 +2919,7 @@ export default function App() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             {[
                               { label: 'Programmes Used', value: `${displayPrograms.length} / 3`, pct: (displayPrograms.length / 3) * 100, barColor: '#E2B235' },
-                              { label: 'Learners Enrolled', value: `${wsLearners.length} / 50`, pct: (wsLearners.length / 50) * 100, barColor: '#22c55e' },
+                              { label: 'Participants Enrolled', value: `${wsLearners.length} / 50`, pct: (wsLearners.length / 50) * 100, barColor: '#22c55e' },
                               { label: 'Team Members', value: `${wsTeam.length} / 10`, pct: (wsTeam.length / 10) * 100, barColor: '#A855F7' },
                               { label: 'Storage Usage', value: `${storageText} / 10 GB`, pct: storagePercent, barColor: '#3b82f6' }
                             ].map((row, idx) => (
@@ -2977,11 +2977,11 @@ export default function App() {
                   { id: 3, label: 'Invite Team Members', desc: 'Add administrators and facilitators to collaborate in your workspace.', done: wsTeam.length > 0, tab: 'Team' },
                   { id: 4, label: 'Configure Roles & Permissions', desc: 'Set up access levels to control what each team member can do.', done: false, tab: 'Settings' },
                   { id: 5, label: 'Create Your First Programme', desc: 'Programmes are the foundation of your workspace learning structure.', done: displayPrograms.length > 0, tab: 'Programmes' },
-                  { id: 6, label: 'Add Learners', desc: 'Enroll participants into your programmes to begin their journey.', done: wsLearners.length > 0, tab: 'Participants' },
+                  { id: 6, label: 'Add Participants', desc: 'Enroll participants into your programmes to begin their journey.', done: wsLearners.length > 0, tab: 'Participants' },
                   { id: 7, label: 'Schedule Your First Session', desc: 'Create a live session or workshop inside one of your programmes.', done: false, tab: 'Sessions' },
                   { id: 8, label: 'Configure Notifications', desc: 'Set up email and in-app notifications to keep your team updated.', done: false, tab: 'Settings' },
                   { id: 9, label: 'Generate Test Certificate', desc: 'Preview and test your certificate template before launch.', done: false, tab: 'Certificates' },
-                  { id: 10, label: 'Launch Your First Programme', desc: 'Make your programme live and start enrolling learners at scale.', done: false, tab: 'Programmes' },
+                  { id: 10, label: 'Launch Your First Programme', desc: 'Make your programme live and start enrolling participants at scale.', done: false, tab: 'Programmes' },
                 ];
                 const completedCount = setupSteps.filter(s => s.done).length;
                 const progressPct = Math.round((completedCount / setupSteps.length) * 100);
@@ -3312,7 +3312,7 @@ export default function App() {
                     <div style={{ padding: '1.25rem 1.5rem', backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '14px', color: '#78350F' }}>
                       <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 0.35rem' }}>Welcome to OYEN GROUP</h4>
                       <p style={{ fontSize: '0.82rem', margin: 0, lineHeight: 1.5, color: '#92400E' }}>
-                        This short guide walks you through the recommended setup process. Complete these steps in order to prepare your workspace before inviting learners.
+                        This short guide walks you through the recommended setup process. Complete these steps in order to prepare your workspace before inviting participants.
                       </p>
                     </div>
 
@@ -3382,7 +3382,7 @@ export default function App() {
                             icon: <ClipboardCheck size={16} />,
                             color: '#DB2777',
                             bg: '#FDF2F8',
-                            desc: 'Evaluate learner progress using:',
+                            desc: 'Evaluate participant progress using:',
                             details: ['Quizzes', 'Assignments', 'Exams', 'Practical assessments'],
                             note: 'Automatic grading is available where supported.',
                           },
@@ -3393,7 +3393,7 @@ export default function App() {
                             color: '#D4A017',
                             bg: '#FFFBEB',
                             desc: 'When setup is complete:',
-                            details: ['Learners can join', 'Sessions become available', 'Resources are published', 'Attendance tracking begins', 'Reports become available'],
+                            details: ['Participants can join', 'Sessions become available', 'Resources are published', 'Attendance tracking begins', 'Reports become available'],
                             note: 'Your program is now ready to run.',
                           }
                         ].map((item, idx) => (

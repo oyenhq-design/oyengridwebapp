@@ -300,10 +300,10 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   const isAdmin = userRole === 'Admin';
   
   const subTabs = userRole === 'Viewer'
-    ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Assessments', 'Reports', 'Announcements']
+    ? ['Overview', 'Participants', 'Sessions', 'Resources', 'Assessments', 'Reports', 'Announcements']
     : (userRole === 'Team Member'
-        ? ['Overview', 'Learners', 'Sessions', 'Resources', 'Announcements', 'Certificates', 'Reports']
-        : ['Overview', 'Sessions', 'Learners', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports']);
+        ? ['Overview', 'Participants', 'Sessions', 'Resources', 'Announcements', 'Certificates', 'Reports']
+        : ['Overview', 'Sessions', 'Participants', 'Attendance', 'Resources', 'Assessments', 'Announcements', 'Reports']);
 
   const doneSteps = [
     true, // Program Created
@@ -317,13 +317,13 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
 
   // Determine current recommended action
   let nextActionTitle = 'Assign Facilitators';
-  let nextActionDesc = 'Assign facilitators to this program before inviting learners. Facilitators help manage sessions, learners, attendance and assessments.';
+  let nextActionDesc = 'Assign facilitators to this program before inviting participants. Facilitators help manage sessions, learners, attendance and assessments.';
   let nextActionBtnText = 'Assign Facilitators';
   let nextActionHandler = () => setShowAssignModal(true);
 
   if (assignedFacs.length === 0) {
     nextActionTitle = 'Assign Facilitators';
-    nextActionDesc = 'Assign facilitators to this program before inviting learners. Facilitators help manage sessions, learners, attendance and assessments.';
+    nextActionDesc = 'Assign facilitators to this program before inviting participants. Facilitators help manage sessions, learners, attendance and assessments.';
     nextActionBtnText = 'Assign Facilitators';
     nextActionHandler = () => setShowAssignModal(true);
   } else if (learnerCount === 0) {
@@ -333,7 +333,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     nextActionHandler = () => setActiveSubTab('Learners');
   } else if (sessionCount === 0) {
     nextActionTitle = 'Schedule Session';
-    nextActionDesc = 'Plan and schedule your first virtual or live session. This creates calendar invites and links for learners.';
+    nextActionDesc = 'Plan and schedule your first virtual or live session. This creates calendar invites and links for participants.';
     nextActionBtnText = 'Schedule Session';
     nextActionHandler = () => setShowCreateSessionModal(true);
   } else if (resourceCount === 0) {
@@ -343,7 +343,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     nextActionHandler = () => setActiveSubTab('Resources');
   } else if (assessmentCount === 0) {
     nextActionTitle = 'Create Assessment';
-    nextActionDesc = 'Create your first quiz, assignment, or project to evaluate learner performance.';
+    nextActionDesc = 'Create your first quiz, assignment, or project to evaluate participant performance.';
     nextActionBtnText = 'Create Assessment';
     nextActionHandler = () => setActiveSubTab('Assessments');
   } else {
@@ -430,7 +430,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
           {/* Summary Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
             {[
-              { label: 'Learners',    value: learnerCount,    icon: <Users size={20} />,         color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
+              { label: 'Participants',    value: learnerCount,    icon: <Users size={20} />,         color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
               { label: 'Sessions',    value: sessionCount,    icon: <Calendar size={20} />,      color: '#D4A017', bg: 'rgba(212,160,23,0.08)' },
               { label: 'Resources',   value: resourceCount,   icon: <FileText size={20} />,      color: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
               { label: 'Assessments', value: assessmentCount, icon: <ClipboardList size={20} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
@@ -704,7 +704,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {userRole === 'Team Member' && (
             <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Register New Learner</h3>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Register New Participant</h3>
               <form onSubmit={handleRegisterLearner} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 <input required type="text" placeholder="Full Name" value={newLearnerName} onChange={e => setNewLearnerName(e.target.value)} style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }} />
                 <input required type="email" placeholder="Email Address" value={newLearnerEmail} onChange={e => setNewLearnerEmail(e.target.value)} style={{ flex: 1, padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', outline: 'none' }} />
@@ -717,11 +717,11 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
             </div>
           )}
 
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Learners Directory</h3>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Participants Directory</h3>
           
           {programLearners.length === 0 ? (
             <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)' }}>
-              No learners enrolled in this program yet.
+              No participants enrolled in this program yet.
             </div>
           ) : (
             <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
@@ -941,7 +941,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
               <form onSubmit={handleCreateAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <textarea
                   required
-                  placeholder="Broadcast to all learners in this program..."
+                  placeholder="Broadcast to all participants in this program..."
                   value={annText}
                   onChange={e => setAnnText(e.target.value)}
                   rows={3}
@@ -971,7 +971,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>Program Certificates</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
             <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
-              <h4 style={{ fontSize: '0.92rem', color: '#fff', margin: '0 0 1rem 0' }}>Enrolled Learners</h4>
+              <h4 style={{ fontSize: '0.92rem', color: '#fff', margin: '0 0 1rem 0' }}>Enrolled Participants</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {programLearners.map(l => {
                   const hasCert = certificates.some(c => c.email === l.email && c.programId === program.id);

@@ -139,7 +139,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Learner</span>
+            <span style={{ fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Participant</span>
             <select value={learnerFilter} onChange={e => setLearnerFilter(e.target.value)} style={{ padding: '0.35rem 0.5rem', border: '1px solid #F3EFE6', borderRadius: '6px', fontSize: '0.78rem', color: '#374151', cursor: 'pointer' }}>
               <option>All</option>
             </select>
@@ -386,7 +386,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
               <thead>
                 <tr style={{ borderBottom: '1px solid #1F2937', color: '#94A3B8', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   <th style={{ padding: '0.75rem 1rem' }}>Program</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Learners</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Participants</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Attendance</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Completion</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Assessments</th>
@@ -402,7 +402,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
                 ].map((row, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', color: '#E2E8F0' }}>
                     <td style={{ padding: '1rem', fontWeight: 600, color: '#FFFFFF' }}>{row.name}</td>
-                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.learners}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.participants}</td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.attendance}</td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.completion}</td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>{row.assessments}</td>
@@ -420,7 +420,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
 
         {/* Learner Engagement Donut + List */}
         <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Learner Engagement</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Participant Engagement</h3>
           
           {/* Donut Simulation */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
@@ -438,7 +438,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
 
           {/* Top Active Learners List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.1rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Active Learners</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Active Participants</span>
             {[
               { name: 'Adewale Kalu', program: 'Leadership Orientation', score: '98', time: 'Active 2m ago', init: 'AK' },
               { name: 'Sarah Ahmed', program: 'Technical Bootcamp', score: '96', time: 'Active 12m ago', init: 'SA' },
@@ -595,7 +595,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {[
-              { text: '4 learners have not attended in 14 days', action: 'Follow Up', type: 'risk' },
+              { text: '4 participants have not attended in 14 days', action: 'Follow Up', type: 'risk' },
               { text: '2 assessments are due within 24 hours', action: 'Send Reminder', type: 'alert' },
               { text: 'Leadership Orientation attendance dropped 10%', action: 'View Analysis', type: 'risk' },
               { text: '1 session has no facilitator assigned', action: 'Assign Facilitator', type: 'critical' }
@@ -702,7 +702,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
                 <select value={selectedReportType} onChange={e => setSelectedReportType(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', outline: 'none', cursor: 'pointer' }}>
                   <option style={{ backgroundColor: '#0B0F17' }}>Executive Summary</option>
                   <option style={{ backgroundColor: '#0B0F17' }}>Attendance Report</option>
-                  <option style={{ backgroundColor: '#0B0F17' }}>Learner Report</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Participant Report</option>
                   <option style={{ backgroundColor: '#0B0F17' }}>Assessment Report</option>
                   <option style={{ backgroundColor: '#0B0F17' }}>Facilitator Report</option>
                   <option style={{ backgroundColor: '#0B0F17' }}>Certificate Report</option>
@@ -726,7 +726,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {[
                     { key: 'attendance', label: 'Attendance Details' },
-                    { key: 'learners', label: 'Learner Engagement distribution' },
+                    { key: 'learners', label: 'Participant Engagement distribution' },
                     { key: 'assessments', label: 'Assessment performance stats' },
                     { key: 'facilitators', label: 'Facilitator Leaderboard rating' },
                     { key: 'certificates', label: 'Certificates tracking metrics' }

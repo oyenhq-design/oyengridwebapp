@@ -396,12 +396,12 @@ export default function LearnersTab({
         <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '14px', padding: '1.25rem 1.35rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.65rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: '0.68rem', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.6px', fontWeight: 600 }}>Capacity Used</div>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#151515' }}>{learners.length} / {LEARNER_LIMIT}</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#151515' }}>{participants.length} / {LEARNER_LIMIT}</span>
           </div>
           <div style={{ height: '7px', backgroundColor: '#F3F4F6', borderRadius: '99px', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${Math.min((learners.length / LEARNER_LIMIT) * 100, 100)}%`, background: 'linear-gradient(90deg,#D4A017,#C49A2A)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>{LEARNER_LIMIT - learners.length} slots remaining</div>
+          <div style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>{LEARNER_LIMIT - participants.length} slots remaining</div>
         </div>
       </div>
 
@@ -684,7 +684,7 @@ export default function LearnersTab({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Add Participant</h3>
-                <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '0.25rem 0 0' }}>Enroll a new learner into a program.</p>
+                <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '0.25rem 0 0' }}>Enroll a new participant into a program.</p>
               </div>
               <button onClick={() => setShowAddModal(false)} style={{ background: '#F5F2ED', border: '1px solid #E8E2D8', color: '#6B7280', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={15} /></button>
             </div>

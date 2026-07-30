@@ -250,7 +250,7 @@ export default function SessionsTab({
           <div style={{ color: 'rgba(255,255,255,0.1)' }}>|</div>
           <div>Live: <span style={{ color: '#10B981', fontWeight: 800 }}>{liveCount} Active Now</span></div>
           <div style={{ color: 'rgba(255,255,255,0.1)' }}>|</div>
-          <div>Audience: <span style={{ color: '#3B82F6', fontWeight: 800 }}>{learners.length} Active Learners</span></div>
+          <div>Audience: <span style={{ color: '#3B82F6', fontWeight: 800 }}>{participants.length} Active Participants</span></div>
         </div>
         
         <button 
@@ -335,7 +335,7 @@ export default function SessionsTab({
                       <div style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 700 }}>{timeItem.day} · {timeItem.time}</div>
                       <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#FFFFFF', margin: '0.15rem 0' }}>{timeItem.title}</h4>
                       <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: 0 }}>{timeItem.platform} · Facilitator: <strong style={{ color: '#FFFFFF' }}>{timeItem.fac}</strong></p>
-                      <span style={{ fontSize: '0.75rem', color: '#F5C84C', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>{timeItem.learners}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#F5C84C', fontWeight: 600, display: 'inline-block', marginTop: '0.25rem' }}>{timeItem.participants}</span>
                     </div>
                     
                     {timeItem.status === 'Live' ? (
@@ -563,7 +563,7 @@ export default function SessionsTab({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.8rem', color: '#94A3B8' }}>
               <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Attendance increased 14% this month.</div>
               <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Tuesday sessions have the highest participation.</div>
-              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Average learner joins 6 minutes early.</div>
+              <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Average participant joins 6 minutes early.</div>
               <div style={{ padding: '0.5rem', backgroundColor: 'rgba(245,200,76,0.05)', border: '1px solid rgba(245,200,76,0.15)', borderRadius: '6px', color: '#F5C84C', fontSize: '0.72rem', fontWeight: 600, marginTop: '0.25rem' }}>
                 Recommendation: Schedule more sessions between 9AM–11AM.
               </div>
