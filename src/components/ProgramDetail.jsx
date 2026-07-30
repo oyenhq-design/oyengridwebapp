@@ -327,9 +327,9 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     nextActionBtnText = 'Assign Facilitators';
     nextActionHandler = () => setShowAssignModal(true);
   } else if (learnerCount === 0) {
-    nextActionTitle = 'Invite Learners';
+    nextActionTitle = 'Invite Participants';
     nextActionDesc = 'Invite participants to enroll in this program. You can add them manually or import a list via CSV.';
-    nextActionBtnText = 'Invite Learners';
+    nextActionBtnText = 'Invite Participants';
     nextActionHandler = () => setActiveSubTab('Learners');
   } else if (sessionCount === 0) {
     nextActionTitle = 'Schedule Session';
@@ -461,7 +461,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                 {[
                   { label: 'Program Created', done: true, optional: false },
                   { label: 'Add Facilitators', done: assignedFacs.length > 0, optional: false, tab: 'Overview', handler: () => setShowAssignModal(true), btnText: 'Assign' },
-                  { label: 'Invite Learners', done: learnerCount > 0, optional: false, tab: 'Learners', handler: () => setActiveSubTab('Learners'), btnText: 'Invite' },
+                  { label: 'Invite Participants', done: learnerCount > 0, optional: false, tab: 'Learners', handler: () => setActiveSubTab('Learners'), btnText: 'Invite' },
                   { label: 'Schedule Your First Session', done: hasSession, optional: false, tab: 'Sessions', handler: () => setShowCreateSessionModal(true), btnText: 'Schedule' },
                   { label: 'Upload Learning Resources', done: hasResource, optional: false, tab: 'Resources', handler: () => setActiveSubTab('Resources'), btnText: 'Upload' },
                   { label: 'Create an Assessment', done: hasAssessment, optional: true, tab: 'Assessments', handler: () => setActiveSubTab('Assessments'), btnText: 'Create' },
@@ -607,7 +607,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem' }}>
               {[
                 { title: 'Assign Facilitators', icon: <Users size={18} color="#D4A017" />, handler: () => setShowAssignModal(true) },
-                { title: 'Invite Learners', icon: <UserPlus size={18} color="#D4A017" />, handler: () => setActiveSubTab('Learners') },
+                { title: 'Invite Participants', icon: <UserPlus size={18} color="#D4A017" />, handler: () => setActiveSubTab('Learners') },
                 { title: 'Schedule Session', icon: <Calendar size={18} color="#D4A017" />, handler: () => setShowCreateSessionModal(true) },
                 { title: 'Upload Resources', icon: <Upload size={18} color="#D4A017" />, handler: () => setActiveSubTab('Resources') },
                 { title: 'Create Assessment', icon: <ClipboardList size={18} color="#D4A017" />, handler: () => setActiveSubTab('Assessments') },
