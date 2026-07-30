@@ -9,8 +9,11 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFacs, setSelectedFacs] = useState([]);
   const [activeSubTab, setActiveSubTab] = useState('Overview');
+  const [showParticipantsGuide, setShowParticipantsGuide] = useState(false);
+  const [faqOpen, setFaqOpen] = useState({});
 
   // Input states for operational sub-tabs
+
   const [sessionTitle, setSessionTitle] = useState('');
   const [sessionDate, setSessionDate] = useState('');
   const [sessionTime, setSessionTime] = useState('');
@@ -571,7 +574,13 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                     {nextActionBtnText}
                   </button>
                   <button 
-                    onClick={() => alert('Opening guide article...')}
+                    onClick={() => {
+                      if (nextActionTitle.includes('Participants')) {
+                        setShowParticipantsGuide(true);
+                      } else {
+                        alert('Opening guide article...');
+                      }
+                    }}
                     style={{
                       background: 'none', border: 'none', color: '#6B7280',
                       fontSize: '12px', fontWeight: 600, cursor: 'pointer',
@@ -1205,6 +1214,254 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                 <button type="submit" style={{ flex: 2, padding: '0.7rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>Schedule Session</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ── PARTICIPANTS GUIDE MODAL ── */}
+      {showParticipantsGuide && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 9999,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '1rem',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            backgroundColor: '#000000',
+            border: '1px solid #1F2937',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '640px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '2.25rem',
+            position: 'relative',
+            color: '#FFFFFF',
+            boxSizing: 'border-box',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+            textAlign: 'left'
+          }}>
+            {/* Close Button */}
+            <button 
+              onClick={() => setShowParticipantsGuide(false)}
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid #1F2937',
+                color: '#94A3B8',
+                borderRadius: '8px',
+                width: '32px',
+                height: '32px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = '#FFFFFF'}
+              onMouseLeave={e => e.currentTarget.style.color = '#94A3B8'}
+            >
+              <X size={16} />
+            </button>
+
+            {/* Hero */}
+            <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #1F2937', paddingBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#F5C542', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.35rem' }}>
+                <Sparkles size={13} /> Onboarding Guide
+              </div>
+              <h2 style={{ fontSize: '1.65rem', fontWeight: 900, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Learn About Participants</h2>
+              <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: '0.4rem', margin: 0, lineHeight: 1.45 }}>
+                Understand how participants work, how to invite them, and how to manage them throughout your program.
+              </p>
+            </div>
+
+            {/* Section 1: Who are Participants? */}
+            <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '12px', padding: '1rem', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#F5C542', textTransform: 'uppercase', margin: '0 0 0.35rem 0', letterSpacing: '0.5px' }}>1. Who are Participants?</h3>
+              <p style={{ fontSize: '0.8rem', color: '#E2E8F0', margin: 0, lineHeight: 1.45 }}>
+                Participants are the people enrolled in your programs. They can attend sessions, access resources, complete assessments, receive announcements, and track their learning progress.
+              </p>
+            </div>
+
+            {/* Section 2: Ways to Add Participants */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', margin: '0 0 0.65rem 0', letterSpacing: '0.5px' }}>2. Ways to Add Participants</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '10px', padding: '0.85rem', fontSize: '0.76rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                  <div style={{ fontWeight: 800, color: '#FFFFFF', marginBottom: '0.25rem' }}>📧 Invite by Email</div>
+                  Send direct invites to individual email addresses.
+                </div>
+                <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '10px', padding: '0.85rem', fontSize: '0.76rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                  <div style={{ fontWeight: 800, color: '#FFFFFF', marginBottom: '0.25rem' }}>📄 Import CSV</div>
+                  Bulk enroll dozens of participants at once using spreadsheets.
+                </div>
+                <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '10px', padding: '0.85rem', fontSize: '0.76rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                  <div style={{ fontWeight: 800, color: '#FFFFFF', marginBottom: '0.25rem' }}>🔗 Registration Link</div>
+                  Share a secure invite URL for self-registration.
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: What Participants Can Do */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', margin: '0 0 0.65rem 0', letterSpacing: '0.5px' }}>3. What Participants Can Do</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem' }}>
+                {[
+                  { label: 'Join Sessions', icon: <Video size={14} color="#F5C542" /> },
+                  { label: 'Access Resources', icon: <FileText size={14} color="#F5C542" /> },
+                  { label: 'Take Assessments', icon: <ClipboardList size={14} color="#F5C542" /> },
+                  { label: 'View Announcements', icon: <Users size={14} color="#F5C542" /> },
+                  { label: 'Track Progress', icon: <CheckCircle2 size={14} color="#F5C542" /> },
+                  { label: 'Download Certificates', icon: <Award size={14} color="#F5C542" /> }
+                ].map((act, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '8px', padding: '0.6rem 0.75rem', fontSize: '0.74rem', color: '#E2E8F0' }}>
+                    {act.icon}
+                    <span>{act.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 4: Participant Status */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', margin: '0 0 0.65rem 0', letterSpacing: '0.5px' }}>4. Participant Status</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {[
+                  { label: 'Active', bg: '#065F46', color: '#34D399', dot: '🟢', desc: 'Enrolled and actively participating in the workspace.' },
+                  { label: 'Invited', bg: '#78350F', color: '#FBBF24', dot: '🟡', desc: 'Invitation sent but password configuration is pending.' },
+                  { label: 'Pending', bg: '#1E3A8A', color: '#60A5FA', dot: '⏳', desc: 'Awaiting administrator confirmation to finalize access.' },
+                  { label: 'Inactive', bg: '#374151', color: '#9CA3AF', dot: '⚪', desc: 'Access suspended or program enrollment finished.' }
+                ].map((st, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem' }}>
+                    <span style={{ minWidth: '70px', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', backgroundColor: st.bg, color: st.color, padding: '0.15rem 0.45rem', borderRadius: '5px', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase' }}>
+                      {st.dot} {st.label}
+                    </span>
+                    <span style={{ color: '#94A3B8' }}>{st.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 5: Best Practices */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', margin: '0 0 0.65rem 0', letterSpacing: '0.5px' }}>5. Best Practices</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', fontSize: '0.75rem', color: '#E2E8F0' }}>
+                <div>✓ Keep participant emails accurate</div>
+                <div>✓ Use CSV for large imports</div>
+                <div>✓ Organize learners into the correct program</div>
+                <div>✓ Monitor attendance regularly</div>
+              </div>
+            </div>
+
+            {/* Section 6: Quick FAQ */}
+            <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #1F2937', paddingBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', margin: '0 0 0.65rem 0', letterSpacing: '0.5px' }}>6. Quick FAQ</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {[
+                  { q: 'Can participants join multiple programs?', a: 'Yes. A single participant record can be assigned to multiple active programs concurrently.' },
+                  { q: 'Can I remove participants later?', a: 'Yes. You can revoke access or unenroll participants from individual programs at any time.' },
+                  { q: 'What happens after sending an invitation?', a: 'Participants receive an automatic email containing a link to set up their password and log in.' },
+                  { q: 'Can participants edit their own profile?', a: 'Participants can edit their names and profile pictures, but not their registered emails.' }
+                ].map((faq, idx) => {
+                  const isOpen = faqOpen[idx];
+                  const toggleFaq = (i) => setFaqOpen(prev => ({ ...prev, [i]: !prev[i] }));
+                  return (
+                    <div key={idx} style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '8px', overflow: 'hidden' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => toggleFaq(idx)} 
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.85rem',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#FFFFFF',
+                          textAlign: 'left',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <span>{faq.q}</span>
+                        <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', color: '#F5C542' }} />
+                      </button>
+                      {isOpen && (
+                        <div style={{ padding: '0 0.85rem 0.65rem', fontSize: '0.76rem', color: '#94A3B8', lineHeight: 1.4, borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.5rem' }}>
+                          {faq.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Callout */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '12px', padding: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '220px' }}>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF', margin: '0 0 0.25rem 0' }}>Need more help?</h4>
+                <p style={{ fontSize: '0.74rem', color: '#94A3B8', margin: 0, lineHeight: 1.45 }}>
+                  If you're just getting started, invite a few participants first. You can always import larger groups later using CSV.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowParticipantsGuide(false);
+                    if (setActiveTab) {
+                      if (triggerTransition) {
+                        triggerTransition(() => setActiveTab('Learners'));
+                      } else {
+                        setActiveTab('Learners');
+                      }
+                    }
+                  }}
+                  style={{
+                    backgroundColor: '#F5C542',
+                    border: 'none',
+                    color: '#000000',
+                    padding: '0.55rem 1rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 10px rgba(245,197,66,0.15)'
+                  }}
+                >
+                  Invite Participants
+                </button>
+                <button
+                  type="button"
+                  onClick={() => alert('CSV template download initiated...')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#F5C542',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    textDecoration: 'underline',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View CSV Template
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
