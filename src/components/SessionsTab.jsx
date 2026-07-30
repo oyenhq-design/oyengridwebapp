@@ -25,6 +25,8 @@ export default function SessionsTab({
   const [facilitatorFilter, setFacilitatorFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('');
   const [sortField, setSortField] = useState('date');
+  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   
   // Drawer states
   const [selectedSession, setSelectedSession] = useState(null);
@@ -403,17 +405,110 @@ export default function SessionsTab({
 
             {/* List / Calendar Graphic Render */}
             {viewMode === 'calendar' ? (
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.01)', border: '1px dashed #1F2937', borderRadius: '12px', padding: '2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <h4 style={{ color: '#FFFFFF', fontSize: '0.92rem', fontWeight: 700, margin: 0 }}>Interactive Calendar Workspace</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.4rem', maxWidth: '420px', margin: '0 auto' }}>
-                  {Array.from({ length: 28 }).map((_, i) => (
-                    <div key={i} style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: (i===11 || i===15) ? 'rgba(245,200,76,0.1)' : 'rgba(255,255,255,0.02)', border: (i===11 || i===15) ? '1px solid #F5C84C' : '1px solid #1F2937', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', color: (i===11 || i===15) ? '#F5C84C' : '#94A3B8', cursor: 'pointer' }} onClick={() => addNotification?.(`Quick-checking calendar events for August ${i+1}`)}>
-                      {i + 1}
+              (() => {
+                const monthNames = [
+                  "January", "February", "March", "April", "May", "June",
+                  "July", "August", "September", "October", "November", "December"
+                ];
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
+
+                const handlePrevMonth = () => {
+                  if (currentMonth === 0) {
+                    setCurrentMonth(11);
+                    setCurrentYear(currentYear - 1);
+                  } else {
+                    setCurrentMonth(currentMonth - 1);
+                  }
+                };
+
+                const handleNextMonth = () => {
+                  if (currentMonth === 11) {
+                    setCurrentMonth(0);
+                    setCurrentYear(currentYear + 1);
+                  } else {
+                    setCurrentMonth(currentMonth + 1);
+                  }
+                };
+
+                return (
+                  <div style={{ backgroundColor: '#161616', border: '1px solid #1F2937', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', boxSizing: 'border-box' }}>
+                    {/* Calendar Month Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <button type="button" onClick={handlePrevMonth} style={{ background: 'transparent', border: 'none', color: '#F5C84C', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>&larr; Prev</button>
+                      <h4 style={{ color: '#FFFFFF', fontSize: '1rem', fontWeight: 800, margin: 0, fontFamily: "'Outfit', sans-serif" }}>
+                        {monthNames[currentMonth]} {currentYear}
+                      </h4>
+                      <button type="button" onClick={handleNextMonth} style={{ background: 'transparent', border: 'none', color: '#F5C84C', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>Next &rarr;</button>
                     </div>
-                  ))}
-                </div>
-                <span style={{ fontSize: '0.72rem', color: '#6B7280' }}>Click highlights to view scheduled sessions on that day.</span>
-              </div>
+
+                    {/* Weekday headers */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.4rem', textAlign: 'center', fontWeight: 700, fontSize: '0.7rem', color: '#6B7280', borderBottom: '1px solid #1F2937', paddingBottom: '0.5rem' }}>
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <span key={d}>{d}</span>)}
+                    </div>
+
+                    {/* Days grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.4rem' }}>
+                      {/* Blank spaces for day offset */}
+                      {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                        <div key={`blank-${i}`} style={{ height: '38px' }} />
+                      ))}
+
+                      {/* Actual day cells */}
+                      {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const dayNum = i + 1;
+                        const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                        const daySessions = sessions.filter(s => s.date === dateString);
+                        const hasSessions = daySessions.length > 0;
+
+                        return (
+                          <div 
+                            key={dayNum} 
+                            onClick={() => {
+                              if (hasSessions) {
+                                setSelectedSession(daySessions[0]);
+                                setActiveTab('overview');
+                                addNotification?.(`Opened workspace for: ${daySessions[0].title}`);
+                              } else {
+                                addNotification?.(`No sessions scheduled on ${monthNames[currentMonth]} ${dayNum}, ${currentYear}`);
+                              }
+                            }}
+                            style={{ 
+                              height: '38px', 
+                              borderRadius: '8px', 
+                              backgroundColor: hasSessions ? 'rgba(245,200,76,0.1)' : 'rgba(255,255,255,0.02)', 
+                              border: hasSessions ? '1.5px solid #F5C84C' : '1px solid #1F2937', 
+                              display: 'flex', 
+                              flexDirection: 'column',
+                              alignItems: 'center', 
+                              justifyContent: 'center', 
+                              fontSize: '0.8rem', 
+                              fontWeight: hasSessions ? 800 : 500,
+                              color: hasSessions ? '#F5C84C' : '#94A3B8', 
+                              cursor: 'pointer',
+                              position: 'relative',
+                              transition: 'all 0.15s'
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.transform = 'scale(1.05)';
+                              if (!hasSessions) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              if (!hasSessions) e.currentTarget.style.borderColor = '#1F2937';
+                            }}
+                          >
+                            <span>{dayNum}</span>
+                            {hasSessions && (
+                              <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#F5C84C', position: 'absolute', bottom: '3px' }} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()
             ) : filteredSessions.length > 0 ? (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
