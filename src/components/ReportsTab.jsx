@@ -1,1066 +1,753 @@
 import React, { useState } from 'react';
 import { 
   Users, BookOpen, Calendar, Percent, ArrowLeft, ArrowUpRight, 
-  Download, AlertTriangle, FileText, X, TrendingUp
+  Download, AlertTriangle, FileText, X, TrendingUp, Sparkles,
+  Award, BarChart3, ChevronDown, CheckCircle, RefreshCw, Star,
+  Clock, ShieldAlert, ArrowDownRight, Share2, Mail, Check
 } from 'lucide-react';
 
-export default function ReportsTab({ programs = [], learners = [] }) {
-  const [selectedReport, setSelectedReport] = useState(null);
-  
-  // Chart states
+export default function ReportsTab({ programs = [], learners = [], addNotification }) {
+  // Global Filters State
+  const [workspaceFilter, setWorkspaceFilter] = useState('All');
+  const [programFilter, setProgramFilter] = useState('All');
+  const [facilitatorFilter, setFacilitatorFilter] = useState('All');
+  const [learnerFilter, setLearnerFilter] = useState('All');
+  const [dateRangeFilter, setDateRangeFilter] = useState('Last 30 Days');
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Chart & Interactive states
   const [chartMetric, setChartMetric] = useState('Attendance');
   const [chartDateRange, setChartDateRange] = useState('Last 30 Days');
-  const [chartCustomStart, setChartCustomStart] = useState('');
-  const [chartCustomEnd, setChartCustomEnd] = useState('');
-
-  // Generator flow state
+  
+  // Custom Generate Report State
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [reportType, setReportType] = useState('Program Performance');
-  const [targetProgram, setTargetProgram] = useState('All Programs');
-  const [dateRange, setDateRange] = useState('Last 30 Days');
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
-
-  // Generated reports state
-  const [generatedReports, setGeneratedReports] = useState([]);
-
-  // 1. Live Workspace Metrics Calculations
-  const activeProgramsCount = programs.length;
-  const totalLearnersCount = learners.length;
-  const today = new Date().setHours(0, 0, 0, 0);
-
-  let totalCompletedSessions = 0;
-  let totalAttendanceOpportunities = 0;
-  let totalPresentCount = 0;
-
-  programs.forEach(p => {
-    (p.sessions || []).forEach(s => {
-      const isCompleted = s.date && new Date(s.date) < today;
-      if (isCompleted) {
-        totalCompletedSessions++;
-        const programLearners = learners.filter(l => l.program === p.name);
-        programLearners.forEach(l => {
-          totalAttendanceOpportunities++;
-          const status = s.attendance?.[l.id] || 'Present';
-          if (status === 'Present') {
-            totalPresentCount++;
-          }
-        });
-      }
-    });
+  const [selectedSections, setSelectedSections] = useState({
+    attendance: true,
+    learners: true,
+    assessments: true,
+    facilitators: true,
+    certificates: true
   });
+  const [selectedReportType, setSelectedReportType] = useState('Executive Summary');
+  const [selectedFormat, setSelectedFormat] = useState('PDF');
 
-  const averageAttendance = totalAttendanceOpportunities > 0
-    ? `${Math.round((totalPresentCount / totalAttendanceOpportunities) * 100)}%`
-    : '—';
+  // Scheduled reports states
+  const [scheduledReports, setScheduledReports] = useState([
+    { id: 1, name: 'Weekly Workspace Summary', schedule: 'Every Monday', enabled: true },
+    { id: 2, name: 'Monthly Executive Report', schedule: '1st of every month', enabled: true },
+    { id: 3, name: 'Quarterly Performance Report', schedule: '1st of quarter', enabled: false }
+  ]);
 
-  // Learner engagement live calculation
-  let activeLearners = 0;
-  let inactiveLearners = 0;
-  let atRiskLearners = 0;
-  let hasEngagementData = false;
+  // Recent generated reports list
+  const [recentReports, setRecentReports] = useState([
+    { id: 1, name: 'Attendance Summary', format: 'PDF', generated: 'Yesterday' },
+    { id: 2, name: 'Assessment Analytics', format: 'Excel', generated: '2 days ago' },
+    { id: 3, name: 'Executive Leadership Report', format: 'PDF', generated: 'Last week' }
+  ]);
 
-  learners.forEach(l => {
-    const hasProgram = l.program && l.program !== 'None';
-    if (!hasProgram) {
-      inactiveLearners++;
-      return;
-    }
-    activeLearners++;
-
-    const prog = programs.find(p => p.name === l.program);
-    if (prog) {
-      let completedInProg = 0;
-      let presentInProg = 0;
-      (prog.sessions || []).forEach(s => {
-        const isCompleted = s.date && new Date(s.date) < today;
-        if (isCompleted) {
-          completedInProg++;
-          hasEngagementData = true;
-          if ((s.attendance?.[l.id] || 'Present') === 'Present') {
-            presentInProg++;
-          }
-        }
-      });
-      if (completedInProg > 0) {
-        const rate = presentInProg / completedInProg;
-        if (rate < 0.75) {
-          atRiskLearners++;
-        }
-      }
-    }
-  });
-
-  // Calculate dynamic chart data points
-  const getChartData = () => {
-    let startBoundary = null;
-    let endBoundary = new Date();
-
-    if (chartDateRange === 'Last 7 Days') {
-      startBoundary = new Date();
-      startBoundary.setDate(startBoundary.getDate() - 7);
-    } else if (chartDateRange === 'Last 30 Days') {
-      startBoundary = new Date();
-      startBoundary.setDate(startBoundary.getDate() - 30);
-    } else if (chartDateRange === 'Last 90 Days') {
-      startBoundary = new Date();
-      startBoundary.setDate(startBoundary.getDate() - 90);
-    } else if (chartDateRange === 'Custom Range') {
-      if (chartCustomStart) startBoundary = new Date(chartCustomStart);
-      if (chartCustomEnd) endBoundary = new Date(chartCustomEnd);
-    }
-
-    const dataPoints = [];
-    programs.forEach(p => {
-      const pLearners = learners.filter(l => l.program === p.name);
-      (p.sessions || []).forEach(s => {
-        if (!s.date) return;
-        const sDate = new Date(s.date);
-        const isCompleted = sDate < today;
-        if (!isCompleted) return;
-        
-        if (startBoundary && sDate < startBoundary) return;
-        if (endBoundary && sDate > endBoundary) return;
-
-        let attendanceRate = 0;
-        let learnerCount = pLearners.length;
-        let present = 0;
-        
-        if (learnerCount > 0) {
-          pLearners.forEach(l => {
-            if ((s.attendance?.[l.id] || 'Present') === 'Present') present++;
-          });
-          attendanceRate = Math.round((present / learnerCount) * 100);
-        } else {
-          attendanceRate = 100;
-        }
-
-        let engagementVal = attendanceRate;
-        if (s.notes) engagementVal = Math.min(100, engagementVal + 10);
-        if ((s.resources || []).length > 0) engagementVal = Math.min(100, engagementVal + 10);
-
-        let assessmentVal = 0;
-        const assessments = p.assessments || [];
-        if (assessments.length > 0) {
-          assessmentVal = 85; 
-        } else {
-          assessmentVal = 70;
-        }
-
-        dataPoints.push({
-          date: sDate,
-          dateString: sDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          title: s.title,
-          program: p.name,
-          attendance: attendanceRate,
-          engagement: engagementVal,
-          sessions: 1,
-          assessment: assessmentVal
-        });
-      });
-    });
-
-    dataPoints.sort((a, b) => a.date - b.date);
-
-    if (chartMetric === 'Sessions') {
-      let cumulative = 0;
-      dataPoints.forEach(pt => {
-        cumulative++;
-        pt.sessionsCumulative = cumulative;
-      });
-    }
-
-    return dataPoints;
+  const resetFilters = () => {
+    setWorkspaceFilter('All');
+    setProgramFilter('All');
+    setFacilitatorFilter('All');
+    setLearnerFilter('All');
+    setDateRangeFilter('Last 30 Days');
+    setStatusFilter('All');
+    addNotification?.('Filters reset to default');
   };
 
-  const chartData = getChartData();
-  const hasEnoughChartData = chartData.length >= 2;
+  const handleToggleSchedule = (id) => {
+    setScheduledReports(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+    addNotification?.('Scheduled report preference updated');
+  };
 
-  // 2. Report Generation Logic
-  const handleGenerateSubmit = (e) => {
+  const handleGenerateReport = (e) => {
     e.preventDefault();
-
-    let startBoundary = null;
-    let endBoundary = new Date();
-
-    if (dateRange === 'Last 7 Days') {
-      startBoundary = new Date();
-      startBoundary.setDate(startBoundary.getDate() - 7);
-    } else if (dateRange === 'Last 30 Days') {
-      startBoundary = new Date();
-      startBoundary.setDate(startBoundary.getDate() - 30);
-    } else if (dateRange === 'Last 90 Days') {
-      startBoundary = new Date();
-      startBoundary.setDate(startBoundary.getDate() - 90);
-    } else if (dateRange === 'Custom Range') {
-      if (customStartDate) startBoundary = new Date(customStartDate);
-      if (customEndDate) endBoundary = new Date(customEndDate);
-    }
-
-    const filteredProgs = targetProgram === 'All Programs' 
-      ? programs 
-      : programs.filter(p => p.name === targetProgram);
-
-    const reportResults = {
-      generatedAt: new Date().toLocaleString(),
-      totalProgramsScanned: filteredProgs.length,
-      insufficientData: false,
-      missingFields: [],
-      programSummaries: [],
-      learnerMetrics: [],
-      attendanceRate: '—',
-      healthScore: '—',
-      healthStatus: 'Unknown',
-      recommendations: []
-    };
-
-    let totalOpps = 0;
-    let totalPres = 0;
-    let totalSessionsScanned = 0;
-    let completedSessionsScanned = 0;
-    let totalResourcesCount = 0;
-    let totalAssessmentsCount = 0;
-
-    filteredProgs.forEach(p => {
-      const pLearners = learners.filter(l => l.program === p.name);
-      const pSessions = p.sessions || [];
-      totalResourcesCount += (p.resources || []).length;
-      totalAssessmentsCount += (p.assessments || []).length;
-
-      const inRangeSessions = pSessions.filter(s => {
-        if (!s.date) return false;
-        const sDate = new Date(s.date);
-        if (startBoundary && sDate < startBoundary) return false;
-        if (endBoundary && sDate > endBoundary) return false;
-        return true;
-      });
-
-      totalSessionsScanned += inRangeSessions.length;
-
-      const completedSessions = inRangeSessions.filter(s => new Date(s.date) < today);
-      completedSessionsScanned += completedSessions.length;
-
-      let progOpps = 0;
-      let progPres = 0;
-
-      completedSessions.forEach(s => {
-        pLearners.forEach(l => {
-          progOpps++;
-          totalOpps++;
-          if ((s.attendance?.[l.id] || 'Present') === 'Present') {
-            progPres++;
-            totalPres++;
-          }
-        });
-      });
-
-      const progRate = progOpps > 0 ? `${Math.round((progPres / progOpps) * 100)}%` : '—';
-
-      reportResults.programSummaries.push({
-        name: p.name,
-        learnersCount: pLearners.length,
-        totalSessions: inRangeSessions.length,
-        completedSessions: completedSessions.length,
-        attendanceRate: progRate,
-        resourcesCount: (p.resources || []).length,
-        assessmentsCount: (p.assessments || []).length
-      });
-    });
-
-    if (totalOpps > 0) {
-      reportResults.attendanceRate = `${Math.round((totalPres / totalOpps) * 100)}%`;
-    }
-
-    if (reportType === 'Program Health' || reportType === 'Operational Insights') {
-      if (completedSessionsScanned === 0) {
-        reportResults.insufficientData = true;
-        reportResults.missingFields.push('Completed session attendance history in the selected range');
-      } else {
-        const rateVal = totalPres / totalOpps;
-        let score = Math.round(rateVal * 100);
-        reportResults.healthScore = `${score}%`;
-        if (score >= 85) {
-          reportResults.healthStatus = 'Healthy';
-          reportResults.recommendations.push('Keep up the strong engagement. Learner turnout is excellent.');
-        } else if (score >= 70) {
-          reportResults.healthStatus = 'Needs Attention';
-          reportResults.recommendations.push('Consider sending session reminders to learners. Turnout is average.');
-        } else {
-          reportResults.healthStatus = 'Critical Risk';
-          reportResults.recommendations.push('Urgent: Attendance is critically low. Review facilitator feedback and session timings.');
-        }
-
-        if (totalResourcesCount === 0) {
-          reportResults.recommendations.push('Resource availability is zero. Upload course materials to enhance learner interaction.');
-        }
-      }
-    }
-
-    if (reportType === 'Attendance' && completedSessionsScanned === 0) {
-      reportResults.insufficientData = true;
-      reportResults.missingFields.push('Completed sessions');
-    }
-
-    if (reportType === 'Engagement' && totalLearnersCount === 0) {
-      reportResults.insufficientData = true;
-      reportResults.missingFields.push('Registered learners');
-    }
-
-    const newReport = {
+    const newRep = {
       id: Date.now(),
-      name: `${targetProgram === 'All Programs' ? 'Workspace' : targetProgram} ${reportType} Report`,
-      type: reportType,
-      program: targetProgram,
-      dateRange: dateRange === 'Custom Range' ? `${customStartDate} to ${customEndDate}` : dateRange,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      results: reportResults
+      name: `${selectedReportType} (${Object.keys(selectedSections).filter(k=>selectedSections[k]).join(', ')})`,
+      format: selectedFormat,
+      generated: 'Just now'
     };
-
-    setGeneratedReports(p => [newReport, ...p]);
+    setRecentReports(prev => [newRep, ...prev]);
     setShowConfigModal(false);
-    setSelectedReport(newReport);
-  };
-
-  const exportCSV = (type) => {
-    let headers = [];
-    let rows = [];
-    let filename = 'report.csv';
-
-    if (type === 'Workspace Overview') {
-      filename = 'workspace_overview_report.csv';
-      headers = ['Metric', 'Value'];
-      rows = [
-        ['Total Learners', totalLearnersCount],
-        ['Active Programs', activeProgramsCount],
-        ['Sessions Completed', totalCompletedSessions],
-        ['Average Attendance', averageAttendance]
-      ];
-    } else if (type === 'Program Performance') {
-      filename = 'program_performance_report.csv';
-      headers = ['Program Name', 'Learners Count', 'Total Sessions', 'Completed Sessions', 'Attendance Rate'];
-      programs.forEach(p => {
-        const pLearners = learners.filter(l => l.program === p.name);
-        const pSessions = p.sessions || [];
-        const pCompleted = pSessions.filter(s => s.date && new Date(s.date) < today);
-        let opps = 0;
-        let pres = 0;
-        pCompleted.forEach(s => {
-          pLearners.forEach(l => {
-            opps++;
-            if ((s.attendance?.[l.id] || 'Present') === 'Present') pres++;
-          });
-        });
-        const rate = opps > 0 ? `${Math.round((pres / opps) * 100)}%` : '—';
-        rows.push([p.name, pLearners.length, pSessions.length, pCompleted.length, rate]);
-      });
-    } else if (type === 'Learner Engagement') {
-      filename = 'learner_engagement_report.csv';
-      headers = ['Name', 'Email', 'Program', 'Completed Sessions', 'Attended', 'Attendance Rate', 'Engagement Status'];
-      learners.forEach(l => {
-        const prog = programs.find(p => p.name === l.program);
-        let completed = 0;
-        let present = 0;
-        if (prog) {
-          (prog.sessions || []).forEach(s => {
-            if (s.date && new Date(s.date) < today) {
-              completed++;
-              if ((s.attendance?.[l.id] || 'Present') === 'Present') present++;
-            }
-          });
-        }
-        const rate = completed > 0 ? (present / completed) : 1;
-        const rateText = completed > 0 ? `${Math.round(rate * 100)}%` : '—';
-        let status = 'Active';
-        if (!l.program || l.program === 'None') status = 'Inactive';
-        else if (completed > 0 && rate < 0.75) status = 'At Risk';
-
-        rows.push([l.name, l.email, l.program || 'None', completed, present, rateText, status]);
-      });
-    }
-
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const triggerGenerateWithProgram = (progName) => {
-    setTargetProgram(progName);
-    setReportType('Program Performance');
-    setDateRange('Last 30 Days');
-    setShowConfigModal(true);
+    addNotification?.(`Successfully generated ${selectedReportType} Report in ${selectedFormat} format!`);
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left' }}>
+    <div className="animate-fade-in" style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', padding: '2rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
       
-      {/* Header title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* ── PAGE HEADER ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.25rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Reports</h2>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-            Understand program performance, learner engagement, and operational activity across your workspace.
+          <h1 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.5px' }}>Reports</h1>
+          <p style={{ color: '#5C5C5C', fontSize: '0.92rem', marginTop: '0.35rem', margin: 0 }}>
+            Understand program performance, learner engagement, attendance, assessments, and operational activity across your workspace.
           </p>
         </div>
-        {selectedReport && (
-          <button 
-            onClick={() => setSelectedReport(null)}
-            style={{ 
-              backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-              color: '#fff', padding: '0.55rem 1rem', borderRadius: '8px', fontSize: '0.82rem',
-              fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer' 
-            }}
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <select 
+            value={dateRangeFilter} 
+            onChange={e => setDateRangeFilter(e.target.value)}
+            style={{ padding: '0.6rem 0.85rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '10px', fontSize: '0.82rem', color: '#151515', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
           >
-            <ArrowLeft size={14} /> Back to Dashboard
+            <option>Last 7 Days</option>
+            <option>Last 30 Days</option>
+            <option>Last 90 Days</option>
+            <option>This Year</option>
+          </select>
+          
+          <button 
+            onClick={() => addNotification?.('Exporting workspace records...')}
+            style={{ padding: '0.6rem 1rem', backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '10px', fontSize: '0.82rem', color: '#151515', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer' }}
+          >
+            <Download size={15} /> Export
           </button>
-        )}
+          
+          <button 
+            onClick={() => setShowConfigModal(true)}
+            style={{ padding: '0.65rem 1.25rem', backgroundColor: '#F5C84C', border: '1px solid #F5C84C', borderRadius: '10px', fontSize: '0.82rem', color: '#151515', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(245,200,76,0.15)' }}
+          >
+            <FileText size={15} /> Generate Report
+          </button>
+        </div>
       </div>
 
-      {!selectedReport ? (
-        <>
-          {/* 1. Live Workspace Overview */}
-          <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '1.1rem', fontFamily: "'Outfit', sans-serif" }}>Workspace Overview</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
-              {[
-                { label: 'Total Learners', value: totalLearnersCount, icon: <Users size={20} />, color: '#D4AF37', bg: 'rgba(212,175,55,0.08)' },
-                { label: 'Active Programs', value: activeProgramsCount, icon: <BookOpen size={20} />, color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
-                { label: 'Sessions Completed', value: totalCompletedSessions, icon: <Calendar size={20} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
-                { label: 'Average Attendance', value: averageAttendance, icon: <Percent size={20} />, color: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
-              ].map(card => (
-                <div key={card.label} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '8px', backgroundColor: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: card.color }}>
-                    {card.icon}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</div>
-                    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{card.value}</div>
-                  </div>
-                </div>
+      {/* ── STICKY FILTER BAR ── */}
+      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E2D8', borderRadius: '14px', padding: '1rem 1.5rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', boxShadow: '0 2px 8px rgba(100,90,75,0.02)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <span style={{ fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Workspace</span>
+            <select value={workspaceFilter} onChange={e => setWorkspaceFilter(e.target.value)} style={{ padding: '0.35rem 0.5rem', border: '1px solid #F3EFE6', borderRadius: '6px', fontSize: '0.78rem', color: '#374151', cursor: 'pointer' }}>
+              <option>All</option>
+              <option>ABC Energy</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <span style={{ fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Program</span>
+            <select value={programFilter} onChange={e => setProgramFilter(e.target.value)} style={{ padding: '0.35rem 0.5rem', border: '1px solid #F3EFE6', borderRadius: '6px', fontSize: '0.78rem', color: '#374151', cursor: 'pointer' }}>
+              <option>All</option>
+              <option>Leadership Orientation</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <span style={{ fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Facilitator</span>
+            <select value={facilitatorFilter} onChange={e => setFacilitatorFilter(e.target.value)} style={{ padding: '0.35rem 0.5rem', border: '1px solid #F3EFE6', borderRadius: '6px', fontSize: '0.78rem', color: '#374151', cursor: 'pointer' }}>
+              <option>All</option>
+              <option>Sarah Ahmed</option>
+              <option>Michael Ibrahim</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <span style={{ fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Learner</span>
+            <select value={learnerFilter} onChange={e => setLearnerFilter(e.target.value)} style={{ padding: '0.35rem 0.5rem', border: '1px solid #F3EFE6', borderRadius: '6px', fontSize: '0.78rem', color: '#374151', cursor: 'pointer' }}>
+              <option>All</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <span style={{ fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</span>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: '0.35rem 0.5rem', border: '1px solid #F3EFE6', borderRadius: '6px', fontSize: '0.78rem', color: '#374151', cursor: 'pointer' }}>
+              <option>All</option>
+              <option>Active</option>
+              <option>Completed</option>
+            </select>
+          </div>
+        </div>
+        <button 
+          onClick={resetFilters}
+          style={{ padding: '0.45rem 0.85rem', backgroundColor: 'transparent', border: '1px solid #E8E2D8', borderRadius: '8px', fontSize: '0.78rem', color: '#4B5563', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}
+        >
+          <RefreshCw size={12} /> Reset Filters
+        </button>
+      </div>
+
+      {/* ── WORKSPACE KPI SECTION (6-Card Grid) ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+        {[
+          { label: 'Total Programs', value: '12', trend: '+2 this month', isUp: true, icon: <BookOpen size={18} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
+          { label: 'Active Learners', value: '486', trend: '+8% this week', isUp: true, icon: <Users size={18} />, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+          { label: 'Sessions Completed', value: '124', trend: '+15 this month', isUp: true, icon: <Calendar size={18} />, color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
+          { label: 'Average Attendance', value: '91%', trend: '+3% improvement', isUp: true, icon: <Percent size={18} />, color: '#d97706', bg: 'rgba(217,119,6,0.1)' },
+          { label: 'Assessment Completion', value: '84%', trend: '+6% this month', isUp: true, icon: <Award size={18} />, color: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
+          { label: 'Certificates Issued', value: '276', trend: '+24 this month', isUp: true, icon: <Award size={18} />, color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' }
+        ].map((kpi, idx) => (
+          <div 
+            key={idx} 
+            className="kpi-card" 
+            style={{ 
+              backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', 
+              display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', 
+              transition: 'transform 0.2s', cursor: 'pointer' 
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{kpi.label}</span>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: kpi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: kpi.color }}>
+                {kpi.icon}
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+              <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#FFFFFF' }}>{kpi.value}</span>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem', color: kpi.isUp ? '#34D399' : '#F87171' }}>
+              {kpi.isUp ? <TrendingUp size={12} /> : <ArrowDownRight size={12} />}
+              <span>{kpi.trend}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── AI EXECUTIVE SUMMARY ── */}
+      <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Sparkles size={20} color="#F5D76E" />
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>AI Executive Summary</h3>
+          </div>
+          <button 
+            onClick={() => addNotification?.('Opening full cognitive report breakdown...')}
+            style={{ padding: '0.45rem 1rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid #374151', borderRadius: '8px', fontSize: '0.78rem', color: '#F5D76E', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            View Full Analysis <ArrowUpRight size={13} />
+          </button>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          {[
+            'Attendance increased by 12% over the last 30 days.',
+            '3 learners may require follow-up due to low engagement.',
+            'Assessment completion reached 84% across active programs.',
+            'Leadership Orientation is currently the highest-performing program.',
+            'Facilitator response time improved by 18% this month.'
+          ].map((insight, idx) => (
+            <div key={idx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', backgroundColor: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'rgba(245,215,110,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F5D76E', fontSize: '11px', fontWeight: 700, flexShrink: 0, marginTop: '0.1rem' }}>
+                {idx + 1}
+              </div>
+              <span style={{ fontSize: '0.84rem', color: '#94A3B8', lineHeight: 1.5 }}>{insight}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── PROGRAM ACTIVITY TREND & ATTENDANCE OVERVIEW ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* Line Chart Trend */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <TrendingUp size={18} color="#F5D76E" />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Activity Trend</h3>
+            </div>
+            
+            <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              {['Attendance', 'Engagement', 'Sessions', 'Assessments', 'Certificates', 'AI Insights'].map(m => (
+                <button
+                  key={m}
+                  onClick={() => {
+                    setChartMetric(m);
+                    addNotification?.(`Switched activity trend metric to ${m}`);
+                  }}
+                  style={{
+                    backgroundColor: chartMetric === m ? '#F5D76E' : 'transparent',
+                    color: chartMetric === m ? '#0B0F17' : '#94A3B8',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {m}
+                </button>
               ))}
             </div>
           </div>
 
-          {/* New Main Chart Component: Program Activity Trend */}
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <TrendingUp size={18} color="#D4AF37" />
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Activity Trend</h3>
-              </div>
+          <div style={{ display: 'flex', gap: '0.50rem', justifyContent: 'flex-end', fontSize: '0.72rem', color: '#94A3B8' }}>
+            {['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'This Year', 'Custom Range'].map(range => (
+              <span 
+                key={range} 
+                onClick={() => setChartDateRange(range)}
+                style={{ cursor: 'pointer', color: chartDateRange === range ? '#F5D76E' : '#94A3B8', fontWeight: chartDateRange === range ? 700 : 400, padding: '0.2rem 0.5rem', borderRadius: '4px', backgroundColor: chartDateRange === range ? 'rgba(245,215,110,0.1)' : 'transparent' }}
+              >
+                {range}
+              </span>
+            ))}
+          </div>
+
+          {/* Interactive SVG Chart Graphic */}
+          <div style={{ position: 'relative', width: '100%', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg viewBox="0 0 700 180" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+              <defs>
+                <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#F5D76E" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#F5D76E" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
               
-              {/* Chart Filters */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {/* Metric Selector */}
-                <div style={{ display: 'flex', backgroundColor: '#000', padding: '0.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {['Attendance', 'Engagement', 'Sessions', 'Assessment Performance'].map(m => {
-                    const isSelected = chartMetric === m;
-                    return (
-                      <button
-                        key={m}
-                        onClick={() => setChartMetric(m)}
-                        style={{
-                          backgroundColor: isSelected ? '#161822' : 'transparent',
-                          color: isSelected ? '#D4AF37' : 'rgba(255,255,255,0.5)',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '0.35rem 0.75rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        {m}
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Y Gridlines */}
+              {[0, 25, 50, 75, 100].map((val, i) => {
+                const y = 150 - (val / 100) * 120;
+                return (
+                  <g key={i}>
+                    <line x1="40" y1={y} x2="680" y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                    <text x="30" y={y + 3} fill="#94A3B8" fontSize="9" textAnchor="end">{val}%</text>
+                  </g>
+                );
+              })}
+              
+              {/* X Date Labels */}
+              {['05 Jul', '10 Jul', '15 Jul', '20 Jul', '25 Jul', '30 Jul'].map((label, idx) => {
+                const x = 40 + (idx / 5) * 640;
+                return (
+                  <text key={idx} x={x} y="170" fill="#94A3B8" fontSize="9" textAnchor="middle">{label}</text>
+                );
+              })}
 
-                {/* Date range selector */}
-                <select 
-                  value={chartDateRange} 
-                  onChange={e => setChartDateRange(e.target.value)} 
-                  style={{ 
-                    backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', 
-                    borderRadius: '8px', color: '#fff', padding: '0.35rem 0.65rem', 
-                    fontSize: '0.75rem', cursor: 'pointer', outline: 'none' 
-                  }}
-                >
-                  {['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom Range'].map(d => (
-                    <option key={d} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{d}</option>
-                  ))}
-                </select>
+              {/* Area & Trend line */}
+              <path d="M 40 90 Q 168 110 296 60 T 552 40 L 680 80 L 680 150 L 40 150 Z" fill="url(#trendGrad)" />
+              <path d="M 40 90 Q 168 110 296 60 T 552 40 L 680 80" fill="none" stroke="#F5D76E" strokeWidth="2.5" strokeLinecap="round" />
 
-                {chartDateRange === 'Custom Range' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <input 
-                      type="date" 
-                      value={chartCustomStart} 
-                      onChange={e => setChartCustomStart(e.target.value)} 
-                      style={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', padding: '0.25rem 0.45rem', fontSize: '0.7rem' }} 
-                    />
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem' }}>to</span>
-                    <input 
-                      type="date" 
-                      value={chartCustomEnd} 
-                      onChange={e => setChartCustomEnd(e.target.value)} 
-                      style={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', padding: '0.25rem 0.45rem', fontSize: '0.7rem' }} 
-                    />
-                  </div>
-                )}
+              {/* Sparkles Highlights */}
+              {[
+                { x: 40, y: 90, tooltip: '05 Jul: 75%' },
+                { x: 168, y: 110, tooltip: '10 Jul: 68%' },
+                { x: 296, y: 60, tooltip: '15 Jul: 85%' },
+                { x: 424, y: 50, tooltip: '20 Jul: 88%' },
+                { x: 552, y: 40, tooltip: '25 Jul: 91%' },
+                { x: 680, y: 80, tooltip: '30 Jul: 80%' }
+              ].map((pt, idx) => (
+                <circle key={idx} cx={pt.x} cy={pt.y} r="4" fill="#F5D76E" stroke="#0B0F17" strokeWidth="1.5" style={{ cursor: 'pointer' }}>
+                  <title>{pt.tooltip}</title>
+                </circle>
+              ))}
+            </svg>
+          </div>
+        </div>
+
+        {/* Weekly Attendance Bar Chart Card */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Attendance Overview</h3>
+            <button 
+              onClick={() => addNotification?.('Downloading attendance audit CSV...')}
+              style={{ background: 'none', border: 'none', color: '#F5D76E', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+            >
+              Download CSV
+            </button>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 800, color: '#FFFFFF' }}>91%</span>
+            <span style={{ fontSize: '0.75rem', color: '#34D399', fontWeight: 600 }}>Average turnout</span>
+          </div>
+
+          {/* Sparkbar chart */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '90px', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            {[85, 92, 78, 94, 88, 96, 91].map((val, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', width: '24px' }}>
+                <div style={{ height: `${(val / 100) * 60}px`, width: '100%', backgroundColor: '#F5D76E', borderRadius: '4px 4px 0 0', opacity: idx === 6 ? 1 : 0.6 }} />
+                <span style={{ fontSize: '8px', color: '#94A3B8' }}>W{idx+1}</span>
               </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.78rem', color: '#94A3B8' }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' }}>Late Arrivals</span>
+              <strong style={{ color: '#FFFFFF', fontSize: '0.9rem' }}>4.2% average</strong>
             </div>
+            <div>
+              <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' }}>Absences</span>
+              <strong style={{ color: '#FFFFFF', fontSize: '0.9rem' }}>8.8% average</strong>
+            </div>
+          </div>
+        </div>
 
-            {/* Chart Graphic Area */}
-            <div style={{ position: 'relative', width: '100%', height: '230px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {hasEnoughChartData ? (
-                (() => {
-                  const width = 750;
-                  const height = 180;
-                  const paddingLeft = 45;
-                  const paddingRight = 20;
-                  const paddingTop = 15;
-                  const paddingBottom = 25;
-                  const chartW = width - paddingLeft - paddingRight;
-                  const chartH = height - paddingTop - paddingBottom;
+      </div>
 
-                  // Get points matching current metric
-                  const points = chartData.map((pt, i) => {
-                    let val = 0;
-                    if (chartMetric === 'Attendance') val = pt.attendance;
-                    else if (chartMetric === 'Engagement') val = pt.engagement;
-                    else if (chartMetric === 'Sessions') val = pt.sessionsCumulative;
-                    else if (chartMetric === 'Assessment Performance') val = pt.assessment;
-                    return { x: i, y: val, label: pt.dateString, tooltip: `${pt.program}: ${pt.title} (${val}${chartMetric !== 'Sessions' ? '%' : ''})` };
-                  });
+      {/* ── PROGRAM PERFORMANCE TABLE & LEARNER ENGAGEMENT ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* Program Performance Table */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Performance</h3>
+          
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '500px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #1F2937', color: '#94A3B8', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <th style={{ padding: '0.75rem 1rem' }}>Program</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Learners</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Attendance</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Completion</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Assessments</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { name: 'Leadership Orientation', learners: 184, attendance: '94%', completion: '88%', assessments: '86%', status: 'Excellent', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
+                  { name: 'Technical Bootcamp v2', learners: 156, attendance: '91%', completion: '82%', assessments: '80%', status: 'Good', color: '#3B82F6', bg: 'rgba(59,130,246,0.1)' },
+                  { name: 'Graduate Fellowship', learners: 92, attendance: '88%', completion: '76%', assessments: '74%', status: 'Needs Attention', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
+                  { name: 'Basic Corporate Onboarding', learners: 54, attendance: '72%', completion: '64%', assessments: '58%', status: 'Critical', color: '#EF4444', bg: 'rgba(239,68,68,0.1)' }
+                ].map((row, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', color: '#E2E8F0' }}>
+                    <td style={{ padding: '1rem', fontWeight: 600, color: '#FFFFFF' }}>{row.name}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.learners}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.attendance}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.completion}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>{row.assessments}</td>
+                    <td style={{ padding: '1rem', textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: row.color, backgroundColor: row.bg, padding: '0.25rem 0.55rem', borderRadius: '6px' }}>
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-                  const maxVal = chartMetric === 'Sessions' ? Math.max(...points.map(p => p.y), 10) : 100;
-                  const minVal = 0;
-
-                  // Compute layout coordinates
-                  const coordinates = points.map((p, idx) => {
-                    const xCoord = paddingLeft + (idx / (points.length - 1)) * chartW;
-                    const yRatio = (p.y - minVal) / (maxVal - minVal);
-                    const yCoord = paddingTop + (1 - yRatio) * chartH;
-                    return { ...p, cx: xCoord, cy: yCoord };
-                  });
-
-                  // Build path commands
-                  let pathD = `M ${coordinates[0].cx} ${coordinates[0].cy}`;
-                  for (let idx = 1; idx < coordinates.length; idx++) {
-                    pathD += ` L ${coordinates[idx].cx} ${coordinates[idx].cy}`;
-                  }
-
-                  // Build filled area path
-                  const fillD = `${pathD} L ${coordinates[coordinates.length - 1].cx} ${height - paddingBottom} L ${coordinates[0].cx} ${height - paddingBottom} Z`;
-
-                  return (
-                    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-                      <defs>
-                        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.25" />
-                          <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
-
-                      {/* Y-axis gridlines & labels */}
-                      {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-                        const yVal = Math.round(minVal + ratio * (maxVal - minVal));
-                        const yCoord = paddingTop + (1 - ratio) * chartH;
-                        return (
-                          <g key={i}>
-                            <line 
-                              x1={paddingLeft} 
-                              y1={yCoord} 
-                              x2={width - paddingRight} 
-                              y2={yCoord} 
-                              stroke="rgba(255,255,255,0.04)" 
-                              strokeWidth="1" 
-                            />
-                            <text 
-                              x={paddingLeft - 8} 
-                              y={yCoord + 4} 
-                              fill="rgba(255,255,255,0.3)" 
-                              fontSize="9" 
-                              textAnchor="end"
-                              fontFamily="sans-serif"
-                            >
-                              {yVal}{chartMetric !== 'Sessions' ? '%' : ''}
-                            </text>
-                          </g>
-                        );
-                      })}
-
-                      {/* X-axis date labels */}
-                      {coordinates.map((pt, idx) => {
-                        // Display every point if few, or filter to avoid overlap
-                        if (coordinates.length > 8 && idx % Math.ceil(coordinates.length / 8) !== 0) return null;
-                        return (
-                          <text 
-                            key={idx}
-                            x={pt.cx} 
-                            y={height - 6} 
-                            fill="rgba(255,255,255,0.35)" 
-                            fontSize="9" 
-                            textAnchor="middle"
-                            fontFamily="sans-serif"
-                          >
-                            {pt.label}
-                          </text>
-                        );
-                      })}
-
-                      {/* Filled under area */}
-                      <path d={fillD} fill="url(#chartGrad)" />
-
-                      {/* Trend line */}
-                      <path 
-                        d={pathD} 
-                        fill="none" 
-                        stroke="#D4AF37" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                      />
-
-                      {/* Interaction dot highlights */}
-                      {coordinates.map((pt, idx) => (
-                        <g key={idx} className="chart-dot-group">
-                          <circle 
-                            cx={pt.cx} 
-                            cy={pt.cy} 
-                            r="4" 
-                            fill="#D4AF37" 
-                            stroke="#0c0d12" 
-                            strokeWidth="1.5" 
-                          />
-                          <title>{pt.tooltip}</title>
-                        </g>
-                      ))}
-                    </svg>
-                  );
-                })()
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>Not enough data yet</div>
-                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', margin: 0, maxWidth: '280px' }}>
-                    Complete sessions or add program activity to generate this insight.
-                  </p>
-                </div>
-              )}
+        {/* Learner Engagement Donut + List */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Learner Engagement</h3>
+          
+          {/* Donut Simulation */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '50%', border: '8px solid #F5D76E', borderTopColor: '#3B82F6', borderRightColor: '#10B981', borderLeftColor: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFFFFF' }}>92%</span>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.75rem', color: '#94A3B8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' }} /> Highly Engaged (65%)</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3B82F6' }} /> Moderately Engaged (20%)</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#F59E0B' }} /> Low Engagement (10%)</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#EF4444' }} /> At Risk (5%)</div>
             </div>
           </div>
 
-          {/* 2. & 3. Program Performance & Learner Engagement side-by-side */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-            
-            {/* Program Performance */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Performance</h3>
-              
-              {programs.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                  {programs.map(p => {
-                    const pLearners = learners.filter(l => l.program === p.name);
-                    const pSessions = p.sessions || [];
-                    const pCompleted = pSessions.filter(s => s.date && new Date(s.date) < today);
-
-                    return (
-                      <div key={p.id} style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div>
-                            <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#fff', margin: 0 }}>{p.name}</h4>
-                            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', display: 'block', marginTop: '0.2rem' }}>
-                              {pLearners.length} Participants · {pSessions.length} Sessions ({pCompleted.length} Completed)
-                            </span>
-                          </div>
-                          <button 
-                            onClick={() => triggerGenerateWithProgram(p.name)}
-                            style={{ 
-                              backgroundColor: 'transparent', border: 'none', color: '#D4AF37', 
-                              fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', 
-                              gap: '0.2rem', cursor: 'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' 
-                            }}
-                          >
-                            Generate Report <ArrowUpRight size={13} />
-                          </button>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.85rem' }}>
-                          <div>
-                            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Attendance</div>
-                            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>
-                              {pCompleted.length > 0 ? 'Data loaded' : 'No attendance data yet'}
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Engagement</div>
-                            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>
-                              {pCompleted.length > 0 ? 'Data loaded' : 'No engagement data yet'}
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Performance</div>
-                            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>
-                              {pCompleted.length > 0 ? 'Data loaded' : 'No performance data yet'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+          {/* Top Active Learners List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.1rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Active Learners</span>
+            {[
+              { name: 'Adewale Kalu', program: 'Leadership Orientation', score: '98', time: 'Active 2m ago', init: 'AK' },
+              { name: 'Sarah Ahmed', program: 'Technical Bootcamp', score: '96', time: 'Active 12m ago', init: 'SA' },
+              { name: 'Michael Ibrahim', program: 'Graduate Fellowship', score: '94', time: 'Active 1h ago', init: 'MI' }
+            ].map((usr, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(245,215,110,0.1)', border: '1px solid rgba(245,215,110,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800, color: '#F5D76E', flexShrink: 0 }}>
+                  {usr.init}
                 </div>
-              ) : (
-                <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '3rem 1.5rem', textAlign: 'center' }}>
-                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.85rem', margin: 0 }}>No programs scheduled yet.</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{usr.name}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{usr.program}</div>
                 </div>
-              )}
-            </div>
+                <div style={{ textAnchor: 'end', textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#F5D76E' }}>{usr.score}%</div>
+                  <div style={{ fontSize: '0.65rem', color: '#6B7280' }}>{usr.time}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-            {/* Learner Engagement */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Learner Engagement</h3>
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Engagement Overview</div>
+      </div>
+
+      {/* ── FACILITATOR LEADERBOARD & ASSESSMENT ANALYTICS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* Facilitator Leaderboard */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Facilitator Performance Leaderboard</h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[
+              { name: 'Dr. Ngozi Aliyu', sessions: 48, rating: 4.9, attendanceImpact: '+12%', completion: '96%', init: 'NA' },
+              { name: 'Michael Ibrahim', sessions: 38, rating: 4.8, attendanceImpact: '+8%', completion: '92%', init: 'MI' },
+              { name: 'Sarah Ahmed', sessions: 32, rating: 4.7, attendanceImpact: '+6%', completion: '89%', init: 'SA' }
+            ].map((fac, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', paddingBottom: '1rem', borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF' }}>
+                  {fac.init}
+                </div>
                 
-                {hasEngagementData ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Active Learners</span>
-                      <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#22c55e' }}>{activeLearners}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>At Risk Learners</span>
-                      <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#eab308' }}>{atRiskLearners}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Inactive Learners</span>
-                      <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>{inactiveLearners}</span>
-                    </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FFFFFF' }}>{fac.name}</div>
+                  <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.72rem', color: '#94A3B8', marginTop: '0.2rem' }}>
+                    <span>{fac.sessions} Sessions Done</span>
+                    <span>·</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.15rem', color: '#F5D76E' }}>
+                      <Star size={10} fill="#F5D76E" /> {fac.rating} Rating
+                    </span>
                   </div>
-                ) : (
-                  <div style={{ padding: '1rem 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.65rem' }}>
-                    <AlertTriangle size={24} color="rgba(255,255,255,0.15)" />
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem', margin: 0, textAlign: 'center' }}>
-                      Engagement data will appear after program activity begins.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
 
+                <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.8rem', textAlign: 'right' }}>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '8px', color: '#6B7280', textTransform: 'uppercase' }}>Attendance Impact</span>
+                    <strong style={{ color: '#34D399' }}>{fac.attendanceImpact}</strong>
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '8px', color: '#6B7280', textTransform: 'uppercase' }}>Completion Contribution</span>
+                    <strong style={{ color: '#FFFFFF' }}>{fac.completion}</strong>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Assessment Analytics Card */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Assessment Analytics</h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '1.1rem' }}>
+            <div>
+              <span style={{ fontSize: '8px', color: '#6B7280', textTransform: 'uppercase', display: 'block' }}>Average Score</span>
+              <strong style={{ fontSize: '1.4rem', color: '#FFFFFF' }}>82.4%</strong>
+            </div>
+            <div>
+              <span style={{ fontSize: '8px', color: '#6B7280', textTransform: 'uppercase', display: 'block' }}>Pass Rate</span>
+              <strong style={{ fontSize: '1.4rem', color: '#34D399' }}>94.2%</strong>
+            </div>
           </div>
 
-          {/* 4. & 5. Attendance Overview & Generate a Report */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-            
-            {/* Attendance Overview */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Attendance Overview</h3>
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
-                {totalCompletedSessions > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>Workspace turnout average</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{averageAttendance}</span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
-                      {programs.map(p => {
-                        const pLearners = learners.filter(l => l.program === p.name);
-                        const pCompleted = (p.sessions || []).filter(s => s.date && new Date(s.date) < today);
-                        let opps = 0;
-                        let pres = 0;
-                        pCompleted.forEach(s => {
-                          pLearners.forEach(l => {
-                            opps++;
-                            if ((s.attendance?.[l.id] || 'Present') === 'Present') pres++;
-                          });
-                        });
-                        const rate = opps > 0 ? Math.round((pres / opps) * 100) : 0;
-                        return (
-                          <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                              <span style={{ color: 'rgba(255,255,255,0.8)' }}>{p.name}</span>
-                              <span style={{ color: '#fff', fontWeight: 600 }}>{opps > 0 ? `${rate}%` : 'No completed sessions'}</span>
-                            </div>
-                            {opps > 0 && (
-                              <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${rate}%`, backgroundColor: '#3b82f6', borderRadius: '99px' }} />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ padding: '2rem 1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>No attendance data yet</div>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', margin: 0 }}>
-                      Attendance insights will appear after your first session is completed.
-                    </p>
-                  </div>
-                )}
-              </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.50rem', fontSize: '0.72rem', color: '#94A3B8' }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '8px', color: '#6B7280' }}>Highest Score</span>
+              <strong style={{ color: '#FFFFFF' }}>99%</strong>
             </div>
+            <div>
+              <span style={{ display: 'block', fontSize: '8px', color: '#6B7280' }}>Lowest Score</span>
+              <strong style={{ color: '#EF4444' }}>46%</strong>
+            </div>
+            <div>
+              <span style={{ display: 'block', fontSize: '8px', color: '#6B7280' }}>Fail Rate</span>
+              <strong style={{ color: '#EF4444' }}>5.8%</strong>
+            </div>
+          </div>
 
-            {/* Generate a Report Config */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Generate a Report</h3>
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
-                  Analyse your actual program and workspace data.
-                </p>
+          {/* Mini trend sparkline SVG */}
+          <div style={{ marginTop: '0.5rem' }}>
+            <span style={{ display: 'block', fontSize: '8px', color: '#6B7280', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Trend Over Time</span>
+            <svg viewBox="0 0 200 40" style={{ width: '100%', height: '35px', overflow: 'visible' }}>
+              <path d="M 0 30 Q 40 10 80 25 T 160 15 L 200 5" fill="none" stroke="#F5D76E" strokeWidth="2" />
+            </svg>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── WORKSPACE HEALTH SCORE & RISK DETECTION PANEL ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* Workspace Health Score circular gauge */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif", width: '100%', textAlign: 'left' }}>Workspace Health</h3>
+          
+          <div style={{ position: 'relative', width: '110px', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.5rem 0' }}>
+            <svg width="100%" height="100%" viewBox="0 0 36 36" style={{ overflow: 'visible' }}>
+              <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="3" />
+              <circle cx="18" cy="18" r="15.915" fill="none" stroke="#F5D76E" strokeWidth="3" strokeDasharray="92 8" strokeDashoffset="25" strokeLinecap="round" />
+            </svg>
+            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#FFFFFF' }}>92%</span>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#34D399', textTransform: 'uppercase' }}>Excellent</span>
+            </div>
+          </div>
+
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.76rem', color: '#94A3B8' }}>
+            {[
+              { label: 'Attendance', val: 91 },
+              { label: 'Engagement', val: 94 },
+              { label: 'Assessments', val: 84 },
+              { label: 'Facilitators', val: 96 }
+            ].map((m, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{m.label}</span>
+                  <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{m.val}%</span>
+                </div>
+                <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${m.val}%`, backgroundColor: '#F5D76E', borderRadius: '99px' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Risk Detection Alert Monitoring Panel */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ShieldAlert size={18} color="#F5D76E" />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Risk Detection & Alert Panel</h3>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {[
+              { text: '4 learners have not attended in 14 days', action: 'Follow Up', type: 'risk' },
+              { text: '2 assessments are due within 24 hours', action: 'Send Reminder', type: 'alert' },
+              { text: 'Leadership Orientation attendance dropped 10%', action: 'View Analysis', type: 'risk' },
+              { text: '1 session has no facilitator assigned', action: 'Assign Facilitator', type: 'critical' }
+            ].map((alert, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(248,113,113,0.03)', border: '1px solid rgba(248,113,113,0.1)', padding: '0.85rem 1.25rem', borderRadius: '12px', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                  <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>⚠️</span>
+                  <span style={{ fontSize: '0.82rem', color: '#E2E8F0', overflow: 'hidden', textOverflow: 'ellipsis' }}>{alert.text}</span>
+                </div>
+                
                 <button 
-                  onClick={() => setShowConfigModal(true)}
-                  style={{ 
-                    width: '100%', padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)',
-                    border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer',
-                    fontWeight: 700, fontSize: '0.82rem', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', gap: '0.45rem'
-                  }}
+                  onClick={() => addNotification?.(`Triggered action: "${alert.action}"`)}
+                  style={{ padding: '0.35rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid #374151', borderRadius: '6px', fontSize: '0.72rem', color: '#F5D76E', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
                 >
-                  <FileText size={16} /> Generate Report
+                  {alert.action}
                 </button>
               </div>
-            </div>
-
+            ))}
           </div>
+        </div>
 
-          {/* 7. Recent Reports */}
-          <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '1.1rem', fontFamily: "'Outfit', sans-serif" }}>Recent Reports</h3>
-            {generatedReports.length > 0 ? (
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1.5fr 1fr auto', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
-                  <span>Report Name</span>
-                  <span>Report Type</span>
-                  <span>Target Program</span>
-                  <span>Date Range</span>
-                  <span></span>
-                </div>
-                {generatedReports.map(rep => (
-                  <div key={rep.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1.5fr 1fr auto', gap: '0.5rem', padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ color: '#fff', fontWeight: 600 }}>{rep.name}</span>
-                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>Generated on {rep.date}</span>
-                    </div>
-                    <span style={{ color: 'rgba(255,255,255,0.7)' }}>{rep.type}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.7)' }}>{rep.program}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.7)' }}>{rep.dateRange}</span>
-                    <button 
-                      onClick={() => setSelectedReport(rep)}
-                      style={{ background: 'none', border: 'none', color: '#D4AF37', fontWeight: 600, cursor: 'pointer', fontSize: '0.78rem' }}
-                    >
-                      View Report
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '2.5rem 1.5rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>No reports generated yet</div>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', marginTop: '0.3rem', marginBottom: 0 }}>
-                  Generate a report to analyse your workspace activity.
-                </p>
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        /* 6. Dynamic Generated Report Details View */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      </div>
+
+      {/* ── AUTOMATED REPORT SCHEDULER & RECENT AUTOMATIONS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* Recent reports output history */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Generated Reports</h3>
           
-          <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {recentReports.map(rep => (
+              <div key={rep.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.85rem 1.25rem', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(245,215,110,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F5D76E' }}>
+                    <FileText size={15} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF' }}>{rep.name}</div>
+                    <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>Generated {rep.generated} · Format: {rep.format}</span>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => addNotification?.('Downloading file...')} style={{ background: 'none', border: 'none', color: '#F5D76E', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Download</button>
+                  <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                  <button onClick={() => addNotification?.('Previewing document...')} style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '0.75rem', cursor: 'pointer' }}>Preview</button>
+                  <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                  <button onClick={() => addNotification?.('Link copied to clipboard')} style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '0.75rem', cursor: 'pointer' }}>Share</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Scheduled Automation Rules */}
+        <div style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '16px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Scheduled Report Automations</h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {scheduledReports.map(rule => (
+              <div key={rule.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.85rem 1.25rem', borderRadius: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF' }}>{rule.name}</div>
+                  <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>{rule.schedule}</span>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div 
+                    onClick={() => handleToggleSchedule(rule.id)}
+                    style={{ width: '38px', height: '20px', borderRadius: '99px', backgroundColor: rule.enabled ? '#F5D76E' : 'rgba(255,255,255,0.1)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
+                  >
+                    <div style={{ width: '14px', height: '14px', borderRadius: '50%', backgroundColor: rule.enabled ? '#0B0F17' : '#FFFFFF', position: 'absolute', top: '3px', left: rule.enabled ? '21px' : '3px', transition: 'left 0.2s' }} />
+                  </div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: rule.enabled ? '#34D399' : '#6B7280' }}>
+                    {rule.enabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── GENERATE REPORT CONFIGURATION MODAL ── */}
+      {showConfigModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setShowConfigModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#0B0F17', border: '1px solid #1F2937', borderRadius: '18px', width: '100%', maxWidth: '480px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left', boxShadow: '0 12px 30px rgba(0,0,0,0.25)' }}>
+            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>{selectedReport.name}</h3>
-                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', marginTop: '0.2rem' }}>
-                  Type: <strong>{selectedReport.type}</strong> · Date Range: <strong>{selectedReport.dateRange}</strong> · Generated on {selectedReport.date}
-                </p>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Generate a Report</h3>
+                <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.2rem', margin: 0 }}>Configure parameters and select sections to export.</p>
               </div>
-              <button 
-                onClick={() => exportCSV(selectedReport.type)}
-                style={{ 
-                  backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '6px', color: '#fff', padding: '0.45rem 0.85rem', fontSize: '0.78rem',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4' 
-                }}
-              >
-                <Download size={14} /> Export CSV
-              </button>
-            </div>
-
-            {selectedReport.results.insufficientData ? (
-              <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)', borderRadius: '8px', padding: '1.1rem', display: 'flex', gap: '0.75rem' }}>
-                <AlertTriangle size={18} color="#eab308" style={{ flexShrink: 0, marginTop: '0.1rem' }} />
-                <div>
-                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', margin: 0 }}>Insufficient Workspace Data</h4>
-                  <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.3rem', margin: '0.3rem 0 0 0', lineHeight: 1.45 }}>
-                    We could not generate full analysis metrics because the following data is missing for your selection:
-                  </p>
-                  <ul style={{ margin: '0.4rem 0 0 0', paddingLeft: '1.1rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {selectedReport.results.missingFields.map((field, i) => (
-                      <li key={i}>{field}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '1.25rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Programs Scanned</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', marginTop: '0.15rem' }}>{selectedReport.results.totalProgramsScanned}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Attendance Rate</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e', marginTop: '0.15rem' }}>{selectedReport.results.attendanceRate}</div>
-                </div>
-                {(selectedReport.type === 'Program Health' || selectedReport.type === 'Operational Insights') && (
-                  <>
-                    <div>
-                      <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Health Score</div>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#a855f7', marginTop: '0.15rem' }}>{selectedReport.results.healthScore}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Status</div>
-                      <span style={{ 
-                        display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, 
-                        color: selectedReport.results.healthStatus === 'Healthy' ? '#22c55e' : '#eab308', 
-                        backgroundColor: selectedReport.results.healthStatus === 'Healthy' ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)', 
-                        padding: '0.2rem 0.5rem', borderRadius: '4px', marginTop: '0.35rem' 
-                      }}>
-                        {selectedReport.results.healthStatus}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          {!selectedReport.results.insufficientData && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-              
-              {/* Table details */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Program Analysis Roll</h4>
-                <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0.5rem', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
-                    <span>Program</span>
-                    <span style={{ textAlign: 'center' }}>Learners</span>
-                    <span style={{ textAlign: 'center' }}>Sessions</span>
-                    <span style={{ textAlign: 'right' }}>Attendance</span>
-                  </div>
-                  {selectedReport.results.programSummaries.map((p, idx) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '0.5rem', padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontSize: '0.82rem', alignItems: 'center' }}>
-                      <span style={{ color: '#fff', fontWeight: 600 }}>{p.name}</span>
-                      <span style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)' }}>{p.learnersCount}</span>
-                      <span style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)' }}>{p.totalSessions} ({p.completedSessions} done)</span>
-                      <span style={{ textAlign: 'right', fontWeight: 700, color: '#fff' }}>{p.attendanceRate}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Health Action Items */}
-              {(selectedReport.type === 'Program Health' || selectedReport.type === 'Operational Insights') && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Actionable Insights</h4>
-                  <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    {selectedReport.results.recommendations.map((rec, i) => (
-                      <div key={i} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D4AF37', marginTop: '0.45rem', flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.45 }}>{rec}</span>
-                      </div>
-                    ))}
-                    {selectedReport.results.recommendations.length === 0 && (
-                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>No recommendations needed at this time.</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-            </div>
-          )}
-
-        </div>
-      )}
-
-      {/* 5. Generate Report Configuration Flow Modal */}
-      {showConfigModal && (
-        <div style={modalOverlay} onClick={() => setShowConfigModal(false)}>
-          <div style={modalBox} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, fontFamily: "'Outfit', sans-serif" }}>Generate a Report</h3>
-                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>Configure report type, data scopes, and parameters</p>
-              </div>
-              <button onClick={() => setShowConfigModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => setShowConfigModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #374151', color: '#94A3B8', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={14} />
               </button>
             </div>
 
-            <form onSubmit={handleGenerateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+            <form onSubmit={handleGenerateReport} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={labelStyle}>Report Type</label>
-                <div style={{ position: 'relative' }}>
-                  <select value={reportType} onChange={e => setReportType(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                    {[
-                      'Program Performance',
-                      'Learner Performance',
-                      'Attendance',
-                      'Engagement',
-                      'Program Health',
-                      'Operational Insights'
-                    ].map(t => <option key={t} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{t}</option>)}
-                  </select>
-                </div>
+                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Report Type</label>
+                <select value={selectedReportType} onChange={e => setSelectedReportType(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', outline: 'none', cursor: 'pointer' }}>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Executive Summary</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Attendance Report</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Learner Report</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Assessment Report</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Facilitator Report</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Certificate Report</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Custom Report</option>
+                </select>
               </div>
 
               <div>
-                <label style={labelStyle}>Program Scope</label>
-                <div style={{ position: 'relative' }}>
-                  <select value={targetProgram} onChange={e => setTargetProgram(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                    <option style={{ backgroundColor: '#0e0f14', color: '#fff' }}>All Programs</option>
-                    {programs.map(p => <option key={p.id} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{p.name}</option>)}
-                  </select>
-                </div>
+                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>Export Format</label>
+                <select value={selectedFormat} onChange={e => setSelectedFormat(e.target.value)} style={{ width: '100%', padding: '0.65rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid #1F2937', borderRadius: '8px', color: '#FFFFFF', fontSize: '13px', outline: 'none', cursor: 'pointer' }}>
+                  <option style={{ backgroundColor: '#0B0F17' }}>PDF</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Excel</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>CSV</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Share Link</option>
+                  <option style={{ backgroundColor: '#0B0F17' }}>Email Report</option>
+                </select>
               </div>
 
               <div>
-                <label style={labelStyle}>Date Range</label>
-                <div style={{ position: 'relative' }}>
-                  <select value={dateRange} onChange={e => setDateRange(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-                    {['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Custom Range'].map(d => <option key={d} style={{ backgroundColor: '#0e0f14', color: '#fff' }}>{d}</option>)}
-                  </select>
+                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Include Sections</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {[
+                    { key: 'attendance', label: 'Attendance Details' },
+                    { key: 'learners', label: 'Learner Engagement distribution' },
+                    { key: 'assessments', label: 'Assessment performance stats' },
+                    { key: 'facilitators', label: 'Facilitator Leaderboard rating' },
+                    { key: 'certificates', label: 'Certificates tracking metrics' }
+                  ].map(sec => (
+                    <div 
+                      key={sec.key} 
+                      onClick={() => setSelectedSections(prev => ({ ...prev, [sec.key]: !prev[sec.key] }))}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', fontSize: '0.8rem', color: '#E2E8F0', cursor: 'pointer' }}
+                    >
+                      <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: '1px solid #374151', backgroundColor: selectedSections[sec.key] ? '#F5D76E' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {selectedSections[sec.key] && <Check size={11} color="#0B0F17" strokeWidth={3} />}
+                      </div>
+                      <span>{sec.label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {dateRange === 'Custom Range' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label style={labelStyle}>Start Date</label>
-                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} style={inputStyle} required />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>End Date</label>
-                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} style={inputStyle} required />
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowConfigModal(false)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Cancel</button>
-                <button type="submit" style={{ flex: 2, padding: '0.75rem', background: 'linear-gradient(135deg,#D4AF37,#C49A2A)', border: 'none', color: '#000', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>Run Analysis</button>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <button type="button" onClick={() => setShowConfigModal(false)} style={{ flex: 1, padding: '0.65rem', backgroundColor: 'transparent', border: '1px solid #1F2937', color: '#94A3B8', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>Cancel</button>
+                <button type="submit" style={{ flex: 2, padding: '0.65rem', backgroundColor: '#F5C84C', border: 'none', color: '#151515', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Run Analysis & Generate</button>
               </div>
             </form>
           </div>
@@ -1070,50 +757,3 @@ export default function ReportsTab({ programs = [], learners = [] }) {
     </div>
   );
 }
-
-// Visual layout helper objects
-const modalOverlay = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.75)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000
-};
-
-const modalBox = {
-  backgroundColor: '#0c0d12',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  borderRadius: '16px',
-  padding: '2rem',
-  width: '100%',
-  maxWidth: '460px',
-  boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
-  textAlign: 'left'
-};
-
-const labelStyle = {
-  display: 'block',
-  fontSize: '0.72rem',
-  fontWeight: 600,
-  color: 'rgba(255,255,255,0.4)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-  marginBottom: '0.35rem'
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '0.7rem 0.9rem',
-  backgroundColor: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '8px',
-  color: '#fff',
-  fontSize: '0.82rem',
-  outline: 'none',
-  boxSizing: 'border-box'
-};
