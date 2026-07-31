@@ -153,6 +153,21 @@ export default function App() {
     }
   });
 
+  const assignedSessions = useMemo(() => {
+    if (userRole !== 'Facilitator' || !user) return [];
+    const list = [];
+    wsPrograms.forEach(prog => {
+      if (prog.sessions && Array.isArray(prog.sessions)) {
+        prog.sessions.forEach(sess => {
+          if ((sess.facilitatorEmail || '').toLowerCase().trim() === user.toLowerCase().trim()) {
+            list.push({ ...sess, programName: prog.name, programId: prog.id });
+          }
+        });
+      }
+    });
+    return list;
+  }, [wsPrograms, user, userRole]);
+
   // Sync team and invitations to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('oyen_ws_team', JSON.stringify(wsTeam));
@@ -1759,21 +1774,6 @@ export default function App() {
     const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
     const displayInbox = getInboxForUser(user, userRole, wsPrograms);
 
-    const assignedSessions = React.useMemo(() => {
-      if (userRole !== 'Facilitator' || !user) return [];
-      const list = [];
-      wsPrograms.forEach(prog => {
-        if (prog.sessions && Array.isArray(prog.sessions)) {
-          prog.sessions.forEach(sess => {
-            if ((sess.facilitatorEmail || '').toLowerCase().trim() === user.toLowerCase().trim()) {
-              list.push({ ...sess, programName: prog.name, programId: prog.id });
-            }
-          });
-        }
-      });
-      return list;
-    }, [wsPrograms, user, userRole]);
-
     return (
       <div className="dashboard-root" style={{
         display: 'flex',
@@ -2252,7 +2252,7 @@ export default function App() {
               ) : activeTab === 'Notifications' ? (
                 <FacilitatorNotifications />
               ) : activeTab === 'Profile' ? (
-                <FacilitatorProfile currentUserEmail={user} />
+                <FacilitatorProfile userInfo={getLoggedInUserInfo()} />
               ) : (
                 <div style={{ padding: '2.5rem', color: '#EF4444' }}>Unauthorized route access denied.</div>
               )
