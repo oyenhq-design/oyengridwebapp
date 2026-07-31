@@ -5,9 +5,7 @@ import {
   Sparkles, Check, List, ShieldAlert, Award, FileSpreadsheet, Share2, Copy, Eye
 } from 'lucide-react';
 
-import SessionsTabFacilitator from './SessionsTabFacilitator';
-
-export default function SessionsTab(props) {
+export default function AdminSessions(props) {
   const { 
     programs = [], 
     setPrograms, 
@@ -17,10 +15,6 @@ export default function SessionsTab(props) {
     userRole,
     teamMembers = []
   } = props;
-
-  if (userRole !== 'Admin') {
-    return <SessionsTabFacilitator {...props} />;
-  }
 
   const [selectedProgId, setSelectedProgId] = useState(() => {
     return programs.length > 0 ? programs[0].id : null;

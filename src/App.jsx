@@ -23,7 +23,14 @@ import SignInForm from './components/SignInForm';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
-import SessionsTab from './components/SessionsTab';
+import AdminSidebar from './components/admin/AdminSidebar';
+import FacilitatorSidebar from './components/facilitator/FacilitatorSidebar';
+import AdminSessions from './components/admin/AdminSessions';
+import FacilitatorSessions from './components/facilitator/FacilitatorSessions';
+import FacilitatorDashboard from './components/facilitator/FacilitatorDashboard';
+import FacilitatorResources from './components/facilitator/FacilitatorResources';
+import FacilitatorNotifications from './components/facilitator/FacilitatorNotifications';
+import FacilitatorProfile from './components/facilitator/FacilitatorProfile';
 import oyenLogo from './assets/logo_v2.png';
 import onboardingBg from './assets/onboarding_bg_v2.png';
 import dashboardHeroIllustration from './assets/dashboard_hero_illustration.jpg';
@@ -1752,6 +1759,21 @@ export default function App() {
     const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
     const displayInbox = getInboxForUser(user, userRole, wsPrograms);
 
+    const assignedSessions = React.useMemo(() => {
+      if (userRole !== 'Facilitator' || !user) return [];
+      const list = [];
+      wsPrograms.forEach(prog => {
+        if (prog.sessions && Array.isArray(prog.sessions)) {
+          prog.sessions.forEach(sess => {
+            if ((sess.facilitatorEmail || '').toLowerCase().trim() === user.toLowerCase().trim()) {
+              list.push({ ...sess, programName: prog.name, programId: prog.id });
+            }
+          });
+        }
+      });
+      return list;
+    }, [wsPrograms, user, userRole]);
+
     return (
       <div className="dashboard-root" style={{
         display: 'flex',
@@ -2126,46 +2148,19 @@ export default function App() {
           }}>
             {/* Navigation links */}
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              {sidebarItems.map((item) => {
-                const isActive = (item.id === 'Welcome' && isWelcome) || (item.id === activeTab);
-                return (
-                  <div 
-                    key={item.id}
-                    onClick={() => triggerTransition(() => setActiveTab(item.id))}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.85rem',
-                      padding: '0.75rem 1rem',
-                      margin: '0 0.5rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      fontWeight: isActive ? 600 : 500,
-                      color: isActive ? '#151515' : '#a0aec0',
-                      background: isActive ? '#F5C84C' : 'transparent',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = '#fff';
-                        e.currentTarget.style.background = 'rgba(245, 200, 76, 0.05)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = '#a0aec0';
-                        e.currentTarget.style.background = 'transparent';
-                      }
-                    }}
-                  >
-                    <span style={{ color: isActive ? '#151515' : '#718096' }}>
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
-                  </div>
-                );
-              })}
+              {userRole === 'Facilitator' ? (
+                <FacilitatorSidebar 
+                  activeTab={activeTab} 
+                  onTabSelect={(tab) => triggerTransition(() => setActiveTab(tab))} 
+                  isWelcome={isWelcome} 
+                />
+              ) : (
+                <AdminSidebar 
+                  activeTab={activeTab} 
+                  onTabSelect={(tab) => triggerTransition(() => setActiveTab(tab))} 
+                  isWelcome={isWelcome} 
+                />
+              )}
             </nav>
 
             {/* Bottom Profile card widget */}
@@ -2221,39 +2216,46 @@ export default function App() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#EEEAE4', backgroundImage: 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.04), transparent 50%)', overflowY: 'auto' }}>
             
             {/* Conditional content based on activeTab */}
-            {userRole === 'Facilitator' && activeSession ? (
-              <SessionDetail 
-                session={activeSession}
-                onBack={() => setActiveSession(null)}
-                addNotification={addNotification}
-                onUpdateStatus={(newStatus) => {
-                  setWsPrograms(prev => {
-                    const next = updateSessionStatus(prev, activeSession.programId, activeSession.id, newStatus);
-                    const updatedProg = next.find(p => p.id === activeSession.programId);
-                    const updatedSess = updatedProg?.sessions?.find(s => s.id === activeSession.id);
-
-                    localStorage.setItem('oyen_ws_programs', JSON.stringify(next));
-                    return next;
-                  });
-                }}
-                learners={wsLearners.filter(l => l.program === activeSession.programName)}
-                programResources={wsPrograms.find(p => p.id === activeSession.programId)?.resources || []}
-                sessionResources={activeSession.resources || []}
-              />
-            ) : showFacilitatorOverview ? (
-              <FacilitatorOverview 
-                info={getLoggedInUserInfo()} 
-                programs={displayPrograms} 
-                learners={wsLearners}
-                announcements={displayInbox}
-                notifications={facilitatorNotifications}
-                onNavigate={setActiveTab} 
-                addNotification={addNotification}
-                onSelectSession={(s) => {
-                  setActiveSession(s);
-                  setActiveTab('Sessions');
-                }}
-              />
+            {userRole === 'Facilitator' ? (
+              activeSession ? (
+                <SessionDetail 
+                  session={activeSession}
+                  onBack={() => setActiveSession(null)}
+                  addNotification={addNotification}
+                  onUpdateStatus={(newStatus) => {
+                    setWsPrograms(prev => {
+                      const next = updateSessionStatus(prev, activeSession.programId, activeSession.id, newStatus);
+                      localStorage.setItem('oyen_ws_programs', JSON.stringify(next));
+                      return next;
+                    });
+                  }}
+                  learners={wsLearners.filter(l => l.program === activeSession.programName)}
+                  programResources={wsPrograms.find(p => p.id === activeSession.programId)?.resources || []}
+                  sessionResources={activeSession.resources || []}
+                />
+              ) : activeTab === 'Overview' ? (
+                <FacilitatorDashboard
+                  assignedSessions={assignedSessions}
+                  programs={displayPrograms}
+                  currentUserEmail={user}
+                />
+              ) : activeTab === 'Sessions' ? (
+                <FacilitatorSessions
+                  programs={displayPrograms}
+                  setPrograms={setWsPrograms}
+                  learners={wsLearners}
+                  addNotification={addNotification}
+                  currentUserEmail={user}
+                />
+              ) : activeTab === 'Resources' ? (
+                <FacilitatorResources />
+              ) : activeTab === 'Notifications' ? (
+                <FacilitatorNotifications />
+              ) : activeTab === 'Profile' ? (
+                <FacilitatorProfile currentUserEmail={user} />
+              ) : (
+                <div style={{ padding: '2.5rem', color: '#EF4444' }}>Unauthorized route access denied.</div>
+              )
             ) : showTeamMemberOverview ? (
               <TeamMemberOverview 
                 info={getLoggedInUserInfo()} 
@@ -2688,17 +2690,27 @@ export default function App() {
               />
             ) : activeTab === 'Sessions' ? (
               /* Sessions Tab Component */
-              <SessionsTab
-                programs={displayPrograms}
-                setPrograms={setWsPrograms}
-                learners={wsLearners}
-                addNotification={addNotification}
-                onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
-                userRole={userRole}
-                onSelectSession={setActiveSession}
-                teamMembers={wsTeam}
-                currentUserEmail={user}
-              />
+              userRole === 'Facilitator' ? (
+                <FacilitatorSessions
+                  programs={displayPrograms}
+                  setPrograms={setWsPrograms}
+                  learners={wsLearners}
+                  addNotification={addNotification}
+                  currentUserEmail={user}
+                />
+              ) : (
+                <AdminSessions
+                  programs={displayPrograms}
+                  setPrograms={setWsPrograms}
+                  learners={wsLearners}
+                  addNotification={addNotification}
+                  onNavigateToPrograms={() => triggerTransition(() => setActiveTab('Programmes'))}
+                  userRole={userRole}
+                  onSelectSession={setActiveSession}
+                  teamMembers={wsTeam}
+                  currentUserEmail={user}
+                />
+              )
             ) : activeTab === 'Reports' ? (
               /* Reports Tab Component */
               <ReportsTab

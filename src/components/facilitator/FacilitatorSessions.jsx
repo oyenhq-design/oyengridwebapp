@@ -4,7 +4,7 @@ import {
   MoreVertical, Download, Search, Sparkles, CheckSquare, MessageSquare, ClipboardList, Upload, File, List, Eye, Video
 } from 'lucide-react';
 
-export default function SessionsTabFacilitator({ 
+export default function FacilitatorSessions({ 
   programs = [], 
   setPrograms, 
   learners = [], 
