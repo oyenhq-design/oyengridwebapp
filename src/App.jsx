@@ -2697,6 +2697,7 @@ export default function App() {
                 userRole={userRole}
                 onSelectSession={setActiveSession}
                 teamMembers={wsTeam}
+                currentUserEmail={user}
               />
             ) : activeTab === 'Reports' ? (
               /* Reports Tab Component */
