@@ -3578,8 +3578,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Floating Workspace Chat Button & Drawer Overlay for Facilitator Workspace */}
-            {userRole === 'Facilitator' && (
+            {/* Floating Workspace Chat Button & Drawer Overlay for Workspace Users (Facilitators & Admins) */}
+            {(userRole === 'Facilitator' || userRole === 'Workspace Super Admin' || userRole === 'Admin' || userRole === 'Program Manager') && (
               <>
                 {/* Floating Workspace Chat Button */}
                 <button
