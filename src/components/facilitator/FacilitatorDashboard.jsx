@@ -6,11 +6,13 @@ import {
 
 export default function FacilitatorDashboard({ 
   assignedSessions = [], 
+  assignedResources = [],
   programs = [], 
   currentUserEmail, 
   userInfo, 
   onNavigate, 
-  onSelectSession 
+  onSelectSession,
+  onOpenChatDrawer
 }) {
 
   const facilitatorName = userInfo?.fullName?.split(' ')[0] || currentUserEmail?.split('@')[0] || 'Facilitator';
@@ -446,7 +448,7 @@ export default function FacilitatorDashboard({
                 </p>
               </div>
               <button 
-                onClick={() => onNavigate('Inbox')}
+                onClick={onOpenChatDrawer}
                 style={{ 
                   background: 'none', 
                   border: 'none', 

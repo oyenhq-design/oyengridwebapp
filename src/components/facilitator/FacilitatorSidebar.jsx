@@ -1,12 +1,11 @@
 import React from 'react';
-import { Home, Calendar, BookOpen, Bell, User, MessageSquare } from 'lucide-react';
+import { Home, Calendar, BookOpen, Bell, User } from 'lucide-react';
 
 export default function FacilitatorSidebar({ activeTab, onTabSelect, isWelcome }) {
   const sidebarItems = [
     { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
     { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
     { id: 'Resources', label: 'Resources', icon: <BookOpen size={18} /> },
-    { id: 'Inbox', label: 'Inbox', icon: <MessageSquare size={18} /> },
     { id: 'Notifications', label: 'Notifications', icon: <Bell size={18} /> },
     { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
   ];
