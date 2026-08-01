@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Play, BookOpen, MessageSquare, Bell, User, Calendar, CheckCircle2, 
-  AlertCircle, ArrowRight, RefreshCw, Clock, ExternalLink, ChevronRight
+  AlertCircle, ArrowRight, RefreshCw, Clock, ExternalLink, ChevronRight,
+  MessageCircle, X, Send, Paperclip, Search
 } from 'lucide-react';
 
 export default function FacilitatorDashboard({ 
@@ -15,6 +16,34 @@ export default function FacilitatorDashboard({
 }) {
 
   const facilitatorName = userInfo?.fullName || currentUserEmail?.split('@')[0] || 'Facilitator';
+
+  // Drawer Chat Overlay States
+  const [isDrawerChatOpen, setIsDrawerChatOpen] = useState(false);
+  const [drawerChatSearch, setDrawerChatSearch] = useState('');
+  const [activeDrawerChatId, setActiveDrawerChatId] = useState(null);
+  const [drawerMessageText, setDrawerMessageText] = useState('');
+  const [drawerConversations, setDrawerConversations] = useState([
+    {
+      id: 'admin',
+      name: 'Workspace Administrator',
+      role: 'Admin',
+      online: true,
+      unread: true,
+      messages: [
+        { id: 'dm1', sender: 'admin', text: 'Hey there! Let me know if you have any questions about safety checklists.', time: '12:30 PM' }
+      ]
+    },
+    {
+      id: 'owner',
+      name: 'Programme Owner',
+      role: 'Owner',
+      online: false,
+      unread: false,
+      messages: [
+        { id: 'dm2', sender: 'owner', text: 'Hi! Let me know when you finish reviewing the course outline slides.', time: 'Yesterday' }
+      ]
+    }
+  ]);
 
   // Get dynamic greeting based on time of day
   const timeGreeting = useMemo(() => {
@@ -131,6 +160,44 @@ export default function FacilitatorDashboard({
       desc: 'You are all set for today.'
     };
   }, [assignedSessions, todaySession, assignedResources]);
+
+  // Drawer chat computed lists
+  const filteredDrawerConversations = useMemo(() => {
+    return drawerConversations.filter(c => 
+      c.name.toLowerCase().includes(drawerChatSearch.toLowerCase()) ||
+      c.messages.some(m => m.text.toLowerCase().includes(drawerChatSearch.toLowerCase()))
+    );
+  }, [drawerConversations, drawerChatSearch]);
+
+  const activeDrawerConversation = useMemo(() => {
+    return drawerConversations.find(c => c.id === activeDrawerChatId) || null;
+  }, [drawerConversations, activeDrawerChatId]);
+
+  const handleSendDrawerMessage = (e) => {
+    e.preventDefault();
+    if (!drawerMessageText.trim() || !activeDrawerChatId) return;
+    
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newMsg = {
+      id: `dm-sent-${Date.now()}`,
+      sender: 'me',
+      text: drawerMessageText,
+      time: timeStr
+    };
+
+    setDrawerConversations(prev => prev.map(c => {
+      if (c.id === activeDrawerChatId) {
+        return {
+          ...c,
+          unread: false,
+          messages: [...c.messages, newMsg]
+        };
+      }
+      return c;
+    }));
+    setDrawerMessageText('');
+  };
 
   return (
     <div className="animate-fade-in" style={{ 
@@ -675,6 +742,320 @@ export default function FacilitatorDashboard({
         </div>
 
       </div>
+
+      {/* Floating Workspace Chat Button */}
+      <button
+        onClick={() => setIsDrawerChatOpen(!isDrawerChatOpen)}
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          width: '58px',
+          height: '58px',
+          borderRadius: '50%',
+          backgroundColor: '#D9B233', // OYEN Gold (#D9B233)
+          border: 'none',
+          color: '#FFFFFF',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(217, 178, 51, 0.4)',
+          zIndex: 1000,
+          transition: 'all 0.2s ease-in-out'
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(217, 178, 51, 0.5)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 15px rgba(217, 178, 51, 0.4)';
+        }}
+      >
+        <MessageCircle size={24} />
+      </button>
+
+      {/* Floating Chat Drawer Side Panel */}
+      {isDrawerChatOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          width: '380px',
+          height: '100vh',
+          backgroundColor: '#FFFDF9',
+          borderLeft: '1px solid #E8E2D8',
+          boxShadow: '-4px 0 25px rgba(0,0,0,0.06)',
+          zIndex: 1001,
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'transform 0.3s ease'
+        }}>
+          {/* Drawer Header */}
+          <div style={{
+            padding: '1.25rem 1.5rem',
+            borderBottom: '1px solid #E8E2D8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: '#FFFDF9'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {activeDrawerChatId && (
+                <button 
+                  onClick={() => setActiveDrawerChatId(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#2D6CDF',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: '0.2rem'
+                  }}
+                >
+                  ← Back
+                </button>
+              )}
+              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111111', fontFamily: "'Outfit', sans-serif" }}>
+                {activeDrawerConversation ? activeDrawerConversation.name : 'Workspace Chat'}
+              </h4>
+            </div>
+            <button 
+              onClick={() => { setIsDrawerChatOpen(false); setActiveDrawerChatId(null); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#888888',
+                padding: '0.2rem',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Chat content switch */}
+          {!activeDrawerChatId ? (
+            /* VIEW A: Contacts / Conversations Directory */
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              
+              {/* Search box */}
+              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(0,0,0,0.03)', position: 'relative' }}>
+                <Search size={14} color="#888888" style={{ position: 'absolute', left: '1.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+                <input 
+                  type="text" 
+                  placeholder="Search conversations..." 
+                  value={drawerChatSearch}
+                  onChange={e => setDrawerChatSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 1rem 0.5rem 2.25rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(0,0,0,0.05)',
+                    backgroundColor: '#F8F6F1',
+                    fontSize: '0.8rem',
+                    outline: 'none',
+                    color: '#111111'
+                  }}
+                />
+              </div>
+
+              {/* Contacts list */}
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                {filteredDrawerConversations.length > 0 ? (
+                  filteredDrawerConversations.map(conv => {
+                    const lastMsg = conv.messages[conv.messages.length - 1];
+                    return (
+                      <div 
+                        key={conv.id}
+                        onClick={() => {
+                          setActiveDrawerChatId(conv.id);
+                          // Mark as read
+                          setDrawerConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread: false } : c));
+                        }}
+                        style={{
+                          padding: '1rem 1.5rem',
+                          borderBottom: '1px solid rgba(0,0,0,0.02)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.01)'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <div style={{ position: 'relative' }}>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            backgroundColor: '#111111',
+                            color: '#FFFDF9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: '0.8rem'
+                          }}>
+                            {conv.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <span style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: conv.online ? '#10B981' : '#CBD5E1',
+                            border: '1.5px solid #FFFDF9'
+                          }} />
+                        </div>
+
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111111' }}>{conv.name}</span>
+                            {conv.unread && (
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D9B233' }} />
+                            )}
+                          </div>
+                          <p style={{
+                            margin: '0.15rem 0 0',
+                            fontSize: '0.75rem',
+                            color: '#666666',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {lastMsg ? lastMsg.text : ''}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '3rem 1.5rem',
+                    color: '#666666'
+                  }}>
+                    <h5 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#111111', margin: '0 0 0.25rem' }}>No conversations yet</h5>
+                    <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.4 }}>
+                      Messages from your administrator and workspace members will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          ) : (
+            /* VIEW B: Active Conversation Chat Log */
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#FFFDF9' }}>
+              
+              {/* Message log */}
+              <div style={{ flex: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {activeDrawerConversation.messages.map(m => {
+                  const isMe = m.sender === 'me';
+                  return (
+                    <div 
+                      key={m.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: isMe ? 'flex-end' : 'flex-start',
+                        width: '100%'
+                      }}
+                    >
+                      <div style={{
+                        maxWidth: '80%',
+                        backgroundColor: isMe ? '#111111' : '#F8F6F1',
+                        color: isMe ? '#FFFDF9' : '#111111',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        lineHeight: 1.4,
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.01)'
+                      }}>
+                        <p style={{ margin: 0, wordBreak: 'break-word' }}>{m.text}</p>
+                        <span style={{ 
+                          display: 'block', 
+                          textAlign: 'right', 
+                          fontSize: '0.65rem', 
+                          color: isMe ? 'rgba(255,255,255,0.6)' : '#888888',
+                          marginTop: '0.25rem'
+                        }}>
+                          {m.time}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Message Input form */}
+              <form 
+                onSubmit={handleSendDrawerMessage}
+                style={{
+                  padding: '1rem 1.25rem',
+                  borderTop: '1px solid #E8E2D8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  backgroundColor: '#FFFDF9'
+                }}
+              >
+                <button 
+                  type="button" 
+                  onClick={() => alert('Attachment simulation')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center' }}
+                >
+                  <Paperclip size={16} />
+                </button>
+                
+                <input 
+                  type="text" 
+                  placeholder="Message..." 
+                  value={drawerMessageText}
+                  onChange={e => setDrawerMessageText(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(0,0,0,0.06)',
+                    backgroundColor: '#F8F6F1',
+                    fontSize: '0.8rem',
+                    outline: 'none',
+                    color: '#111111'
+                  }}
+                />
+
+                <button 
+                  type="submit"
+                  style={{
+                    backgroundColor: '#D9B233',
+                    border: 'none',
+                    borderRadius: '10px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#FFFFFF'
+                  }}
+                >
+                  <Send size={14} />
+                </button>
+              </form>
+
+            </div>
+          )}
+
+        </div>
+      )}
 
     </div>
   );
