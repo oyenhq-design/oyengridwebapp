@@ -11,7 +11,7 @@ import {
   Play, Zap, Plus, X, File, ClipboardCheck
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
-import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser } from './domain/workspace/selectors';
+import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser, getResourcesForUser } from './domain/workspace/selectors';
 import { updateSessionStatus } from './domain/workspace/actions';
 import FacilitatorOverview from './pages/facilitator/FacilitatorOverview';
 import TeamMemberOverview from './pages/owner/TeamMemberOverview';
@@ -1751,6 +1751,7 @@ export default function App() {
     const displaySessions = getSessionsForUser(user, userRole, wsPrograms);
     const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
     const displayInbox = getInboxForUser(user, userRole, wsPrograms);
+    const displayResources = getResourcesForUser(user, userRole, wsPrograms);
 
     return (
       <div className="dashboard-root" style={{
@@ -2242,7 +2243,11 @@ export default function App() {
                   setNotifications={setFacilitatorNotifications}
                 />
               ) : activeTab === 'Profile' ? (
-                <FacilitatorProfile userInfo={getLoggedInUserInfo()} />
+                <FacilitatorProfile 
+                  userInfo={getLoggedInUserInfo()} 
+                  assignedSessions={displaySessions}
+                  assignedResources={displayResources}
+                />
               ) : (
                 <div style={{ padding: '2.5rem', color: '#EF4444' }}>Unauthorized route access denied.</div>
               )
