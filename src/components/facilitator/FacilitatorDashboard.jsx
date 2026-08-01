@@ -6,6 +6,7 @@ import {
 
 export default function FacilitatorDashboard({ 
   assignedSessions = [], 
+  assignedResources = [],
   programs = [], 
   currentUserEmail, 
   userInfo, 
@@ -13,7 +14,7 @@ export default function FacilitatorDashboard({
   onSelectSession 
 }) {
 
-  const facilitatorName = userInfo?.fullName?.split(' ')[0] || currentUserEmail?.split('@')[0] || 'Facilitator';
+  const facilitatorName = userInfo?.fullName || currentUserEmail?.split('@')[0] || 'Facilitator';
 
   // Get dynamic greeting based on time of day
   const timeGreeting = useMemo(() => {
@@ -23,7 +24,7 @@ export default function FacilitatorDashboard({
     return 'Good Evening';
   }, []);
 
-  // Format today's date nicely: e.g. "Thursday, 30 July" (or current date)
+  // Format today's date nicely: e.g. "Thursday, 30 July"
   const formattedDate = useMemo(() => {
     return new Date().toLocaleDateString('en-US', {
       weekday: 'long',
@@ -63,21 +64,17 @@ export default function FacilitatorDashboard({
   // Determine dynamic schedule message
   const dynamicScheduleMsg = useMemo(() => {
     if (todaySession) {
-      return 'You have one session starting in 2 hours.';
+      return `Your next session starts at ${todaySession.time || '10:00 AM'}.`;
     }
     if (nextSession) {
-      const diffTime = Math.abs(new Date(nextSession.date) - new Date(todayStr));
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return `Your next session is ${diffDays === 1 ? 'tomorrow' : `in ${diffDays} days`}.`;
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      const isTomorrow = nextSession.date === tomorrowStr;
+      return `Your next session starts ${isTomorrow ? 'tomorrow' : 'soon'} at ${nextSession.time || '10:00 AM'}.`;
     }
     return 'You have a free day today.';
-  }, [todaySession, nextSession, todayStr]);
-
-  // Determine dynamic count of resources
-  const resourcesCount = useMemo(() => {
-    // Read unique program resources or return a default count based on assigned sessions
-    return Math.max(12, assignedSessions.length * 4);
-  }, [assignedSessions]);
+  }, [todaySession, nextSession]);
 
   // Upcoming sessions for timeline cards
   const upcomingSessions = useMemo(() => {
@@ -88,7 +85,7 @@ export default function FacilitatorDashboard({
     });
   }, [sortedSessions, todayStr, todaySession]);
 
-  // Dynamically build Recent Activity Feed
+  // Dynamically build Recent Activity Feed based on real assignments
   const recentActivities = useMemo(() => {
     const list = [];
     sortedSessions.forEach((s, idx) => {
@@ -97,11 +94,6 @@ export default function FacilitatorDashboard({
           id: `act-comp-${s.id}-${idx}`,
           text: `Session "${s.title}" completed successfully.`,
           time: 'Yesterday'
-        });
-        list.push({
-          id: `act-att-${s.id}-${idx}`,
-          text: `Attendance report generated for "${s.title}".`,
-          time: '2 days ago'
         });
       } else {
         list.push({
@@ -113,6 +105,32 @@ export default function FacilitatorDashboard({
     });
     return list.slice(0, 3);
   }, [sortedSessions]);
+
+  // Today's Focus Action Item
+  const todaysFocus = useMemo(() => {
+    if (assignedSessions.length === 0) {
+      return {
+        title: 'No assignments yet',
+        desc: "You'll see your upcoming focus items here once sessions are assigned."
+      };
+    }
+    if (todaySession) {
+      return {
+        title: 'Prepare Session Materials',
+        desc: `Review outline and slides for "${todaySession.title}" before starts.`
+      };
+    }
+    if (assignedResources.length > 0) {
+      return {
+        title: 'Review Shared Resources',
+        desc: 'Review newly uploaded slide decks and facilitator guides.'
+      };
+    }
+    return {
+      title: 'Everything looks good.',
+      desc: 'You are all set for today.'
+    };
+  }, [assignedSessions, todaySession, assignedResources]);
 
   return (
     <div className="animate-fade-in" style={{ 
@@ -250,7 +268,7 @@ export default function FacilitatorDashboard({
                   <div>
                     <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block', marginBottom: '0.15rem' }}>LEARNERS</span>
                     <span style={{ color: '#151515', fontSize: '0.95rem', fontWeight: 700 }}>
-                      {todaySession.learnersCount || todaySession.learners?.length || '24 learners'}
+                      {todaySession.learnersCount || '24 learners'}
                     </span>
                   </div>
                   <div>
@@ -301,67 +319,87 @@ export default function FacilitatorDashboard({
                     onMouseEnter={e => { e.currentTarget.style.borderColor = '#2D6CDF'; e.currentTarget.style.backgroundColor = 'rgba(45, 108, 223, 0.02)'; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    View Learners
+                    View Details
                   </button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.5rem 0' }}>
-                <span style={{ fontSize: '1.25rem', color: '#2D6CDF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <h4 style={{ 
+                  fontSize: '1.4rem', 
+                  fontWeight: 800, 
+                  color: '#2D6CDF', 
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontFamily: "'Outfit', sans-serif"
+                }}>
                   ✓ No sessions today
-                </span>
-                <p style={{ color: '#666666', fontSize: '0.95rem', margin: '0.25rem 0 1.25rem', lineHeight: '1.6' }}>
+                </h4>
+                <p style={{ color: '#666666', fontSize: '0.95rem', lineHeight: '1.6', margin: 0, maxWidth: '520px' }}>
                   You have a free schedule. Take time to prepare your upcoming sessions, review learner submissions, or update your teaching resources.
                 </p>
-                <div>
-                  <button 
-                    onClick={() => onNavigate('Resources')}
-                    style={{ 
-                      backgroundColor: '#D4AF37', 
-                      border: 'none', 
-                      color: '#FFFFFF', 
-                      padding: '0.85rem 1.85rem', 
-                      borderRadius: '10px', 
-                      fontSize: '0.95rem', 
-                      fontWeight: 700, 
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 4px 12px rgba(212, 175, 55, 0.15)'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#B5942D'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D4AF37'}
-                  >
-                    Review Resources
-                  </button>
-                </div>
+                <button 
+                  onClick={() => onNavigate('Resources')}
+                  style={{ 
+                    alignSelf: 'flex-start',
+                    backgroundColor: '#D4AF37', 
+                    border: 'none', 
+                    color: '#FFFFFF', 
+                    padding: '0.75rem 1.5rem', 
+                    borderRadius: '8px', 
+                    fontSize: '0.9rem', 
+                    fontWeight: 700, 
+                    cursor: 'pointer',
+                    marginTop: '0.5rem',
+                    boxShadow: '0 4px 12px rgba(212, 175, 55, 0.15)',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#B5942D'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D4AF37'}
+                >
+                  Review Resources
+                </button>
               </div>
             )}
           </div>
 
-          {/* 3. Three Compact Information Cards */}
+          {/* 3. Three Info Metric Cards */}
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(3, 1fr)', 
             gap: '1.5rem' 
           }}>
+            
             {/* Card A: Next Session */}
             <div style={{ 
               backgroundColor: '#FFFDF9', 
               borderRadius: '16px', 
               padding: '1.5rem', 
-              boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
-              border: '1px solid rgba(0,0,0,0.02)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.005)',
+              border: '1px solid rgba(0,0,0,0.015)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              minHeight: '180px'
+              minHeight: '150px'
             }}>
               <div>
-                <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>📅</div>
-                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 0.35rem' }}>Next Session</h5>
-                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0, lineHeight: '1.4' }}>
+                <span style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }}>📅</span>
+                <span style={{ fontSize: '0.8rem', color: '#888888', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Next Session</span>
+                <h4 style={{ 
+                  fontSize: '0.95rem', 
+                  fontWeight: 800, 
+                  color: '#151515', 
+                  margin: '0.25rem 0 0', 
+                  lineHeight: '1.3',
+                  fontFamily: "'Outfit', sans-serif",
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
                   {nextSession ? nextSession.title : 'No upcoming session'}
-                </p>
+                </h4>
               </div>
               <button 
                 onClick={() => onNavigate('Sessions')}
@@ -369,15 +407,14 @@ export default function FacilitatorDashboard({
                   background: 'none', 
                   border: 'none', 
                   color: '#2D6CDF', 
+                  fontSize: '0.8rem', 
                   fontWeight: 700, 
-                  fontSize: '0.85rem', 
-                  cursor: 'pointer', 
-                  textAlign: 'left', 
-                  padding: 0,
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.2rem',
-                  marginTop: '1rem'
+                  marginTop: '1rem',
+                  padding: 0
                 }}
               >
                 <span>View Schedule</span>
@@ -390,19 +427,25 @@ export default function FacilitatorDashboard({
               backgroundColor: '#FFFDF9', 
               borderRadius: '16px', 
               padding: '1.5rem', 
-              boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
-              border: '1px solid rgba(0,0,0,0.02)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.005)',
+              border: '1px solid rgba(0,0,0,0.015)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              minHeight: '180px'
+              minHeight: '150px'
             }}>
               <div>
-                <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>📚</div>
-                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 0.35rem' }}>Resources</h5>
-                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0 }}>
-                  {resourcesCount} Files Available
-                </p>
+                <span style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }}>📚</span>
+                <span style={{ fontSize: '0.8rem', color: '#888888', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Resources</span>
+                <h4 style={{ 
+                  fontSize: '0.95rem', 
+                  fontWeight: 800, 
+                  color: '#151515', 
+                  margin: '0.25rem 0 0',
+                  fontFamily: "'Outfit', sans-serif"
+                }}>
+                  {assignedResources.length} Files Available
+                </h4>
               </div>
               <button 
                 onClick={() => onNavigate('Resources')}
@@ -410,15 +453,14 @@ export default function FacilitatorDashboard({
                   background: 'none', 
                   border: 'none', 
                   color: '#2D6CDF', 
+                  fontSize: '0.8rem', 
                   fontWeight: 700, 
-                  fontSize: '0.85rem', 
-                  cursor: 'pointer', 
-                  textAlign: 'left', 
-                  padding: 0,
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.2rem',
-                  marginTop: '1rem'
+                  marginTop: '1rem',
+                  padding: 0
                 }}
               >
                 <span>Open Library</span>
@@ -431,19 +473,25 @@ export default function FacilitatorDashboard({
               backgroundColor: '#FFFDF9', 
               borderRadius: '16px', 
               padding: '1.5rem', 
-              boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
-              border: '1px solid rgba(0,0,0,0.02)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.005)',
+              border: '1px solid rgba(0,0,0,0.015)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              minHeight: '180px'
+              minHeight: '150px'
             }}>
               <div>
-                <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>💬</div>
-                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 0.35rem' }}>Messages</h5>
-                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0 }}>
-                  3 unread messages
-                </p>
+                <span style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }}>💬</span>
+                <span style={{ fontSize: '0.8rem', color: '#888888', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Messages</span>
+                <h4 style={{ 
+                  fontSize: '0.95rem', 
+                  fontWeight: 800, 
+                  color: '#151515', 
+                  margin: '0.25rem 0 0',
+                  fontFamily: "'Outfit', sans-serif"
+                }}>
+                  2 unread messages
+                </h4>
               </div>
               <button 
                 onClick={() => onNavigate('Inbox')}
@@ -451,15 +499,14 @@ export default function FacilitatorDashboard({
                   background: 'none', 
                   border: 'none', 
                   color: '#2D6CDF', 
+                  fontSize: '0.8rem', 
                   fontWeight: 700, 
-                  fontSize: '0.85rem', 
-                  cursor: 'pointer', 
-                  textAlign: 'left', 
-                  padding: 0,
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.2rem',
-                  marginTop: '1rem'
+                  marginTop: '1rem',
+                  padding: 0
                 }}
               >
                 <span>Open Inbox</span>
@@ -468,7 +515,7 @@ export default function FacilitatorDashboard({
             </div>
           </div>
 
-          {/* 4. Upcoming Timeline / Compact Cards */}
+          {/* 4. Upcoming Timeline */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h3 style={{ 
               fontSize: '0.85rem', 
@@ -504,7 +551,11 @@ export default function FacilitatorDashboard({
                   >
                     <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
                       <div>
-                        <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block' }}>TOMORROW</span>
+                        <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block' }}>DATE</span>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#151515' }}>{session.date}</span>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block' }}>TITLE</span>
                         <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#151515' }}>{session.title}</span>
                       </div>
                       <div>
@@ -520,89 +571,82 @@ export default function FacilitatorDashboard({
                       style={{ 
                         background: 'none', 
                         border: 'none', 
-                        color: '#2D6CDF', 
-                        fontWeight: 700, 
+                        color: '#D4AF37', 
                         fontSize: '0.85rem', 
+                        fontWeight: 700, 
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.2rem'
+                        gap: '0.15rem'
                       }}
                     >
-                      <span>View</span>
+                      <span>Prepare</span>
                       <ChevronRight size={14} />
                     </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ 
-                backgroundColor: '#FFFDF9', 
-                borderRadius: '16px', 
-                padding: '2.5rem', 
+              <div style={{
                 textAlign: 'center',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.005)',
-                border: '1px solid rgba(0,0,0,0.015)',
-                color: '#666666'
+                padding: '3rem',
+                backgroundColor: '#FFFDF9',
+                borderRadius: '16px',
+                border: '1px dashed rgba(0,0,0,0.06)'
               }}>
-                <span style={{ display: 'block', fontWeight: 600, fontSize: '0.95rem', color: '#151515', marginBottom: '0.25rem' }}>Upcoming</span>
-                No sessions assigned. When an administrator assigns a session, it will appear here automatically.
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111111', display: 'block', marginBottom: '0.25rem' }}>Upcoming</span>
+                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0 }}>
+                  No sessions assigned. When an administrator assigns a session, it will appear here automatically.
+                </p>
               </div>
             )}
           </div>
 
         </div>
 
-        {/* Right Side (4 Columns): Today's Focus, Recent Activity, Recent Notifications */}
+        {/* Right Side (4 Columns): Today's Focus & Recent Activity */}
         <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           
           {/* Today's Focus Card */}
           <div style={{ 
             backgroundColor: '#FFFDF9', 
             borderRadius: '20px', 
-            padding: '2rem', 
-            boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
-            border: '1px solid rgba(0,0,0,0.02)'
+            padding: '2rem 2.25rem', 
+            boxShadow: '0 8px 24px rgba(0,0,0,0.015)',
+            border: '1px solid rgba(0,0,0,0.015)'
           }}>
             <h3 style={{ 
-              fontSize: '0.85rem', 
+              fontSize: '0.8rem', 
               fontWeight: 700, 
               color: '#888888', 
               textTransform: 'uppercase', 
-              letterSpacing: '1px',
+              letterSpacing: '1.5px',
               margin: '0 0 1.25rem'
             }}>
               Today's Focus
             </h3>
-            
-            {todaySession ? (
-              <ul style={{ paddingLeft: '1.25rem', margin: 0, color: '#151515', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                <li style={{ color: '#151515' }}>Upload lesson slides</li>
-                <li style={{ color: '#151515' }}>Review learner questions</li>
-                <li style={{ color: '#151515' }}>Check announcements</li>
-              </ul>
-            ) : (
-              <div style={{ padding: '0.25rem 0' }}>
-                <span style={{ fontSize: '1rem', fontWeight: 700, color: '#151515', display: 'block', marginBottom: '0.25rem' }}>Everything looks good.</span>
-                <span style={{ fontSize: '0.85rem', color: '#666666' }}>You're all set for today.</span>
-              </div>
-            )}
+            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', margin: 0 }}>
+              {todaysFocus.title}
+            </h4>
+            <p style={{ color: '#666666', fontSize: '0.85rem', lineHeight: '1.5', margin: '0.4rem 0 0' }}>
+              {todaysFocus.desc}
+            </p>
           </div>
 
-          {/* Recent Activity / Notifications Timeline */}
+          {/* Recent Activity Card */}
           <div style={{ 
             backgroundColor: '#FFFDF9', 
             borderRadius: '20px', 
-            padding: '2rem', 
-            boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
-            border: '1px solid rgba(0,0,0,0.02)'
+            padding: '2rem 2.25rem', 
+            boxShadow: '0 8px 24px rgba(0,0,0,0.015)',
+            border: '1px solid rgba(0,0,0,0.015)'
           }}>
             <h3 style={{ 
-              fontSize: '0.85rem', 
+              fontSize: '0.8rem', 
               fontWeight: 700, 
               color: '#888888', 
               textTransform: 'uppercase', 
-              letterSpacing: '1px',
+              letterSpacing: '1.5px',
               margin: '0 0 1.5rem'
             }}>
               Recent Activity
@@ -610,24 +654,21 @@ export default function FacilitatorDashboard({
 
             {recentActivities.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {recentActivities.map((act, i) => (
-                  <div key={act.id} style={{ 
-                    borderBottom: i === recentActivities.length - 1 ? 'none' : '1px solid rgba(0,0,0,0.03)',
-                    paddingBottom: i === recentActivities.length - 1 ? 0 : '1.25rem'
-                  }}>
-                    <span style={{ fontSize: '0.7rem', color: '#D4AF37', fontWeight: 700, display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {recentActivities.map((act) => (
+                  <div key={act.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#D4AF37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       {act.time}
                     </span>
-                    <p style={{ fontSize: '0.85rem', color: '#151515', margin: '0.25rem 0 0', lineHeight: 1.4 }}>
+                    <p style={{ color: '#151515', fontSize: '0.85rem', margin: 0, lineHeight: '1.4' }}>
                       {act.text}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ color: '#888888', fontSize: '0.85rem', padding: '0.5rem 0' }}>
+              <p style={{ color: '#666666', fontSize: '0.85rem', margin: 0 }}>
                 No recent activity.
-              </div>
+              </p>
             )}
           </div>
 

@@ -31,6 +31,7 @@ import FacilitatorDashboard from './components/facilitator/FacilitatorDashboard'
 import FacilitatorResources from './components/facilitator/FacilitatorResources';
 import FacilitatorNotifications from './components/facilitator/FacilitatorNotifications';
 import FacilitatorProfile from './components/facilitator/FacilitatorProfile';
+import FacilitatorInbox from './components/facilitator/FacilitatorInbox';
 import oyenLogo from './assets/logo_v2.png';
 import onboardingBg from './assets/onboarding_bg_v2.png';
 import dashboardHeroIllustration from './assets/dashboard_hero_illustration.jpg';
@@ -2215,6 +2216,7 @@ export default function App() {
               ) : activeTab === 'Overview' ? (
                 <FacilitatorDashboard
                   assignedSessions={assignedSessions}
+                  assignedResources={displayResources}
                   programs={displayPrograms}
                   currentUserEmail={user}
                   userInfo={getLoggedInUserInfo()}
@@ -2242,6 +2244,8 @@ export default function App() {
                   notifications={facilitatorNotifications}
                   setNotifications={setFacilitatorNotifications}
                 />
+              ) : activeTab === 'Inbox' ? (
+                <FacilitatorInbox currentUserEmail={user} />
               ) : activeTab === 'Profile' ? (
                 <FacilitatorProfile 
                   userInfo={getLoggedInUserInfo()} 
