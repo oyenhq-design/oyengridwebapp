@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, Play, 
-  BookOpen as BookOpenIcon, Bell, User as UserIcon, Activity, AlertCircle 
+  Play, BookOpen, MessageSquare, Bell, HelpCircle, User, 
+  CheckSquare, Square, Calendar, Eye, RefreshCw
 } from 'lucide-react';
 
 export default function FacilitatorDashboard({ 
@@ -12,11 +12,44 @@ export default function FacilitatorDashboard({
   onNavigate, 
   onSelectSession 
 }) {
-  const [filter, setFilter] = useState('Upcoming');
+  
+  // Tasks state synced with localStorage
+  const localStorageKey = `oyen_tasks_${currentUserEmail || 'default'}`;
+  const [tasks, setTasks] = useState(() => {
+    const defaultTasks = [
+      { id: 'review-materials', label: 'Review session materials', completed: false },
+      { id: 'upload-slides', label: 'Upload presentation slides', completed: false },
+      { id: 'mark-attendance', label: 'Mark attendance', completed: false },
+      { id: 'grade-assessments', label: 'Grade submitted assessment', completed: false },
+      { id: 'reply-questions', label: 'Reply learner questions', completed: false }
+    ];
+    try {
+      const saved = localStorage.getItem(localStorageKey);
+      return saved ? JSON.parse(saved) : defaultTasks;
+    } catch (e) {
+      return defaultTasks;
+    }
+  });
 
-  const facilitatorName = userInfo?.fullName || currentUserEmail || 'Facilitator';
+  useEffect(() => {
+    localStorage.setItem(localStorageKey, JSON.stringify(tasks));
+  }, [tasks, localStorageKey]);
 
-  // Sort and categorize sessions
+  const toggleTask = (id) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  };
+
+  const facilitatorName = userInfo?.fullName || currentUserEmail?.split('@')[0] || 'Facilitator';
+
+  // Get today's date in YYYY-MM-DD
+  const todayStr = useMemo(() => {
+    const today = new Date();
+    const offset = today.getTimezoneOffset();
+    const localToday = new Date(today.getTime() - (offset * 60 * 1000));
+    return localToday.toISOString().split('T')[0];
+  }, []);
+
+  // Sort sessions chronologically
   const sortedSessions = useMemo(() => {
     return [...assignedSessions].sort((a, b) => {
       const dateA = new Date(a.date || '');
@@ -25,406 +58,585 @@ export default function FacilitatorDashboard({
     });
   }, [assignedSessions]);
 
+  // Determine Today's Session
+  const todaySession = useMemo(() => {
+    return sortedSessions.find(s => s.date === todayStr) || null;
+  }, [sortedSessions, todayStr]);
+
+  // Determine Upcoming Sessions (sessions scheduled after today, or today's sessions if no todaySession is active)
   const upcomingSessions = useMemo(() => {
-    return sortedSessions.filter(s => s.status === 'Upcoming' || s.status === 'Live');
-  }, [sortedSessions]);
-
-  const completedSessions = useMemo(() => {
-    return sortedSessions.filter(s => s.status === 'Completed');
-  }, [sortedSessions]);
-
-  // Determine "Next Session"
-  const nextSession = useMemo(() => {
-    return upcomingSessions[0] || null;
-  }, [upcomingSessions]);
-
-  // Filtered list for "My Sessions" section
-  const filteredSessionsList = useMemo(() => {
-    if (filter === 'Upcoming') return upcomingSessions;
-    if (filter === 'Completed') return completedSessions;
-    return sortedSessions;
-  }, [filter, upcomingSessions, completedSessions, sortedSessions]);
-
-  // Check if a session starts tomorrow or today for upcoming reminder
-  const nextSessionReminder = useMemo(() => {
-    if (!nextSession || !nextSession.date) return null;
-    const sessionDate = new Date(nextSession.date);
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
-
-    const isToday = sessionDate.toDateString() === today.toDateString();
-    const isTomorrow = sessionDate.toDateString() === tomorrow.toDateString();
-
-    if (isToday) {
-      return { text: `Your next session "${nextSession.title}" starts today at ${nextSession.time || '10:00 AM'}.`, session: nextSession };
-    }
-    if (isTomorrow) {
-      return { text: `Your next session starts tomorrow at ${nextSession.time || '10:00 AM'}.`, session: nextSession };
-    }
-    return null;
-  }, [nextSession]);
-
-  // Dynamic Recent Activity list based on actual session data
-  const recentActivities = useMemo(() => {
-    const activities = [];
-    sortedSessions.forEach(s => {
-      if (s.status === 'Completed') {
-        activities.push({
-          id: `act-comp-${s.id}`,
-          text: `Session "${s.title}" was completed`,
-          time: 'Completed',
-          icon: <CheckCircle2 size={14} color="#10B981" />
-        });
-      } else if (s.status === 'Live') {
-        activities.push({
-          id: `act-live-${s.id}`,
-          text: `Session "${s.title}" is currently live`,
-          time: 'Active Now',
-          icon: <Play size={14} color="#F5C84C" />
-        });
-      } else if (s.status === 'Upcoming') {
-        activities.push({
-          id: `act-up-${s.id}`,
-          text: `Session "${s.title}" assigned to you`,
-          time: 'Scheduled',
-          icon: <Calendar size={14} color="#3B82F6" />
-        });
-      }
+    return sortedSessions.filter(s => {
+      if (s.status === 'Completed') return false;
+      if (todaySession && s.id === todaySession.id) return false;
+      return s.date >= todayStr;
     });
-    return activities.slice(0, 4);
-  }, [sortedSessions]);
+  }, [sortedSessions, todayStr, todaySession]);
 
-  // Handle Full Empty State (If facilitator has NO sessions assigned at all)
+  // Full Empty State (If facilitator has NO sessions assigned at all)
   if (assignedSessions.length === 0) {
     return (
-      <div className="animate-fade-in" style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', padding: '3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ maxWidth: '520px', textAlign: 'center', backgroundColor: '#111111', padding: '3rem', borderRadius: '16px', border: '1px solid #1F2937', color: '#FFFFFF', boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(245, 200, 76, 0.08)', marginBottom: '1.5rem', border: '1px solid rgba(245, 200, 76, 0.2)' }}>
-            <Calendar size={32} color="#F5C84C" />
+      <div className="animate-fade-in" style={{ 
+        backgroundColor: '#F8F6F1', 
+        minHeight: '100vh', 
+        padding: '3rem', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        fontFamily: "'Inter', sans-serif" 
+      }}>
+        <div style={{ 
+          maxWidth: '500px', 
+          textAlign: 'center', 
+          backgroundColor: '#FFFFFF', 
+          padding: '4rem 3rem', 
+          borderRadius: '16px', 
+          boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+          border: '1px solid rgba(0,0,0,0.03)',
+          color: '#1A1A1A'
+        }}>
+          <div style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            width: '80px', 
+            height: '80px', 
+            borderRadius: '50%', 
+            backgroundColor: '#F8F6F1', 
+            marginBottom: '2rem'
+          }}>
+            <Calendar size={36} color="#D6A428" />
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFFFFF', margin: '0 0 0.75rem', fontFamily: "'Outfit', sans-serif" }}>No sessions assigned yet</h2>
-          <p style={{ color: '#94A3B8', fontSize: '0.92rem', lineHeight: '1.6', margin: '0 0 1.5rem' }}>
-            Your assigned sessions will appear here once a programme administrator schedules and assigns them to you.
+          <h2 style={{ 
+            fontSize: '1.75rem', 
+            fontWeight: 800, 
+            color: '#1A1A1A', 
+            margin: '0 0 1rem', 
+            fontFamily: "'Outfit', sans-serif",
+            letterSpacing: '-0.3px'
+          }}>
+            You're all caught up.
+          </h2>
+          <p style={{ 
+            color: '#666666', 
+            fontSize: '1rem', 
+            lineHeight: '1.6', 
+            margin: '0 0 2rem' 
+          }}>
+            You don't have any assigned sessions yet. Once an administrator assigns a session, it will appear here automatically.
           </p>
-          <div style={{ padding: '0.85rem 1.15rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.65rem', justifyContent: 'center' }}>
-            <AlertCircle size={16} color="#6B7280" />
-            <span style={{ fontSize: '0.8rem', color: '#6B7280', fontWeight: 500 }}>
-              You don’t need to create or schedule sessions from this account.
-            </span>
-          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{ 
+              backgroundColor: '#D6A428', 
+              border: 'none', 
+              color: '#FFFFFF', 
+              padding: '0.85rem 2rem', 
+              borderRadius: '8px', 
+              fontSize: '0.95rem', 
+              fontWeight: 700, 
+              cursor: 'pointer', 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.65rem',
+              transition: 'background-color 0.2s',
+              boxShadow: '0 4px 12px rgba(214, 164, 40, 0.2)'
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#B5841D'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D6A428'}
+          >
+            <RefreshCw size={16} />
+            Refresh
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in" style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', padding: '2rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem', fontFamily: "'Inter', sans-serif", color: '#151515' }}>
+    <div className="animate-fade-in" style={{ 
+      backgroundColor: '#F8F6F1', 
+      minHeight: '100vh', 
+      padding: '3rem 4rem', 
+      fontFamily: "'Inter', sans-serif", 
+      color: '#1A1A1A',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '2.5rem'
+    }}>
       
-      {/* Header section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.3px' }}>
-            Welcome back, {facilitatorName}
-          </h1>
-          <p style={{ color: '#5C5C5C', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-            Here's what's coming up in your assigned sessions.
-          </p>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 style={{ 
+          fontSize: '2.4rem', 
+          fontWeight: 800, 
+          color: '#1A1A1A', 
+          margin: 0, 
+          fontFamily: "'Outfit', sans-serif",
+          letterSpacing: '-0.5px' 
+        }}>
+          Welcome back, {facilitatorName}
+        </h1>
+        <p style={{ 
+          color: '#666666', 
+          fontSize: '1.05rem', 
+          marginTop: '0.35rem' 
+        }}>
+          Here’s what’s coming up in your assigned sessions.
+        </p>
       </div>
 
-      {/* Subtle Approach Reminder Banner */}
-      {nextSessionReminder && (
-        <div style={{ backgroundColor: '#111111', border: '1px solid #F5C84C', borderRadius: '12px', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', color: '#FFFFFF', boxShadow: '0 4px 12px rgba(245, 200, 76, 0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Clock size={18} color="#F5C84C" />
-            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{nextSessionReminder.text}</span>
-          </div>
-          <button 
-            onClick={() => onSelectSession(nextSessionReminder.session)}
-            style={{ backgroundColor: '#F5C84C', border: 'none', color: '#111111', padding: '0.45rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.2s' }}
-          >
-            View Session <ChevronRight size={14} />
-          </button>
-        </div>
-      )}
-
-      {/* Top summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
-        <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '1.5rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#F5C84C', marginBottom: '0.5rem' }}>
-            <Calendar size={16} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Upcoming Sessions</span>
-          </div>
-          <span style={{ fontSize: '2rem', fontWeight: 800 }}>{upcomingSessions.length}</span>
-        </div>
+      {/* Main Grid Section */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1.6fr 1fr', 
+        gap: '2.5rem', 
+        alignItems: 'start' 
+      }}>
         
-        <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '1.5rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#3B82F6', marginBottom: '0.5rem' }}>
-            <BookOpenIcon size={16} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sessions Assigned</span>
-          </div>
-          <span style={{ fontSize: '2rem', fontWeight: 800 }}>{assignedSessions.length}</span>
-        </div>
-
-        <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '1.5rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10B981', marginBottom: '0.5rem' }}>
-            <CheckCircle2 size={16} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sessions Completed</span>
-          </div>
-          <span style={{ fontSize: '2rem', fontWeight: 800 }}>{completedSessions.length}</span>
-        </div>
-
-        <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '1.5rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#A855F7', marginBottom: '0.5rem' }}>
-            <Clock size={16} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Next Session</span>
-          </div>
-          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#E2E8F0', display: 'block', marginTop: '0.45rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {nextSession ? `${nextSession.date} • ${nextSession.time || '10:00 AM'}` : 'No Upcoming'}
-          </span>
-        </div>
-      </div>
-
-      {/* Main split grid: Next Session + Quick Actions & Activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-        
-        {/* Next Session card */}
-        <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '2rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, fontFamily: "'Outfit', sans-serif" }}>Next Scheduled Session</h3>
-            {nextSession && (
-              <span style={{ 
-                fontSize: '0.75rem', 
-                fontWeight: 700, 
-                padding: '0.25rem 0.6rem', 
-                borderRadius: '4px', 
-                backgroundColor: nextSession.status === 'Live' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 200, 76, 0.1)',
-                color: nextSession.status === 'Live' ? '#10B981' : '#F5C84C',
-                border: nextSession.status === 'Live' ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(245, 200, 76, 0.2)'
-              }}>
-                {nextSession.status}
-              </span>
-            )}
-          </div>
-
-          {nextSession ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 600, textTransform: 'uppercase' }}>{nextSession.programName || 'Programme'}</span>
-                <h4 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF', margin: '0.25rem 0 0', fontFamily: "'Outfit', sans-serif" }}>{nextSession.title}</h4>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 500 }}>DATE & TIME</span>
-                  <div style={{ color: '#E2E8F0', fontSize: '0.9rem', fontWeight: 600, marginTop: '0.15rem' }}>
-                    {nextSession.date} at {nextSession.time || '10:00 AM'}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 500 }}>SESSION TYPE</span>
-                  <div style={{ color: '#E2E8F0', fontSize: '0.9rem', fontWeight: 600, marginTop: '0.15rem' }}>
-                    {nextSession.type || 'Live Class'}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 500 }}>PARTICIPANTS</span>
-                  <div style={{ color: '#E2E8F0', fontSize: '0.9rem', fontWeight: 600, marginTop: '0.15rem' }}>
-                    {nextSession.learnersCount || nextSession.learners?.length || '24 Registered'}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: '#6B7280', fontWeight: 500 }}>FACILITATOR</span>
-                  <div style={{ color: '#E2E8F0', fontSize: '0.9rem', fontWeight: 600, marginTop: '0.15rem' }}>
-                    {facilitatorName}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '0.5rem' }}>
-                <button 
-                  onClick={() => onSelectSession(nextSession)}
-                  style={{
-                    backgroundColor: '#F5C84C',
-                    border: 'none',
-                    color: '#111111',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    width: '100%',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {nextSession.status === 'Live' ? 'Join Session Workspace' : 'View Session details'}
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#94A3B8' }}>
-              <Calendar size={32} color="#4B5563" style={{ marginBottom: '1rem' }} />
-              <div style={{ fontWeight: 600 }}>You have no upcoming sessions.</div>
-              <div style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: '0.25rem' }}>Assigned sessions will appear here when they are scheduled.</div>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* Left Column: Today's Session & Upcoming Sessions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           
-          {/* Quick Actions List */}
-          <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '1.5rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 1rem', fontFamily: "'Outfit', sans-serif" }}>Quick Actions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <button 
-                onClick={() => onNavigate('Sessions')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.65rem 0.85rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.85rem', fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5C84C'; e.currentTarget.style.backgroundColor = 'rgba(245, 200, 76, 0.02)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
-              >
-                <Calendar size={16} color="#F5C84C" />
-                <span>View My Sessions</span>
-              </button>
-              <button 
-                onClick={() => onNavigate('Resources')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.65rem 0.85rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.85rem', fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5C84C'; e.currentTarget.style.backgroundColor = 'rgba(245, 200, 76, 0.02)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
-              >
-                <BookOpenIcon size={16} color="#3B82F6" />
-                <span>View Resources Library</span>
-              </button>
-              <button 
-                onClick={() => onNavigate('Notifications')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.65rem 0.85rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.85rem', fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#F5C84C'; e.currentTarget.style.backgroundColor = 'rgba(245, 200, 76, 0.02)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
-              >
-                <Bell size={16} color="#10B981" />
-                <span>View Notifications</span>
-              </button>
-            </div>
-          </div>
+          {/* 1. TODAY'S SESSION */}
+          <div style={{ 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: '16px', 
+            padding: '2.5rem', 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+            border: '1px solid rgba(0,0,0,0.02)'
+          }}>
+            <h2 style={{ 
+              fontSize: '0.85rem', 
+              fontWeight: 700, 
+              color: '#888888', 
+              textTransform: 'uppercase', 
+              letterSpacing: '1px',
+              margin: '0 0 1.5rem'
+            }}>
+              Today's Session
+            </h2>
 
-          {/* Recent Activity List */}
-          <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '1.5rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <Activity size={16} color="#A855F7" />
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, fontFamily: "'Outfit', sans-serif" }}>Recent Activity</h3>
-            </div>
-            {recentActivities.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {recentActivities.map(act => (
-                  <div key={act.id} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                    <div style={{ marginTop: '0.2rem' }}>{act.icon}</div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#E2E8F0' }}>{act.text}</span>
-                      <span style={{ fontSize: '0.7rem', color: '#6B7280', marginTop: '0.15rem' }}>{act.time}</span>
+            {todaySession ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div>
+                  <span style={{ 
+                    fontSize: '0.85rem', 
+                    fontWeight: 700, 
+                    color: '#D6A428', 
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {todaySession.programName || 'Programme'}
+                  </span>
+                  <h3 style={{ 
+                    fontSize: '1.8rem', 
+                    fontWeight: 800, 
+                    color: '#1A1A1A', 
+                    margin: '0.35rem 0 0', 
+                    fontFamily: "'Outfit', sans-serif",
+                    letterSpacing: '-0.3px'
+                  }}>
+                    {todaySession.title}
+                  </h3>
+                </div>
+
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '1fr 1fr 1fr', 
+                  gap: '1.5rem', 
+                  borderTop: '1px solid #F1ECE4', 
+                  borderBottom: '1px solid #F1ECE4',
+                  padding: '1.5rem 0'
+                }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600 }}>DATE & TIME</span>
+                    <div style={{ color: '#1A1A1A', fontSize: '0.95rem', fontWeight: 700, marginTop: '0.25rem' }}>
+                      {todaySession.date} at {todaySession.time || '10:00 AM'}
                     </div>
                   </div>
-                ))}
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600 }}>SESSION TYPE</span>
+                    <div style={{ color: '#1A1A1A', fontSize: '0.95rem', fontWeight: 700, marginTop: '0.25rem' }}>
+                      {todaySession.type || 'Live Class'}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600 }}>LEARNERS</span>
+                    <div style={{ color: '#1A1A1A', fontSize: '0.95rem', fontWeight: 700, marginTop: '0.25rem' }}>
+                      {todaySession.learnersCount || todaySession.learners?.length || '24 Registered'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                  <button 
+                    onClick={() => onSelectSession(todaySession)}
+                    style={{ 
+                      backgroundColor: '#D6A428', 
+                      border: 'none', 
+                      color: '#FFFFFF', 
+                      padding: '0.9rem 2rem', 
+                      borderRadius: '8px', 
+                      fontSize: '0.95rem', 
+                      fontWeight: 700, 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      transition: 'background-color 0.2s',
+                      boxShadow: '0 4px 12px rgba(214, 164, 40, 0.25)'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#B5841D'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D6A428'}
+                  >
+                    <Play size={16} fill="#FFFFFF" />
+                    Start Session
+                  </button>
+
+                  <button 
+                    onClick={() => onSelectSession(todaySession)}
+                    style={{ 
+                      backgroundColor: 'transparent', 
+                      border: '1px solid #E2DCD0', 
+                      color: '#1A1A1A', 
+                      padding: '0.9rem 1.5rem', 
+                      borderRadius: '8px', 
+                      fontSize: '0.95rem', 
+                      fontWeight: 600, 
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#1A1A1A'; e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.01)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2DCD0'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    View Details
+                  </button>
+
+                  <button 
+                    onClick={() => onNavigate('Resources')}
+                    style={{ 
+                      backgroundColor: 'transparent', 
+                      border: '1px solid #E2DCD0', 
+                      color: '#1A1A1A', 
+                      padding: '0.9rem 1.5rem', 
+                      borderRadius: '8px', 
+                      fontSize: '0.95rem', 
+                      fontWeight: 600, 
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#1A1A1A'; e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.01)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2DCD0'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    Open Resources
+                  </button>
+                </div>
               </div>
             ) : (
-              <div style={{ color: '#6B7280', fontSize: '0.8rem', textAlign: 'center', padding: '1rem 0' }}>
-                No recent activity yet.
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0' }}>
+                <span style={{ fontSize: '1.05rem', color: '#666666', fontWeight: 500 }}>
+                  No session scheduled today.
+                </span>
+                <button 
+                  onClick={() => onNavigate('Sessions')}
+                  style={{ 
+                    backgroundColor: 'transparent', 
+                    border: '1px solid #E2DCD0', 
+                    color: '#1A1A1A', 
+                    padding: '0.75rem 1.5rem', 
+                    borderRadius: '8px', 
+                    fontSize: '0.9rem', 
+                    fontWeight: 600, 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#1A1A1A'; e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.01)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2DCD0'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                >
+                  View Upcoming Sessions
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 2. UPCOMING SESSIONS */}
+          <div style={{ 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: '16px', 
+            padding: '2.5rem', 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+            border: '1px solid rgba(0,0,0,0.02)'
+          }}>
+            <h2 style={{ 
+              fontSize: '0.85rem', 
+              fontWeight: 700, 
+              color: '#888888', 
+              textTransform: 'uppercase', 
+              letterSpacing: '1px',
+              margin: '0 0 1.5rem'
+            }}>
+              Upcoming Sessions
+            </h2>
+
+            {upcomingSessions.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #F1ECE4' }}>
+                      <th style={{ padding: '0.85rem 0.5rem', color: '#888888', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Date</th>
+                      <th style={{ padding: '0.85rem 0.5rem', color: '#888888', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Time</th>
+                      <th style={{ padding: '0.85rem 0.5rem', color: '#888888', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Programme</th>
+                      <th style={{ padding: '0.85rem 0.5rem', color: '#888888', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Session</th>
+                      <th style={{ padding: '0.85rem 0.5rem', color: '#888888', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Type</th>
+                      <th style={{ padding: '0.85rem 0.5rem', color: '#888888', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', textAlign: 'right' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcomingSessions.map(session => (
+                      <tr key={session.id} style={{ borderBottom: '1px solid #F8F6F1', transition: 'background-color 0.2s' }}>
+                        <td style={{ padding: '1.1rem 0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>{session.date}</td>
+                        <td style={{ padding: '1.1rem 0.5rem', color: '#666666', fontSize: '0.875rem' }}>{session.time || '10:00 AM'}</td>
+                        <td style={{ padding: '1.1rem 0.5rem', color: '#666666', fontSize: '0.875rem' }}>{session.programName || 'Programme'}</td>
+                        <td style={{ padding: '1.1rem 0.5rem', fontWeight: 700, fontSize: '0.9rem', color: '#1A1A1A' }}>{session.title}</td>
+                        <td style={{ padding: '1.1rem 0.5rem', color: '#666666', fontSize: '0.875rem' }}>{session.type || 'Live Class'}</td>
+                        <td style={{ padding: '1.1rem 0.5rem', textAlign: 'right' }}>
+                          <button 
+                            onClick={() => onSelectSession(session)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              color: '#D6A428', 
+                              fontWeight: 700, 
+                              fontSize: '0.85rem', 
+                              cursor: 'pointer', 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '0.2rem' 
+                            }}
+                          >
+                            <Eye size={14} />
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ color: '#888888', fontSize: '0.9rem', padding: '1rem 0' }}>
+                No upcoming sessions scheduled.
               </div>
             )}
           </div>
 
         </div>
 
-      </div>
-
-      {/* Bottom section: My Sessions Filterable Table/List */}
-      <div style={{ backgroundColor: '#111111', borderRadius: '12px', padding: '2rem', border: '1px solid #1F2937', color: '#FFFFFF' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, fontFamily: "'Outfit', sans-serif" }}>My Sessions</h3>
+        {/* Right Column: My Tasks & Quick Access */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           
-          {/* Filters Row */}
-          <div style={{ display: 'flex', gap: '0.5rem', backgroundColor: 'rgba(255,255,255,0.03)', padding: '0.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            {['Upcoming', 'Completed', 'All'].map(tabName => {
-              const isSelected = filter === tabName;
-              return (
-                <button
-                  key={tabName}
-                  onClick={() => setFilter(tabName)}
-                  style={{
-                    backgroundColor: isSelected ? '#F5C84C' : 'transparent',
-                    border: 'none',
-                    color: isSelected ? '#111111' : '#94A3B8',
-                    padding: '0.35rem 0.85rem',
-                    borderRadius: '6px',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
+          {/* 3. MY TASKS */}
+          <div style={{ 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: '16px', 
+            padding: '2.5rem', 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+            border: '1px solid rgba(0,0,0,0.02)'
+          }}>
+            <h2 style={{ 
+              fontSize: '0.85rem', 
+              fontWeight: 700, 
+              color: '#888888', 
+              textTransform: 'uppercase', 
+              letterSpacing: '1px',
+              margin: '0 0 1.5rem'
+            }}>
+              My Tasks
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {tasks.map(task => (
+                <div 
+                  key={task.id} 
+                  onClick={() => toggleTask(task.id)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'flex-start', 
+                    gap: '0.75rem', 
                     cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    padding: '0.5rem 0',
+                    userSelect: 'none'
                   }}
                 >
-                  {tabName}
-                </button>
-              );
-            })}
+                  <div style={{ marginTop: '0.1rem', color: task.completed ? '#D6A428' : '#888888' }}>
+                    {task.completed ? <CheckSquare size={18} /> : <Square size={18} />}
+                  </div>
+                  <span style={{ 
+                    fontSize: '0.925rem', 
+                    fontWeight: 500,
+                    color: task.completed ? '#888888' : '#1A1A1A',
+                    textDecoration: task.completed ? 'line-through' : 'none',
+                    transition: 'color 0.2s, text-decoration 0.2s'
+                  }}>
+                    {task.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* 4. QUICK ACCESS */}
+          <div style={{ 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: '16px', 
+            padding: '2.5rem', 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+            border: '1px solid rgba(0,0,0,0.02)'
+          }}>
+            <h2 style={{ 
+              fontSize: '0.85rem', 
+              fontWeight: 700, 
+              color: '#888888', 
+              textTransform: 'uppercase', 
+              letterSpacing: '1px',
+              margin: '0 0 1.5rem'
+            }}>
+              Quick Access
+            </h2>
+
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr', 
+              gap: '0.75rem' 
+            }}>
+              <button 
+                onClick={() => onNavigate('Resources')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.85rem', 
+                  width: '100%', 
+                  padding: '0.9rem 1.25rem', 
+                  backgroundColor: '#F8F6F1', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  color: '#1A1A1A', 
+                  fontSize: '0.925rem', 
+                  fontWeight: 600, 
+                  textAlign: 'left', 
+                  cursor: 'pointer', 
+                  transition: 'background-color 0.2s' 
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EEEBE3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F8F6F1'}
+              >
+                <BookOpen size={16} color="#D6A428" />
+                <span>Resources</span>
+              </button>
+
+              <button 
+                onClick={() => onNavigate('Inbox')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.85rem', 
+                  width: '100%', 
+                  padding: '0.9rem 1.25rem', 
+                  backgroundColor: '#F8F6F1', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  color: '#1A1A1A', 
+                  fontSize: '0.925rem', 
+                  fontWeight: 600, 
+                  textAlign: 'left', 
+                  cursor: 'pointer', 
+                  transition: 'background-color 0.2s' 
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EEEBE3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F8F6F1'}
+              >
+                <MessageSquare size={16} color="#D6A428" />
+                <span>Messages</span>
+              </button>
+
+              <button 
+                onClick={() => onNavigate('Notifications')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.85rem', 
+                  width: '100%', 
+                  padding: '0.9rem 1.25rem', 
+                  backgroundColor: '#F8F6F1', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  color: '#1A1A1A', 
+                  fontSize: '0.925rem', 
+                  fontWeight: 600, 
+                  textAlign: 'left', 
+                  cursor: 'pointer', 
+                  transition: 'background-color 0.2s' 
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EEEBE3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F8F6F1'}
+              >
+                <Bell size={16} color="#D6A428" />
+                <span>Announcements</span>
+              </button>
+
+              <button 
+                onClick={() => alert('Support portal simulation: contact support@oyengrid.com')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.85rem', 
+                  width: '100%', 
+                  padding: '0.9rem 1.25rem', 
+                  backgroundColor: '#F8F6F1', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  color: '#1A1A1A', 
+                  fontSize: '0.925rem', 
+                  fontWeight: 600, 
+                  textAlign: 'left', 
+                  cursor: 'pointer', 
+                  transition: 'background-color 0.2s' 
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EEEBE3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F8F6F1'}
+              >
+                <HelpCircle size={16} color="#D6A428" />
+                <span>Support</span>
+              </button>
+
+              <button 
+                onClick={() => onNavigate('Profile')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.85rem', 
+                  width: '100%', 
+                  padding: '0.9rem 1.25rem', 
+                  backgroundColor: '#F8F6F1', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  color: '#1A1A1A', 
+                  fontSize: '0.925rem', 
+                  fontWeight: 600, 
+                  textAlign: 'left', 
+                  cursor: 'pointer', 
+                  transition: 'background-color 0.2s' 
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EEEBE3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F8F6F1'}
+              >
+                <User size={16} color="#D6A428" />
+                <span>My Profile</span>
+              </button>
+            </div>
+          </div>
+
         </div>
 
-        {/* Sessions list */}
-        {filteredSessionsList.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                  <th style={{ padding: '0.75rem 1rem', color: '#6B7280', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Session Title</th>
-                  <th style={{ padding: '0.75rem 1rem', color: '#6B7280', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Programme</th>
-                  <th style={{ padding: '0.75rem 1rem', color: '#6B7280', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Date & Time</th>
-                  <th style={{ padding: '0.75rem 1rem', color: '#6B7280', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Type</th>
-                  <th style={{ padding: '0.75rem 1rem', color: '#6B7280', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Status</th>
-                  <th style={{ padding: '0.75rem 1rem', color: '#6B7280', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSessionsList.map(session => (
-                  <tr key={session.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'all 0.2s' }}>
-                    <td style={{ padding: '1rem', fontWeight: 700, fontSize: '0.9rem', color: '#FFFFFF' }}>{session.title}</td>
-                    <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#94A3B8' }}>{session.programName || 'Programme'}</td>
-                    <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#E2E8F0' }}>{session.date} • {session.time || '10:00 AM'}</td>
-                    <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#94A3B8' }}>{session.type || 'Live Class'}</td>
-                    <td style={{ padding: '1rem' }}>
-                      <span style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        padding: '0.15rem 0.5rem',
-                        borderRadius: '4px',
-                        backgroundColor: session.status === 'Completed' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 200, 76, 0.1)',
-                        color: session.status === 'Completed' ? '#10B981' : '#F5C84C'
-                      }}>
-                        {session.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '1rem', textAlign: 'right' }}>
-                      <button 
-                        onClick={() => onSelectSession(session)}
-                        style={{ background: 'none', border: 'none', color: '#F5C84C', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
-                      >
-                        View <ChevronRight size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '3rem 0', color: '#94A3B8' }}>
-            No sessions matching this filter.
-          </div>
-        )}
       </div>
 
     </div>
