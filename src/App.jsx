@@ -10,6 +10,15 @@ import {
   Presentation, Folder, Image, Eye, Download, Book, Video, MessageSquare,
   Play, Zap, Plus, X, File, ClipboardCheck, MessageCircle, Send, Paperclip, CheckCheck, Mic
 } from 'lucide-react';
+import {
+  buildWorkspaceConversations,
+  mergeConversations,
+  createMessage,
+  getOtherParticipant,
+  MESSAGE_TYPE,
+  MESSAGE_STATUS,
+} from './services/chatService';
+import { simulateReply } from './services/chatSimulation';
 import SessionDetail from './components/SessionDetail';
 import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser, getResourcesForUser } from './domain/workspace/selectors';
 import { updateSessionStatus } from './domain/workspace/actions';
@@ -88,148 +97,156 @@ export default function App() {
   const [invitedTeamRole, setInvitedTeamRole] = useState('Programme Manager');
   // Simulation & Verification inputs
 
-  // Floating chat state variables for Facilitator Dashboard Overlay
-  const [isDrawerChatOpen, setIsDrawerChatOpen] = useState(false);
-  const [drawerChatSearch, setDrawerChatSearch] = useState('');
-  const [activeDrawerChatId, setActiveDrawerChatId] = useState(null);
-  const [drawerMessageText, setDrawerMessageText] = useState('');
-  const [drawerConversations, setDrawerConversations] = useState([
-    {
-      id: 'admin',
-      name: 'Workspace Administrator',
-      role: 'Administrator',
-      avatarInitials: 'WA',
-      online: true,
-      unreadCount: 1,
-      subText: 'Usually replies within a few minutes',
-      typing: false,
-      messages: [
-        { id: 'm1', sender: 'admin', type: 'text', text: 'Good morning 👋', time: '10:00 AM', date: 'Today', readStatus: 'read' },
-        { id: 'm2', sender: 'admin', type: 'text', text: 'Your Safety Induction session has been assigned for tomorrow at 10:00 AM.', time: '10:01 AM', date: 'Today', readStatus: 'read' },
-        { id: 'm3', sender: 'admin', type: 'text', text: 'Please review the resources before the session.', time: '10:02 AM', date: 'Today', readStatus: 'read' },
-        { id: 'm4', sender: 'me', type: 'text', text: "Thank you. I'll review them this evening.", time: '10:05 AM', date: 'Today', readStatus: 'read' },
-        { id: 'm5', sender: 'admin', type: 'text', text: 'Great. Let me know if you have any questions.', time: '10:06 AM', date: 'Today', readStatus: 'read' },
-        { id: 'm6', sender: 'admin', type: 'file', text: 'Safety Guide.pdf', time: '10:10 AM', date: 'Today', readStatus: 'read', fileMeta: { name: 'Safety Guide.pdf', size: '1.2 MB', date: 'Uploaded today' } },
-        { id: 'm7', sender: 'admin', type: 'session', text: 'Renewable Energy Workshop', time: '10:15 AM', date: 'Today', readStatus: 'read', sessionMeta: { title: 'Renewable Energy Workshop', day: 'Tuesday', time: '10:00 AM', location: 'ABC Energy' } },
-        { id: 'm8', sender: 'admin', type: 'attendance', text: 'Attendance Reminder', time: '10:20 AM', date: 'Today', readStatus: 'read', attendanceMeta: { title: 'Leadership Workshop', due: 'Submit before 5 PM' } }
-      ]
-    },
-    {
-      id: 'owner',
-      name: 'Programme Owner',
-      role: 'Programme Owner',
-      avatarInitials: 'PO',
-      online: false,
-      unreadCount: 0,
-      subText: 'ABC Energy Workspace',
-      typing: false,
-      messages: [
-        { id: 'o1', sender: 'owner', type: 'resource', text: 'Session slides have been updated.', time: 'Yesterday', date: 'Yesterday', readStatus: 'read', resourceMeta: { name: 'Facilitator Guide.pdf', date: 'Uploaded today' } }
-      ]
-    },
-    {
-      id: 'leadership',
-      name: 'Leadership Programme (Group)',
-      role: 'Group',
-      avatarInitials: 'LP',
-      online: true,
-      unreadCount: 3,
-      subText: 'Active Cohort Channel',
-      typing: false,
-      messages: [
-        { id: 'g1', sender: 'owner', type: 'assessment', text: 'Leadership Quiz Published', time: '10:45 AM', date: 'Today', readStatus: 'read', assessmentMeta: { title: 'Leadership Quiz', due: 'Due Friday' } }
-      ]
-    },
-    {
-      id: 'david',
-      name: 'John David',
-      role: 'Learner',
-      avatarInitials: 'JD',
-      online: true,
-      unreadCount: 0,
-      subText: 'Cohort Participant',
-      typing: false,
-      messages: [
-        { id: 'l1', sender: 'david', type: 'text', text: "Thanks for today's session.", time: 'Monday', date: 'Monday', readStatus: 'read' }
-      ]
+  // ── Workspace Chat System ──────────────────────────────────────────────────────────────────
+  // Core state — architecture-first naming (not drawer-specific)
+  const [isChatOpen,          setIsChatOpen]          = useState(false);
+  const [conversations,       setConversations]       = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const [messageInput,        setMessageInput]        = useState('');
+  const [chatSearch,          setChatSearch]          = useState('');
+
+  // Sync conversations whenever wsTeam or workspace metadata changes.
+  // mergeConversations preserves existing message history — welcome messages are seeded once.
+  useEffect(() => {
+    if (!wsTeam || !orgName) return;
+    const generated = buildWorkspaceConversations(wsTeam, orgName, ownerEmail || 'admin');
+    setConversations(prev => mergeConversations(prev, generated));
+  }, [wsTeam, orgName, ownerEmail]);
+
+  // ─ Computed views ────────────────────────────────────────────────────────────────
+
+  // Role-filtered list of conversations visible to the current user.
+  // Phase 1: Facilitator ↔ Admin only.
+  // Future: extend cases for Programme Owner, Learner, Groups.
+  const visibleConversations = useMemo(() => {
+    if (userRole === 'Facilitator') {
+      return conversations.filter(c =>
+        c.participants.some(p => p.role === 'Administrator')
+      );
     }
-  ]);
+    if (userRole === 'Workspace Super Admin' || userRole === 'Admin') {
+      return conversations.filter(c =>
+        c.participants.some(p => p.role === 'Facilitator')
+      );
+    }
+    return [];
+  }, [conversations, userRole]);
 
-  const filteredDrawerConversations = useMemo(() => {
-    return drawerConversations.filter(c => 
-      c.name.toLowerCase().includes(drawerChatSearch.toLowerCase()) ||
-      c.messages.some(m => m.text.toLowerCase().includes(drawerChatSearch.toLowerCase()))
-    );
-  }, [drawerConversations, drawerChatSearch]);
+  // Search — Admin: filter by facilitator name/email; Facilitator: filter by message text
+  const filteredConversations = useMemo(() => {
+    if (!chatSearch.trim()) return visibleConversations;
+    const q = chatSearch.toLowerCase();
+    if (userRole === 'Facilitator') {
+      // Search within the single conversation’s message history
+      return visibleConversations.filter(c =>
+        c.messages.some(m => m.text.toLowerCase().includes(q))
+      );
+    }
+    // Admin: search by facilitator name or email
+    return visibleConversations.filter(c => {
+      const facilitator = c.participants.find(p => p.role === 'Facilitator');
+      return (
+        facilitator?.name.toLowerCase().includes(q) ||
+        facilitator?.email.toLowerCase().includes(q)
+      );
+    });
+  }, [visibleConversations, chatSearch, userRole]);
 
-  const activeDrawerConversation = useMemo(() => {
-    return drawerConversations.find(c => c.id === activeDrawerChatId) || null;
-  }, [drawerConversations, activeDrawerChatId]);
+  const activeConversation = useMemo(
+    () => conversations.find(c => c.conversationId === activeConversationId) || null,
+    [conversations, activeConversationId]
+  );
 
-  const handleSendDrawerMessage = (e) => {
-    e.preventDefault();
-    if (!drawerMessageText.trim() || !activeDrawerChatId) return;
-    
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newMsg = {
-      id: `dm-sent-${Date.now()}`,
-      sender: 'me',
-      type: 'text',
-      text: drawerMessageText,
-      time: timeStr,
-      date: 'Today',
-      readStatus: 'sent'
-    };
+  // Derived: the participant the current user is talking to in the active conversation
+  const activePeer = useMemo(() => {
+    if (!activeConversation) return null;
+    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin');
+    return getOtherParticipant(activeConversation, selfId);
+  }, [activeConversation, userRole, user, ownerEmail]);
 
-    setDrawerConversations(prev => prev.map(c => {
-      if (c.id === activeDrawerChatId) {
-        return {
-          ...c,
-          unreadCount: 0,
-          messages: [...c.messages, newMsg]
-        };
-      }
-      return c;
+  // ─ Actions ───────────────────────────────────────────────────────────────────
+
+  // Helper: append a message to a conversation and update lastMessage + lastActivity
+  const appendMessage = (conversationId, message) => {
+    setConversations(prev => prev.map(c => {
+      if (c.conversationId !== conversationId) return c;
+      const updated = [...c.messages, message];
+      return {
+        ...c,
+        messages:     updated,
+        lastMessage:  message,
+        lastActivity: Date.now(),
+        updatedAt:    Date.now(),
+      };
     }));
-    setDrawerMessageText('');
-
-    // Trigger typing simulation
-    const currentId = activeDrawerChatId;
-    setTimeout(() => {
-      setDrawerConversations(prev => prev.map(c => c.id === currentId ? { ...c, typing: true } : c));
-    }, 1500);
-
-    setTimeout(() => {
-      const replies = {
-        admin: "Got it! I will check that for you shortly.",
-        owner: "Excellent work on the workshop modules.",
-        leadership: "Announcement acknowledged. Thanks!",
-        david: "Thank you for the guidance!"
-      };
-      const replyText = replies[currentId] || "Understood, thank you.";
-      const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const incomingMsg = {
-        id: `dm-reply-${Date.now()}`,
-        sender: currentId,
-        type: 'text',
-        text: replyText,
-        time: replyTime,
-        date: 'Today',
-        readStatus: 'read'
-      };
-      setDrawerConversations(prev => prev.map(c => {
-        if (c.id === currentId) {
-          return {
-            ...c,
-            typing: false,
-            messages: [...c.messages, incomingMsg]
-          };
-        }
-        return c;
-      }));
-    }, 4500);
   };
+
+  // Helper: set typing state on a conversation
+  const setConversationTyping = (conversationId, isTyping) => {
+    setConversations(prev => prev.map(c =>
+      c.conversationId === conversationId
+        ? { ...c, typing: { ...c.typing, isTyping } }
+        : c
+    ));
+  };
+
+  // Helper: mark conversation as read (reset unreadCount)
+  const markAsRead = (conversationId) => {
+    setConversations(prev => prev.map(c =>
+      c.conversationId === conversationId ? { ...c, unreadCount: 0 } : c
+    ));
+  };
+
+  // Open chat drawer — Facilitators auto-open into their only conversation
+  const openChat = () => {
+    setIsChatOpen(true);
+    if (userRole === 'Facilitator' && visibleConversations.length === 1) {
+      setActiveConversationId(visibleConversations[0].conversationId);
+      markAsRead(visibleConversations[0].conversationId);
+    } else {
+      setActiveConversationId(null);
+    }
+  };
+
+  const closeChat = () => {
+    setIsChatOpen(false);
+    setActiveConversationId(null);
+    setChatSearch('');
+  };
+
+  const openConversation = (conversationId) => {
+    setActiveConversationId(conversationId);
+    markAsRead(conversationId);
+  };
+
+  // Send a message — appends to state, then fires simulation from isolated service
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!messageInput.trim() || !activeConversationId || !activeConversation) return;
+
+    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin');
+    const peerId = activePeer?.userId || 'other';
+
+    const outMsg = createMessage({
+      conversationId: activeConversationId,
+      senderId:       selfId,
+      receiverId:     peerId,
+      senderRole:     userRole,
+      messageType:    MESSAGE_TYPE.TEXT,
+      text:           messageInput,
+      status:         MESSAGE_STATUS.SENT,
+    });
+
+    appendMessage(activeConversationId, outMsg);
+    setMessageInput('');
+
+    // Isolated simulation — replace onReply with socket.on('message', ...) in production
+    simulateReply(activeConversation, userRole, {
+      onTyping: (isTyping) => setConversationTyping(activeConversationId, isTyping),
+      onReply:  (replyMsg) => appendMessage(activeConversationId, replyMsg),
+    });
+  };
+
   const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
   const [verifyOrgEmailInput, setVerifyOrgEmailInput] = useState('');
   const [verifyError, setVerifyError] = useState('');
@@ -2363,7 +2380,7 @@ export default function App() {
                   currentUserEmail={user}
                   userInfo={getLoggedInUserInfo()}
                   onNavigate={setActiveTab}
-                  onOpenChatDrawer={() => setIsDrawerChatOpen(true)}
+                  onOpenChatDrawer={openChat}
                   onSelectSession={(s) => {
                     setActiveSession(s);
                     setActiveTab('Sessions');
@@ -3661,7 +3678,8 @@ export default function App() {
               <>
                 {/* Floating Workspace Chat Button */}
                 <button
-                  onClick={() => setIsDrawerChatOpen(!isDrawerChatOpen)}
+                  onClick={openChat}
+                  title="Workspace Chat"
                   style={{
                     position: 'fixed',
                     bottom: '24px',
@@ -3669,7 +3687,7 @@ export default function App() {
                     width: '58px',
                     height: '58px',
                     borderRadius: '50%',
-                    backgroundColor: '#D9B233', // OYEN Gold (#D9B233)
+                    backgroundColor: '#D9B233',
                     border: 'none',
                     color: '#FFFFFF',
                     display: 'flex',
@@ -3690,10 +3708,31 @@ export default function App() {
                   }}
                 >
                   <MessageCircle size={24} />
+                  {/* Unread badge */}
+                  {!isChatOpen && visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0) > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-2px',
+                      right: '-2px',
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      backgroundColor: '#EF4444',
+                      color: '#FFF',
+                      fontSize: '0.6rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px solid #FFFDF9'
+                    }}>
+                      {visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0)}
+                    </span>
+                  )}
                 </button>
 
                 {/* Floating Chat Drawer Side Panel */}
-                {isDrawerChatOpen && (
+                {isChatOpen && (
                   <div style={{
                     position: 'fixed',
                     top: 0,
@@ -3710,52 +3749,68 @@ export default function App() {
                   }}>
                     {/* Drawer Header */}
                     <div style={{
-                      padding: '1.25rem 1.5rem',
+                      padding: '1rem 1.25rem',
                       borderBottom: '1px solid #E8E2D8',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       backgroundColor: '#FFFDF9'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        {activeDrawerChatId && (
-                          <button 
-                            onClick={() => setActiveDrawerChatId(null)}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        {/* Back button — only for Admin role that navigated into a conversation */}
+                        {activeConversationId && userRole !== 'Facilitator' && (
+                          <button
+                            onClick={() => setActiveConversationId(null)}
                             style={{
                               background: '#F5F2ED',
                               border: '1px solid #E8E2D8',
                               color: '#151515',
-                              fontSize: '0.75rem',
+                              fontSize: '0.72rem',
                               fontWeight: 700,
                               cursor: 'pointer',
-                              padding: '0.35rem 0.65rem',
-                              borderRadius: '8px'
+                              padding: '0.3rem 0.6rem',
+                              borderRadius: '7px',
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             ← Back
                           </button>
                         )}
                         <div>
-                          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#111111', fontFamily: "'Outfit', sans-serif" }}>
-                            {activeDrawerConversation ? activeDrawerConversation.name : 'Workspace Chat'}
+                          <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#111111', fontFamily: "'Outfit', sans-serif", lineHeight: 1.2 }}>
+                            {activeConversation
+                              ? activePeer?.name || 'Conversation'
+                              : 'Workspace Chat'}
                           </h4>
-                          {activeDrawerConversation && (
-                            <span style={{ fontSize: '0.7rem', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem', fontWeight: 600 }}>
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
-                              {activeDrawerConversation.online ? 'Online' : 'Away'} • {activeDrawerConversation.subText}
+                          {activeConversation ? (
+                            <span style={{ fontSize: '0.67rem', color: activePeer?.online ? '#16A34A' : '#888888', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem', fontWeight: 600 }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: activePeer?.online ? '#10B981' : '#9CA3AF', display: 'inline-block', flexShrink: 0 }} />
+                              {activePeer?.online ? 'Online' : 'Away'} · {activePeer?.specialization || activePeer?.role || 'Facilitator'}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.67rem', color: '#888888', marginTop: '0.15rem', display: 'block', fontWeight: 500 }}>
+                              {userRole === 'Facilitator'
+                                ? 'Direct line to your workspace administrator'
+                                : `${visibleConversations.length} Facilitator${visibleConversations.length !== 1 ? 's' : ''} · All conversations`}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {activeDrawerChatId && (
-                          <div style={{ display: 'flex', gap: '0.5rem', marginRight: '0.5rem', color: '#666666' }}>
-                            <span style={{ cursor: 'pointer', fontSize: '0.9rem' }}>📞</span>
-                            <span style={{ cursor: 'pointer', fontSize: '0.9rem' }}>📎</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {activeConversationId && (
+                          <div style={{ display: 'flex', gap: '0.3rem', marginRight: '0.3rem' }}>
+                            <button
+                              type="button"
+                              title="Audio call"
+                              onClick={() => alert('Audio call feature coming soon')}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center', padding: '0.2rem' }}
+                            >
+                              📞
+                            </button>
                           </div>
                         )}
-                        <button 
-                          onClick={() => { setIsDrawerChatOpen(false); setActiveDrawerChatId(null); }}
+                        <button
+                          onClick={closeChat}
                           style={{
                             background: 'none',
                             border: 'none',
@@ -3772,136 +3827,148 @@ export default function App() {
                     </div>
 
                     {/* Chat content switch */}
-                    {!activeDrawerChatId ? (
-                      /* VIEW A: Contacts / Conversations Directory */
+                    {!activeConversationId ? (
+                      /* VIEW A: Conversations Directory (Admin only; Facilitators auto-redirect) */
                       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-                        
-                        {/* Search box */}
-                        <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(0,0,0,0.03)', position: 'relative' }}>
-                          <Search size={14} color="#888888" style={{ position: 'absolute', left: '1.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                          <input 
-                            type="text" 
-                            placeholder="Search conversations..." 
-                            value={drawerChatSearch}
-                            onChange={e => setDrawerChatSearch(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '0.55rem 1rem 0.55rem 2.25rem',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(0,0,0,0.05)',
-                              backgroundColor: '#F8F6F1',
-                              fontSize: '0.8rem',
-                              outline: 'none',
-                              color: '#111111'
-                            }}
-                          />
+
+                        {/* Section label + search */}
+                        <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.6rem' }}>
+                            {userRole === 'Facilitator' ? 'Your Administrator' : 'Facilitators'}
+                          </div>
+                          <div style={{ position: 'relative' }}>
+                            <Search size={13} color="#AAAAAA" style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)' }} />
+                            <input
+                              type="text"
+                              placeholder={userRole === 'Facilitator' ? 'Search messages...' : 'Search facilitators...'}
+                              value={chatSearch}
+                              onChange={e => setChatSearch(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '0.5rem 0.9rem 0.5rem 2rem',
+                                borderRadius: '9px',
+                                border: '1px solid rgba(0,0,0,0.06)',
+                                backgroundColor: '#F5F2ED',
+                                fontSize: '0.78rem',
+                                outline: 'none',
+                                color: '#111111',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
                         </div>
 
-                        {/* Contacts list */}
+                        {/* Conversations list */}
                         <div style={{ flex: 1, overflowY: 'auto' }}>
-                          {filteredDrawerConversations.length > 0 ? (
-                            filteredDrawerConversations.map(conv => {
-                              const lastMsg = conv.messages[conv.messages.length - 1];
+                          {filteredConversations.length > 0 ? (
+                            filteredConversations.map(conv => {
+                              const peer    = conv.participants.find(p => p.role !== (userRole === 'Facilitator' ? 'Facilitator' : 'Administrator')) || conv.participants[0];
+                              const lastMsg = conv.lastMessage;
+                              const hasUnread = (conv.unreadCount || 0) > 0;
                               return (
-                                <div 
-                                  key={conv.id}
-                                  onClick={() => {
-                                    setActiveDrawerChatId(conv.id);
-                                    // Mark as read
-                                    setDrawerConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unreadCount: 0 } : c));
-                                  }}
+                                <div
+                                  key={conv.conversationId}
+                                  onClick={() => openConversation(conv.conversationId)}
                                   style={{
-                                    padding: '1.15rem 1.5rem',
-                                    borderBottom: '1px solid rgba(0,0,0,0.02)',
+                                    padding: '0.95rem 1.25rem',
+                                    borderBottom: '1px solid rgba(0,0,0,0.03)',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '1rem',
-                                    transition: 'all 0.2s',
+                                    gap: '0.85rem',
+                                    transition: 'background 0.15s',
                                     position: 'relative'
                                   }}
-                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(214, 166, 42, 0.03)'}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(217,178,51,0.04)'}
                                   onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
-                                  <div style={{ position: 'relative' }}>
+                                  {/* Avatar */}
+                                  <div style={{ position: 'relative', flexShrink: 0 }}>
                                     <div style={{
-                                      width: '40px',
-                                      height: '40px',
+                                      width: '42px',
+                                      height: '42px',
                                       borderRadius: '50%',
-                                      backgroundColor: '#111111',
+                                      background: peer.role === 'Administrator' ? 'linear-gradient(135deg, #D9B233, #9B7B1A)' : 'linear-gradient(135deg, #374151, #111827)',
                                       color: '#FFFDF9',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
                                       fontWeight: 800,
-                                      fontSize: '0.85rem'
+                                      fontSize: '0.85rem',
+                                      fontFamily: "'Outfit', sans-serif"
                                     }}>
-                                      {conv.avatarInitials || conv.name.substring(0, 2).toUpperCase()}
+                                      {peer.avatarInitials}
                                     </div>
-                                    {conv.online && (
-                                      <span style={{
-                                        position: 'absolute',
-                                        bottom: 0,
-                                        right: 0,
-                                        width: '10px',
-                                        height: '10px',
-                                        borderRadius: '50%',
-                                        backgroundColor: '#10B981',
-                                        border: '2px solid #FFFDF9'
-                                      }} />
-                                    )}
+                                    <span style={{
+                                      position: 'absolute',
+                                      bottom: '1px',
+                                      right: '1px',
+                                      width: '9px',
+                                      height: '9px',
+                                      borderRadius: '50%',
+                                      backgroundColor: peer.online ? '#10B981' : '#9CA3AF',
+                                      border: '2px solid #FFFDF9'
+                                    }} />
                                   </div>
 
-                                  <div style={{ flex: 1, overflow: 'hidden' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-                                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#111111' }}>
-                                        {conv.name}
+                                  {/* Text block */}
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.15rem' }}>
+                                      <span style={{ fontSize: '0.83rem', fontWeight: hasUnread ? 800 : 700, color: '#111111', fontFamily: "'Outfit', sans-serif" }}>
+                                        {peer.name}
                                       </span>
-                                      <span style={{ fontSize: '0.7rem', color: '#888888', fontWeight: 500 }}>
-                                        {lastMsg ? lastMsg.time : ''}
+                                      <span style={{ fontSize: '0.67rem', color: '#AAAAAA', fontWeight: 500, flexShrink: 0, marginLeft: '0.5rem' }}>
+                                        {lastMsg ? lastMsg._time || lastMsg.time : ''}
                                       </span>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.1rem' }}>
                                       <span style={{
-                                        fontSize: '0.65rem',
-                                        backgroundColor: conv.role === 'Administrator' ? 'rgba(217, 178, 51, 0.12)' : conv.role === 'Programme Owner' ? 'rgba(45, 108, 223, 0.08)' : 'rgba(0,0,0,0.05)',
-                                        color: conv.role === 'Administrator' ? '#D9B233' : conv.role === 'Programme Owner' ? '#2D6CDF' : '#555',
-                                        padding: '0.1rem 0.4rem',
-                                        borderRadius: '4px',
+                                        fontSize: '0.6rem',
+                                        backgroundColor: peer.role === 'Administrator' ? 'rgba(217,178,51,0.12)' : 'rgba(107,114,128,0.1)',
+                                        color: peer.role === 'Administrator' ? '#C49B0A' : '#4B5563',
+                                        padding: '0.08rem 0.38rem',
+                                        borderRadius: '3px',
                                         fontWeight: 700,
-                                        textTransform: 'uppercase'
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.3px'
                                       }}>
-                                        {conv.role}
+                                        {peer.role}
                                       </span>
-                                      {conv.unreadCount > 0 && (
+                                      {peer.online && (
+                                        <span style={{ fontSize: '0.6rem', color: '#10B981', fontWeight: 600 }}>● Online</span>
+                                      )}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                      <p style={{
+                                        margin: 0,
+                                        fontSize: '0.75rem',
+                                        color: hasUnread ? '#222' : '#777777',
+                                        fontWeight: hasUnread ? 700 : 400,
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        flex: 1
+                                      }}>
+                                        {lastMsg
+                                          ? (lastMsg.type === 'system-welcome'
+                                            ? '🔔 Workspace conversation started'
+                                            : lastMsg.sender === 'me' ? `You: ${lastMsg.text}` : lastMsg.text)
+                                          : 'Start the conversation'}
+                                      </p>
+                                      {hasUnread && (
                                         <span style={{
                                           backgroundColor: '#D9B233',
-                                          color: '#FFF',
-                                          fontSize: '0.65rem',
-                                          fontWeight: 700,
-                                          borderRadius: '50%',
-                                          width: '16px',
-                                          height: '16px',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          marginLeft: 'auto'
+                                          color: '#FFFDF9',
+                                          fontSize: '0.6rem',
+                                          fontWeight: 800,
+                                          borderRadius: '10px',
+                                          padding: '0.05rem 0.4rem',
+                                          flexShrink: 0
                                         }}>
                                           {conv.unreadCount}
                                         </span>
                                       )}
                                     </div>
-                                    <p style={{
-                                      margin: 0,
-                                      fontSize: '0.78rem',
-                                      color: conv.unreadCount > 0 ? '#111' : '#666666',
-                                      fontWeight: conv.unreadCount > 0 ? 700 : 500,
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis'
-                                    }}>
-                                      {lastMsg ? lastMsg.text : ''}
-                                    </p>
                                   </div>
                                 </div>
                               );
@@ -3909,18 +3976,22 @@ export default function App() {
                           ) : (
                             <div style={{
                               textAlign: 'center',
-                              padding: '4rem 2rem',
+                              padding: '3rem 2rem',
                               color: '#666666',
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
                               gap: '1rem'
                             }}>
-                              <span style={{ fontSize: '2.5rem' }}>👋</span>
+                              <div style={{ fontSize: '2rem' }}>💬</div>
                               <div>
-                                <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#111111', margin: '0 0 0.35rem' }}>No conversations yet</h5>
-                                <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.5, color: '#666666' }}>
-                                  Messages from your administrator, programme owners and learners will appear here. Everything stays connected to your workspace.
+                                <h5 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#111111', margin: '0 0 0.35rem', fontFamily: "'Outfit', sans-serif" }}>
+                                  {userRole === 'Facilitator' ? 'No admin conversation' : 'No facilitators yet'}
+                                </h5>
+                                <p style={{ fontSize: '0.72rem', margin: 0, lineHeight: 1.5, color: '#888888' }}>
+                                  {userRole === 'Facilitator'
+                                    ? 'Your workspace administrator conversation will appear here automatically.'
+                                    : 'Invite facilitators to the workspace and their conversations will appear here automatically.'}
                                 </p>
                               </div>
                             </div>
@@ -3938,13 +4009,14 @@ export default function App() {
                           {/* Date separator rendering and dynamic bubbles */}
                           {(() => {
                             let lastDate = null;
-                            return activeDrawerConversation.messages.map(m => {
-                              const showDate = m.date !== lastDate;
-                              lastDate = m.date;
-                              const isMe = m.sender === 'me';
+                            const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin');
+                            return activeConversation.messages.map(m => {
+                              const showDate = (m._date || m.date) !== lastDate;
+                              lastDate = m._date || m.date;
+                              const isMe = m.senderId === selfId || m.sender === 'me';
                               
                               return (
-                                <div key={m.id} style={{ width: '100%' }}>
+                                <div key={m.messageId || m.id} style={{ width: '100%' }}>
                                   {showDate && (
                                     <div style={{
                                       display: 'flex',
@@ -3961,7 +4033,7 @@ export default function App() {
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.5px'
                                       }}>
-                                        {m.date}
+                                        {m._date || m.date}
                                       </span>
                                     </div>
                                   )}
@@ -3973,7 +4045,35 @@ export default function App() {
                                   }}>
                                     
                                     {/* System / Action Card messages */}
-                                    {m.type === 'system' || m.type === 'session' ? (
+                                    {m.messageType === 'system-welcome' || m.type === 'system-welcome' ? (
+                                      /* Workspace conversation started card */
+                                      <div style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        padding: '0.5rem 0 1rem',
+                                        gap: '0.5rem'
+                                      }}>
+                                        <div style={{
+                                          width: '38px', height: '38px', borderRadius: '10px',
+                                          background: 'linear-gradient(135deg, #D9B233, #9B7B1A)',
+                                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          boxShadow: '0 4px 12px rgba(217,178,51,0.25)'
+                                        }}>
+                                          <MessageCircle size={18} color="#FFFFFF" />
+                                        </div>
+                                        <div style={{ textAlign: 'center' }}>
+                                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#555', fontFamily: "'Outfit', sans-serif" }}>
+                                            Workspace conversation created
+                                          </div>
+                                          <div style={{ fontSize: '0.65rem', color: '#AAAAAA', marginTop: '0.1rem' }}>
+                                            {m.time} · This is the beginning of your conversation
+                                          </div>
+                                        </div>
+                                        <div style={{ width: '100%', height: '1px', background: 'linear-gradient(to right, transparent, #E8E2D8, transparent)', margin: '0.25rem 0' }} />
+                                      </div>
+                                    ) : m.messageType === 'system' || m.type === 'system' || m.messageType === 'session' || m.type === 'session' ? (
                                       <div style={{
                                         width: '100%',
                                         maxWidth: '310px',
@@ -4008,7 +4108,7 @@ export default function App() {
                                           View Session
                                         </button>
                                       </div>
-                                    ) : m.type === 'file' ? (
+                                    ) : m.messageType === 'file' || m.type === 'file' ? (
                                       <div style={{
                                         width: '100%',
                                         maxWidth: '310px',
@@ -4044,7 +4144,7 @@ export default function App() {
                                           Download
                                         </button>
                                       </div>
-                                    ) : m.type === 'resource' ? (
+                                    ) : m.messageType === 'resource' || m.type === 'resource' ? (
                                       <div style={{
                                         width: '100%',
                                         maxWidth: '310px',
@@ -4080,7 +4180,7 @@ export default function App() {
                                           Open Resource
                                         </button>
                                       </div>
-                                    ) : m.type === 'assessment' ? (
+                                    ) : m.messageType === 'assessment' || m.type === 'assessment' ? (
                                       <div style={{
                                         width: '100%',
                                         maxWidth: '310px',
@@ -4113,7 +4213,7 @@ export default function App() {
                                           Open Assessment
                                         </button>
                                       </div>
-                                    ) : m.type === 'attendance' ? (
+                                    ) : m.messageType === 'attendance' || m.type === 'attendance' ? (
                                       <div style={{
                                         width: '100%',
                                         maxWidth: '310px',
@@ -4179,12 +4279,12 @@ export default function App() {
                                           </span>
                                           {isMe && (
                                             <span style={{ display: 'flex', alignItems: 'center' }}>
-                                              {m.readStatus === 'sent' ? (
+                                              {(m.status || m.readStatus) === 'sent' ? (
                                                 <Check size={11} color="rgba(255,255,255,0.5)" />
-                                              ) : m.readStatus === 'delivered' ? (
+                                              ) : (m.status || m.readStatus) === 'delivered' ? (
                                                 <CheckCheck size={12} color="rgba(255,255,255,0.5)" />
                                               ) : (
-                                                <CheckCheck size={12} color="#D9B233" /> // Gold/Blue read receipts
+                                                <CheckCheck size={12} color="#D9B233" />
                                               )}
                                             </span>
                                           )}
@@ -4200,16 +4300,21 @@ export default function App() {
 
                         </div>
 
-                        {/* Typing indicator indicator log */}
-                        {activeDrawerConversation.typing && (
+                        {/* Typing indicator */}
+                        {activeConversation?.typing?.isTyping && (
                           <div style={{ padding: '0.5rem 1.5rem', fontSize: '0.72rem', color: '#D9B233', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <span style={{ fontStyle: 'italic' }}>{activeDrawerConversation.name} is typing...</span>
+                            <span style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D9B233', animation: 'bounce 1s infinite' }} />
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D9B233', animation: 'bounce 1s infinite 0.2s' }} />
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D9B233', animation: 'bounce 1s infinite 0.4s' }} />
+                            </span>
+                            <span style={{ fontStyle: 'italic', fontSize: '0.7rem' }}>{activePeer?.name || 'Workspace'} is typing</span>
                           </div>
                         )}
 
                         {/* Message Input form */}
                         <form 
-                          onSubmit={handleSendDrawerMessage}
+                          onSubmit={sendMessage}
                           style={{
                             padding: '1rem 1.25rem',
                             borderTop: '1px solid #E8E2D8',
@@ -4239,8 +4344,8 @@ export default function App() {
                           <input 
                             type="text" 
                             placeholder="Type a message..." 
-                            value={drawerMessageText}
-                            onChange={e => setDrawerMessageText(e.target.value)}
+                            value={messageInput}
+                            onChange={e => setMessageInput(e.target.value)}
                             style={{
                               flex: 1,
                               padding: '0.55rem 0.85rem',
@@ -4253,7 +4358,7 @@ export default function App() {
                             }}
                           />
 
-                          {drawerMessageText.trim() === '' ? (
+                          {messageInput.trim() === '' ? (
                             <button 
                               type="button"
                               onClick={() => alert('Voice notes recording...')}
