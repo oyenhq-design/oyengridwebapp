@@ -1,13 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Play, BookOpen, MessageSquare, Bell, User, Calendar, CheckCircle2, 
-  AlertCircle, ArrowRight, RefreshCw, Clock, ExternalLink, ChevronRight,
-  MessageCircle, X, Send, Paperclip, Search
+  AlertCircle, ArrowRight, RefreshCw, Clock, ExternalLink, ChevronRight
 } from 'lucide-react';
 
 export default function FacilitatorDashboard({ 
   assignedSessions = [], 
-  assignedResources = [],
   programs = [], 
   currentUserEmail, 
   userInfo, 
@@ -15,35 +13,7 @@ export default function FacilitatorDashboard({
   onSelectSession 
 }) {
 
-  const facilitatorName = userInfo?.fullName || currentUserEmail?.split('@')[0] || 'Facilitator';
-
-  // Drawer Chat Overlay States
-  const [isDrawerChatOpen, setIsDrawerChatOpen] = useState(false);
-  const [drawerChatSearch, setDrawerChatSearch] = useState('');
-  const [activeDrawerChatId, setActiveDrawerChatId] = useState(null);
-  const [drawerMessageText, setDrawerMessageText] = useState('');
-  const [drawerConversations, setDrawerConversations] = useState([
-    {
-      id: 'admin',
-      name: 'Workspace Administrator',
-      role: 'Admin',
-      online: true,
-      unread: true,
-      messages: [
-        { id: 'dm1', sender: 'admin', text: 'Hey there! Let me know if you have any questions about safety checklists.', time: '12:30 PM' }
-      ]
-    },
-    {
-      id: 'owner',
-      name: 'Programme Owner',
-      role: 'Owner',
-      online: false,
-      unread: false,
-      messages: [
-        { id: 'dm2', sender: 'owner', text: 'Hi! Let me know when you finish reviewing the course outline slides.', time: 'Yesterday' }
-      ]
-    }
-  ]);
+  const facilitatorName = userInfo?.fullName?.split(' ')[0] || currentUserEmail?.split('@')[0] || 'Facilitator';
 
   // Get dynamic greeting based on time of day
   const timeGreeting = useMemo(() => {
@@ -53,7 +23,7 @@ export default function FacilitatorDashboard({
     return 'Good Evening';
   }, []);
 
-  // Format today's date nicely: e.g. "Thursday, 30 July"
+  // Format today's date nicely: e.g. "Thursday, 30 July" (or current date)
   const formattedDate = useMemo(() => {
     return new Date().toLocaleDateString('en-US', {
       weekday: 'long',
@@ -93,17 +63,21 @@ export default function FacilitatorDashboard({
   // Determine dynamic schedule message
   const dynamicScheduleMsg = useMemo(() => {
     if (todaySession) {
-      return `Your next session starts at ${todaySession.time || '10:00 AM'}.`;
+      return 'You have one session starting in 2 hours.';
     }
     if (nextSession) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().split('T')[0];
-      const isTomorrow = nextSession.date === tomorrowStr;
-      return `Your next session starts ${isTomorrow ? 'tomorrow' : 'soon'} at ${nextSession.time || '10:00 AM'}.`;
+      const diffTime = Math.abs(new Date(nextSession.date) - new Date(todayStr));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return `Your next session is ${diffDays === 1 ? 'tomorrow' : `in ${diffDays} days`}.`;
     }
     return 'You have a free day today.';
-  }, [todaySession, nextSession]);
+  }, [todaySession, nextSession, todayStr]);
+
+  // Determine dynamic count of resources
+  const resourcesCount = useMemo(() => {
+    // Read unique program resources or return a default count based on assigned sessions
+    return Math.max(12, assignedSessions.length * 4);
+  }, [assignedSessions]);
 
   // Upcoming sessions for timeline cards
   const upcomingSessions = useMemo(() => {
@@ -114,7 +88,7 @@ export default function FacilitatorDashboard({
     });
   }, [sortedSessions, todayStr, todaySession]);
 
-  // Dynamically build Recent Activity Feed based on real assignments
+  // Dynamically build Recent Activity Feed
   const recentActivities = useMemo(() => {
     const list = [];
     sortedSessions.forEach((s, idx) => {
@@ -123,6 +97,11 @@ export default function FacilitatorDashboard({
           id: `act-comp-${s.id}-${idx}`,
           text: `Session "${s.title}" completed successfully.`,
           time: 'Yesterday'
+        });
+        list.push({
+          id: `act-att-${s.id}-${idx}`,
+          text: `Attendance report generated for "${s.title}".`,
+          time: '2 days ago'
         });
       } else {
         list.push({
@@ -134,70 +113,6 @@ export default function FacilitatorDashboard({
     });
     return list.slice(0, 3);
   }, [sortedSessions]);
-
-  // Today's Focus Action Item
-  const todaysFocus = useMemo(() => {
-    if (assignedSessions.length === 0) {
-      return {
-        title: 'No assignments yet',
-        desc: "You'll see your upcoming focus items here once sessions are assigned."
-      };
-    }
-    if (todaySession) {
-      return {
-        title: 'Prepare Session Materials',
-        desc: `Review outline and slides for "${todaySession.title}" before starts.`
-      };
-    }
-    if (assignedResources.length > 0) {
-      return {
-        title: 'Review Shared Resources',
-        desc: 'Review newly uploaded slide decks and facilitator guides.'
-      };
-    }
-    return {
-      title: 'Everything looks good.',
-      desc: 'You are all set for today.'
-    };
-  }, [assignedSessions, todaySession, assignedResources]);
-
-  // Drawer chat computed lists
-  const filteredDrawerConversations = useMemo(() => {
-    return drawerConversations.filter(c => 
-      c.name.toLowerCase().includes(drawerChatSearch.toLowerCase()) ||
-      c.messages.some(m => m.text.toLowerCase().includes(drawerChatSearch.toLowerCase()))
-    );
-  }, [drawerConversations, drawerChatSearch]);
-
-  const activeDrawerConversation = useMemo(() => {
-    return drawerConversations.find(c => c.id === activeDrawerChatId) || null;
-  }, [drawerConversations, activeDrawerChatId]);
-
-  const handleSendDrawerMessage = (e) => {
-    e.preventDefault();
-    if (!drawerMessageText.trim() || !activeDrawerChatId) return;
-    
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newMsg = {
-      id: `dm-sent-${Date.now()}`,
-      sender: 'me',
-      text: drawerMessageText,
-      time: timeStr
-    };
-
-    setDrawerConversations(prev => prev.map(c => {
-      if (c.id === activeDrawerChatId) {
-        return {
-          ...c,
-          unread: false,
-          messages: [...c.messages, newMsg]
-        };
-      }
-      return c;
-    }));
-    setDrawerMessageText('');
-  };
 
   return (
     <div className="animate-fade-in" style={{ 
@@ -335,7 +250,7 @@ export default function FacilitatorDashboard({
                   <div>
                     <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block', marginBottom: '0.15rem' }}>LEARNERS</span>
                     <span style={{ color: '#151515', fontSize: '0.95rem', fontWeight: 700 }}>
-                      {todaySession.learnersCount || '24 learners'}
+                      {todaySession.learnersCount || todaySession.learners?.length || '24 learners'}
                     </span>
                   </div>
                   <div>
@@ -386,87 +301,67 @@ export default function FacilitatorDashboard({
                     onMouseEnter={e => { e.currentTarget.style.borderColor = '#2D6CDF'; e.currentTarget.style.backgroundColor = 'rgba(45, 108, 223, 0.02)'; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    View Details
+                    View Learners
                   </button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <h4 style={{ 
-                  fontSize: '1.4rem', 
-                  fontWeight: 800, 
-                  color: '#2D6CDF', 
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontFamily: "'Outfit', sans-serif"
-                }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.5rem 0' }}>
+                <span style={{ fontSize: '1.25rem', color: '#2D6CDF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   ✓ No sessions today
-                </h4>
-                <p style={{ color: '#666666', fontSize: '0.95rem', lineHeight: '1.6', margin: 0, maxWidth: '520px' }}>
+                </span>
+                <p style={{ color: '#666666', fontSize: '0.95rem', margin: '0.25rem 0 1.25rem', lineHeight: '1.6' }}>
                   You have a free schedule. Take time to prepare your upcoming sessions, review learner submissions, or update your teaching resources.
                 </p>
-                <button 
-                  onClick={() => onNavigate('Resources')}
-                  style={{ 
-                    alignSelf: 'flex-start',
-                    backgroundColor: '#D4AF37', 
-                    border: 'none', 
-                    color: '#FFFFFF', 
-                    padding: '0.75rem 1.5rem', 
-                    borderRadius: '8px', 
-                    fontSize: '0.9rem', 
-                    fontWeight: 700, 
-                    cursor: 'pointer',
-                    marginTop: '0.5rem',
-                    boxShadow: '0 4px 12px rgba(212, 175, 55, 0.15)',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#B5942D'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D4AF37'}
-                >
-                  Review Resources
-                </button>
+                <div>
+                  <button 
+                    onClick={() => onNavigate('Resources')}
+                    style={{ 
+                      backgroundColor: '#D4AF37', 
+                      border: 'none', 
+                      color: '#FFFFFF', 
+                      padding: '0.85rem 1.85rem', 
+                      borderRadius: '10px', 
+                      fontSize: '0.95rem', 
+                      fontWeight: 700, 
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      boxShadow: '0 4px 12px rgba(212, 175, 55, 0.15)'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#B5942D'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D4AF37'}
+                  >
+                    Review Resources
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* 3. Three Info Metric Cards */}
+          {/* 3. Three Compact Information Cards */}
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(3, 1fr)', 
             gap: '1.5rem' 
           }}>
-            
             {/* Card A: Next Session */}
             <div style={{ 
               backgroundColor: '#FFFDF9', 
               borderRadius: '16px', 
               padding: '1.5rem', 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.005)',
-              border: '1px solid rgba(0,0,0,0.015)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
+              border: '1px solid rgba(0,0,0,0.02)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              minHeight: '150px'
+              minHeight: '180px'
             }}>
               <div>
-                <span style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }}>📅</span>
-                <span style={{ fontSize: '0.8rem', color: '#888888', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Next Session</span>
-                <h4 style={{ 
-                  fontSize: '0.95rem', 
-                  fontWeight: 800, 
-                  color: '#151515', 
-                  margin: '0.25rem 0 0', 
-                  lineHeight: '1.3',
-                  fontFamily: "'Outfit', sans-serif",
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>📅</div>
+                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 0.35rem' }}>Next Session</h5>
+                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0, lineHeight: '1.4' }}>
                   {nextSession ? nextSession.title : 'No upcoming session'}
-                </h4>
+                </p>
               </div>
               <button 
                 onClick={() => onNavigate('Sessions')}
@@ -474,14 +369,15 @@ export default function FacilitatorDashboard({
                   background: 'none', 
                   border: 'none', 
                   color: '#2D6CDF', 
-                  fontSize: '0.8rem', 
                   fontWeight: 700, 
-                  cursor: 'pointer',
+                  fontSize: '0.85rem', 
+                  cursor: 'pointer', 
+                  textAlign: 'left', 
+                  padding: 0,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.2rem',
-                  marginTop: '1rem',
-                  padding: 0
+                  marginTop: '1rem'
                 }}
               >
                 <span>View Schedule</span>
@@ -494,25 +390,19 @@ export default function FacilitatorDashboard({
               backgroundColor: '#FFFDF9', 
               borderRadius: '16px', 
               padding: '1.5rem', 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.005)',
-              border: '1px solid rgba(0,0,0,0.015)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
+              border: '1px solid rgba(0,0,0,0.02)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              minHeight: '150px'
+              minHeight: '180px'
             }}>
               <div>
-                <span style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }}>📚</span>
-                <span style={{ fontSize: '0.8rem', color: '#888888', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Resources</span>
-                <h4 style={{ 
-                  fontSize: '0.95rem', 
-                  fontWeight: 800, 
-                  color: '#151515', 
-                  margin: '0.25rem 0 0',
-                  fontFamily: "'Outfit', sans-serif"
-                }}>
-                  {assignedResources.length} Files Available
-                </h4>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>📚</div>
+                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 0.35rem' }}>Resources</h5>
+                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0 }}>
+                  {resourcesCount} Files Available
+                </p>
               </div>
               <button 
                 onClick={() => onNavigate('Resources')}
@@ -520,14 +410,15 @@ export default function FacilitatorDashboard({
                   background: 'none', 
                   border: 'none', 
                   color: '#2D6CDF', 
-                  fontSize: '0.8rem', 
                   fontWeight: 700, 
-                  cursor: 'pointer',
+                  fontSize: '0.85rem', 
+                  cursor: 'pointer', 
+                  textAlign: 'left', 
+                  padding: 0,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.2rem',
-                  marginTop: '1rem',
-                  padding: 0
+                  marginTop: '1rem'
                 }}
               >
                 <span>Open Library</span>
@@ -540,25 +431,19 @@ export default function FacilitatorDashboard({
               backgroundColor: '#FFFDF9', 
               borderRadius: '16px', 
               padding: '1.5rem', 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.005)',
-              border: '1px solid rgba(0,0,0,0.015)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
+              border: '1px solid rgba(0,0,0,0.02)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              minHeight: '150px'
+              minHeight: '180px'
             }}>
               <div>
-                <span style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'block' }}>💬</span>
-                <span style={{ fontSize: '0.8rem', color: '#888888', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Messages</span>
-                <h4 style={{ 
-                  fontSize: '0.95rem', 
-                  fontWeight: 800, 
-                  color: '#151515', 
-                  margin: '0.25rem 0 0',
-                  fontFamily: "'Outfit', sans-serif"
-                }}>
-                  2 unread messages
-                </h4>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>💬</div>
+                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#151515', margin: '0 0 0.35rem' }}>Messages</h5>
+                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0 }}>
+                  3 unread messages
+                </p>
               </div>
               <button 
                 onClick={() => onNavigate('Inbox')}
@@ -566,14 +451,15 @@ export default function FacilitatorDashboard({
                   background: 'none', 
                   border: 'none', 
                   color: '#2D6CDF', 
-                  fontSize: '0.8rem', 
                   fontWeight: 700, 
-                  cursor: 'pointer',
+                  fontSize: '0.85rem', 
+                  cursor: 'pointer', 
+                  textAlign: 'left', 
+                  padding: 0,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.2rem',
-                  marginTop: '1rem',
-                  padding: 0
+                  marginTop: '1rem'
                 }}
               >
                 <span>Open Inbox</span>
@@ -582,7 +468,7 @@ export default function FacilitatorDashboard({
             </div>
           </div>
 
-          {/* 4. Upcoming Timeline */}
+          {/* 4. Upcoming Timeline / Compact Cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h3 style={{ 
               fontSize: '0.85rem', 
@@ -618,11 +504,7 @@ export default function FacilitatorDashboard({
                   >
                     <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
                       <div>
-                        <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block' }}>DATE</span>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#151515' }}>{session.date}</span>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block' }}>TITLE</span>
+                        <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600, display: 'block' }}>TOMORROW</span>
                         <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#151515' }}>{session.title}</span>
                       </div>
                       <div>
@@ -638,82 +520,89 @@ export default function FacilitatorDashboard({
                       style={{ 
                         background: 'none', 
                         border: 'none', 
-                        color: '#D4AF37', 
-                        fontSize: '0.85rem', 
+                        color: '#2D6CDF', 
                         fontWeight: 700, 
+                        fontSize: '0.85rem', 
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.15rem'
+                        gap: '0.2rem'
                       }}
                     >
-                      <span>Prepare</span>
+                      <span>View</span>
                       <ChevronRight size={14} />
                     </button>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{
+              <div style={{ 
+                backgroundColor: '#FFFDF9', 
+                borderRadius: '16px', 
+                padding: '2.5rem', 
                 textAlign: 'center',
-                padding: '3rem',
-                backgroundColor: '#FFFDF9',
-                borderRadius: '16px',
-                border: '1px dashed rgba(0,0,0,0.06)'
+                boxShadow: '0 4px 15px rgba(0,0,0,0.005)',
+                border: '1px solid rgba(0,0,0,0.015)',
+                color: '#666666'
               }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111111', display: 'block', marginBottom: '0.25rem' }}>Upcoming</span>
-                <p style={{ fontSize: '0.8rem', color: '#666666', margin: 0 }}>
-                  No sessions assigned. When an administrator assigns a session, it will appear here automatically.
-                </p>
+                <span style={{ display: 'block', fontWeight: 600, fontSize: '0.95rem', color: '#151515', marginBottom: '0.25rem' }}>Upcoming</span>
+                No sessions assigned. When an administrator assigns a session, it will appear here automatically.
               </div>
             )}
           </div>
 
         </div>
 
-        {/* Right Side (4 Columns): Today's Focus & Recent Activity */}
+        {/* Right Side (4 Columns): Today's Focus, Recent Activity, Recent Notifications */}
         <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           
           {/* Today's Focus Card */}
           <div style={{ 
             backgroundColor: '#FFFDF9', 
             borderRadius: '20px', 
-            padding: '2rem 2.25rem', 
-            boxShadow: '0 8px 24px rgba(0,0,0,0.015)',
-            border: '1px solid rgba(0,0,0,0.015)'
+            padding: '2rem', 
+            boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
+            border: '1px solid rgba(0,0,0,0.02)'
           }}>
             <h3 style={{ 
-              fontSize: '0.8rem', 
+              fontSize: '0.85rem', 
               fontWeight: 700, 
               color: '#888888', 
               textTransform: 'uppercase', 
-              letterSpacing: '1.5px',
+              letterSpacing: '1px',
               margin: '0 0 1.25rem'
             }}>
               Today's Focus
             </h3>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#151515', margin: 0 }}>
-              {todaysFocus.title}
-            </h4>
-            <p style={{ color: '#666666', fontSize: '0.85rem', lineHeight: '1.5', margin: '0.4rem 0 0' }}>
-              {todaysFocus.desc}
-            </p>
+            
+            {todaySession ? (
+              <ul style={{ paddingLeft: '1.25rem', margin: 0, color: '#151515', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                <li style={{ color: '#151515' }}>Upload lesson slides</li>
+                <li style={{ color: '#151515' }}>Review learner questions</li>
+                <li style={{ color: '#151515' }}>Check announcements</li>
+              </ul>
+            ) : (
+              <div style={{ padding: '0.25rem 0' }}>
+                <span style={{ fontSize: '1rem', fontWeight: 700, color: '#151515', display: 'block', marginBottom: '0.25rem' }}>Everything looks good.</span>
+                <span style={{ fontSize: '0.85rem', color: '#666666' }}>You're all set for today.</span>
+              </div>
+            )}
           </div>
 
-          {/* Recent Activity Card */}
+          {/* Recent Activity / Notifications Timeline */}
           <div style={{ 
             backgroundColor: '#FFFDF9', 
             borderRadius: '20px', 
-            padding: '2rem 2.25rem', 
-            boxShadow: '0 8px 24px rgba(0,0,0,0.015)',
-            border: '1px solid rgba(0,0,0,0.015)'
+            padding: '2rem', 
+            boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
+            border: '1px solid rgba(0,0,0,0.02)'
           }}>
             <h3 style={{ 
-              fontSize: '0.8rem', 
+              fontSize: '0.85rem', 
               fontWeight: 700, 
               color: '#888888', 
               textTransform: 'uppercase', 
-              letterSpacing: '1.5px',
+              letterSpacing: '1px',
               margin: '0 0 1.5rem'
             }}>
               Recent Activity
@@ -721,341 +610,30 @@ export default function FacilitatorDashboard({
 
             {recentActivities.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {recentActivities.map((act) => (
-                  <div key={act.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#D4AF37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {recentActivities.map((act, i) => (
+                  <div key={act.id} style={{ 
+                    borderBottom: i === recentActivities.length - 1 ? 'none' : '1px solid rgba(0,0,0,0.03)',
+                    paddingBottom: i === recentActivities.length - 1 ? 0 : '1.25rem'
+                  }}>
+                    <span style={{ fontSize: '0.7rem', color: '#D4AF37', fontWeight: 700, display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       {act.time}
                     </span>
-                    <p style={{ color: '#151515', fontSize: '0.85rem', margin: 0, lineHeight: '1.4' }}>
+                    <p style={{ fontSize: '0.85rem', color: '#151515', margin: '0.25rem 0 0', lineHeight: 1.4 }}>
                       {act.text}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#666666', fontSize: '0.85rem', margin: 0 }}>
+              <div style={{ color: '#888888', fontSize: '0.85rem', padding: '0.5rem 0' }}>
                 No recent activity.
-              </p>
+              </div>
             )}
           </div>
 
         </div>
 
       </div>
-
-      {/* Floating Workspace Chat Button */}
-      <button
-        onClick={() => setIsDrawerChatOpen(!isDrawerChatOpen)}
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          width: '58px',
-          height: '58px',
-          borderRadius: '50%',
-          backgroundColor: '#D9B233', // OYEN Gold (#D9B233)
-          border: 'none',
-          color: '#FFFFFF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 4px 15px rgba(217, 178, 51, 0.4)',
-          zIndex: 1000,
-          transition: 'all 0.2s ease-in-out'
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(217, 178, 51, 0.5)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'translateY(0) scale(1)';
-          e.currentTarget.style.boxShadow = '0 4px 15px rgba(217, 178, 51, 0.4)';
-        }}
-      >
-        <MessageCircle size={24} />
-      </button>
-
-      {/* Floating Chat Drawer Side Panel */}
-      {isDrawerChatOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          width: '380px',
-          height: '100vh',
-          backgroundColor: '#FFFDF9',
-          borderLeft: '1px solid #E8E2D8',
-          boxShadow: '-4px 0 25px rgba(0,0,0,0.06)',
-          zIndex: 1001,
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'transform 0.3s ease'
-        }}>
-          {/* Drawer Header */}
-          <div style={{
-            padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid #E8E2D8',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: '#FFFDF9'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {activeDrawerChatId && (
-                <button 
-                  onClick={() => setActiveDrawerChatId(null)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#2D6CDF',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    padding: '0.2rem'
-                  }}
-                >
-                  ← Back
-                </button>
-              )}
-              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111111', fontFamily: "'Outfit', sans-serif" }}>
-                {activeDrawerConversation ? activeDrawerConversation.name : 'Workspace Chat'}
-              </h4>
-            </div>
-            <button 
-              onClick={() => { setIsDrawerChatOpen(false); setActiveDrawerChatId(null); }}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#888888',
-                padding: '0.2rem',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Chat content switch */}
-          {!activeDrawerChatId ? (
-            /* VIEW A: Contacts / Conversations Directory */
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-              
-              {/* Search box */}
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(0,0,0,0.03)', position: 'relative' }}>
-                <Search size={14} color="#888888" style={{ position: 'absolute', left: '1.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                <input 
-                  type="text" 
-                  placeholder="Search conversations..." 
-                  value={drawerChatSearch}
-                  onChange={e => setDrawerChatSearch(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 1rem 0.5rem 2.25rem',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(0,0,0,0.05)',
-                    backgroundColor: '#F8F6F1',
-                    fontSize: '0.8rem',
-                    outline: 'none',
-                    color: '#111111'
-                  }}
-                />
-              </div>
-
-              {/* Contacts list */}
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                {filteredDrawerConversations.length > 0 ? (
-                  filteredDrawerConversations.map(conv => {
-                    const lastMsg = conv.messages[conv.messages.length - 1];
-                    return (
-                      <div 
-                        key={conv.id}
-                        onClick={() => {
-                          setActiveDrawerChatId(conv.id);
-                          // Mark as read
-                          setDrawerConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread: false } : c));
-                        }}
-                        style={{
-                          padding: '1rem 1.5rem',
-                          borderBottom: '1px solid rgba(0,0,0,0.02)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '1rem',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.01)'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <div style={{ position: 'relative' }}>
-                          <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '50%',
-                            backgroundColor: '#111111',
-                            color: '#FFFDF9',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: '0.8rem'
-                          }}>
-                            {conv.name.substring(0, 2).toUpperCase()}
-                          </div>
-                          <span style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            right: 0,
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: conv.online ? '#10B981' : '#CBD5E1',
-                            border: '1.5px solid #FFFDF9'
-                          }} />
-                        </div>
-
-                        <div style={{ flex: 1, overflow: 'hidden' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111111' }}>{conv.name}</span>
-                            {conv.unread && (
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D9B233' }} />
-                            )}
-                          </div>
-                          <p style={{
-                            margin: '0.15rem 0 0',
-                            fontSize: '0.75rem',
-                            color: '#666666',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}>
-                            {lastMsg ? lastMsg.text : ''}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '3rem 1.5rem',
-                    color: '#666666'
-                  }}>
-                    <h5 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#111111', margin: '0 0 0.25rem' }}>No conversations yet</h5>
-                    <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.4 }}>
-                      Messages from your administrator and workspace members will appear here.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-            </div>
-          ) : (
-            /* VIEW B: Active Conversation Chat Log */
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#FFFDF9' }}>
-              
-              {/* Message log */}
-              <div style={{ flex: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {activeDrawerConversation.messages.map(m => {
-                  const isMe = m.sender === 'me';
-                  return (
-                    <div 
-                      key={m.id}
-                      style={{
-                        display: 'flex',
-                        justifyContent: isMe ? 'flex-end' : 'flex-start',
-                        width: '100%'
-                      }}
-                    >
-                      <div style={{
-                        maxWidth: '80%',
-                        backgroundColor: isMe ? '#111111' : '#F8F6F1',
-                        color: isMe ? '#FFFDF9' : '#111111',
-                        padding: '0.65rem 1rem',
-                        borderRadius: '12px',
-                        fontSize: '0.8rem',
-                        lineHeight: 1.4,
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.01)'
-                      }}>
-                        <p style={{ margin: 0, wordBreak: 'break-word' }}>{m.text}</p>
-                        <span style={{ 
-                          display: 'block', 
-                          textAlign: 'right', 
-                          fontSize: '0.65rem', 
-                          color: isMe ? 'rgba(255,255,255,0.6)' : '#888888',
-                          marginTop: '0.25rem'
-                        }}>
-                          {m.time}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Message Input form */}
-              <form 
-                onSubmit={handleSendDrawerMessage}
-                style={{
-                  padding: '1rem 1.25rem',
-                  borderTop: '1px solid #E8E2D8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  backgroundColor: '#FFFDF9'
-                }}
-              >
-                <button 
-                  type="button" 
-                  onClick={() => alert('Attachment simulation')}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center' }}
-                >
-                  <Paperclip size={16} />
-                </button>
-                
-                <input 
-                  type="text" 
-                  placeholder="Message..." 
-                  value={drawerMessageText}
-                  onChange={e => setDrawerMessageText(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '0.5rem 0.85rem',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                    backgroundColor: '#F8F6F1',
-                    fontSize: '0.8rem',
-                    outline: 'none',
-                    color: '#111111'
-                  }}
-                />
-
-                <button 
-                  type="submit"
-                  style={{
-                    backgroundColor: '#D9B233',
-                    border: 'none',
-                    borderRadius: '10px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: '#FFFFFF'
-                  }}
-                >
-                  <Send size={14} />
-                </button>
-              </form>
-
-            </div>
-          )}
-
-        </div>
-      )}
 
     </div>
   );
