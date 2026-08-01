@@ -60,29 +60,131 @@ export default function FacilitatorSessions({
 
   if (assignedSessions.length === 0) {
     return (
-      <div className="animate-fade-in" style={{ backgroundColor: '#F7F5F0', minHeight: '100vh', padding: '4rem 2rem', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '4rem 3rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', maxWidth: '500px', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }}>
-          <Calendar size={48} color="#F5C84C" style={{ marginBottom: '1rem' }} />
-          <div>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>No Sessions Assigned</h2>
-            <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginTop: '0.75rem', lineHeight: '1.5' }}>
-              You don't have any scheduled sessions at the moment. Once a workspace administrator or program owner assigns a session to you, it will automatically appear here.
-            </p>
+      <div className="animate-fade-in" style={{ 
+        backgroundColor: '#F8F6F1', 
+        minHeight: '100vh', 
+        padding: '3.5rem 4.5rem', 
+        fontFamily: "'Inter', sans-serif",
+        color: '#111111',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2.5rem'
+      }}>
+        {/* Page Header */}
+        <div>
+          <h1 style={{ 
+            fontSize: '2.4rem', 
+            fontWeight: 800, 
+            color: '#111111', 
+            margin: 0, 
+            fontFamily: "'Outfit', sans-serif",
+            letterSpacing: '-0.8px'
+          }}>
+            Sessions Workspace
+          </h1>
+          <p style={{ 
+            color: '#666666', 
+            fontSize: '1.05rem', 
+            marginTop: '0.35rem' 
+          }}>
+            Manage your assigned teaching sessions and classroom records.
+          </p>
+        </div>
+
+        {/* Naturally Positioned Content Area Empty Card */}
+        <div style={{ 
+          backgroundColor: '#FFFDF9', 
+          borderRadius: '24px', 
+          padding: '4.5rem 3rem', 
+          boxShadow: '0 8px 30px rgba(0,0,0,0.015)',
+          border: '1px solid #E8E2D8',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          maxWidth: '680px',
+          width: '100%',
+          margin: '0 auto',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Subtle gold radial background glow */}
+          <div style={{
+            position: 'absolute',
+            width: '200px',
+            height: '200px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(214, 166, 42, 0.04)',
+            filter: 'blur(50px)',
+            top: '10%',
+            zIndex: 1
+          }} />
+
+          {/* Premium gold badge icon */}
+          <div style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            width: '84px', 
+            height: '84px', 
+            borderRadius: '50%', 
+            backgroundColor: 'rgba(214, 166, 42, 0.08)', 
+            boxShadow: '0 4px 15px rgba(214, 166, 42, 0.08)',
+            marginBottom: '1.5rem',
+            position: 'relative',
+            zIndex: 2
+          }}>
+            <Calendar size={36} color="#D6A62A" />
           </div>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', width: '100%' }}>
+
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: 800, 
+            color: '#111111', 
+            margin: '0 0 1rem', 
+            fontFamily: "'Outfit', sans-serif",
+            position: 'relative',
+            zIndex: 2
+          }}>
+            No sessions assigned yet
+          </h2>
+          
+          <p style={{ 
+            color: '#666666', 
+            fontSize: '0.95rem', 
+            lineHeight: '1.6', 
+            margin: '0 0 2.25rem',
+            maxWidth: '480px',
+            position: 'relative',
+            zIndex: 2
+          }}>
+            Your administrator hasn't assigned any sessions to you yet. As soon as a session is assigned, it will automatically appear here.
+          </p>
+
+          <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 2 }}>
             <button 
               onClick={handleRefresh}
               disabled={isRefreshing}
-              style={{ flex: 1, background: '#F5C84C', border: 'none', color: '#111111', fontWeight: 700, borderRadius: '8px', padding: '0.75rem', cursor: isRefreshing ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', opacity: isRefreshing ? 0.7 : 1 }}
+              style={{ 
+                backgroundColor: '#D6A62A', 
+                border: 'none', 
+                color: '#FFFFFF', 
+                fontWeight: 700, 
+                borderRadius: '10px', 
+                padding: '0.75rem 2rem', 
+                cursor: isRefreshing ? 'not-allowed' : 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                fontSize: '0.9rem',
+                boxShadow: '0 4px 12px rgba(214, 166, 42, 0.25)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => { if(!isRefreshing) e.currentTarget.style.backgroundColor = '#B58C1F'; }}
+              onMouseLeave={e => { if(!isRefreshing) e.currentTarget.style.backgroundColor = '#D6A62A'; }}
             >
               {isRefreshing ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-              {isRefreshing ? 'Refreshing...' : 'Refresh Sessions'}
-            </button>
-            <button 
-              onClick={handleNotifyAdmin}
-              style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid #1F2937', color: '#FFFFFF', fontWeight: 700, borderRadius: '8px', padding: '0.75rem', cursor: 'pointer' }}
-            >
-              Notify Administrator
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
         </div>
