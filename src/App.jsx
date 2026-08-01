@@ -8,7 +8,7 @@ import {
   Globe, Menu, Search, Bell, ChevronDown, Home, Clock, Headphones,
   Shield, Rocket, FileText, Mail, HardDrive,
   Presentation, Folder, Image, Eye, Download, Book, Video, MessageSquare,
-  Play, Zap, Plus, X, File, ClipboardCheck, MessageCircle, Send, Paperclip
+  Play, Zap, Plus, X, File, ClipboardCheck, MessageCircle, Send, Paperclip, CheckCheck, Mic
 } from 'lucide-react';
 import SessionDetail from './components/SessionDetail';
 import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser, getResourcesForUser } from './domain/workspace/selectors';
@@ -97,21 +97,60 @@ export default function App() {
     {
       id: 'admin',
       name: 'Workspace Administrator',
-      role: 'Admin',
+      role: 'Administrator',
+      avatarInitials: 'WA',
       online: true,
-      unread: true,
+      unreadCount: 1,
+      subText: 'Usually replies within a few minutes',
+      typing: false,
       messages: [
-        { id: 'dm1', sender: 'admin', text: 'Hey there! Let me know if you have any questions about safety checklists.', time: '12:30 PM' }
+        { id: 'm1', sender: 'admin', type: 'text', text: 'Good morning 👋', time: '10:00 AM', date: 'Today', readStatus: 'read' },
+        { id: 'm2', sender: 'admin', type: 'text', text: 'Your Safety Induction session has been assigned for tomorrow at 10:00 AM.', time: '10:01 AM', date: 'Today', readStatus: 'read' },
+        { id: 'm3', sender: 'admin', type: 'text', text: 'Please review the resources before the session.', time: '10:02 AM', date: 'Today', readStatus: 'read' },
+        { id: 'm4', sender: 'me', type: 'text', text: "Thank you. I'll review them this evening.", time: '10:05 AM', date: 'Today', readStatus: 'read' },
+        { id: 'm5', sender: 'admin', type: 'text', text: 'Great. Let me know if you have any questions.', time: '10:06 AM', date: 'Today', readStatus: 'read' },
+        { id: 'm6', sender: 'admin', type: 'file', text: 'Safety Guide.pdf', time: '10:10 AM', date: 'Today', readStatus: 'read', fileMeta: { name: 'Safety Guide.pdf', size: '1.2 MB', date: 'Uploaded today' } },
+        { id: 'm7', sender: 'admin', type: 'session', text: 'Renewable Energy Workshop', time: '10:15 AM', date: 'Today', readStatus: 'read', sessionMeta: { title: 'Renewable Energy Workshop', day: 'Tuesday', time: '10:00 AM', location: 'ABC Energy' } },
+        { id: 'm8', sender: 'admin', type: 'attendance', text: 'Attendance Reminder', time: '10:20 AM', date: 'Today', readStatus: 'read', attendanceMeta: { title: 'Leadership Workshop', due: 'Submit before 5 PM' } }
       ]
     },
     {
       id: 'owner',
       name: 'Programme Owner',
-      role: 'Owner',
+      role: 'Programme Owner',
+      avatarInitials: 'PO',
       online: false,
-      unread: false,
+      unreadCount: 0,
+      subText: 'ABC Energy Workspace',
+      typing: false,
       messages: [
-        { id: 'dm2', sender: 'owner', text: 'Hi! Let me know when you finish reviewing the course outline slides.', time: 'Yesterday' }
+        { id: 'o1', sender: 'owner', type: 'resource', text: 'Session slides have been updated.', time: 'Yesterday', date: 'Yesterday', readStatus: 'read', resourceMeta: { name: 'Facilitator Guide.pdf', date: 'Uploaded today' } }
+      ]
+    },
+    {
+      id: 'leadership',
+      name: 'Leadership Programme (Group)',
+      role: 'Group',
+      avatarInitials: 'LP',
+      online: true,
+      unreadCount: 3,
+      subText: 'Active Cohort Channel',
+      typing: false,
+      messages: [
+        { id: 'g1', sender: 'owner', type: 'assessment', text: 'Leadership Quiz Published', time: '10:45 AM', date: 'Today', readStatus: 'read', assessmentMeta: { title: 'Leadership Quiz', due: 'Due Friday' } }
+      ]
+    },
+    {
+      id: 'david',
+      name: 'John David',
+      role: 'Learner',
+      avatarInitials: 'JD',
+      online: true,
+      unreadCount: 0,
+      subText: 'Cohort Participant',
+      typing: false,
+      messages: [
+        { id: 'l1', sender: 'david', type: 'text', text: "Thanks for today's session.", time: 'Monday', date: 'Monday', readStatus: 'read' }
       ]
     }
   ]);
@@ -136,21 +175,60 @@ export default function App() {
     const newMsg = {
       id: `dm-sent-${Date.now()}`,
       sender: 'me',
+      type: 'text',
       text: drawerMessageText,
-      time: timeStr
+      time: timeStr,
+      date: 'Today',
+      readStatus: 'sent'
     };
 
     setDrawerConversations(prev => prev.map(c => {
       if (c.id === activeDrawerChatId) {
         return {
           ...c,
-          unread: false,
+          unreadCount: 0,
           messages: [...c.messages, newMsg]
         };
       }
       return c;
     }));
     setDrawerMessageText('');
+
+    // Trigger typing simulation
+    const currentId = activeDrawerChatId;
+    setTimeout(() => {
+      setDrawerConversations(prev => prev.map(c => c.id === currentId ? { ...c, typing: true } : c));
+    }, 1500);
+
+    setTimeout(() => {
+      const replies = {
+        admin: "Got it! I will check that for you shortly.",
+        owner: "Excellent work on the workshop modules.",
+        leadership: "Announcement acknowledged. Thanks!",
+        david: "Thank you for the guidance!"
+      };
+      const replyText = replies[currentId] || "Understood, thank you.";
+      const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const incomingMsg = {
+        id: `dm-reply-${Date.now()}`,
+        sender: currentId,
+        type: 'text',
+        text: replyText,
+        time: replyTime,
+        date: 'Today',
+        readStatus: 'read'
+      };
+      setDrawerConversations(prev => prev.map(c => {
+        if (c.id === currentId) {
+          return {
+            ...c,
+            typing: false,
+            messages: [...c.messages, incomingMsg]
+          };
+        }
+        return c;
+      }));
+    }, 4500);
   };
   const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
   const [verifyOrgEmailInput, setVerifyOrgEmailInput] = useState('');
@@ -3620,15 +3698,15 @@ export default function App() {
                     position: 'fixed',
                     top: 0,
                     right: 0,
-                    width: '380px',
+                    width: '390px',
                     height: '100vh',
                     backgroundColor: '#FFFDF9',
                     borderLeft: '1px solid #E8E2D8',
-                    boxShadow: '-4px 0 25px rgba(0,0,0,0.06)',
+                    boxShadow: '-6px 0 35px rgba(0,0,0,0.08)',
                     zIndex: 1001,
                     display: 'flex',
                     flexDirection: 'column',
-                    transition: 'transform 0.3s ease'
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}>
                     {/* Drawer Header */}
                     <div style={{
@@ -3639,41 +3717,58 @@ export default function App() {
                       alignItems: 'center',
                       backgroundColor: '#FFFDF9'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         {activeDrawerChatId && (
                           <button 
                             onClick={() => setActiveDrawerChatId(null)}
                             style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#2D6CDF',
-                              fontSize: '0.8rem',
+                              background: '#F5F2ED',
+                              border: '1px solid #E8E2D8',
+                              color: '#151515',
+                              fontSize: '0.75rem',
                               fontWeight: 700,
                               cursor: 'pointer',
-                              padding: '0.2rem'
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: '8px'
                             }}
                           >
                             ← Back
                           </button>
                         )}
-                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111111', fontFamily: "'Outfit', sans-serif" }}>
-                          {activeDrawerConversation ? activeDrawerConversation.name : 'Workspace Chat'}
-                        </h4>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#111111', fontFamily: "'Outfit', sans-serif" }}>
+                            {activeDrawerConversation ? activeDrawerConversation.name : 'Workspace Chat'}
+                          </h4>
+                          {activeDrawerConversation && (
+                            <span style={{ fontSize: '0.7rem', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem', fontWeight: 600 }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
+                              {activeDrawerConversation.online ? 'Online' : 'Away'} • {activeDrawerConversation.subText}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <button 
-                        onClick={() => { setIsDrawerChatOpen(false); setActiveDrawerChatId(null); }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: '#888888',
-                          padding: '0.2rem',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <X size={18} />
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {activeDrawerChatId && (
+                          <div style={{ display: 'flex', gap: '0.5rem', marginRight: '0.5rem', color: '#666666' }}>
+                            <span style={{ cursor: 'pointer', fontSize: '0.9rem' }}>📞</span>
+                            <span style={{ cursor: 'pointer', fontSize: '0.9rem' }}>📎</span>
+                          </div>
+                        )}
+                        <button 
+                          onClick={() => { setIsDrawerChatOpen(false); setActiveDrawerChatId(null); }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#888888',
+                            padding: '0.2rem',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Chat content switch */}
@@ -3691,7 +3786,7 @@ export default function App() {
                             onChange={e => setDrawerChatSearch(e.target.value)}
                             style={{
                               width: '100%',
-                              padding: '0.5rem 1rem 0.5rem 2.25rem',
+                              padding: '0.55rem 1rem 0.55rem 2.25rem',
                               borderRadius: '10px',
                               border: '1px solid rgba(0,0,0,0.05)',
                               backgroundColor: '#F8F6F1',
@@ -3713,59 +3808,94 @@ export default function App() {
                                   onClick={() => {
                                     setActiveDrawerChatId(conv.id);
                                     // Mark as read
-                                    setDrawerConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread: false } : c));
+                                    setDrawerConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unreadCount: 0 } : c));
                                   }}
                                   style={{
-                                    padding: '1rem 1.5rem',
+                                    padding: '1.15rem 1.5rem',
                                     borderBottom: '1px solid rgba(0,0,0,0.02)',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '1rem',
-                                    transition: 'background-color 0.2s',
-                                    color: '#111111'
+                                    transition: 'all 0.2s',
+                                    position: 'relative'
                                   }}
-                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.01)'}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(214, 166, 42, 0.03)'}
                                   onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
                                   <div style={{ position: 'relative' }}>
                                     <div style={{
-                                      width: '36px',
-                                      height: '36px',
+                                      width: '40px',
+                                      height: '40px',
                                       borderRadius: '50%',
                                       backgroundColor: '#111111',
                                       color: '#FFFDF9',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
-                                      fontWeight: 700,
-                                      fontSize: '0.8rem'
+                                      fontWeight: 800,
+                                      fontSize: '0.85rem'
                                     }}>
-                                      {conv.name.substring(0, 2).toUpperCase()}
+                                      {conv.avatarInitials || conv.name.substring(0, 2).toUpperCase()}
                                     </div>
-                                    <span style={{
-                                      position: 'absolute',
-                                      bottom: 0,
-                                      right: 0,
-                                      width: '8px',
-                                      height: '8px',
-                                      borderRadius: '50%',
-                                      backgroundColor: conv.online ? '#10B981' : '#CBD5E1',
-                                      border: '1.5px solid #FFFDF9'
-                                    }} />
+                                    {conv.online && (
+                                      <span style={{
+                                        position: 'absolute',
+                                        bottom: 0,
+                                        right: 0,
+                                        width: '10px',
+                                        height: '10px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#10B981',
+                                        border: '2px solid #FFFDF9'
+                                      }} />
+                                    )}
                                   </div>
 
                                   <div style={{ flex: 1, overflow: 'hidden' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111111' }}>{conv.name}</span>
-                                      {conv.unread && (
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D9B233' }} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#111111' }}>
+                                        {conv.name}
+                                      </span>
+                                      <span style={{ fontSize: '0.7rem', color: '#888888', fontWeight: 500 }}>
+                                        {lastMsg ? lastMsg.time : ''}
+                                      </span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
+                                      <span style={{
+                                        fontSize: '0.65rem',
+                                        backgroundColor: conv.role === 'Administrator' ? 'rgba(217, 178, 51, 0.12)' : conv.role === 'Programme Owner' ? 'rgba(45, 108, 223, 0.08)' : 'rgba(0,0,0,0.05)',
+                                        color: conv.role === 'Administrator' ? '#D9B233' : conv.role === 'Programme Owner' ? '#2D6CDF' : '#555',
+                                        padding: '0.1rem 0.4rem',
+                                        borderRadius: '4px',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase'
+                                      }}>
+                                        {conv.role}
+                                      </span>
+                                      {conv.unreadCount > 0 && (
+                                        <span style={{
+                                          backgroundColor: '#D9B233',
+                                          color: '#FFF',
+                                          fontSize: '0.65rem',
+                                          fontWeight: 700,
+                                          borderRadius: '50%',
+                                          width: '16px',
+                                          height: '16px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          marginLeft: 'auto'
+                                        }}>
+                                          {conv.unreadCount}
+                                        </span>
                                       )}
                                     </div>
                                     <p style={{
-                                      margin: '0.15rem 0 0',
-                                      fontSize: '0.75rem',
-                                      color: '#666666',
+                                      margin: 0,
+                                      fontSize: '0.78rem',
+                                      color: conv.unreadCount > 0 ? '#111' : '#666666',
+                                      fontWeight: conv.unreadCount > 0 ? 700 : 500,
                                       whiteSpace: 'nowrap',
                                       overflow: 'hidden',
                                       textOverflow: 'ellipsis'
@@ -3779,13 +3909,20 @@ export default function App() {
                           ) : (
                             <div style={{
                               textAlign: 'center',
-                              padding: '3rem 1.5rem',
-                              color: '#666666'
+                              padding: '4rem 2rem',
+                              color: '#666666',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '1rem'
                             }}>
-                              <h5 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#111111', margin: '0 0 0.25rem' }}>No conversations yet</h5>
-                              <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.4 }}>
-                                Messages from your administrator and workspace members will appear here.
-                              </p>
+                              <span style={{ fontSize: '2.5rem' }}>👋</span>
+                              <div>
+                                <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#111111', margin: '0 0 0.35rem' }}>No conversations yet</h5>
+                                <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.5, color: '#666666' }}>
+                                  Messages from your administrator, programme owners and learners will appear here. Everything stays connected to your workspace.
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -3793,46 +3930,282 @@ export default function App() {
                       </div>
                     ) : (
                       /* VIEW B: Active Conversation Chat Log */
-                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#FFFDF9' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#FDFBF7' }}>
                         
                         {/* Message log */}
-                        <div style={{ flex: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                          {activeDrawerConversation.messages.map(m => {
-                            const isMe = m.sender === 'me';
-                            return (
-                              <div 
-                                key={m.id}
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: isMe ? 'flex-end' : 'flex-start',
-                                  width: '100%'
-                                }}
-                              >
-                                <div style={{
-                                  maxWidth: '80%',
-                                  backgroundColor: isMe ? '#111111' : '#F8F6F1',
-                                  color: isMe ? '#FFFDF9' : '#111111',
-                                  padding: '0.65rem 1rem',
-                                  borderRadius: '12px',
-                                  fontSize: '0.8rem',
-                                  lineHeight: 1.4,
-                                  boxShadow: '0 1px 4px rgba(0,0,0,0.01)'
-                                }}>
-                                  <p style={{ margin: 0, wordBreak: 'break-word' }}>{m.text}</p>
-                                  <span style={{ 
-                                    display: 'block', 
-                                    textAlign: 'right', 
-                                    fontSize: '0.65rem', 
-                                    color: isMe ? 'rgba(255,255,255,0.6)' : '#888888',
-                                    marginTop: '0.25rem'
+                        <div style={{ flex: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          
+                          {/* Date separator rendering and dynamic bubbles */}
+                          {(() => {
+                            let lastDate = null;
+                            return activeDrawerConversation.messages.map(m => {
+                              const showDate = m.date !== lastDate;
+                              lastDate = m.date;
+                              const isMe = m.sender === 'me';
+                              
+                              return (
+                                <div key={m.id} style={{ width: '100%' }}>
+                                  {showDate && (
+                                    <div style={{
+                                      display: 'flex',
+                                      justifyContent: 'center',
+                                      margin: '1.25rem 0 0.85rem'
+                                    }}>
+                                      <span style={{
+                                        fontSize: '0.7rem',
+                                        backgroundColor: '#EAE5DB',
+                                        color: '#6B665E',
+                                        padding: '0.25rem 0.75rem',
+                                        borderRadius: '20px',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px'
+                                      }}>
+                                        {m.date}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  <div style={{
+                                    display: 'flex',
+                                    justifyContent: isMe ? 'flex-end' : 'flex-start',
+                                    width: '100%'
                                   }}>
-                                    {m.time}
-                                  </span>
+                                    
+                                    {/* System / Action Card messages */}
+                                    {m.type === 'system' || m.type === 'session' ? (
+                                      <div style={{
+                                        width: '100%',
+                                        maxWidth: '310px',
+                                        backgroundColor: '#FFFDF9',
+                                        border: '1px solid #E8E2D8',
+                                        borderRadius: '12px',
+                                        padding: '1rem',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                                      }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#D9B233', fontWeight: 800, fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                          <Calendar size={14} />
+                                          <span>Session Updated</span>
+                                        </div>
+                                        <h5 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#111111', margin: '0 0 0.25rem' }}>{m.sessionMeta?.title}</h5>
+                                        <p style={{ fontSize: '0.75rem', color: '#666', margin: '0 0 0.75rem' }}>
+                                          {m.sessionMeta?.day} • {m.sessionMeta?.time} • {m.sessionMeta?.location}
+                                        </p>
+                                        <button 
+                                          onClick={() => alert('Opening Session details')}
+                                          style={{
+                                            width: '100%',
+                                            padding: '0.45rem',
+                                            backgroundColor: '#111111',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            color: '#FFFDF9',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          View Session
+                                        </button>
+                                      </div>
+                                    ) : m.type === 'file' ? (
+                                      <div style={{
+                                        width: '100%',
+                                        maxWidth: '310px',
+                                        backgroundColor: '#FFFDF9',
+                                        border: '1px solid #E8E2D8',
+                                        borderRadius: '12px',
+                                        padding: '1rem',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                                      }}>
+                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(217, 178, 51, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D9B233' }}>
+                                            <FileText size={18} />
+                                          </div>
+                                          <div>
+                                            <h6 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#111' }}>{m.fileMeta?.name}</h6>
+                                            <span style={{ fontSize: '0.68rem', color: '#888' }}>{m.fileMeta?.size} • {m.fileMeta?.date}</span>
+                                          </div>
+                                        </div>
+                                        <button 
+                                          onClick={() => alert('Downloading file...')}
+                                          style={{
+                                            width: '100%',
+                                            padding: '0.45rem',
+                                            backgroundColor: '#F5F2ED',
+                                            border: '1px solid #E8E2D8',
+                                            borderRadius: '6px',
+                                            color: '#111',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          Download
+                                        </button>
+                                      </div>
+                                    ) : m.type === 'resource' ? (
+                                      <div style={{
+                                        width: '100%',
+                                        maxWidth: '310px',
+                                        backgroundColor: '#FFFDF9',
+                                        border: '1px solid #E8E2D8',
+                                        borderRadius: '12px',
+                                        padding: '1rem',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                                      }}>
+                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(45, 108, 223, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2D6CDF' }}>
+                                            <BookOpen size={18} />
+                                          </div>
+                                          <div>
+                                            <h6 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#111' }}>{m.resourceMeta?.name}</h6>
+                                            <span style={{ fontSize: '0.68rem', color: '#888' }}>{m.resourceMeta?.date}</span>
+                                          </div>
+                                        </div>
+                                        <button 
+                                          onClick={() => alert('Opening Resource details')}
+                                          style={{
+                                            width: '100%',
+                                            padding: '0.45rem',
+                                            backgroundColor: '#111',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            color: '#FFF',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          Open Resource
+                                        </button>
+                                      </div>
+                                    ) : m.type === 'assessment' ? (
+                                      <div style={{
+                                        width: '100%',
+                                        maxWidth: '310px',
+                                        backgroundColor: '#FFFDF9',
+                                        border: '1px solid #E8E2D8',
+                                        borderRadius: '12px',
+                                        padding: '1rem',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                                      }}>
+                                        <div style={{ display: 'flex', itemsAlign: 'center', gap: '0.5rem', color: '#D9B233', fontWeight: 800, fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                          <Award size={14} />
+                                          <span>Assessment Published</span>
+                                        </div>
+                                        <h5 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#111111', margin: '0 0 0.25rem' }}>{m.assessmentMeta?.title}</h5>
+                                        <p style={{ fontSize: '0.75rem', color: '#666', margin: '0 0 0.75rem' }}>{m.assessmentMeta?.due}</p>
+                                        <button 
+                                          onClick={() => alert('Opening assessment')}
+                                          style={{
+                                            width: '100%',
+                                            padding: '0.45rem',
+                                            backgroundColor: '#111',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            color: '#FFF',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          Open Assessment
+                                        </button>
+                                      </div>
+                                    ) : m.type === 'attendance' ? (
+                                      <div style={{
+                                        width: '100%',
+                                        maxWidth: '310px',
+                                        backgroundColor: '#FFFDF9',
+                                        border: '1px solid #E8E2D8',
+                                        borderRadius: '12px',
+                                        padding: '1rem',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                                      }}>
+                                        <div style={{ display: 'flex', itemsAlign: 'center', gap: '0.5rem', color: '#D9B233', fontWeight: 800, fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                          <ClipboardCheck size={14} />
+                                          <span>Attendance Reminder</span>
+                                        </div>
+                                        <p style={{ fontSize: '0.78rem', color: '#111', margin: '0 0 0.75rem', lineHeight: 1.4 }}>
+                                          Please submit attendance for <strong>{m.attendanceMeta?.title}</strong> before 5 PM.
+                                        </p>
+                                        <button 
+                                          onClick={() => alert('Opening attendance sheet')}
+                                          style={{
+                                            width: '100%',
+                                            padding: '0.45rem',
+                                            backgroundColor: '#D9B233',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            color: '#FFF',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer'
+                                          }}
+                                        >
+                                          Open Attendance
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      /* Standard text bubbles */
+                                      <div 
+                                        style={{
+                                          maxWidth: '80%',
+                                          backgroundColor: isMe ? '#111111' : '#F8F6F1',
+                                          color: isMe ? '#FFFDF9' : '#111111',
+                                          padding: '0.65rem 1rem',
+                                          borderRadius: '12px',
+                                          fontSize: '0.8rem',
+                                          lineHeight: 1.45,
+                                          boxShadow: '0 1px 4px rgba(0,0,0,0.01)',
+                                          position: 'relative'
+                                        }}
+                                        title="Right-click for options"
+                                      >
+                                        <p style={{ margin: 0, wordBreak: 'break-word' }}>{m.text}</p>
+                                        <div style={{ 
+                                          display: 'flex', 
+                                          alignItems: 'center',
+                                          justifyContent: 'flex-end',
+                                          gap: '0.25rem',
+                                          marginTop: '0.25rem'
+                                        }}>
+                                          <span style={{ 
+                                            fontSize: '0.65rem', 
+                                            color: isMe ? 'rgba(255,255,255,0.6)' : '#888888'
+                                          }}>
+                                            {m.time}
+                                          </span>
+                                          {isMe && (
+                                            <span style={{ display: 'flex', alignItems: 'center' }}>
+                                              {m.readStatus === 'sent' ? (
+                                                <Check size={11} color="rgba(255,255,255,0.5)" />
+                                              ) : m.readStatus === 'delivered' ? (
+                                                <CheckCheck size={12} color="rgba(255,255,255,0.5)" />
+                                              ) : (
+                                                <CheckCheck size={12} color="#D9B233" /> // Gold/Blue read receipts
+                                              )}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
+
                         </div>
+
+                        {/* Typing indicator indicator log */}
+                        {activeDrawerConversation.typing && (
+                          <div style={{ padding: '0.5rem 1.5rem', fontSize: '0.72rem', color: '#D9B233', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ fontStyle: 'italic' }}>{activeDrawerConversation.name} is typing...</span>
+                          </div>
+                        )}
 
                         {/* Message Input form */}
                         <form 
@@ -3846,22 +4219,31 @@ export default function App() {
                             backgroundColor: '#FFFDF9'
                           }}
                         >
-                          <button 
-                            type="button" 
-                            onClick={() => alert('Attachment simulation')}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center' }}
-                          >
-                            <Paperclip size={16} />
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.5rem', color: '#888888' }}>
+                            <button 
+                              type="button" 
+                              onClick={() => alert('Attachments: Files, Images, Videos, Voice Notes')}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center' }}
+                            >
+                              <Paperclip size={16} />
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => alert('Emoji Drawer')}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center' }}
+                            >
+                              <span>😊</span>
+                            </button>
+                          </div>
                           
                           <input 
                             type="text" 
-                            placeholder="Message..." 
+                            placeholder="Type a message..." 
                             value={drawerMessageText}
                             onChange={e => setDrawerMessageText(e.target.value)}
                             style={{
                               flex: 1,
-                              padding: '0.5rem 0.85rem',
+                              padding: '0.55rem 0.85rem',
                               borderRadius: '10px',
                               border: '1px solid rgba(0,0,0,0.06)',
                               backgroundColor: '#F8F6F1',
@@ -3871,23 +4253,43 @@ export default function App() {
                             }}
                           />
 
-                          <button 
-                            type="submit"
-                            style={{
-                              backgroundColor: '#D9B233',
-                              border: 'none',
-                              borderRadius: '10px',
-                              width: '32px',
-                              height: '32px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              color: '#FFFFFF'
-                            }}
-                          >
-                            <Send size={14} />
-                          </button>
+                          {drawerMessageText.trim() === '' ? (
+                            <button 
+                              type="button"
+                              onClick={() => alert('Voice notes recording...')}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: '#888888',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Mic size={16} />
+                            </button>
+                          ) : (
+                            <button 
+                              type="submit"
+                              style={{
+                                backgroundColor: '#D9B233',
+                                border: 'none',
+                                borderRadius: '10px',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                color: '#FFFFFF'
+                              }}
+                            >
+                              <Send size={14} />
+                            </button>
+                          )}
                         </form>
 
                       </div>
