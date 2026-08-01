@@ -272,15 +272,14 @@ export default function FacilitatorProfile({
                     />
                   </div>
 
-                  {/* Email Input */}
+                  {/* Email Input (Read-only / Disabled) */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                     <label style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 600 }}>EMAIL ADDRESS</label>
                     <input 
                       type="email" 
                       value={editForm.email}
-                      onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-                      required
-                      style={{ padding: '0.75rem 1rem', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', fontSize: '0.9rem', outline: 'none', backgroundColor: '#F8F6F1' }}
+                      disabled={true}
+                      style={{ padding: '0.75rem 1rem', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', fontSize: '0.9rem', outline: 'none', backgroundColor: '#EAE6DF', color: '#666666', cursor: 'not-allowed' }}
                     />
                   </div>
 
