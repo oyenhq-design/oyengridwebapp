@@ -1,129 +1,88 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, Bell, Calendar, BookOpen, ClipboardCheck, Volume2, 
-  AlertTriangle, ChevronRight, Check, CheckCircle2, Clock
+  AlertTriangle, ChevronRight, Check, Clock
 } from 'lucide-react';
 
-export default function FacilitatorNotifications() {
+export default function FacilitatorNotifications({ 
+  notifications = [], 
+  setNotifications 
+}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
 
-  // Stateful notifications list to allow "Mark as read" interaction
-  const [notifications, setNotifications] = useState([
-    {
-      id: 'notif-1',
-      title: 'Session Reminder',
-      description: 'Battery Storage Systems Simulation starts tomorrow at 10:00 AM.',
-      time: '2 hours ago',
-      category: 'Sessions',
-      unread: true,
-      iconType: 'session',
-      actionText: 'View Session'
-    },
-    {
-      id: 'notif-2',
-      title: 'New Resources Available',
-      description: 'Presentation slides and Facilitator Guide have been uploaded.',
-      time: 'Yesterday',
-      category: 'Resources',
-      unread: true,
-      iconType: 'resources',
-      actionText: 'Open Resources'
-    },
-    {
-      id: 'notif-3',
-      title: 'Programme Update',
-      description: 'The administrator updated the Renewable Power Architecture session schedule.',
-      time: '2 days ago',
-      category: 'Announcements',
-      unread: false,
-      iconType: 'announcements',
-      actionText: 'View Details'
-    },
-    {
-      id: 'notif-4',
-      title: 'Attendance Completed',
-      description: 'The participant roster sheet has been processed and compiled.',
-      time: '3 days ago',
-      category: 'Attendance',
-      unread: false,
-      iconType: 'attendance',
-      actionText: 'View Roster'
-    },
-    {
-      id: 'notif-5',
-      title: 'Session Rescheduled',
-      description: 'Grid Simulation Lab was moved to next week due to maintenance.',
-      time: '5 days ago',
-      category: 'Sessions',
-      unread: false,
-      iconType: 'cancelled',
-      actionText: 'View Schedule'
-    }
-  ]);
-
   // Handle Mark All as Read
   const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
-
-  // Toggle single notification status
-  const handleToggleRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: !n.unread } : n));
-  };
-
-  // File icons selector
-  const getIcon = (type) => {
-    switch (type) {
-      case 'session':
-        return {
-          icon: <Calendar size={20} />,
-          bgColor: 'rgba(212, 175, 55, 0.08)',
-          color: '#D4AF37'
-        };
-      case 'resources':
-        return {
-          icon: <BookOpen size={20} />,
-          bgColor: 'rgba(45, 108, 223, 0.08)',
-          color: '#2D6CDF'
-        };
-      case 'attendance':
-        return {
-          icon: <ClipboardCheck size={20} />,
-          bgColor: 'rgba(16, 185, 129, 0.08)',
-          color: '#10B981'
-        };
-      case 'announcements':
-        return {
-          icon: <Volume2 size={20} />,
-          bgColor: 'rgba(139, 92, 246, 0.08)',
-          color: '#8B5CF6'
-        };
-      case 'cancelled':
-        return {
-          icon: <AlertTriangle size={20} />,
-          bgColor: 'rgba(239, 68, 68, 0.08)',
-          color: '#EF4444'
-        };
-      default:
-        return {
-          icon: <Bell size={20} />,
-          bgColor: 'rgba(0, 0, 0, 0.04)',
-          color: '#151515'
-        };
+    if (setNotifications) {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     }
+  };
+
+  // Toggle single notification read status
+  const handleToggleRead = (id) => {
+    if (setNotifications) {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    }
+  };
+
+  // Select icon properties based on type
+  const getIconProperties = (type = '') => {
+    const lowerType = type.toLowerCase();
+    
+    if (lowerType.includes('session')) {
+      return {
+        icon: <Calendar size={20} />,
+        bgColor: 'rgba(212, 175, 55, 0.08)',
+        color: '#D4AF37'
+      };
+    }
+    if (lowerType.includes('resource') || lowerType.includes('ai_notes')) {
+      return {
+        icon: <BookOpen size={20} />,
+        bgColor: 'rgba(45, 108, 223, 0.08)',
+        color: '#2D6CDF'
+      };
+    }
+    if (lowerType.includes('attendance')) {
+      return {
+        icon: <ClipboardCheck size={20} />,
+        bgColor: 'rgba(16, 185, 129, 0.08)',
+        color: '#10B981'
+      };
+    }
+    if (lowerType.includes('announcement') || lowerType.includes('programme')) {
+      return {
+        icon: <Volume2 size={20} />,
+        bgColor: 'rgba(139, 92, 246, 0.08)',
+        color: '#8B5CF6'
+      };
+    }
+    
+    // Default Bell icon
+    return {
+      icon: <Bell size={20} />,
+      bgColor: 'rgba(212, 175, 55, 0.08)',
+      color: '#D4AF37'
+    };
   };
 
   // Filtered notifications
   const filteredNotifications = useMemo(() => {
-    return notifications.filter(n => {
-      const matchesSearch = n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return (notifications || []).filter(n => {
+      const titleText = n.title || n.text || '';
+      const descText = n.description || '';
+      const matchesSearch = titleText.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            descText.toLowerCase().includes(searchQuery.toLowerCase());
       
       let matchesFilter = true;
       if (activeFilter === 'Unread') {
-        matchesFilter = n.unread;
-      } else if (activeFilter !== 'All') {
-        matchesFilter = n.category === activeFilter;
+        matchesFilter = !n.read;
+      } else if (activeFilter === 'Sessions') {
+        matchesFilter = (n.type || '').toLowerCase().includes('session');
+      } else if (activeFilter === 'Resources') {
+        matchesFilter = (n.type || '').toLowerCase().includes('resource') || (n.type || '').toLowerCase().includes('ai_notes');
+      } else if (activeFilter === 'Announcements') {
+        matchesFilter = (n.type || '').toLowerCase().includes('announcement') || (n.type || '').toLowerCase().includes('programme');
       }
 
       return matchesSearch && matchesFilter;
@@ -132,7 +91,20 @@ export default function FacilitatorNotifications() {
 
   // Check if any notification is unread
   const hasUnread = useMemo(() => {
-    return notifications.some(n => n.unread);
+    return (notifications || []).some(n => !n.read);
+  }, [notifications]);
+
+  // Available filter chips (only show filter choices if we have categories containing notifications)
+  const filterOptions = useMemo(() => {
+    const list = ['All', 'Unread'];
+    const types = new Set();
+    (notifications || []).forEach(n => {
+      const type = (n.type || '').toLowerCase();
+      if (type.includes('session')) types.add('Sessions');
+      if (type.includes('resource') || type.includes('ai_notes')) types.add('Resources');
+      if (type.includes('announcement') || type.includes('programme')) types.add('Announcements');
+    });
+    return [...list, ...Array.from(types)];
   }, [notifications]);
 
   return (
@@ -158,7 +130,7 @@ export default function FacilitatorNotifications() {
             fontFamily: "'Outfit', sans-serif",
             letterSpacing: '-0.8px'
           }}>
-            Activity Feed
+            Notifications
           </h1>
           <p style={{ 
             color: '#666666', 
@@ -207,7 +179,7 @@ export default function FacilitatorNotifications() {
         paddingBottom: '1.5rem'
       }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {['All', 'Unread', 'Sessions', 'Resources', 'Announcements'].map(filter => (
+          {filterOptions.map(filter => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
@@ -251,11 +223,12 @@ export default function FacilitatorNotifications() {
         </div>
       </div>
 
-      {/* Notifications feed content area */}
+      {/* Notifications feed list */}
       {filteredNotifications.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '820px', margin: '0 auto', width: '100%' }}>
           {filteredNotifications.map(notif => {
-            const styleIcon = getIcon(notif.iconType);
+            const styleIcon = getIconProperties(notif.type);
+            const displayTitle = notif.title || notif.text || 'Notification';
             return (
               <div 
                 key={notif.id}
@@ -265,7 +238,7 @@ export default function FacilitatorNotifications() {
                   borderRadius: '18px',
                   padding: '1.5rem',
                   boxShadow: '0 4px 15px rgba(0,0,0,0.01)',
-                  border: notif.unread ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(0,0,0,0.015)',
+                  border: !notif.read ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(0,0,0,0.015)',
                   display: 'flex',
                   alignItems: 'flex-start',
                   justifyContent: 'space-between',
@@ -274,10 +247,10 @@ export default function FacilitatorNotifications() {
                   position: 'relative'
                 }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = '#2D6CDF'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = notif.unread ? 'rgba(212, 175, 55, 0.2)' : 'rgba(0,0,0,0.015)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = !notif.read ? 'rgba(212, 175, 55, 0.2)' : 'rgba(0,0,0,0.015)'}
               >
                 <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
-                  {/* Left Column: Category Icon */}
+                  {/* Category Icon */}
                   <div style={{ 
                     width: '44px', 
                     height: '44px', 
@@ -292,13 +265,13 @@ export default function FacilitatorNotifications() {
                     {styleIcon.icon}
                   </div>
 
-                  {/* Center Column: Text contents */}
+                  {/* Text Contents */}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                       <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#151515', margin: 0 }}>
-                        {notif.title}
+                        {displayTitle}
                       </h4>
-                      {notif.unread && (
+                      {!notif.read && (
                         <span style={{ 
                           backgroundColor: 'rgba(212, 175, 55, 0.08)',
                           color: '#D4AF37',
@@ -314,46 +287,50 @@ export default function FacilitatorNotifications() {
                         </span>
                       )}
                     </div>
-                    <p style={{ color: '#666666', fontSize: '0.9rem', margin: '0.35rem 0 0.5rem', lineHeight: '1.4' }}>
-                      {notif.description}
-                    </p>
-                    <span style={{ color: '#888888', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    {notif.description && (
+                      <p style={{ color: '#666666', fontSize: '0.9rem', margin: '0.35rem 0 0.5rem', lineHeight: '1.4' }}>
+                        {notif.description}
+                      </p>
+                    )}
+                    <span style={{ color: '#888888', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.35rem' }}>
                       <Clock size={12} />
-                      {notif.time}
+                      {notif.time || 'Just now'}
                     </span>
                   </div>
                 </div>
 
-                {/* Right Column: Inline Action button */}
-                <button 
-                  onClick={(e) => { e.stopPropagation(); alert(`Navigating to action: ${notif.actionText}`); }}
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    color: '#2D6CDF',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.2rem',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '8px',
-                    transition: 'all 0.2s',
-                    marginTop: '0.2rem'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(45, 108, 223, 0.04)'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <span>{notif.actionText}</span>
-                  <ChevronRight size={14} />
-                </button>
+                {/* Inline Action Button */}
+                {notif.actionText && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); alert(`Executing action: ${notif.actionText}`); }}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#2D6CDF',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '8px',
+                      transition: 'all 0.2s',
+                      marginTop: '0.2rem'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(45, 108, 223, 0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span>{notif.actionText}</span>
+                    <ChevronRight size={14} />
+                  </button>
+                )}
               </div>
             );
           })}
         </div>
       ) : (
-        /* Empty State Card wrapper */
+        /* 100% Data-driven Clean Empty State */
         <div style={{ 
           textAlign: 'center', 
           backgroundColor: '#FFFDF9', 
@@ -389,16 +366,16 @@ export default function FacilitatorNotifications() {
             margin: 0, 
             fontFamily: "'Outfit', sans-serif" 
           }}>
-            You're all caught up.
+            You're all caught up
           </h3>
           <p style={{ 
             color: '#666666', 
             fontSize: '0.95rem', 
             lineHeight: '1.6', 
             margin: 0,
-            maxWidth: '420px'
+            maxWidth: '440px'
           }}>
-            When something requires your attention, notifications about assigned sessions, resources, announcements, and reminders will appear here automatically.
+            No activity has been recorded for your assigned sessions yet. Notifications from your administrator, session reminders, resource updates, announcements, and learner activity will automatically appear here.
           </p>
         </div>
       )}
