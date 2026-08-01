@@ -209,7 +209,8 @@ export default function App() {
       'michael.ibrahim@abcenergy.com',
       'fatima.aliyu@abcenergy.com',
       'ngozi.kalu@abcenergy.com',
-      'facilitator@oyengrid.test'
+      'facilitator@oyengrid.test',
+      'oyengroupp@gmail.com'
     ];
     if (
       userRole === 'Admin' || 
@@ -2238,6 +2239,12 @@ export default function App() {
                   assignedSessions={assignedSessions}
                   programs={displayPrograms}
                   currentUserEmail={user}
+                  userInfo={getLoggedInUserInfo()}
+                  onNavigate={setActiveTab}
+                  onSelectSession={(s) => {
+                    setActiveSession(s);
+                    setActiveTab('Sessions');
+                  }}
                 />
               ) : activeTab === 'Sessions' ? (
                 <FacilitatorSessions

@@ -100,6 +100,15 @@ export default function SignInForm({
           status: 'Active',
           password: 'password123'
         };
+      } else if (!matchingMember && targetEmail === 'oyengroupp@gmail.com') {
+        matchingMember = {
+          name: 'oyengroupp',
+          fullName: 'oyengroupp',
+          email: 'oyengroupp@gmail.com',
+          role: 'Facilitator',
+          status: 'Active',
+          password: 'password123'
+        };
       }
       const pendingInvite = invitations.find(i => i.email.toLowerCase() === targetEmail && !i.used);
 
@@ -138,7 +147,9 @@ export default function SignInForm({
       }
 
       if (onAuthSuccess) {
-        setTimeout(() => onAuthSuccess(targetEmail, actualRole), 1000);
+        setTimeout(() => {
+          onAuthSuccess(targetEmail, actualRole);
+        }, 1000);
       }
     }, 1200);
   };
