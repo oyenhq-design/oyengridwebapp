@@ -842,6 +842,34 @@ export default function App() {
       enabledTemplates
     }));
     isLoggingOutRef.current = false;
+
+    if (email.toLowerCase() === 'oyengroupp@gmail.com') {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+      const seed = [
+        {
+          id: 'prog-1',
+          name: 'Renewable Power Architecture',
+          assignedFacilitators: ['oyengroupp@gmail.com'],
+          sessions: [
+            {
+              id: 'sess-2',
+              title: 'Battery Storage Systems Simulation',
+              facilitatorEmail: 'oyengroupp@gmail.com',
+              date: tomorrowStr,
+              time: '10:00 AM - 11:30 AM',
+              type: 'Lab Workshop',
+              status: 'Upcoming',
+              learnersCount: '24 Learners'
+            }
+          ]
+        }
+      ];
+      setWsPrograms(seed);
+    }
+
     triggerTransition(() => {
       setUser(email);
       setUserRole(role);
@@ -2255,7 +2283,10 @@ export default function App() {
                   currentUserEmail={user}
                 />
               ) : activeTab === 'Resources' ? (
-                <FacilitatorResources />
+                <FacilitatorResources 
+                  assignedSessions={displaySessions}
+                  currentUserEmail={user}
+                />
               ) : activeTab === 'Notifications' ? (
                 <FacilitatorNotifications />
               ) : activeTab === 'Profile' ? (
