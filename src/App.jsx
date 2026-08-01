@@ -863,6 +863,16 @@ export default function App() {
               type: 'Lab Workshop',
               status: 'Upcoming',
               learnersCount: '24 Learners'
+            },
+            {
+              id: 'sess-3',
+              title: 'Introduction to Photovoltaic Microgrids',
+              facilitatorEmail: 'oyengroupp@gmail.com',
+              date: tomorrowStr,
+              time: '1:00 PM - 2:30 PM',
+              type: 'Live Class',
+              status: 'Upcoming',
+              learnersCount: '18 Learners'
             }
           ]
         }
