@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, RefreshCw, HeadphonesIcon } from 'lucide-react';
+import { Monitor, Laptop, Smartphone, Lock, Info, Mail } from 'lucide-react';
 
 const MobileRestriction = () => {
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
   const handleSupport = () => {
-    window.location.href = 'mailto:support@oyengrid.com'; // Adjust to actual support email
+    window.location.href = 'mailto:support@oyengrid.com'; 
   };
 
   return (
     <div style={{
       minHeight: '100vh',
       width: '100vw',
-      backgroundColor: '#F8F6F1', // soft milk
+      backgroundColor: '#F8F7F4', // Warm light background
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '2rem',
@@ -24,50 +21,91 @@ const MobileRestriction = () => {
     }}>
       <div style={{
         backgroundColor: '#FFFFFF',
-        borderRadius: '24px',
-        padding: '3rem 2rem',
-        maxWidth: '480px',
+        borderRadius: '20px',
+        padding: '3.5rem 3rem',
+        maxWidth: '620px',
         width: '100%',
         textAlign: 'center',
-        boxShadow: '0 20px 40px rgba(17, 17, 17, 0.04), 0 1px 3px rgba(17, 17, 17, 0.02)',
-        border: '1px solid rgba(212, 175, 55, 0.15)', // Light gold border
+        boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.05), 0 8px 16px -4px rgba(0, 0, 0, 0.02)',
+        border: '1px solid rgba(0, 0, 0, 0.03)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '1.5rem'
+        gap: '2rem'
       }}>
-        {/* Icon / Illustration */}
+        
+        {/* Premium Illustration */}
         <div style={{
-          width: '80px',
-          height: '80px',
-          backgroundColor: 'rgba(212, 175, 55, 0.1)', // Gold tint
-          borderRadius: '20px',
+          position: 'relative',
+          width: '140px',
+          height: '140px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '0.5rem'
         }}>
-          <Monitor size={40} color="#D4AF37" />
+          {/* Soft beige background circle */}
+          <div style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#FAF8F0',
+            borderRadius: '50%',
+            zIndex: 0
+          }} />
+          
+          {/* Devices and Icons */}
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
+            <Monitor size={56} color="#111111" strokeWidth={1.5} style={{ marginBottom: '8px' }} />
+            
+            <div style={{ position: 'relative' }}>
+              <Smartphone size={32} color="#666666" strokeWidth={1.5} />
+              <div style={{
+                position: 'absolute',
+                bottom: '-4px',
+                right: '-8px',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '50%',
+                padding: '4px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                <Lock size={12} color="#D4AF37" strokeWidth={2.5} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Subtle gold accent lines */}
+          <div style={{
+            position: 'absolute',
+            bottom: '15px',
+            width: '80%',
+            height: '2px',
+            backgroundColor: 'rgba(212, 175, 55, 0.3)',
+            borderRadius: '2px',
+            zIndex: 0
+          }} />
         </div>
 
         {/* Headings */}
         <div>
           <h1 style={{
-            fontSize: '1.5rem',
+            fontSize: '1.75rem',
             fontWeight: '800',
-            color: '#111111', // Near Black
+            color: '#111111', 
             margin: '0 0 1rem 0',
-            lineHeight: 1.3
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2
           }}>
-            OYEN GRID works best on Desktop
+            Desktop Access Required
           </h1>
           <p style={{
             fontSize: '0.95rem',
-            color: '#666666',
+            color: '#555555',
             margin: '0 0 1rem 0',
-            lineHeight: 1.6
+            lineHeight: 1.6,
+            maxWidth: '480px'
           }}>
-            This workspace includes programme management, live sessions, attendance tracking, grading, resources, analytics, and other professional tools that require a larger screen.
+            This workspace includes programme management, live sessions, attendance tracking, grading, resources, analytics, and collaboration tools designed for larger screens.
           </p>
           <p style={{
             fontSize: '0.95rem',
@@ -75,70 +113,67 @@ const MobileRestriction = () => {
             fontWeight: 600,
             margin: '0'
           }}>
-            Please continue using a desktop or laptop computer for the best experience.
+            Please sign in using a desktop or laptop computer to continue.
           </p>
         </div>
 
-        {/* Optional Info Card */}
+        {/* Soft Premium Information Panel */}
         <div style={{
-          backgroundColor: 'rgba(30, 78, 216, 0.05)', // Deep Blue tint
-          borderLeft: '4px solid #1E4ED8',
-          padding: '1rem',
-          borderRadius: '0 8px 8px 0',
+          backgroundColor: '#FFF8E7', // Very light gold
+          borderRadius: '12px',
+          padding: '1.25rem',
           width: '100%',
-          textAlign: 'left'
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '0.75rem',
+          textAlign: 'left',
+          border: '1px solid rgba(212, 175, 55, 0.1)'
         }}>
-          <p style={{
-            margin: 0,
-            fontSize: '0.85rem',
-            color: '#1E4ED8', // Deep Blue
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            <span style={{ fontSize: '1.2rem' }}>💡</span>
-            Mobile support is currently under development.
-          </p>
+          <Info size={20} color="#D4AF37" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div>
+            <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: '#8F7113', fontWeight: 700 }}>
+              Mobile Support
+            </h4>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#A08018', lineHeight: 1.5, fontWeight: 500 }}>
+              Mobile access is currently under development and will be available in a future release.
+            </p>
+          </div>
         </div>
 
         {/* Buttons */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.75rem',
+          gap: '1rem',
           width: '100%',
-          marginTop: '1rem'
+          marginTop: '0.5rem'
         }}>
           <button
-            onClick={handleRefresh}
+            onClick={() => {}} // Disabled visually/functionally as requested "Open on Desktop", could just be a visual button or copy link
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem',
+              width: '100%',
               backgroundColor: '#D4AF37',
               color: '#FFFFFF',
               border: 'none',
-              padding: '0.875rem 1.5rem',
+              padding: '1rem 1.5rem',
               borderRadius: '12px',
               fontSize: '1rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 4px 12px rgba(212, 175, 55, 0.3)'
+              fontWeight: 600,
+              cursor: 'default',
+              transition: 'background-color 0.2s ease',
+              boxShadow: '0 4px 12px rgba(212, 175, 55, 0.2)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(212, 175, 55, 0.4)';
+              e.currentTarget.style.backgroundColor = '#C29F32';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(212, 175, 55, 0.3)';
+              e.currentTarget.style.backgroundColor = '#D4AF37';
             }}
           >
-            <RefreshCw size={18} />
-            Refresh
+            Open on Desktop
           </button>
           
           <button
@@ -148,10 +183,11 @@ const MobileRestriction = () => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              backgroundColor: 'transparent',
-              color: '#666666',
-              border: '1px solid #E5E7EB',
-              padding: '0.875rem 1.5rem',
+              width: '100%',
+              backgroundColor: '#FFFFFF',
+              color: '#111111',
+              border: '1px solid #E2E2E2',
+              padding: '1rem 1.5rem',
               borderRadius: '12px',
               fontSize: '1rem',
               fontWeight: 600,
@@ -159,18 +195,32 @@ const MobileRestriction = () => {
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#F9FAFB';
-              e.currentTarget.style.color = '#111111';
+              e.currentTarget.style.backgroundColor = '#FAFAFA';
+              e.currentTarget.style.borderColor = '#D4D4D4';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#666666';
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+              e.currentTarget.style.borderColor = '#E2E2E2';
             }}
           >
-            <HeadphonesIcon size={18} />
-            Contact Support
+            <Mail size={18} />
+            Contact Workspace Administrator
           </button>
         </div>
+      </div>
+      
+      {/* Footer */}
+      <div style={{
+        marginTop: '2.5rem',
+        textAlign: 'center',
+        color: '#999999',
+        fontSize: '0.75rem',
+        lineHeight: 1.6,
+        fontWeight: 500
+      }}>
+        <div style={{ fontWeight: 600, color: '#666666', marginBottom: '0.2rem' }}>Powered by OYEN GRID</div>
+        <div>Enterprise Workspace</div>
+        <div>Version 1.0</div>
       </div>
     </div>
   );
