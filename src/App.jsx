@@ -1752,7 +1752,24 @@ export default function App() {
   // Render Dashboard Workspace Preview if Logged In
   if (activeRoute === 'dashboard' && user) {
     if (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') {
-      return <ProgramManagerModule user={user} role={userRole} workspaceName={orgName} />;
+      return (
+        <ProgramManagerModule 
+          user={user} 
+          role={userRole} 
+          workspaceName={orgName}
+          wsPrograms={wsPrograms}
+          wsLearners={wsLearners}
+          wsTeam={wsTeam}
+          wsInvitations={wsInvitations}
+          notifications={[]} // Will check if there's global notifications later
+          recentUpdates={[]} // Will check if there's global updates later
+          onLogout={() => {
+            setUser(null);
+            setUserRole(null);
+            setActiveRoute('signin');
+          }}
+        />
+      );
     }
 
     const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard' || activeTab === 'Overview';
