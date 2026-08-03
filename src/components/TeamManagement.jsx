@@ -961,6 +961,11 @@ function MemberProfilePage({
                   )}
                 </h3>
                 <span style={{ fontSize: '0.85rem', color: '#6B7280' }}>{member.email}</span>
+                {member.bio && (
+                  <p style={{ fontSize: '0.82rem', color: '#4B5563', marginTop: '0.5rem', marginBottom: 0, lineHeight: 1.4 }}>
+                    {member.bio}
+                  </p>
+                )}
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1.5rem', borderTop: '1px solid #F3EFE6', paddingTop: '1rem', fontSize: '0.82rem', color: '#6B7280' }}>
@@ -1120,6 +1125,10 @@ function MemberProfilePage({
               <div>
                 <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Time Zone</span>
                 <strong style={{ color: '#151515' }}>{member.timezone ? (member.timezone.includes('/') ? `GMT+1 (${member.timezone.split('/')[1].replace('_', ' ')})` : member.timezone) : 'GMT+1 (West Africa Time)'}</strong>
+              </div>
+              <div>
+                <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>Location</span>
+                <strong style={{ color: '#151515' }}>{member.location || '—'}</strong>
               </div>
             </div>
           </div>

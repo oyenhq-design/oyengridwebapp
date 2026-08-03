@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   User, Mail, Phone, Globe, MapPin, Shield, Calendar, 
   BookOpen, Lock, Activity, Settings, ChevronRight, RefreshCw, Key
@@ -7,19 +7,32 @@ import {
 export default function FacilitatorProfile({ 
   userInfo = {}, 
   assignedSessions = [],
-  assignedResources = []
+  assignedResources = [],
+  onUpdateProfile
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
   // Stateful personal info driven initially from userInfo prop
   const [personalInfo, setPersonalInfo] = useState({
-    fullName: userInfo.fullName || 'oyengroupp',
-    email: userInfo.email || 'oyengroupp@gmail.com',
-    phone: '+234 812 345 6789',
+    fullName: userInfo.fullName || userInfo.name || '',
+    email: userInfo.email || '',
+    phone: userInfo.phone || '',
     timezone: userInfo.timezone || 'Africa/Lagos',
-    location: 'Lagos, Nigeria',
-    bio: 'Senior Renewable Energy Facilitator specializing in battery storage solutions and microgrid installations.'
+    location: userInfo.location || '',
+    bio: userInfo.bio || ''
   });
+
+  useEffect(() => {
+    setPersonalInfo(prev => ({
+      ...prev,
+      fullName: userInfo.fullName || userInfo.name || prev.fullName,
+      email: userInfo.email || prev.email,
+      phone: userInfo.phone || prev.phone,
+      timezone: userInfo.timezone || prev.timezone,
+      location: userInfo.location || prev.location,
+      bio: userInfo.bio || prev.bio
+    }));
+  }, [userInfo]);
 
   // Intermediate edit state to allow Cancelling edits
   const [editForm, setEditForm] = useState({ ...personalInfo });
@@ -52,6 +65,11 @@ export default function FacilitatorProfile({
     e.preventDefault();
     setPersonalInfo({ ...editForm });
     setIsEditing(false);
+    
+    // Bubble up to global state
+    if (onUpdateProfile) {
+      onUpdateProfile(editForm);
+    }
     
     // Add real event to Activity History!
     const now = new Date();

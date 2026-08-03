@@ -2453,6 +2453,21 @@ export default function App() {
                   userInfo={getLoggedInUserInfo()} 
                   assignedSessions={displaySessions}
                   assignedResources={displayResources}
+                  onUpdateProfile={(updates) => {
+                    setWsTeam(prev => prev.map(m => {
+                      if (m.email.toLowerCase() === user.toLowerCase()) {
+                        return { 
+                          ...m, 
+                          name: updates.fullName || m.name, 
+                          phone: updates.phone || m.phone,
+                          location: updates.location || m.location,
+                          bio: updates.bio || m.bio,
+                          timezone: updates.timezone || m.timezone
+                        };
+                      }
+                      return m;
+                    }));
+                  }}
                 />
               ) : (
                 <div style={{ padding: '2.5rem', color: '#EF4444' }}>Unauthorized route access denied.</div>
