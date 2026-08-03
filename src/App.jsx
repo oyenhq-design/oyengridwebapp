@@ -29,6 +29,7 @@ import InboxTab from './components/InboxTab';
 import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
 import SignInForm from './components/SignInForm';
+import ProgramManagerModule from './modules/program-manager';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
@@ -1750,6 +1751,10 @@ export default function App() {
 
   // Render Dashboard Workspace Preview if Logged In
   if (activeRoute === 'dashboard' && user) {
+    if (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') {
+      return <ProgramManagerModule user={user} role={userRole} workspaceName={orgName} />;
+    }
+
     const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard' || activeTab === 'Overview';
     const showFacilitatorOverview = userRole === 'Facilitator' && isWelcome;
     const showTeamMemberOverview = userRole === 'Team Member' && isWelcome;
