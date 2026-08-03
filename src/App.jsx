@@ -164,6 +164,46 @@ export default function App() {
     return getOtherParticipant(activeConversation, selfId);
   }, [activeConversation, userRole, user, ownerEmail]);
 
+  // ── BroadcastChannel for Real-Time Chat Across Tabs ──────────────────────────
+  const chatStateRef = useRef({ isChatOpen, activeConversationId });
+  useEffect(() => {
+    chatStateRef.current = { isChatOpen, activeConversationId };
+  }, [isChatOpen, activeConversationId]);
+
+  useEffect(() => {
+    const channel = new BroadcastChannel('oyen_workspace_chat');
+    channel.onmessage = (event) => {
+      const { type, payload } = event.data;
+      if (type === 'NEW_MESSAGE') {
+        const { conversationId, message } = payload;
+        setConversations(prev => prev.map(c => {
+          if (c.conversationId !== conversationId) return c;
+          if (c.messages.some(m => m.messageId === message.messageId)) return c;
+          
+          const updated = [...c.messages, message];
+          const { isChatOpen: open, activeConversationId: activeId } = chatStateRef.current;
+          const isViewed = open && activeId === conversationId;
+          
+          return {
+            ...c,
+            messages: updated,
+            lastMessage: message,
+            lastActivity: Date.now(),
+            updatedAt: Date.now(),
+            unreadCount: isViewed ? 0 : (c.unreadCount || 0) + 1,
+          };
+        }));
+      } else if (type === 'TYPING') {
+        setConversations(prev => prev.map(c =>
+          c.conversationId === payload.conversationId
+            ? { ...c, typing: { ...c.typing, isTyping: payload.isTyping } }
+            : c
+        ));
+      }
+    };
+    return () => channel.close();
+  }, []);
+
   // ─ Actions ───────────────────────────────────────────────────────────────────
 
   // Helper: append a message to a conversation and update lastMessage + lastActivity
@@ -240,11 +280,19 @@ export default function App() {
     appendMessage(activeConversationId, outMsg);
     setMessageInput('');
 
-    // Isolated simulation — replace onReply with socket.on('message', ...) in production
-    simulateReply(activeConversation, userRole, {
-      onTyping: (isTyping) => setConversationTyping(activeConversationId, isTyping),
-      onReply:  (replyMsg) => appendMessage(activeConversationId, replyMsg),
+    // Broadcast message to other tabs in real-time
+    const channel = new BroadcastChannel('oyen_workspace_chat');
+    channel.postMessage({
+      type: 'NEW_MESSAGE',
+      payload: { conversationId: activeConversationId, message: outMsg }
     });
+    channel.close();
+
+    // Isolated simulation — disabled for real-time conversation across tabs
+    // simulateReply(activeConversation, userRole, {
+    //   onTyping: (isTyping) => setConversationTyping(activeConversationId, isTyping),
+    //   onReply:  (replyMsg) => appendMessage(activeConversationId, replyMsg),
+    // });
   };
 
   const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
