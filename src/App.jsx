@@ -97,6 +97,87 @@ export default function App() {
   const [invitedTeamRole, setInvitedTeamRole] = useState('Programme Manager');
   // Simulation & Verification inputs
 
+  const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
+  const [verifyOrgEmailInput, setVerifyOrgEmailInput] = useState('');
+  const [verifyError, setVerifyError] = useState('');
+  const [verificationResult, setVerificationResult] = useState(null); // null | 'found' | 'not-found'
+  const [generatedInviteLink, setGeneratedInviteLink] = useState('');
+
+  // Premium Onboarding Step 1 States
+  const [orgLogo, setOrgLogo] = useState(null);
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+  const [orgName, setOrgName] = useState('abc energy'); // Prefilled from verified subscription
+  const [orgIndustry, setOrgIndustry] = useState('Energy');
+  const [orgSize, setOrgSize] = useState('11-50');
+  const [orgCountry, setOrgCountry] = useState('United States');
+  const [orgTimezone, setOrgTimezone] = useState('GMT-5 (EST)');
+  const [orgDesc, setOrgDesc] = useState('');
+
+  // Onboarding Step 2: Owner states
+  const [ownerFirstName, setOwnerFirstName] = useState('John');
+  const [ownerLastName, setOwnerLastName] = useState('Doe');
+  const [ownerPhone, setOwnerPhone] = useState('+1 (555) 000-0000');
+  const [ownerTitle, setOwnerTitle] = useState('Chief Executive Officer');
+  const [ownerEmail, setOwnerEmail] = useState('abc@gmail.com');
+  const [ownerPersonalEmail, setOwnerPersonalEmail] = useState('personal@email.com');
+  const [ownerPassword, setOwnerPassword] = useState('password');
+  const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('password');
+  const [isAuthorizedOwner, setIsAuthorizedOwner] = useState(false);
+  const [ownerPhoto, setOwnerPhoto] = useState(null); // Base64 or object URL of the owner's profile photo
+
+  const [activeTab, setActiveTab] = useState('Dashboard');
+
+  const isLoggingOutRef = useRef(false);
+
+  // Shared workspace data — lifted so Programs + Learners stay in sync
+  const [wsPrograms, setWsPrograms] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_programs') || sessionStorage.getItem('oyen_ws_programs');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [wsLearners, setWsLearners] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_learners') || sessionStorage.getItem('oyen_ws_learners');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [wsTeam, setWsTeam]         = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_team');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [wsInvitations, setWsInvitations] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_ws_invitations');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const assignedSessions = useMemo(() => {
+    if (userRole !== 'Facilitator' || !user) return [];
+    const list = [];
+    wsPrograms.forEach(prog => {
+      if (prog.sessions && Array.isArray(prog.sessions)) {
+        prog.sessions.forEach(sess => {
+          if ((sess.facilitatorEmail || '').toLowerCase().trim() === user.toLowerCase().trim()) {
+            list.push({ ...sess, programName: prog.name, programId: prog.id });
+          }
+        });
+      }
+    });
+    return list;
+  }, [wsPrograms, user, userRole]);
+
   // ── Workspace Chat System ──────────────────────────────────────────────────────────────────
   // Core state — architecture-first naming (not drawer-specific)
   const [isChatOpen,          setIsChatOpen]          = useState(false);
@@ -294,87 +375,6 @@ export default function App() {
     //   onReply:  (replyMsg) => appendMessage(activeConversationId, replyMsg),
     // });
   };
-
-  const [verifyOrgNameInput, setVerifyOrgNameInput] = useState('');
-  const [verifyOrgEmailInput, setVerifyOrgEmailInput] = useState('');
-  const [verifyError, setVerifyError] = useState('');
-  const [verificationResult, setVerificationResult] = useState(null); // null | 'found' | 'not-found'
-  const [generatedInviteLink, setGeneratedInviteLink] = useState('');
-
-  // Premium Onboarding Step 1 States
-  const [orgLogo, setOrgLogo] = useState(null);
-  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
-  const [orgName, setOrgName] = useState('abc energy'); // Prefilled from verified subscription
-  const [orgIndustry, setOrgIndustry] = useState('Energy');
-  const [orgSize, setOrgSize] = useState('11-50');
-  const [orgCountry, setOrgCountry] = useState('United States');
-  const [orgTimezone, setOrgTimezone] = useState('GMT-5 (EST)');
-  const [orgDesc, setOrgDesc] = useState('');
-
-  // Onboarding Step 2: Owner states
-  const [ownerFirstName, setOwnerFirstName] = useState('John');
-  const [ownerLastName, setOwnerLastName] = useState('Doe');
-  const [ownerPhone, setOwnerPhone] = useState('+1 (555) 000-0000');
-  const [ownerTitle, setOwnerTitle] = useState('Chief Executive Officer');
-  const [ownerEmail, setOwnerEmail] = useState('abc@gmail.com');
-  const [ownerPersonalEmail, setOwnerPersonalEmail] = useState('personal@email.com');
-  const [ownerPassword, setOwnerPassword] = useState('password');
-  const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('password');
-  const [isAuthorizedOwner, setIsAuthorizedOwner] = useState(false);
-  const [ownerPhoto, setOwnerPhoto] = useState(null); // Base64 or object URL of the owner's profile photo
-
-  const [activeTab, setActiveTab] = useState('Dashboard');
-
-  const isLoggingOutRef = useRef(false);
-
-  // Shared workspace data — lifted so Programs + Learners stay in sync
-  const [wsPrograms, setWsPrograms] = useState(() => {
-    try {
-      const saved = localStorage.getItem('oyen_ws_programs') || sessionStorage.getItem('oyen_ws_programs');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-  const [wsLearners, setWsLearners] = useState(() => {
-    try {
-      const saved = localStorage.getItem('oyen_ws_learners') || sessionStorage.getItem('oyen_ws_learners');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-  const [wsTeam, setWsTeam]         = useState(() => {
-    try {
-      const saved = localStorage.getItem('oyen_ws_team');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-  const [wsInvitations, setWsInvitations] = useState(() => {
-    try {
-      const saved = localStorage.getItem('oyen_ws_invitations');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-
-  const assignedSessions = useMemo(() => {
-    if (userRole !== 'Facilitator' || !user) return [];
-    const list = [];
-    wsPrograms.forEach(prog => {
-      if (prog.sessions && Array.isArray(prog.sessions)) {
-        prog.sessions.forEach(sess => {
-          if ((sess.facilitatorEmail || '').toLowerCase().trim() === user.toLowerCase().trim()) {
-            list.push({ ...sess, programName: prog.name, programId: prog.id });
-          }
-        });
-      }
-    });
-    return list;
-  }, [wsPrograms, user, userRole]);
 
   // Sync team and invitations to localStorage whenever they change
   useEffect(() => {
