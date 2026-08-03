@@ -1139,9 +1139,6 @@ export default function App() {
           <div className="wizard-steps" style={{ marginBottom: '2.5rem' }}>
             <div className={`wizard-step-node ${onboardingStep >= 1 ? 'completed' : ''} ${onboardingStep === 1 ? 'active' : ''}`}>1</div>
             <div className={`wizard-step-node ${onboardingStep >= 2 ? 'completed' : ''} ${onboardingStep === 2 ? 'active' : ''}`}>2</div>
-            <div className={`wizard-step-node ${onboardingStep >= 3 ? 'completed' : ''} ${onboardingStep === 3 ? 'active' : ''}`}>3</div>
-            <div className={`wizard-step-node ${onboardingStep >= 4 ? 'completed' : ''} ${onboardingStep === 4 ? 'active' : ''}`}>4</div>
-            <div className={`wizard-step-node ${onboardingStep >= 5 ? 'completed' : ''} ${onboardingStep === 5 ? 'active' : ''}`}>5</div>
           </div>
 
           {/* STEP 1: Premium Organization Profile */}
@@ -1733,162 +1730,18 @@ export default function App() {
                     Included in your plan
                   </h4>
                   <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: 0, margin: 0, textAlign: 'left' }}>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> Up to 50 Participants</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> 3 Active Programmes</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> Basic AI</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> 10GB Storage</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>Ã¢Å“â€œ</span> Invite Team Members Later</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Up to 50 Participants</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> 3 Active Programmes</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Basic AI</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> 10GB Storage</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Invite Team Members Later</li>
                   </ul>
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Invite Team */}
-          {onboardingStep === 3 && (
-            <div className="animate-fade-in">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Step 3: Invite Your Team</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                Invite co-workers, trainers, or managers. They will receive invitation links to configure their passwords.
-              </p>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="team-email">Email Address</label>
-                  <div className="input-container">
-                    <input
-                      id="team-email"
-                      type="email"
-                      className="form-input"
-                      placeholder="colleague@company.com"
-                      value={invitedTeamEmail}
-                      onChange={(e) => setInvitedTeamEmail(e.target.value)}
-                      style={{ paddingLeft: '1rem' }}
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="team-role">Role</label>
-                  <div className="input-container">
-                    <select
-                      id="team-role"
-                      className="form-input"
-                      value={invitedTeamRole}
-                      onChange={(e) => setInvitedTeamRole(e.target.value)}
-                      style={{ paddingLeft: '1rem' }}
-                    >
-                      <option value="Organization Admin">Organization Admin</option>
-                      <option value="Programme Manager">Programme Manager</option>
-                      <option value="Facilitator">Facilitator</option>
-                      <option value="Trainer">Trainer</option>
-                      <option value="Employee">Employee</option>
-                      <option value="Participant">Participant / Participant</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <button type="button" className="secondary-btn" onClick={generateInviteLink} style={{ marginBottom: '1rem', width: '100%', justifyContent: 'center' }}>
-                <UserPlus size={18} /> Generate Invite Link
-              </button>
-
-              {generatedInviteLink && (
-                <div style={{ padding: '0.75rem', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Generated Code Link (Demo)</span>
-                  <div style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--primary)', marginTop: '0.25rem', wordBreak: 'break-all' }}>
-                    {generatedInviteLink}
-                  </div>
-                </div>
-              )}
-
-              <div className="wizard-footer-buttons">
-                <button className="secondary-btn" onClick={() => setOnboardingStep(2)}>
-                  Back
-                </button>
-                <button className="submit-btn" style={{ maxWidth: '200px' }} onClick={() => setOnboardingStep(4)}>
-                  Continue
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 4: Workspace Settings */}
-          {onboardingStep === 4 && (
-            <div className="animate-fade-in">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Step 4: Workspace Settings</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                Customize default preferences for your new workspace environment.
-              </p>
-
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label className="form-label">Active Working Days</label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                    <span 
-                      key={day} 
-                      style={{ 
-                        padding: '0.4rem 0.8rem', 
-                        borderRadius: '6px', 
-                        backgroundColor: day !== 'Sat' && day !== 'Sun' ? 'var(--primary-glow)' : 'var(--bg-input)', 
-                        border: day !== 'Sat' && day !== 'Sun' ? '1px solid var(--border-focus)' : '1px solid var(--border-color)',
-                        color: day !== 'Sat' && day !== 'Sun' ? 'var(--primary)' : 'var(--text-secondary)',
-                        fontSize: '0.8rem',
-                        fontWeight: 600
-                      }}
-                    >
-                      {day}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="work-lang">Default Language</label>
-                  <div className="input-container">
-                    <select id="work-lang" className="form-input" style={{ paddingLeft: '1rem' }}>
-                      <option value="English">English (US)</option>
-                      <option value="French">French</option>
-                      <option value="Spanish">Spanish</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="work-attendance">Attendance Verification</label>
-                  <div className="input-container">
-                    <select id="work-attendance" className="form-input" style={{ paddingLeft: '1rem' }}>
-                      <option value="qr">Automatic QR Check-in</option>
-                      <option value="manual">Manual Roster Logging</option>
-                      <option value="passcode">Unique Session Passcode</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="wizard-footer-buttons">
-                <button className="secondary-btn" onClick={() => setOnboardingStep(3)}>
-                  Back
-                </button>
-                <button className="submit-btn" style={{ maxWidth: '200px' }} onClick={() => setOnboardingStep(5)}>
-                  Continue
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5: Finish Setup */}
-          {onboardingStep === 5 && (
-            <div className="animate-fade-in" style={{ textAlign: 'center' }}>
-              <ShieldCheck size={48} color="var(--primary)" style={{ marginBottom: '1rem', filter: 'drop-shadow(0 0 10px var(--primary-glow))' }} />
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem' }}>Configuration Complete!</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                Your enterprise learning workspace is ready. Click below to launch the OYEN GRID administration dashboard.
-              </p>
-              <button className="submit-btn" onClick={() => handleAuthSuccess(user, 'Admin')}>
-                Launch Workspace Dashboard
-              </button>
-            </div>
-          )}
 
         </div>
       </div>
