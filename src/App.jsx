@@ -126,6 +126,7 @@ export default function App() {
   const [ownerPhoto, setOwnerPhoto] = useState(null); // Base64 or object URL of the owner's profile photo
 
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const isLoggingOutRef = useRef(false);
 
@@ -1984,7 +1985,9 @@ export default function App() {
         }}>
           {/* Header Left: Hamburger & Brand */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <button style={{
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              style={{
               background: 'transparent',
               border: 'none',
               color: '#a0aec0',
@@ -2320,13 +2323,16 @@ export default function App() {
         <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 70px)' }}>
           {/* Sidebar Left */}
           <aside style={{
-            width: '260px',
+            width: isSidebarOpen ? '260px' : '0px',
+            overflow: 'hidden',
+            opacity: isSidebarOpen ? 1 : 0,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             backgroundColor: '#151515',
             borderRight: '1px solid #252525',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            padding: '1.5rem 0.5rem',
+            padding: isSidebarOpen ? '1.5rem 0.5rem' : '1.5rem 0',
             flexShrink: 0
           }}>
             {/* Navigation links */}
