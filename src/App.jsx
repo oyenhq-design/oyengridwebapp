@@ -490,11 +490,7 @@ export default function App() {
   const [showSetupGuideModal, setShowSetupGuideModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'Sarah Ahmed accepted your team invitation', time: '2 minutes ago', read: false },
-    { id: 2, text: 'New program created', time: 'Today', read: false },
-    { id: 3, text: 'Your weekly program report is ready', time: 'Yesterday', read: false }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const [facilitatorNotifications, setFacilitatorNotifications] = useState([]);
 
