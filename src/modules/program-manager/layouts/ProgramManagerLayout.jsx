@@ -97,7 +97,7 @@ export default function ProgramManagerLayout({
             <Search size={16} color="#6b7280" />
             <input 
               type="text"
-              placeholder="Search Programmes, Sessions, Learners, Facilitators, Resources..."
+              placeholder="Search anything..."
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -215,22 +215,13 @@ export default function ProgramManagerLayout({
               borderRadius: '12px',
               padding: '1rem',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: '1rem'
             }}>
-              <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>
-                Welcome {user ? user.split('@')[0] : 'Mayo'}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-                Program Manager
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '0.25rem' }}>
-                {workspaceName || 'ABC Energy'}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }}></div>
-                Last login: Today 08:31 AM
+              <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Workspace</span>
+                <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{workspaceName || 'ABC Energy'}</span>
               </div>
             </div>
 
@@ -268,7 +259,49 @@ export default function ProgramManagerLayout({
         </main>
       </div>
       
-      {/* Floating Chat Button removed as App.jsx handles it */}
+      {/* Floating Chat Button (UI Representation) */}
+      <div 
+        onClick={() => setActiveTab('Messages')}
+        style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          backgroundColor: '#F4C542',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 8px 24px rgba(244, 197, 66, 0.4)',
+          zIndex: 100,
+          transition: 'transform 0.2s ease'
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+      >
+        <MessageSquare size={24} color="#111" fill="#111" />
+        {/* Unread badge */}
+        <div style={{
+          position: 'absolute',
+          top: '-2px',
+          right: '0',
+          backgroundColor: '#111',
+          color: '#F4C542',
+          fontSize: '11px',
+          fontWeight: 700,
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px solid #F8F5EF'
+        }}>
+          3
+        </div>
+      </div>
     </div>
   );
 }
