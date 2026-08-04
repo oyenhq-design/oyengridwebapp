@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Sun, Moon, Grid, ShieldCheck, LogOut, Users, BookOpen, 
   BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
@@ -132,7 +132,7 @@ export default function App() {
 
   const isLoggingOutRef = useRef(false);
 
-  // Shared workspace data — lifted so Programs + Learners stay in sync
+  // Shared workspace data â€” lifted so Programs + Learners stay in sync
   const [wsPrograms, setWsPrograms] = useState(() => {
     try {
       const saved = localStorage.getItem('oyen_ws_programs') || sessionStorage.getItem('oyen_ws_programs');
@@ -181,8 +181,8 @@ export default function App() {
     return list;
   }, [wsPrograms, user, userRole]);
 
-  // ── Workspace Chat System ──────────────────────────────────────────────────────────────────
-  // Core state — architecture-first naming (not drawer-specific)
+  // â”€â”€ Workspace Chat System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Core state â€” architecture-first naming (not drawer-specific)
   const [isChatOpen,          setIsChatOpen]          = useState(false);
   const [conversations,       setConversations]       = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -190,17 +190,17 @@ export default function App() {
   const [chatSearch,          setChatSearch]          = useState('');
 
   // Sync conversations whenever wsTeam or workspace metadata changes.
-  // mergeConversations preserves existing message history — welcome messages are seeded once.
+  // mergeConversations preserves existing message history â€” welcome messages are seeded once.
   useEffect(() => {
     if (!wsTeam || !orgName) return;
     const generated = buildWorkspaceConversations(wsTeam, orgName, ownerEmail || 'admin');
     setConversations(prev => mergeConversations(prev, generated));
   }, [wsTeam, orgName, ownerEmail]);
 
-  // ─ Computed views ────────────────────────────────────────────────────────────────
+  // â”€ Computed views â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Role-filtered list of conversations visible to the current user.
-  // Phase 1: Facilitator ↔ Admin only.
+  // Phase 1: Facilitator â†” Admin only.
   // Future: extend cases for Programme Owner, Learner, Groups.
   const visibleConversations = useMemo(() => {
     if (userRole === 'Facilitator') {
@@ -216,12 +216,12 @@ export default function App() {
     return [];
   }, [conversations, userRole]);
 
-  // Search — Admin: filter by facilitator name/email; Facilitator: filter by message text
+  // Search â€” Admin: filter by facilitator name/email; Facilitator: filter by message text
   const filteredConversations = useMemo(() => {
     if (!chatSearch.trim()) return visibleConversations;
     const q = chatSearch.toLowerCase();
     if (userRole === 'Facilitator') {
-      // Search within the single conversation’s message history
+      // Search within the single conversationâ€™s message history
       return visibleConversations.filter(c =>
         c.messages.some(m => m.text.toLowerCase().includes(q))
       );
@@ -248,7 +248,7 @@ export default function App() {
     return getOtherParticipant(activeConversation, selfId);
   }, [activeConversation, userRole, user, ownerEmail]);
 
-  // ── BroadcastChannel for Real-Time Chat Across Tabs ──────────────────────────
+  // â”€â”€ BroadcastChannel for Real-Time Chat Across Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const chatStateRef = useRef({ isChatOpen, activeConversationId });
   useEffect(() => {
     chatStateRef.current = { isChatOpen, activeConversationId };
@@ -288,7 +288,7 @@ export default function App() {
     return () => channel.close();
   }, []);
 
-  // ─ Actions ───────────────────────────────────────────────────────────────────
+  // â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Helper: append a message to a conversation and update lastMessage + lastActivity
   const appendMessage = (conversationId, message) => {
@@ -321,7 +321,7 @@ export default function App() {
     ));
   };
 
-  // Open chat drawer — Facilitators auto-open into their only conversation
+  // Open chat drawer â€” Facilitators auto-open into their only conversation
   const openChat = () => {
     setIsChatOpen(true);
     if (userRole === 'Facilitator' && visibleConversations.length === 1) {
@@ -343,7 +343,7 @@ export default function App() {
     markAsRead(conversationId);
   };
 
-  // Send a message — appends to state, then fires simulation from isolated service
+  // Send a message â€” appends to state, then fires simulation from isolated service
   const sendMessage = (e) => {
     e.preventDefault();
     if (!messageInput.trim() || !activeConversationId || !activeConversation) return;
@@ -372,7 +372,7 @@ export default function App() {
     });
     channel.close();
 
-    // Isolated simulation — disabled for real-time conversation across tabs
+    // Isolated simulation â€” disabled for real-time conversation across tabs
     // simulateReply(activeConversation, userRole, {
     //   onTyping: (isTyping) => setConversationTyping(activeConversationId, isTyping),
     //   onReply:  (replyMsg) => appendMessage(activeConversationId, replyMsg),
@@ -596,7 +596,7 @@ export default function App() {
   // Helper to push a notification globally
   const addNotification = (text) => {
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const nowTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' · ' + today;
+    const nowTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' Â· ' + today;
     setNotifications(prev => [
       { id: Date.now(), text, time: nowTime, read: false },
       ...prev
@@ -1078,7 +1078,7 @@ export default function App() {
     });
   };
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Page Transition Helper ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
   // Shows the branded overlay for ~1.5s then runs the callback
   const triggerTransition = (callback, delay = 500) => {
     showLoader();
@@ -1107,7 +1107,7 @@ export default function App() {
     setGeneratedInviteLink(`https://app.oyengrid.com/invite/${randCode}`);
   };
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Page Transition Overlay (every button click) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Page Transition Overlay (every button click) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 
 
@@ -1150,7 +1150,7 @@ export default function App() {
               {/* Form Side */}
               <div>
                 <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 1 of 5 Ã¢â‚¬Â¢ Organization Profile</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 1 of 5 ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Organization Profile</span>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Configure Your Organization</h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
                     Let's set up your organization's workspace before inviting your team.
@@ -1392,7 +1392,7 @@ export default function App() {
               {/* Form Side */}
               <div>
                 <div style={{ textAlign: 'left', marginBottom: '1.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 2 of 5 Ã¢â‚¬Â¢ Admin</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px' }}>Step 2 of 5 ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Admin</span>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '0.35rem', color: '#fff' }}>Create the admin account.</h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
                     This account will manage your workspace, billing, security, team members and platform settings.
@@ -1597,7 +1597,7 @@ export default function App() {
                       className="form-input"
                       value={ownerPassword}
                       onChange={(e) => setOwnerPassword(e.target.value)}
-                      placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
+                      placeholder="ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢"
                       style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
@@ -1609,7 +1609,7 @@ export default function App() {
                       className="form-input"
                       value={ownerConfirmPassword}
                       onChange={(e) => setOwnerConfirmPassword(e.target.value)}
-                      placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
+                      placeholder="ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢"
                       style={{ paddingLeft: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
@@ -1732,11 +1732,11 @@ export default function App() {
                     Included in your plan
                   </h4>
                   <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', padding: 0, margin: 0, textAlign: 'left' }}>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Up to 50 Participants</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> 3 Active Programmes</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Basic AI</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> 10GB Storage</li>
-                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>✓</span> Invite Team Members Later</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> Up to 50 Participants</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> 3 Active Programmes</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> Basic AI</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> 10GB Storage</li>
+                    <li><span style={{ color: '#D4AF37', marginRight: '0.4rem', fontWeight: 'bold' }}>âœ“</span> Invite Team Members Later</li>
                   </ul>
                 </div>
               </div>
@@ -1897,7 +1897,7 @@ export default function App() {
               <Menu size={20} />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* Org logo — uploaded during onboarding, fallback to gold hexagon */}
+              {/* Org logo â€” uploaded during onboarding, fallback to gold hexagon */}
               <div style={{
                 background: orgLogo ? 'transparent' : 'rgba(212, 175, 55, 0.1)',
                 border: orgLogo ? 'none' : '1px solid #D4AF37',
@@ -1951,7 +1951,7 @@ export default function App() {
                     onClick={() => { setSearchExpanded(false); setSearchQuery(''); }}
                     style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0 0 0 0.4rem', fontSize: '0.8rem' }}
                   >
-                    âœ•
+                    Ã¢Å“â€¢
                   </button>
 
                   {/* Search Results Dropdown */}
@@ -2774,7 +2774,7 @@ export default function App() {
 
               </div>
             ) : activeTab === 'Team' ? (
-              /* Ã¢â€â‚¬Ã¢â€â‚¬ Team Management Component Ã¢â€â‚¬Ã¢â€â‚¬ */
+              /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Team Management Component ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
               <TeamManagement
                 members={wsTeam}
                 setMembers={setWsTeam}
@@ -3106,7 +3106,7 @@ export default function App() {
                 );
               })()
             ) : activeTab === 'Getting Started' ? (
-              /* ── Getting Started Onboarding Page ── */
+              /* â”€â”€ Getting Started Onboarding Page â”€â”€ */
               (() => {
                 const setupSteps = [
                   { id: 1, label: 'Workspace Created', desc: 'Your OYEN GRID workspace has been successfully provisioned.', done: true, tab: null },
@@ -3158,7 +3158,7 @@ export default function App() {
                               <span style={{ fontSize: '0.75rem', color: s.done ? '#7E7E7E' : '#151515', fontWeight: s.done ? 400 : 600, textDecoration: s.done ? 'line-through' : 'none' }}>{s.label}</span>
                             </div>
                           ))}
-                          <span style={{ fontSize: '0.72rem', color: '#B8891A', fontWeight: 600, marginTop: '0.25rem' }}>+ {setupSteps.length - 5} more steps below ↓</span>
+                          <span style={{ fontSize: '0.72rem', color: '#B8891A', fontWeight: 600, marginTop: '0.25rem' }}>+ {setupSteps.length - 5} more steps below â†“</span>
                         </div>
                       </div>
                     </div>
@@ -3179,7 +3179,7 @@ export default function App() {
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                                     <span style={{ fontSize: '0.88rem', fontWeight: 600, color: step.done ? '#7E7E7E' : '#151515', textDecoration: step.done ? 'line-through' : 'none', fontFamily: "'Inter', sans-serif" }}>{step.label}</span>
                                     {step.tab && !step.done && <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#E2B235', display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>Start <ArrowRight size={12} /></span>}
-                                    {step.done && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', flexShrink: 0 }}>✓ Done</span>}
+                                    {step.done && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', flexShrink: 0 }}>âœ“ Done</span>}
                                   </div>
                                   <p style={{ fontSize: '0.78rem', color: step.done ? '#A0A0A0' : '#5C5C5C', margin: '0.2rem 0 0', lineHeight: '1.4' }}>{step.desc}</p>
                                 </div>
@@ -3420,7 +3420,7 @@ export default function App() {
               </span>
             </footer>
 
-            {/* ── ONBOARDING SETUP GUIDE MODAL ── */}
+            {/* â”€â”€ ONBOARDING SETUP GUIDE MODAL â”€â”€ */}
             {showSetupGuideModal && (
               <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(21, 21, 21, 0.45)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }} onClick={() => setShowSetupGuideModal(false)}>
                 <style>{`
@@ -3636,7 +3636,7 @@ export default function App() {
               </div>
             )}
 
-            {/* Floating Workspace Chat Button & Drawer — shared GlobalChat component */}
+            {/* Floating Workspace Chat Button & Drawer â€” shared GlobalChat component */}
             <GlobalChat
               userRole={userRole}
               user={user}
@@ -3657,736 +3657,6 @@ export default function App() {
               sendMessage={sendMessage}
               openConversation={openConversation}
             />
-            {false && (
-              <>
-                {/* Floating Workspace Chat Button */}
-                <button
-                  onClick={openChat}
-                  title="Workspace Chat"
-                  style={{
-                    position: 'fixed',
-                    bottom: '24px',
-                    right: '24px',
-                    width: '58px',
-                    height: '58px',
-                    borderRadius: '50%',
-                    backgroundColor: '#D9B233',
-                    border: 'none',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 15px rgba(217, 178, 51, 0.4)',
-                    zIndex: 1000,
-                    transition: 'all 0.2s ease-in-out'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(217, 178, 51, 0.5)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(217, 178, 51, 0.4)';
-                  }}
-                >
-                  <MessageCircle size={24} />
-                  {/* Unread badge */}
-                  {!isChatOpen && visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0) > 0 && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '-2px',
-                      right: '-2px',
-                      width: '18px',
-                      height: '18px',
-                      borderRadius: '50%',
-                      backgroundColor: '#EF4444',
-                      color: '#FFF',
-                      fontSize: '0.6rem',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid #FFFDF9'
-                    }}>
-                      {visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0)}
-                    </span>
-                  )}
-                </button>
-
-                {/* Floating Chat Drawer Side Panel */}
-                {isChatOpen && (
-                  <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    right: 0,
-                    width: '390px',
-                    height: '100vh',
-                    backgroundColor: '#FFFDF9',
-                    borderLeft: '1px solid #E8E2D8',
-                    boxShadow: '-6px 0 35px rgba(0,0,0,0.08)',
-                    zIndex: 1001,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                  }}>
-                    {/* Drawer Header */}
-                    <div style={{
-                      padding: '1rem 1.25rem',
-                      borderBottom: '1px solid #E8E2D8',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      backgroundColor: '#FFFDF9'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        {/* Back button — only for Admin role that navigated into a conversation */}
-                        {activeConversationId && userRole !== 'Facilitator' && (
-                          <button
-                            onClick={() => setActiveConversationId(null)}
-                            style={{
-                              background: '#F5F2ED',
-                              border: '1px solid #E8E2D8',
-                              color: '#151515',
-                              fontSize: '0.72rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              padding: '0.3rem 0.6rem',
-                              borderRadius: '7px',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            ← Back
-                          </button>
-                        )}
-                        <div>
-                          <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#111111', fontFamily: "'Outfit', sans-serif", lineHeight: 1.2 }}>
-                            {activeConversation
-                              ? activePeer?.name || 'Conversation'
-                              : 'Workspace Chat'}
-                          </h4>
-                          {activeConversation ? (
-                            <span style={{ fontSize: '0.67rem', color: activePeer?.online ? '#16A34A' : '#888888', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem', fontWeight: 600 }}>
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: activePeer?.online ? '#10B981' : '#9CA3AF', display: 'inline-block', flexShrink: 0 }} />
-                              {activePeer?.online ? 'Online' : 'Away'} · {activePeer?.specialization || activePeer?.role || 'Facilitator'}
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.67rem', color: '#888888', marginTop: '0.15rem', display: 'block', fontWeight: 500 }}>
-                              {userRole === 'Facilitator'
-                                ? 'Direct line to your workspace administrator'
-                                : `${visibleConversations.length} Facilitator${visibleConversations.length !== 1 ? 's' : ''} · All conversations`}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        {activeConversationId && (
-                          <div style={{ display: 'flex', gap: '0.3rem', marginRight: '0.3rem' }}>
-                            <button
-                              type="button"
-                              title="Audio call"
-                              onClick={() => alert('Audio call feature coming soon')}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center', padding: '0.2rem' }}
-                            >
-                              📞
-                            </button>
-                          </div>
-                        )}
-                        <button
-                          onClick={closeChat}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: '#888888',
-                            padding: '0.2rem',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}
-                        >
-                          <X size={18} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Chat content switch */}
-                    {!activeConversationId ? (
-                      /* VIEW A: Conversations Directory (Admin only; Facilitators auto-redirect) */
-                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-
-                        {/* Section label + search */}
-                        <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.6rem' }}>
-                            {userRole === 'Facilitator' ? 'Your Administrator' : 'Facilitators'}
-                          </div>
-                          <div style={{ position: 'relative' }}>
-                            <Search size={13} color="#AAAAAA" style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)' }} />
-                            <input
-                              type="text"
-                              placeholder={userRole === 'Facilitator' ? 'Search messages...' : 'Search facilitators...'}
-                              value={chatSearch}
-                              onChange={e => setChatSearch(e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '0.5rem 0.9rem 0.5rem 2rem',
-                                borderRadius: '9px',
-                                border: '1px solid rgba(0,0,0,0.06)',
-                                backgroundColor: '#F5F2ED',
-                                fontSize: '0.78rem',
-                                outline: 'none',
-                                color: '#111111',
-                                boxSizing: 'border-box'
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Conversations list */}
-                        <div style={{ flex: 1, overflowY: 'auto' }}>
-                          {filteredConversations.length > 0 ? (
-                            filteredConversations.map(conv => {
-                              const peer    = conv.participants.find(p => p.role !== (userRole === 'Facilitator' ? 'Facilitator' : 'Administrator')) || conv.participants[0];
-                              const lastMsg = conv.lastMessage;
-                              const hasUnread = (conv.unreadCount || 0) > 0;
-                              return (
-                                <div
-                                  key={conv.conversationId}
-                                  onClick={() => openConversation(conv.conversationId)}
-                                  style={{
-                                    padding: '0.95rem 1.25rem',
-                                    borderBottom: '1px solid rgba(0,0,0,0.03)',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.85rem',
-                                    transition: 'background 0.15s',
-                                    position: 'relative'
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(217,178,51,0.04)'}
-                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                  {/* Avatar */}
-                                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                                    <div style={{
-                                      width: '42px',
-                                      height: '42px',
-                                      borderRadius: '50%',
-                                      background: peer.role === 'Administrator' ? 'linear-gradient(135deg, #D9B233, #9B7B1A)' : 'linear-gradient(135deg, #374151, #111827)',
-                                      color: '#FFFDF9',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontWeight: 800,
-                                      fontSize: '0.85rem',
-                                      fontFamily: "'Outfit', sans-serif"
-                                    }}>
-                                      {peer.avatarInitials}
-                                    </div>
-                                    <span style={{
-                                      position: 'absolute',
-                                      bottom: '1px',
-                                      right: '1px',
-                                      width: '9px',
-                                      height: '9px',
-                                      borderRadius: '50%',
-                                      backgroundColor: peer.online ? '#10B981' : '#9CA3AF',
-                                      border: '2px solid #FFFDF9'
-                                    }} />
-                                  </div>
-
-                                  {/* Text block */}
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.15rem' }}>
-                                      <span style={{ fontSize: '0.83rem', fontWeight: hasUnread ? 800 : 700, color: '#111111', fontFamily: "'Outfit', sans-serif" }}>
-                                        {peer.name}
-                                      </span>
-                                      <span style={{ fontSize: '0.67rem', color: '#AAAAAA', fontWeight: 500, flexShrink: 0, marginLeft: '0.5rem' }}>
-                                        {lastMsg ? lastMsg._time || lastMsg.time : ''}
-                                      </span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.1rem' }}>
-                                      <span style={{
-                                        fontSize: '0.6rem',
-                                        backgroundColor: peer.role === 'Administrator' ? 'rgba(217,178,51,0.12)' : 'rgba(107,114,128,0.1)',
-                                        color: peer.role === 'Administrator' ? '#C49B0A' : '#4B5563',
-                                        padding: '0.08rem 0.38rem',
-                                        borderRadius: '3px',
-                                        fontWeight: 700,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.3px'
-                                      }}>
-                                        {peer.role}
-                                      </span>
-                                      {peer.online && (
-                                        <span style={{ fontSize: '0.6rem', color: '#10B981', fontWeight: 600 }}>● Online</span>
-                                      )}
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                      <p style={{
-                                        margin: 0,
-                                        fontSize: '0.75rem',
-                                        color: hasUnread ? '#222' : '#777777',
-                                        fontWeight: hasUnread ? 700 : 400,
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        flex: 1
-                                      }}>
-                                        {lastMsg
-                                          ? (lastMsg.type === 'system-welcome'
-                                            ? '🔔 Workspace conversation started'
-                                            : lastMsg.sender === 'me' ? `You: ${lastMsg.text}` : lastMsg.text)
-                                          : 'Start the conversation'}
-                                      </p>
-                                      {hasUnread && (
-                                        <span style={{
-                                          backgroundColor: '#D9B233',
-                                          color: '#FFFDF9',
-                                          fontSize: '0.6rem',
-                                          fontWeight: 800,
-                                          borderRadius: '10px',
-                                          padding: '0.05rem 0.4rem',
-                                          flexShrink: 0
-                                        }}>
-                                          {conv.unreadCount}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div style={{
-                              textAlign: 'center',
-                              padding: '3rem 2rem',
-                              color: '#666666',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              gap: '1rem'
-                            }}>
-                              <div style={{ fontSize: '2rem' }}>💬</div>
-                              <div>
-                                <h5 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#111111', margin: '0 0 0.35rem', fontFamily: "'Outfit', sans-serif" }}>
-                                  {userRole === 'Facilitator' ? 'No admin conversation' : 'No facilitators yet'}
-                                </h5>
-                                <p style={{ fontSize: '0.72rem', margin: 0, lineHeight: 1.5, color: '#888888' }}>
-                                  {userRole === 'Facilitator'
-                                    ? 'Your workspace administrator conversation will appear here automatically.'
-                                    : 'Invite facilitators to the workspace and their conversations will appear here automatically.'}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                      </div>
-                    ) : (
-                      /* VIEW B: Active Conversation Chat Log */
-                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#FDFBF7' }}>
-                        
-                        {/* Message log */}
-                        <div style={{ flex: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                          
-                          {/* Date separator rendering and dynamic bubbles */}
-                          {(() => {
-                            let lastDate = null;
-                            const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin');
-                            return activeConversation.messages.map(m => {
-                              const showDate = (m._date || m.date) !== lastDate;
-                              lastDate = m._date || m.date;
-                              const isMe = m.senderId === selfId || m.sender === 'me';
-                              
-                              return (
-                                <div key={m.messageId || m.id} style={{ width: '100%' }}>
-                                  {showDate && (
-                                    <div style={{
-                                      display: 'flex',
-                                      justifyContent: 'center',
-                                      margin: '1.25rem 0 0.85rem'
-                                    }}>
-                                      <span style={{
-                                        fontSize: '0.7rem',
-                                        backgroundColor: '#EAE5DB',
-                                        color: '#6B665E',
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '20px',
-                                        fontWeight: 700,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.5px'
-                                      }}>
-                                        {m._date || m.date}
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  <div style={{
-                                    display: 'flex',
-                                    justifyContent: isMe ? 'flex-end' : 'flex-start',
-                                    width: '100%'
-                                  }}>
-                                    
-                                    {/* System / Action Card messages */}
-                                    {m.messageType === 'system-welcome' || m.type === 'system-welcome' ? (
-                                      /* Workspace conversation started card */
-                                      <div style={{
-                                        width: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        padding: '0.5rem 0 1rem',
-                                        gap: '0.5rem'
-                                      }}>
-                                        <div style={{
-                                          width: '38px', height: '38px', borderRadius: '10px',
-                                          background: 'linear-gradient(135deg, #D9B233, #9B7B1A)',
-                                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                          boxShadow: '0 4px 12px rgba(217,178,51,0.25)'
-                                        }}>
-                                          <MessageCircle size={18} color="#FFFFFF" />
-                                        </div>
-                                        <div style={{ textAlign: 'center' }}>
-                                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#555', fontFamily: "'Outfit', sans-serif" }}>
-                                            Workspace conversation created
-                                          </div>
-                                          <div style={{ fontSize: '0.65rem', color: '#AAAAAA', marginTop: '0.1rem' }}>
-                                            {m.time} · This is the beginning of your conversation
-                                          </div>
-                                        </div>
-                                        <div style={{ width: '100%', height: '1px', background: 'linear-gradient(to right, transparent, #E8E2D8, transparent)', margin: '0.25rem 0' }} />
-                                      </div>
-                                    ) : m.messageType === 'system' || m.type === 'system' || m.messageType === 'session' || m.type === 'session' ? (
-                                      <div style={{
-                                        width: '100%',
-                                        maxWidth: '310px',
-                                        backgroundColor: '#FFFDF9',
-                                        border: '1px solid #E8E2D8',
-                                        borderRadius: '12px',
-                                        padding: '1rem',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-                                      }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#D9B233', fontWeight: 800, fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                                          <Calendar size={14} />
-                                          <span>Session Updated</span>
-                                        </div>
-                                        <h5 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#111111', margin: '0 0 0.25rem' }}>{m.sessionMeta?.title}</h5>
-                                        <p style={{ fontSize: '0.75rem', color: '#666', margin: '0 0 0.75rem' }}>
-                                          {m.sessionMeta?.day} • {m.sessionMeta?.time} • {m.sessionMeta?.location}
-                                        </p>
-                                        <button 
-                                          onClick={() => alert('Opening Session details')}
-                                          style={{
-                                            width: '100%',
-                                            padding: '0.45rem',
-                                            backgroundColor: '#111111',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            color: '#FFFDF9',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          View Session
-                                        </button>
-                                      </div>
-                                    ) : m.messageType === 'file' || m.type === 'file' ? (
-                                      <div style={{
-                                        width: '100%',
-                                        maxWidth: '310px',
-                                        backgroundColor: '#FFFDF9',
-                                        border: '1px solid #E8E2D8',
-                                        borderRadius: '12px',
-                                        padding: '1rem',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-                                      }}>
-                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(217, 178, 51, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D9B233' }}>
-                                            <FileText size={18} />
-                                          </div>
-                                          <div>
-                                            <h6 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#111' }}>{m.fileMeta?.name}</h6>
-                                            <span style={{ fontSize: '0.68rem', color: '#888' }}>{m.fileMeta?.size} • {m.fileMeta?.date}</span>
-                                          </div>
-                                        </div>
-                                        <button 
-                                          onClick={() => alert('Downloading file...')}
-                                          style={{
-                                            width: '100%',
-                                            padding: '0.45rem',
-                                            backgroundColor: '#F5F2ED',
-                                            border: '1px solid #E8E2D8',
-                                            borderRadius: '6px',
-                                            color: '#111',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          Download
-                                        </button>
-                                      </div>
-                                    ) : m.messageType === 'resource' || m.type === 'resource' ? (
-                                      <div style={{
-                                        width: '100%',
-                                        maxWidth: '310px',
-                                        backgroundColor: '#FFFDF9',
-                                        border: '1px solid #E8E2D8',
-                                        borderRadius: '12px',
-                                        padding: '1rem',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-                                      }}>
-                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                          <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(45, 108, 223, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2D6CDF' }}>
-                                            <BookOpen size={18} />
-                                          </div>
-                                          <div>
-                                            <h6 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#111' }}>{m.resourceMeta?.name}</h6>
-                                            <span style={{ fontSize: '0.68rem', color: '#888' }}>{m.resourceMeta?.date}</span>
-                                          </div>
-                                        </div>
-                                        <button 
-                                          onClick={() => alert('Opening Resource details')}
-                                          style={{
-                                            width: '100%',
-                                            padding: '0.45rem',
-                                            backgroundColor: '#111',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            color: '#FFF',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          Open Resource
-                                        </button>
-                                      </div>
-                                    ) : m.messageType === 'assessment' || m.type === 'assessment' ? (
-                                      <div style={{
-                                        width: '100%',
-                                        maxWidth: '310px',
-                                        backgroundColor: '#FFFDF9',
-                                        border: '1px solid #E8E2D8',
-                                        borderRadius: '12px',
-                                        padding: '1rem',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-                                      }}>
-                                        <div style={{ display: 'flex', itemsAlign: 'center', gap: '0.5rem', color: '#D9B233', fontWeight: 800, fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                                          <Award size={14} />
-                                          <span>Assessment Published</span>
-                                        </div>
-                                        <h5 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#111111', margin: '0 0 0.25rem' }}>{m.assessmentMeta?.title}</h5>
-                                        <p style={{ fontSize: '0.75rem', color: '#666', margin: '0 0 0.75rem' }}>{m.assessmentMeta?.due}</p>
-                                        <button 
-                                          onClick={() => alert('Opening assessment')}
-                                          style={{
-                                            width: '100%',
-                                            padding: '0.45rem',
-                                            backgroundColor: '#111',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            color: '#FFF',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          Open Assessment
-                                        </button>
-                                      </div>
-                                    ) : m.messageType === 'attendance' || m.type === 'attendance' ? (
-                                      <div style={{
-                                        width: '100%',
-                                        maxWidth: '310px',
-                                        backgroundColor: '#FFFDF9',
-                                        border: '1px solid #E8E2D8',
-                                        borderRadius: '12px',
-                                        padding: '1rem',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-                                      }}>
-                                        <div style={{ display: 'flex', itemsAlign: 'center', gap: '0.5rem', color: '#D9B233', fontWeight: 800, fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                                          <ClipboardCheck size={14} />
-                                          <span>Attendance Reminder</span>
-                                        </div>
-                                        <p style={{ fontSize: '0.78rem', color: '#111', margin: '0 0 0.75rem', lineHeight: 1.4 }}>
-                                          Please submit attendance for <strong>{m.attendanceMeta?.title}</strong> before 5 PM.
-                                        </p>
-                                        <button 
-                                          onClick={() => alert('Opening attendance sheet')}
-                                          style={{
-                                            width: '100%',
-                                            padding: '0.45rem',
-                                            backgroundColor: '#D9B233',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            color: '#FFF',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          Open Attendance
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      /* Standard text bubbles */
-                                      <div 
-                                        style={{
-                                          maxWidth: '80%',
-                                          backgroundColor: isMe ? '#111111' : '#F8F6F1',
-                                          color: isMe ? '#FFFDF9' : '#111111',
-                                          padding: '0.65rem 1rem',
-                                          borderRadius: '12px',
-                                          fontSize: '0.8rem',
-                                          lineHeight: 1.45,
-                                          boxShadow: '0 1px 4px rgba(0,0,0,0.01)',
-                                          position: 'relative'
-                                        }}
-                                        title="Right-click for options"
-                                      >
-                                        <p style={{ margin: 0, wordBreak: 'break-word' }}>{m.text}</p>
-                                        <div style={{ 
-                                          display: 'flex', 
-                                          alignItems: 'center',
-                                          justifyContent: 'flex-end',
-                                          gap: '0.25rem',
-                                          marginTop: '0.25rem'
-                                        }}>
-                                          <span style={{ 
-                                            fontSize: '0.65rem', 
-                                            color: isMe ? 'rgba(255,255,255,0.6)' : '#888888'
-                                          }}>
-                                            {m.time}
-                                          </span>
-                                          {isMe && (
-                                            <span style={{ display: 'flex', alignItems: 'center' }}>
-                                              {(m.status || m.readStatus) === 'sent' ? (
-                                                <Check size={11} color="rgba(255,255,255,0.5)" />
-                                              ) : (m.status || m.readStatus) === 'delivered' ? (
-                                                <CheckCheck size={12} color="rgba(255,255,255,0.5)" />
-                                              ) : (
-                                                <CheckCheck size={12} color="#D9B233" />
-                                              )}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                  </div>
-                                </div>
-                              );
-                            });
-                          })()}
-
-                        </div>
-
-                        {/* Typing indicator */}
-                        {activeConversation?.typing?.isTyping && (
-                          <div style={{ padding: '0.5rem 1.5rem', fontSize: '0.72rem', color: '#D9B233', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <span style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D9B233', animation: 'bounce 1s infinite' }} />
-                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D9B233', animation: 'bounce 1s infinite 0.2s' }} />
-                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D9B233', animation: 'bounce 1s infinite 0.4s' }} />
-                            </span>
-                            <span style={{ fontStyle: 'italic', fontSize: '0.7rem' }}>{activePeer?.name || 'Workspace'} is typing</span>
-                          </div>
-                        )}
-
-                        {/* Message Input form */}
-                        <form 
-                          onSubmit={sendMessage}
-                          style={{
-                            padding: '1rem 1.25rem',
-                            borderTop: '1px solid #E8E2D8',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            backgroundColor: '#FFFDF9'
-                          }}
-                        >
-                          <div style={{ display: 'flex', gap: '0.5rem', color: '#888888' }}>
-                            <button 
-                              type="button" 
-                              onClick={() => alert('Attachments: Files, Images, Videos, Voice Notes')}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center' }}
-                            >
-                              <Paperclip size={16} />
-                            </button>
-                            <button 
-                              type="button" 
-                              onClick={() => alert('Emoji Drawer')}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888888', display: 'flex', alignItems: 'center' }}
-                            >
-                              <span>😊</span>
-                            </button>
-                          </div>
-                          
-                          <input 
-                            type="text" 
-                            placeholder="Type a message..." 
-                            value={messageInput}
-                            onChange={e => setMessageInput(e.target.value)}
-                            style={{
-                              flex: 1,
-                              padding: '0.55rem 0.85rem',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(0,0,0,0.06)',
-                              backgroundColor: '#F8F6F1',
-                              fontSize: '0.8rem',
-                              outline: 'none',
-                              color: '#111111'
-                            }}
-                          />
-
-                          {messageInput.trim() === '' ? (
-                            <button 
-                              type="button"
-                              onClick={() => alert('Voice notes recording...')}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                color: '#888888',
-                                width: '32px',
-                                height: '32px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <Mic size={16} />
-                            </button>
-                          ) : (
-                            <button 
-                              type="submit"
-                              style={{
-                                backgroundColor: '#D9B233',
-                                border: 'none',
-                                borderRadius: '10px',
-                                width: '32px',
-                                height: '32px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                color: '#FFFFFF'
-                              }}
-                            >
-                              <Send size={14} />
-                            </button>
-                          )}
-                        </form>
-
-                      </div>
-                    )}
-
-                  </div>
-                )}
-              </>
-            )}
 
           </div>
         </div>
@@ -4572,7 +3842,7 @@ export default function App() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '0.4rem 0.8rem', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)' }} onClick={() => alert('Language options: English')}>
                   <Globe size={14} color="#D4AF37" />
                   <span>English</span>
-                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>Ã¢â€“Â¼</span>
+                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¼</span>
                 </div>
               </div>
 
@@ -4752,7 +4022,7 @@ export default function App() {
                     onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.38)'}
                     onClick={() => setVerificationResult(null)}
                   >
-                    Ã¢â€ Â Use different details
+                    ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Use different details
                   </button>
 
                   {/* Status row */}
@@ -4763,7 +4033,7 @@ export default function App() {
                       style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }}
                       onClick={() => alert('View Status: All systems fully operational.')}
                     >
-                      View Status Ã¢â€ â€™
+                      View Status ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢
                     </span>
                   </div>
 
@@ -4845,7 +4115,7 @@ export default function App() {
                     }}
                     onClick={() => setVerificationResult(null)}
                   >
-                    Ã¢â€ Â Go back to verify
+                    ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Go back to verify
                   </button>
                 </div>
               )}
@@ -4875,7 +4145,7 @@ export default function App() {
                       marginBottom: '1.5rem',
                       textAlign: 'left'
                     }}>
-                      Ã¢Å¡Â Ã¯Â¸Â {verifyError}
+                      ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â {verifyError}
                     </div>
                   )}
 
@@ -5071,14 +4341,14 @@ export default function App() {
                 </>
               )}
 
-              {/* Status and Footer Links Ã¢â‚¬â€ only show on default input form */}
+              {/* Status and Footer Links ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only show on default input form */}
               {verificationResult === null && (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
                     <span>All Systems Operational</span>
                     <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-                    <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('View Status: All systems fully operational.')}>View Status Ã¢â€ â€™</span>
+                    <span style={{ color: '#D4AF37', fontWeight: 600, cursor: 'pointer' }} onClick={() => alert('View Status: All systems fully operational.')}>View Status ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginTop: '2rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }} onClick={() => alert('Navigating to Privacy Policy...')}>
@@ -5303,7 +4573,7 @@ function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizati
         .prof-card-hover { transition: box-shadow 0.2s; }
       `}</style>
 
-      {/* ── PAGE HEADER ── */}
+      {/* â”€â”€ PAGE HEADER â”€â”€ */}
       <div>
         <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#151515', margin: 0, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.3px' }}>
           Personal Profile
@@ -5313,7 +4583,7 @@ function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizati
         </p>
       </div>
 
-      {/* ════════ SECTION 1 — Personal Information ════════ */}
+      {/* â•â•â•â•â•â•â•â• SECTION 1 â€” Personal Information â•â•â•â•â•â•â•â• */}
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -5378,14 +4648,14 @@ function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizati
             </button>
             {profileSaved && (
               <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                ✓ Saved
+                âœ“ Saved
               </span>
             )}
           </div>
         </form>
       </div>
 
-      {/* ════════ SECTION 2 — Workspace Information (Read Only) ════════ */}
+      {/* â•â•â•â•â•â•â•â• SECTION 2 â€” Workspace Information (Read Only) â•â•â•â•â•â•â•â• */}
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -5417,7 +4687,7 @@ function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizati
         </div>
       </div>
 
-      {/* ════════ SECTION 3 — Security ════════ */}
+      {/* â•â•â•â•â•â•â•â• SECTION 3 â€” Security â•â•â•â•â•â•â•â• */}
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -5432,7 +4702,7 @@ function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizati
         <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {passwordSuccess && (
             <div style={{ padding: '0.75rem 1rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '9px', color: '#16a34a', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              ✓ Password updated successfully.
+              âœ“ Password updated successfully.
             </div>
           )}
           {passwordError && (
@@ -5467,7 +4737,7 @@ function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizati
         </form>
       </div>
 
-      {/* ════════ SECTION 4 — Preferences ════════ */}
+      {/* â•â•â•â•â•â•â•â• SECTION 4 â€” Preferences â•â•â•â•â•â•â•â• */}
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -5522,12 +4792,12 @@ function ProfileTab({ info, onSaveProfile, addNotification, userRole, organizati
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button type="submit" style={goldBtn}>Save Preferences</button>
-            {prefSaved && <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600 }}>✓ Saved</span>}
+            {prefSaved && <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600 }}>âœ“ Saved</span>}
           </div>
         </form>
       </div>
 
-      {/* ════════ SECTION 5 — Account ════════ */}
+      {/* â•â•â•â•â•â•â•â• SECTION 5 â€” Account â•â•â•â•â•â•â•â• */}
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -5828,7 +5098,7 @@ const FacilitatorResourcesView = ({ programs }) => {
           {filteredResources.length === 0 ? (
             <div style={{ padding: '6rem 2rem', textAlign: 'center', backgroundColor: '#FCFBF8', border: '1px solid #E8E2D8', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 18px 40px rgba(60,45,20,.08)' }}>
               <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(201,154,46,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
-                📚
+                ðŸ“š
               </div>
               <div>
                 <h4 style={{ fontSize: '22px', fontWeight: 600, color: '#232323', margin: '0 0 0.5rem 0' }}>Your Resource Library</h4>
@@ -5868,9 +5138,9 @@ const FacilitatorResourcesView = ({ programs }) => {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#8D887E', fontSize: '14px', marginTop: '0.2rem' }}>
                           <span>Updated Today</span>
-                          <span>•</span>
+                          <span>â€¢</span>
                           <span>{getResourceType(featuredResource.name)}</span>
-                          <span>•</span>
+                          <span>â€¢</span>
                           <span>{featuredResource.size || '3.2 MB'}</span>
                         </div>
                       </div>
@@ -5931,7 +5201,7 @@ const FacilitatorResourcesView = ({ programs }) => {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #E8E2D8', paddingTop: '1.25rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                             <span style={{ fontSize: '13px', color: '#5E5A53' }}>Updated {i === 0 ? 'Yesterday' : 'Last Week'}</span>
-                            <span style={{ fontSize: '13px', color: '#8D887E' }}>{getResourceType(res.name)} • {res.size || '2.3 MB'}</span>
+                            <span style={{ fontSize: '13px', color: '#8D887E' }}>{getResourceType(res.name)} â€¢ {res.size || '2.3 MB'}</span>
                           </div>
                           <button 
                             style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', border: '1px solid #E8E2D8', color: '#232323', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
@@ -6058,7 +5328,7 @@ function ResourcesTab({ programs = [], addNotification, currentUser }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '1rem' }}>🔍</span>
+            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '1rem' }}>ðŸ”</span>
             <input 
               type="text" 
               placeholder="Search resources..." 
@@ -6070,7 +5340,7 @@ function ResourcesTab({ programs = [], addNotification, currentUser }) {
 
           {!hasAnyResources && !search ? (
             <div style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📁</div>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>ðŸ“</div>
               <h3 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.5rem', fontWeight: 600 }}>No resources have been shared yet.</h3>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', maxWidth: '400px', margin: '0 auto', lineHeight: 1.5 }}>
                 Your organization hasn't shared any materials for your assigned programs. Resources will appear here automatically when they're published.
@@ -6093,14 +5363,14 @@ function ResourcesTab({ programs = [], addNotification, currentUser }) {
                   {Object.entries(groupedProgramResources).map(([progName, resList]) => (
                     <div key={progName} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
-                        <span style={{ color: '#3b82f6' }}>📁</span> {progName}
+                        <span style={{ color: '#3b82f6' }}>ðŸ“</span> {progName}
                       </div>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', paddingLeft: '1.5rem' }}>
                         {resList.map((res, i) => (
                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                             <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-                              <span>📄</span>
+                              <span>ðŸ“„</span>
                               <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{res.name}</span>
                             </div>
                             <button 
@@ -6127,14 +5397,14 @@ function ResourcesTab({ programs = [], addNotification, currentUser }) {
                   {Object.entries(groupedSessionResources).map(([groupName, resList]) => (
                     <div key={groupName} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
-                        <span style={{ color: '#a855f7' }}>📁</span> {groupName}
+                        <span style={{ color: '#a855f7' }}>ðŸ“</span> {groupName}
                       </div>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', paddingLeft: '1.5rem' }}>
                         {resList.map((res, i) => (
                           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                             <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-                              <span>📄</span>
+                              <span>ðŸ“„</span>
                               <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem' }}>{res.name}</span>
                             </div>
                             <button 
