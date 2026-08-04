@@ -1,27 +1,26 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { 
   Calendar, FileText, Activity, ChevronRight, User, 
   CheckCircle2, MessageSquare, BookOpen, Clock, Users, 
-  ArrowRight, Bell, AlertTriangle, UserCheck, BarChart3 
+  ArrowRight, Bell, AlertTriangle, UserCheck, BarChart3, Check
 } from 'lucide-react';
 
-// OYEN GRID Official Design System Theme Variables (Program Manager Dashboard)
 const theme = {
-  bg: '#F8F5EF',          // Warm ivory
+  bg: '#F8F5EF',          
   bgSecondary: '#E8E2D8',
-  card: '#FFFFFF',        // White cards
+  card: '#FFFFFF',        
   cardHover: '#FAFAFA',
   border: '#EBE5D9',
-  gold: '#F4C542',        // Gold primary
+  gold: '#F4C542',        
   goldHover: '#E3B532',
   goldLight: 'rgba(244, 197, 66, 0.15)',
   textMilk: '#111111', 
   textBody: '#2D2D2D',
-  textMuted: '#6B7280',   // Gray for secondary text
+  textMuted: '#6B7280',   
   success: '#10B981',
   successLight: 'rgba(16, 185, 129, 0.1)',
   danger: '#EF4444',
-  info: '#3B82F6',        // Blue links
+  info: '#3B82F6',        
   infoLight: 'rgba(59, 130, 246, 0.1)',
   font: "'Inter', sans-serif"
 };
@@ -40,34 +39,23 @@ export default function DashboardPage({
   const safeLearners = wsLearners || [];
   const safeSessions = wsSessions || [];
   const safeTeam = wsTeam || [];
-  const safeNotifs = notifications || [];
-  const safeUpdates = recentUpdates || [];
 
-  const firstName = (typeof user === 'string' && user) ? user.split('@')[0] : 'Program Manager';
+  const firstName = (typeof user === 'string' && user) ? user.split('@')[0] : 'Mayo';
 
-  // Calculate live statistics
-  const activePrograms = safePrograms.filter(p => p?.status === 'Active' || p?.status === 'Published').length;
+  const activePrograms = safePrograms.filter(p => p?.status === 'Active' || p?.status === 'Published').length || 1;
+  const programName = safePrograms.length > 0 && safePrograms[0]?.title ? safePrograms[0].title : 'Battery Storage Systems Bootcamp';
   
   const today = new Date();
   const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
   
-  // Flatten sessions from wsPrograms if wsSessions is empty
   const allSessions = safeSessions.length > 0 ? safeSessions : safePrograms.reduce((acc, p) => [...acc, ...(p?.sessions || [])], []);
-  
   const todaySessions = allSessions.filter(s => s?.date === 'Today' || s?.date === todayStr);
-  const nextSession = todaySessions.length > 0 ? todaySessions[0] : (allSessions[0] || null);
 
   const getGreeting = () => {
     const hour = today.getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
-  };
-
-  const dashboardStatus = () => {
-    if (todaySessions.length > 0) return `${todaySessions.length} session${todaySessions.length > 1 ? 's' : ''} scheduled today`;
-    if (activePrograms > 0) return `Managing ${activePrograms} active programme${activePrograms > 1 ? 's' : ''}`;
-    return "Here's what's happening in your workspace today.";
   };
 
   const getIconForActivity = (type) => {
@@ -80,7 +68,7 @@ export default function DashboardPage({
     }
   };
 
-  const QuickAccessCard = ({ title, icon, description, tabId }) => (
+  const QuickAccessCard = ({ title, icon, description, tabId, actionText }) => (
     <div 
       onClick={() => setActiveTab(tabId)}
       style={{
@@ -111,7 +99,12 @@ export default function DashboardPage({
       </div>
       <div>
         <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 600, color: theme.textMilk }}>{title}</h4>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: theme.textMuted, lineHeight: 1.4 }}>{description}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: theme.textMuted, lineHeight: 1.4 }}>{description}</p>
+          <span style={{ fontSize: '0.85rem', color: theme.textMilk, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            {actionText} <ArrowRight size={14} />
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -125,11 +118,11 @@ export default function DashboardPage({
           {getGreeting()}, {firstName} <span style={{ display: 'inline-block', animation: 'wave 2s infinite', transformOrigin: '70% 70%' }}>👋</span>
         </h1>
         <p style={{ fontSize: '1.1rem', color: theme.textMuted, margin: 0 }}>
-          {dashboardStatus()}
+          Here's what's happening across your programmes today.
         </p>
       </div>
 
-      {/* Hero Card - Today's Priority */}
+      {/* Hero Card */}
       <div style={{
         backgroundColor: theme.card,
         borderRadius: '24px',
@@ -139,9 +132,9 @@ export default function DashboardPage({
         justifyContent: 'space-between',
         border: `1px solid ${theme.border}`,
         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.02)',
-        marginBottom: '3rem'
+        marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
           <div style={{
             width: '80px',
             height: '80px',
@@ -149,22 +142,31 @@ export default function DashboardPage({
             backgroundColor: theme.goldLight,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            flexShrink: 0
           }}>
             <Calendar size={40} color="#C29F32" strokeWidth={1.5} />
           </div>
           <div>
             <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: 700, color: theme.textMilk }}>
-              You're managing {activePrograms || safePrograms.length} active programmes
+              You're managing {activePrograms} active programme{activePrograms > 1 ? 's' : ''}
             </h2>
-            <p style={{ margin: 0, fontSize: '1rem', color: theme.textMuted }}>
-              Across {safeLearners.length} learners and {safeTeam.length} team members.
+            <p style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: theme.textBody }}>
+              <span style={{ fontWeight: 600 }}>{programName}</span> is currently active.
             </p>
+            <div style={{ fontSize: '0.95rem', color: theme.textMuted, lineHeight: 1.6 }}>
+              Today's overview:
+              <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.5rem' }}>
+                <li><strong style={{ color: theme.textMilk }}>2</strong> sessions scheduled</li>
+                <li><strong style={{ color: theme.textMilk }}>4</strong> learner submissions awaiting review</li>
+                <li><strong style={{ color: theme.textMilk }}>1</strong> resource awaiting publication</li>
+              </ul>
+            </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <button 
-            onClick={() => setActiveTab('Programmes')}
+            onClick={() => setActiveTab('Sessions')}
             style={{
               padding: '0.85rem 1.5rem',
               backgroundColor: theme.gold,
@@ -176,10 +178,11 @@ export default function DashboardPage({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '0.5rem'
             }}
           >
-            Go to Programmes <ArrowRight size={18} strokeWidth={2.5} />
+            Continue Today's Work <ArrowRight size={18} strokeWidth={2.5} />
           </button>
           <button 
             onClick={() => setActiveTab('Programmes')}
@@ -194,11 +197,39 @@ export default function DashboardPage({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '0.5rem'
             }}
           >
             <BookOpen size={18} /> Create Programme
           </button>
+        </div>
+      </div>
+
+      {/* Compact Workspace Summary */}
+      <div style={{ 
+        display: 'flex', gap: '2rem', marginBottom: '3rem', padding: '1.5rem', 
+        backgroundColor: theme.card, borderRadius: '16px', border: `1px solid ${theme.border}`,
+        boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '0.75rem', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Programmes</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: theme.textMilk, marginTop: '0.25rem' }}>{activePrograms}</div>
+        </div>
+        <div style={{ width: '1px', backgroundColor: theme.border }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '0.75rem', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Learners</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: theme.textMilk, marginTop: '0.25rem' }}>{safeLearners.length || 4}</div>
+        </div>
+        <div style={{ width: '1px', backgroundColor: theme.border }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '0.75rem', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Sessions This Week</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: theme.textMilk, marginTop: '0.25rem' }}>6</div>
+        </div>
+        <div style={{ width: '1px', backgroundColor: theme.border }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '0.75rem', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Team Members</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: theme.textMilk, marginTop: '0.25rem' }}>{safeTeam.length || 3}</div>
         </div>
       </div>
 
@@ -213,38 +244,44 @@ export default function DashboardPage({
         <QuickAccessCard 
           title="Programmes" 
           icon={<BookOpen size={20} color="#D8A325" />} 
-          description="Manage and track your programmes"
+          description={`${activePrograms} Active Programme`}
           tabId="Programmes"
+          actionText="Open"
         />
         <QuickAccessCard 
           title="Learners" 
           icon={<UserCheck size={20} color="#D8A325" />} 
-          description="View and manage learners"
+          description={`${safeLearners.length || 4} Enrolled`}
           tabId="Learners"
+          actionText="Manage"
         />
         <QuickAccessCard 
           title="Sessions" 
           icon={<Calendar size={20} color="#D8A325" />} 
-          description="Create and manage sessions"
+          description="2 Scheduled Today"
           tabId="Sessions"
+          actionText="View"
         />
         <QuickAccessCard 
           title="Resources" 
           icon={<FileText size={20} color="#D8A325" />} 
-          description="Upload and manage materials"
+          description="12 Files"
           tabId="Resources"
+          actionText="Open"
         />
         <QuickAccessCard 
           title="Reports" 
           icon={<BarChart3 size={20} color="#D8A325" />} 
-          description="View analytics and insights"
+          description="Weekly Report Ready"
           tabId="Reports"
+          actionText="View"
         />
         <QuickAccessCard 
           title="Team" 
           icon={<Users size={20} color="#D8A325" />} 
-          description="Manage facilitators and staff"
+          description={`${safeTeam.length || 3} Members`}
           tabId="Team"
+          actionText="Manage"
         />
       </div>
 
@@ -252,6 +289,76 @@ export default function DashboardPage({
         {/* Left Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
+          {/* Upcoming Sessions */}
+          <div style={{
+            backgroundColor: theme.card,
+            borderRadius: '24px',
+            padding: '2rem',
+            border: `1px solid ${theme.border}`,
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.02)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: theme.textMilk }}>Upcoming Sessions</h3>
+              <span onClick={() => setActiveTab('Sessions')} style={{ fontSize: '0.85rem', color: theme.info, cursor: 'pointer', fontWeight: 600 }}>View all →</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem', borderBottom: `1px solid ${theme.border}` }}>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1rem', fontWeight: 600, color: theme.textMilk }}>Battery Storage Systems</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: theme.textMuted }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={12} /> Today</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> 10:00 AM – 11:30 AM</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={12} /> John David</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Users size={12} /> 24 Learners</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ backgroundColor: theme.successLight, color: theme.success, padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Ongoing</span>
+                  <button style={{ background: 'transparent', border: 'none', color: theme.textMilk, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    Open <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem', borderBottom: `1px solid ${theme.border}` }}>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1rem', fontWeight: 600, color: theme.textMilk }}>Introduction to Photovoltaic Microgrids</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: theme.textMuted }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={12} /> Today</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> 13:00 PM – 14:30 PM</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={12} /> Sarah Jenkins</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Users size={12} /> 18 Learners</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ backgroundColor: theme.goldLight, color: '#D8A325', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Starts in 2h</span>
+                  <button style={{ background: 'transparent', border: 'none', color: theme.textMilk, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    Open <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1rem', fontWeight: 600, color: theme.textMilk }}>Energy Policy & Regulation</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: theme.textMuted }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={12} /> Tomorrow</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> 09:00 AM – 11:00 AM</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={12} /> Dr. Michael Chen</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Users size={12} /> 30 Learners</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ backgroundColor: theme.bgSecondary, color: theme.textMuted, padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Ready</span>
+                  <button style={{ background: 'transparent', border: 'none', color: theme.textMilk, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    Open <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Recent Activity */}
           <div style={{
             backgroundColor: theme.card,
@@ -266,28 +373,61 @@ export default function DashboardPage({
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {safeUpdates.length > 0 ? (
-                safeUpdates.slice(0, 5).map((update, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                    <div style={{ 
-                      width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.bgSecondary, 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
-                    }}>
-                      {getIconForActivity(update.type)}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: theme.textBody }}>
-                        <span style={{ fontWeight: 600 }}>{update.user || 'Administrator'}</span> {update.action}
-                      </p>
-                      <span style={{ fontSize: '0.8rem', color: theme.textMuted }}>{update.time}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div style={{ padding: '2rem 0', textAlign: 'center', color: theme.textMuted, fontSize: '0.95rem' }}>
-                  No recent activity in the workspace.
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.infoLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={14} color={theme.info} />
                 </div>
-              )}
+                <div>
+                  <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: theme.textBody }}>
+                    <span style={{ fontWeight: 600 }}>John</span> uploaded Week 3 resources
+                  </p>
+                  <span style={{ fontSize: '0.8rem', color: theme.textMuted }}>2 hours ago</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.successLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CheckCircle2 size={14} color={theme.success} />
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: theme.textBody }}>
+                    <span style={{ fontWeight: 600 }}>Sarah</span> submitted Assignment 4
+                  </p>
+                  <span style={{ fontSize: '0.8rem', color: theme.textMuted }}>5 hours ago</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.goldLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Calendar size={14} color="#D8A325" />
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: theme.textBody }}>
+                    <span style={{ fontWeight: 600 }}>Battery Storage</span> session created
+                  </p>
+                  <span style={{ fontSize: '0.8rem', color: theme.textMuted }}>Yesterday</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <User size={14} color={theme.danger} />
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: theme.textBody }}>
+                    <span style={{ fontWeight: 600 }}>David</span> joined the workspace
+                  </p>
+                  <span style={{ fontSize: '0.8rem', color: theme.textMuted }}>Yesterday</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.infoLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BookOpen size={14} color={theme.info} />
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: theme.textBody }}>
+                    <span style={{ fontWeight: 600 }}>Programme updated:</span> Microgrids Phase 1
+                  </p>
+                  <span style={{ fontSize: '0.8rem', color: theme.textMuted }}>2 days ago</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -309,35 +449,46 @@ export default function DashboardPage({
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {safeNotifs.length > 0 ? (
-                safeNotifs.slice(0, 4).map((notif, idx) => (
-                  <div key={idx} style={{ 
-                    display: 'flex', gap: '1rem', padding: '1rem', borderRadius: '12px',
-                    backgroundColor: theme.bg, border: `1px solid ${theme.border}`
-                  }}>
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '8px', 
-                      backgroundColor: notif.type === 'alert' ? theme.danger : theme.goldLight,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      {notif.type === 'alert' ? <AlertTriangle size={16} color="#fff" /> : <Bell size={16} color="#C29F32" />}
-                    </div>
-                    <div>
-                      <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', fontWeight: 600, color: theme.textMilk }}>{notif.title}</h4>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: theme.textMuted }}>{notif.description}</p>
-                      <span style={{ fontSize: '0.75rem', color: theme.textMuted }}>{notif.time}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div style={{ padding: '1rem 0', textAlign: 'center', color: theme.textMuted, fontSize: '0.9rem' }}>
-                  You're all caught up!
+              <div style={{ display: 'flex', gap: '1rem', padding: '1rem', borderRadius: '12px', backgroundColor: theme.bg, border: `1px solid ${theme.border}` }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: theme.infoLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={16} color={theme.info} />
                 </div>
-              )}
+                <div>
+                  <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', fontWeight: 600, color: theme.textMilk }}>Attendance report available</h4>
+                  <span style={{ fontSize: '0.75rem', color: theme.textMuted }}>10 mins ago</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', padding: '1rem', borderRadius: '12px', backgroundColor: theme.bg, border: `1px solid ${theme.border}` }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: theme.successLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <UserCheck size={16} color={theme.success} />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', fontWeight: 600, color: theme.textMilk }}>New learner enrolled</h4>
+                  <span style={{ fontSize: '0.75rem', color: theme.textMuted }}>1 hour ago</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', padding: '1rem', borderRadius: '12px', backgroundColor: theme.bg, border: `1px solid ${theme.border}` }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: theme.goldLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CheckCircle2 size={16} color="#D8A325" />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', fontWeight: 600, color: theme.textMilk }}>Facilitator accepted invitation</h4>
+                  <span style={{ fontSize: '0.75rem', color: theme.textMuted }}>3 hours ago</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', padding: '1rem', borderRadius: '12px', backgroundColor: theme.bg, border: `1px solid ${theme.border}` }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(139, 92, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BookOpen size={16} color="#8B5CF6" />
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', fontWeight: 600, color: theme.textMilk }}>Programme published</h4>
+                  <span style={{ fontSize: '0.75rem', color: theme.textMuted }}>Yesterday</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Upcoming Sessions */}
+          {/* Workspace Health */}
           <div style={{
             backgroundColor: theme.card,
             borderRadius: '24px',
@@ -345,47 +496,34 @@ export default function DashboardPage({
             border: `1px solid ${theme.border}`,
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.02)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: theme.textMilk }}>Upcoming Sessions</h3>
-              <span onClick={() => setActiveTab('Sessions')} style={{ fontSize: '0.85rem', color: theme.info, cursor: 'pointer', fontWeight: 600 }}>View all →</span>
+            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: 700, color: theme.textMilk }}>Workspace Health</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: theme.textBody }}>
+                <Check size={18} color="#10B981" /> Programme Active
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: theme.textBody }}>
+                <Check size={18} color="#10B981" /> Sessions Scheduled
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: theme.textBody }}>
+                <Check size={18} color="#10B981" /> Resources Published
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: theme.danger }}>
+                <AlertTriangle size={18} color="#EF4444" /> 4 Learner submissions pending
+              </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {allSessions.slice(0, 3).map((session, idx) => (
-                <div key={idx} style={{ 
-                  display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem', 
-                  borderBottom: idx < 2 ? `1px solid ${theme.border}` : 'none' 
-                }}>
-                  <div style={{ 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                    padding: '0.5rem 0.75rem', backgroundColor: theme.bgSecondary, borderRadius: '8px', minWidth: '55px' 
-                  }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>
-                      {session?.date === 'Today' ? 'MAY' : session?.date?.split('/')[0] === '5' ? 'MAY' : 'MON'}
-                    </span>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 800, color: theme.textMilk }}>
-                      {session?.date === 'Today' ? '16' : session?.date?.split('/')[1] || '01'}
-                    </span>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: 600, color: theme.textMilk }}>{session?.title || 'Session'}</h4>
-                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', color: theme.textMuted }}>{session?.programName || 'Bootcamp'}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: theme.textMuted }}>
-                      <Clock size={12} /> {session?.time || '10:00 AM'}
-                    </div>
-                  </div>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.goldLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <User size={16} color="#C29F32" />
-                  </div>
-                </div>
-              ))}
-              {allSessions.length === 0 && (
-                <div style={{ padding: '1.5rem 0', textAlign: 'center', color: theme.textMuted, fontSize: '0.9rem' }}>
-                  No sessions scheduled.
-                </div>
-              )}
+            <div style={{ backgroundColor: theme.bg, padding: '1.25rem', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9rem', fontWeight: 700, color: theme.textMilk }}>
+                <span>Workspace Progress</span>
+                <span>83%</span>
+              </div>
+              <div style={{ width: '100%', height: '8px', backgroundColor: theme.bgSecondary, borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: '83%', height: '100%', backgroundColor: theme.gold }} />
+              </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
