@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Menu, Search, Bell, Home, BookOpen, UserCheck, 
-  Calendar, FileText, BarChart3, Users, MessageSquare, 
+  Calendar, FileText, BarChart3, Users,
   Settings, LogOut 
 } from 'lucide-react';
 
@@ -259,49 +259,6 @@ export default function ProgramManagerLayout({
         </main>
       </div>
       
-      {/* Floating Chat Button (UI Representation) */}
-      <div 
-        onClick={() => setActiveTab('Messages')}
-        style={{
-          position: 'fixed',
-          bottom: '2rem',
-          right: '2rem',
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          backgroundColor: '#F4C542',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(244, 197, 66, 0.4)',
-          zIndex: 100,
-          transition: 'transform 0.2s ease'
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-      >
-        <MessageSquare size={24} color="#111" fill="#111" />
-        {/* Unread badge */}
-        <div style={{
-          position: 'absolute',
-          top: '-2px',
-          right: '0',
-          backgroundColor: '#111',
-          color: '#F4C542',
-          fontSize: '11px',
-          fontWeight: 700,
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '2px solid #F8F5EF'
-        }}>
-          3
-        </div>
-      </div>
     </div>
   );
 }
