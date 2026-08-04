@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Sun, Moon, Grid, ShieldCheck, LogOut, Users, BookOpen, 
   BrainCircuit, BarChart3, Settings, Building2, User, UserCheck, 
@@ -1760,6 +1760,7 @@ export default function App() {
             role={userRole} 
             workspaceName={orgName}
             wsPrograms={wsPrograms}
+            setWsPrograms={setWsPrograms}
             wsLearners={wsLearners}
             wsTeam={wsTeam}
             wsInvitations={wsInvitations}
