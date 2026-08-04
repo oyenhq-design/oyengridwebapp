@@ -30,6 +30,7 @@ import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
 import SignInForm from './components/SignInForm';
 import ProgramManagerModule from './modules/program-manager';
+import GlobalChat from './components/chat/GlobalChat';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
 import LearnersTab from './components/LearnersTab';
@@ -1753,22 +1754,44 @@ export default function App() {
   if (activeRoute === 'dashboard' && user) {
     if (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') {
       return (
-        <ProgramManagerModule 
-          user={user} 
-          role={userRole} 
-          workspaceName={orgName}
-          wsPrograms={wsPrograms}
-          wsLearners={wsLearners}
-          wsTeam={wsTeam}
-          wsInvitations={wsInvitations}
-          notifications={[]} // Will check if there's global notifications later
-          recentUpdates={[]} // Will check if there's global updates later
-          onLogout={() => {
-            setUser(null);
-            setUserRole(null);
-            setActiveRoute('signin');
-          }}
-        />
+        <>
+          <ProgramManagerModule 
+            user={user} 
+            role={userRole} 
+            workspaceName={orgName}
+            wsPrograms={wsPrograms}
+            wsLearners={wsLearners}
+            wsTeam={wsTeam}
+            wsInvitations={wsInvitations}
+            notifications={[]}
+            recentUpdates={[]}
+            onLogout={() => {
+              setUser(null);
+              setUserRole(null);
+              setActiveRoute('signin');
+            }}
+          />
+          <GlobalChat
+            userRole={userRole}
+            user={user}
+            ownerEmail={ownerEmail}
+            isChatOpen={isChatOpen}
+            openChat={openChat}
+            closeChat={closeChat}
+            visibleConversations={visibleConversations}
+            filteredConversations={filteredConversations}
+            activeConversationId={activeConversationId}
+            setActiveConversationId={setActiveConversationId}
+            activeConversation={activeConversation}
+            activePeer={activePeer}
+            chatSearch={chatSearch}
+            setChatSearch={setChatSearch}
+            messageInput={messageInput}
+            setMessageInput={setMessageInput}
+            sendMessage={sendMessage}
+            openConversation={openConversation}
+          />
+        </>
       );
     }
 
@@ -3613,8 +3636,28 @@ export default function App() {
               </div>
             )}
 
-            {/* Floating Workspace Chat Button & Drawer Overlay for Workspace Users (Facilitators & Admins) */}
-            {(userRole === 'Facilitator' || userRole === 'Workspace Super Admin' || userRole === 'Admin' || userRole === 'Program Manager') && (
+            {/* Floating Workspace Chat Button & Drawer — shared GlobalChat component */}
+            <GlobalChat
+              userRole={userRole}
+              user={user}
+              ownerEmail={ownerEmail}
+              isChatOpen={isChatOpen}
+              openChat={openChat}
+              closeChat={closeChat}
+              visibleConversations={visibleConversations}
+              filteredConversations={filteredConversations}
+              activeConversationId={activeConversationId}
+              setActiveConversationId={setActiveConversationId}
+              activeConversation={activeConversation}
+              activePeer={activePeer}
+              chatSearch={chatSearch}
+              setChatSearch={setChatSearch}
+              messageInput={messageInput}
+              setMessageInput={setMessageInput}
+              sendMessage={sendMessage}
+              openConversation={openConversation}
+            />
+            {false && (
               <>
                 {/* Floating Workspace Chat Button */}
                 <button
