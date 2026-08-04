@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { 
   Calendar, FileText, Activity, ChevronRight, User, 
   CheckCircle2, MessageSquare, BookOpen, Clock, Users, 
-  ArrowRight, Bell, AlertTriangle 
+  ArrowRight, Bell, AlertTriangle, UserCheck, BarChart3 
 } from 'lucide-react';
 
 // OYEN GRID Official Design System Theme Variables (Program Manager Dashboard)
@@ -36,18 +36,25 @@ export default function DashboardPage({
   recentUpdates = [],
   setActiveTab 
 }) {
-  const firstName = user ? user.split('@')[0] : 'Program Manager';
+  const safePrograms = wsPrograms || [];
+  const safeLearners = wsLearners || [];
+  const safeSessions = wsSessions || [];
+  const safeTeam = wsTeam || [];
+  const safeNotifs = notifications || [];
+  const safeUpdates = recentUpdates || [];
+
+  const firstName = (typeof user === 'string' && user) ? user.split('@')[0] : 'Program Manager';
 
   // Calculate live statistics
-  const activePrograms = wsPrograms.filter(p => p.status === 'Active' || p.status === 'Published').length;
+  const activePrograms = safePrograms.filter(p => p?.status === 'Active' || p?.status === 'Published').length;
   
   const today = new Date();
   const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
   
   // Flatten sessions from wsPrograms if wsSessions is empty
-  const allSessions = wsSessions.length > 0 ? wsSessions : wsPrograms.reduce((acc, p) => [...acc, ...(p.sessions || [])], []);
+  const allSessions = safeSessions.length > 0 ? safeSessions : safePrograms.reduce((acc, p) => [...acc, ...(p?.sessions || [])], []);
   
-  const todaySessions = allSessions.filter(s => s.date === 'Today' || s.date === todayStr);
+  const todaySessions = allSessions.filter(s => s?.date === 'Today' || s?.date === todayStr);
   const nextSession = todaySessions.length > 0 ? todaySessions[0] : (allSessions[0] || null);
 
   const getGreeting = () => {
@@ -148,10 +155,10 @@ export default function DashboardPage({
           </div>
           <div>
             <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: 700, color: theme.textMilk }}>
-              You're managing {activePrograms || wsPrograms.length} active programmes
+              You're managing {activePrograms || safePrograms.length} active programmes
             </h2>
             <p style={{ margin: 0, fontSize: '1rem', color: theme.textMuted }}>
-              Across {wsLearners.length} learners and {wsTeam.length} team members.
+              Across {safeLearners.length} learners and {safeTeam.length} team members.
             </p>
           </div>
         </div>
@@ -259,8 +266,8 @@ export default function DashboardPage({
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {recentUpdates.length > 0 ? (
-                recentUpdates.slice(0, 5).map((update, idx) => (
+              {safeUpdates.length > 0 ? (
+                safeUpdates.slice(0, 5).map((update, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
                     <div style={{ 
                       width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.bgSecondary, 
@@ -302,8 +309,8 @@ export default function DashboardPage({
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {notifications.length > 0 ? (
-                notifications.slice(0, 4).map((notif, idx) => (
+              {safeNotifs.length > 0 ? (
+                safeNotifs.slice(0, 4).map((notif, idx) => (
                   <div key={idx} style={{ 
                     display: 'flex', gap: '1rem', padding: '1rem', borderRadius: '12px',
                     backgroundColor: theme.bg, border: `1px solid ${theme.border}`
@@ -354,17 +361,17 @@ export default function DashboardPage({
                     padding: '0.5rem 0.75rem', backgroundColor: theme.bgSecondary, borderRadius: '8px', minWidth: '55px' 
                   }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>
-                      {session.date === 'Today' ? 'MAY' : session.date.split('/')[0] === '5' ? 'MAY' : 'MON'}
+                      {session?.date === 'Today' ? 'MAY' : session?.date?.split('/')[0] === '5' ? 'MAY' : 'MON'}
                     </span>
                     <span style={{ fontSize: '1.1rem', fontWeight: 800, color: theme.textMilk }}>
-                      {session.date === 'Today' ? '16' : session.date.split('/')[1] || '01'}
+                      {session?.date === 'Today' ? '16' : session?.date?.split('/')[1] || '01'}
                     </span>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: 600, color: theme.textMilk }}>{session.title}</h4>
-                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', color: theme.textMuted }}>{session.programName || 'Bootcamp'}</p>
+                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: 600, color: theme.textMilk }}>{session?.title || 'Session'}</h4>
+                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', color: theme.textMuted }}>{session?.programName || 'Bootcamp'}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: theme.textMuted }}>
-                      <Clock size={12} /> {session.time}
+                      <Clock size={12} /> {session?.time || '10:00 AM'}
                     </div>
                   </div>
                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.goldLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
