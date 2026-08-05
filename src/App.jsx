@@ -424,8 +424,7 @@ export default function App() {
       'oyengroupp@gmail.com'
     ];
     if (
-      userRole === 'Admin' || 
-      userRole === 'Workspace Super Admin' || 
+      isRoleAdmin(userRole) || 
       currentEmail === 'admin@oyengrid.com' || 
       currentEmail === ownerEmail?.trim().toLowerCase() ||
       demoEmails.includes(currentEmail)
@@ -435,10 +434,8 @@ export default function App() {
     
     const member = wsTeam.find(m => m.email && m.email.trim().toLowerCase() === currentEmail);
     
-    // Invalidation check (deleted, suspended/inactive)
-    const isInvalid = !member || 
-                      member.status === 'Suspended' || 
-                      member.status === 'Inactive';
+    // Invalidation check (only if explicitly suspended/inactive)
+    const isInvalid = member && (member.status === 'Suspended' || member.status === 'Inactive');
                       
     if (isInvalid) {
       isLoggingOutRef.current = true;
@@ -452,10 +449,10 @@ export default function App() {
       setUserRole(null);
       setActiveRoute('signin');
       addNotification('Your access to this organization has been removed. Please contact your Admin.');
-    } else if (member.role !== userRole) {
+    } else if (member && member.role && member.role !== userRole) {
       setUserRole(member.role);
       addNotification(`Your role has been updated to ${member.role}`);
-      if (member.role === 'Facilitator' || member.role === 'Team Member' || member.role === 'Viewer') {
+      if (isRoleFacilitator(member.role) || isRoleTeamMember(member.role) || isRoleViewer(member.role)) {
         setActiveTab('Overview');
       } else {
         setActiveTab('Dashboard');
@@ -758,16 +755,15 @@ export default function App() {
     }
   }, [user, userRole, activeTemplate, enabledTemplates, wsPrograms, wsLearners, wsTeam, wsInvitations]);
 
-  // Synchronize logged-in user's role from wsTeam if their role is modified by the admin
   useEffect(() => {
     if (user && wsTeam.length > 0) {
-      const isOwner = user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com';
+      const isOwner = user.toLowerCase() === ownerEmail?.toLowerCase() || user === 'admin@oyengrid.com' || isRoleAdmin(userRole);
       if (!isOwner) {
         const currentUserInTeam = wsTeam.find(m => m.email?.toLowerCase() === user.toLowerCase());
         if (currentUserInTeam && currentUserInTeam.role && currentUserInTeam.role !== userRole) {
           setUserRole(currentUserInTeam.role);
           addNotification(`Your role has been updated to ${currentUserInTeam.role}`);
-          if (currentUserInTeam.role === 'Facilitator' || currentUserInTeam.role === 'Team Member' || currentUserInTeam.role === 'Viewer') {
+          if (isRoleFacilitator(currentUserInTeam.role) || isRoleTeamMember(currentUserInTeam.role) || isRoleViewer(currentUserInTeam.role)) {
             setActiveTab('Overview');
           } else {
             setActiveTab('Dashboard');
@@ -1030,7 +1026,7 @@ export default function App() {
       setUser(email);
       setUserRole(role);
       setActiveRoute('dashboard');
-      setActiveTab((role === 'Facilitator' || role === 'Team Member' || role === 'Viewer') ? 'Overview' : 'Dashboard');
+      setActiveTab((isRoleFacilitator(role) || isRoleTeamMember(role) || isRoleViewer(role)) ? 'Overview' : 'Dashboard');
     });
   };
 
