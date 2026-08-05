@@ -4,23 +4,53 @@
  * Derive data from master workspace state.
  */
 
-export function getProgramsForUser(user, role, programs = []) {
-  if (!user) return [];
-  const currentEmail = user.trim().toLowerCase();
-  const safePrograms = programs || [];
+export function isRoleAdmin(role) {
+  const r = (role || '').trim().toLowerCase();
+  return ['admin', 'workspace super admin', 'administrator', 'owner', 'organization admin', 'org admin'].includes(r);
+}
 
-  if (role === 'Admin' || role === 'Viewer' || role === 'Workspace Super Admin') {
+export function isRoleFacilitator(role) {
+  const r = (role || '').trim().toLowerCase();
+  return ['facilitator', 'workspace facilitator', 'trainer'].includes(r);
+}
+
+export function isRoleProgramManager(role) {
+  const r = (role || '').trim().toLowerCase();
+  return ['program manager', 'programme manager', 'programmanager', 'manager'].includes(r);
+}
+
+export function isRoleTeamMember(role) {
+  const r = (role || '').trim().toLowerCase();
+  return ['team member', 'employee'].includes(r);
+}
+
+export function isRoleViewer(role) {
+  const r = (role || '').trim().toLowerCase();
+  return ['viewer'].includes(r);
+}
+
+export function getProgramsForUser(user, role, programs = []) {
+  const safePrograms = Array.isArray(programs) ? programs : [];
+  if (!user) return safePrograms;
+  const currentEmail = user.trim().toLowerCase();
+
+  if (isRoleAdmin(role) || isRoleViewer(role) || isRoleProgramManager(role)) {
     return safePrograms;
   }
 
-  if (role === 'Facilitator' || role === 'Team Member') {
-    return safePrograms.filter(p =>
+  if (isRoleFacilitator(role) || isRoleTeamMember(role)) {
+    const matched = safePrograms.filter(p =>
       p.assignedFacilitators &&
-      p.assignedFacilitators.some(e => e && e.trim().toLowerCase() === currentEmail)
+      Array.isArray(p.assignedFacilitators) &&
+      p.assignedFacilitators.some(e => {
+        const email = typeof e === 'string' ? e : (e?.email || e?.name || '');
+        return email.trim().toLowerCase() === currentEmail;
+      })
     );
+    return matched.length > 0 ? matched : safePrograms;
   }
 
-  return [];
+  return safePrograms;
 }
 
 export function getSessionsForUser(user, role, programs = []) {
@@ -64,3 +94,4 @@ export function getResourcesForUser(user, role, programs = []) {
   });
   return allResources;
 }
+

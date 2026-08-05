@@ -20,7 +20,7 @@ import {
 } from './services/chatService';
 import { simulateReply } from './services/chatSimulation';
 import SessionDetail from './components/SessionDetail';
-import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser, getResourcesForUser } from './domain/workspace/selectors';
+import { getProgramsForUser, getSessionsForUser, getLearnersForUser, getInboxForUser, getResourcesForUser, isRoleAdmin, isRoleFacilitator, isRoleProgramManager, isRoleTeamMember, isRoleViewer } from './domain/workspace/selectors';
 import { updateSessionStatus } from './domain/workspace/actions';
 import FacilitatorOverview from './pages/facilitator/FacilitatorOverview';
 import TeamMemberOverview from './pages/owner/TeamMemberOverview';
@@ -1797,9 +1797,9 @@ export default function App() {
     }
 
     const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard' || activeTab === 'Overview';
-    const showFacilitatorOverview = userRole === 'Facilitator' && isWelcome;
-    const showTeamMemberOverview = userRole === 'Team Member' && isWelcome;
-    const showViewerOverview = userRole === 'Viewer' && isWelcome;
+    const showFacilitatorOverview = isRoleFacilitator(userRole) && isWelcome;
+    const showTeamMemberOverview = isRoleTeamMember(userRole) && isWelcome;
+    const showViewerOverview = isRoleViewer(userRole) && isWelcome;
 
     const allSidebarItems = [
       { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
@@ -1814,7 +1814,7 @@ export default function App() {
     ];
 
     let sidebarItems = allSidebarItems;
-    if (userRole === 'Facilitator') {
+    if (isRoleFacilitator(userRole)) {
       sidebarItems = [
         { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
@@ -1822,7 +1822,7 @@ export default function App() {
         { id: 'Notifications', label: 'Notifications', icon: <Bell size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
-    } else if (userRole === 'Program Manager') {
+    } else if (isRoleProgramManager(userRole)) {
       sidebarItems = [
         { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
         { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
@@ -1832,7 +1832,7 @@ export default function App() {
         { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
         { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
       ];
-    } else if (userRole === 'Team Member') {
+    } else if (isRoleTeamMember(userRole)) {
       sidebarItems = [
         { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
         { id: 'Assigned Programs', label: 'Assigned Programs', icon: <BookOpen size={18} /> },
@@ -1844,7 +1844,7 @@ export default function App() {
         { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
-    } else if (userRole === 'Viewer') {
+    } else if (isRoleViewer(userRole)) {
       sidebarItems = [
         { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
@@ -2312,7 +2312,7 @@ export default function App() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#EEEAE4', backgroundImage: 'radial-gradient(circle at top right, rgba(245, 200, 76, 0.04), transparent 50%)', overflowY: 'auto' }}>
             
             {/* Conditional content based on activeTab */}
-            {userRole === 'Facilitator' ? (
+            {isRoleFacilitator(userRole) ? (
               activeSession ? (
                 <SessionDetail 
                   session={activeSession}
@@ -2329,7 +2329,7 @@ export default function App() {
                   programResources={wsPrograms.find(p => p.id === activeSession.programId)?.resources || []}
                   sessionResources={activeSession.resources || []}
                 />
-              ) : activeTab === 'Overview' ? (
+              ) : (activeTab === 'Overview' || activeTab === 'Dashboard' || activeTab === 'Welcome') ? (
                 <FacilitatorDashboard
                   assignedSessions={assignedSessions}
                   assignedResources={displayResources}
@@ -2383,7 +2383,19 @@ export default function App() {
                   }}
                 />
               ) : (
-                <div style={{ padding: '2.5rem', color: '#EF4444' }}>Unauthorized route access denied.</div>
+                <FacilitatorDashboard
+                  assignedSessions={assignedSessions}
+                  assignedResources={displayResources}
+                  programs={displayPrograms}
+                  currentUserEmail={user}
+                  userInfo={getLoggedInUserInfo()}
+                  onNavigate={setActiveTab}
+                  onOpenChatDrawer={openChat}
+                  onSelectSession={(s) => {
+                    setActiveSession(s);
+                    setActiveTab('Sessions');
+                  }}
+                />
               )
             ) : showTeamMemberOverview ? (
               <TeamMemberOverview 
