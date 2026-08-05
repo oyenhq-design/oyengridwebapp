@@ -638,7 +638,7 @@ export default function App() {
     });
 
     wsLearners.forEach(l => {
-      items.push({ name: l.name, type: 'Participant', detail: l.email, tab: 'Learners' });
+      items.push({ name: l.name, type: 'Participant', detail: l.email, tab: 'Participants' });
     });
 
     return items;
@@ -1807,7 +1807,7 @@ export default function App() {
       { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
       { id: 'Team', label: 'Team', icon: <Users size={18} /> },
       { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
-      { id: 'Learners', label: 'Participants', icon: <UserCheck size={18} /> },
+      { id: 'Participants', label: 'Participants', icon: <UserCheck size={18} /> },
       { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
       { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
       { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
@@ -1827,7 +1827,7 @@ export default function App() {
         { id: 'Welcome', label: 'Welcome', icon: <Home size={18} /> },
         { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
         { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
-        { id: 'Learners', label: 'Participants', icon: <UserCheck size={18} /> },
+        { id: 'Participants', label: 'Participants', icon: <UserCheck size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
         { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }
@@ -1836,7 +1836,7 @@ export default function App() {
       sidebarItems = [
         { id: 'Overview', label: 'Overview', icon: <Home size={18} /> },
         { id: 'Assigned Programs', label: 'Assigned Programs', icon: <BookOpen size={18} /> },
-        { id: 'Learners', label: 'Participants', icon: <UserCheck size={18} /> },
+        { id: 'Participants', label: 'Participants', icon: <UserCheck size={18} /> },
         { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
         { id: 'Resources', label: 'Resources', icon: <Grid size={18} /> },
         { id: 'Announcements', label: 'Announcements', icon: <Bell size={18} /> },
@@ -1856,6 +1856,13 @@ export default function App() {
     const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
     const displayInbox = getInboxForUser(user, userRole, wsPrograms);
     const displayResources = getResourcesForUser(user, userRole, wsPrograms);
+
+    const adminAiInsight = React.useMemo(() => {
+      if (userRole !== 'Administrator' && userRole !== 'Owner') return null;
+      const noP = displayPrograms.find(p => !(p.learners || p.enrolledLearners || p.participants || []).length && (p.status === "Active" || p.status === "Published"));
+      if (noP) return { title: noP.name || noP.title, msg: "has no participants enrolled. Consider adding participants before the next session." };
+      return null;
+    }, [displayPrograms, userRole]);
 
     return (
       <div className="dashboard-root" style={{
@@ -2394,7 +2401,35 @@ export default function App() {
                 addNotification={addNotification}
               />
             ) : isWelcome ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2.5rem', padding: '2.5rem 3rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2.5rem 3rem' }}>
+                {adminAiInsight && (
+                  <div style={{
+                    backgroundColor: 'rgba(244, 197, 66, 0.15)',
+                    border: '1px solid #F4C542',
+                    borderRadius: '12px',
+                    padding: '1.25rem 1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    color: '#fff'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                      <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#F4C542', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Zap size={20} color="#111" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#F4C542', marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>OYEN AI</div>
+                        <div style={{ fontSize: '0.95rem', color: '#111' }}>
+                          <strong style={{ color: '#111' }}>{adminAiInsight.title}</strong> <span style={{ color: '#555' }}>{adminAiInsight.msg}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button onClick={() => triggerTransition(() => setActiveTab('Participants'))} style={{ padding: '0.6rem 1.25rem', backgroundColor: '#F4C542', color: '#111', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 6px rgba(244, 197, 66, 0.2)' }}>
+                      Review
+                    </button>
+                  </div>
+                )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2.5rem' }}>
                 
                 {/* Center Main Panel (Left in main layout) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -2774,6 +2809,7 @@ export default function App() {
                 </div>
 
               </div>
+              </div>
             ) : activeTab === 'Team' ? (
               /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Team Management Component ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
               <TeamManagement
@@ -2798,7 +2834,7 @@ export default function App() {
                 setActiveTab={setActiveTab}
                 triggerTransition={triggerTransition}
               />
-            ) : (activeTab === 'Learners' || activeTab === 'Participants') ? (
+            ) : (activeTab === 'Participants' || activeTab === 'Participants') ? (
               /* Learners Tab Component */
               <LearnersTab
                 programs={displayPrograms}
@@ -3491,7 +3527,7 @@ export default function App() {
                             note: 'Participants automatically receive access to the program.',
                             action: () => {
                               setShowSetupGuideModal(false);
-                              triggerTransition(() => setActiveTab('Learners'));
+                              triggerTransition(() => setActiveTab('Participants'));
                             }
                           },
                           {

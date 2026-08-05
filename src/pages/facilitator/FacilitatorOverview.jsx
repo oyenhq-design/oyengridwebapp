@@ -104,7 +104,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
     if (mockUpdates.length === 0) {
       mockUpdates = [
         { text: 'Slides updated for Leadership Orientation', time: '10:15 AM' },
-        { text: '2 learners enrolled in Communication Skills', time: 'Yesterday' },
+        { text: '2 participants enrolled in Communication Skills', time: 'Yesterday' },
         { text: 'Project Review rescheduled to 25 July', time: '2 days ago' }
       ];
     }
@@ -256,7 +256,7 @@ export default function FacilitatorOverview({ info, programs = [], learners = []
               <Users size={24} color={theme.gold} strokeWidth={1.8}/>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '16px', fontWeight: 700, color: theme.textMilk }}>{getSessionLearnersCount(nextSession)}</span>
-                <span style={{ fontSize: '13px', color: theme.textMuted, fontWeight: 500 }}>Learners</span>
+                <span style={{ fontSize: '13px', color: theme.textMuted, fontWeight: 500 }}>Participants</span>
               </div>
             </div>
 

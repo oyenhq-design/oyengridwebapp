@@ -79,7 +79,7 @@ export default function CertificatesTab({ programs = [], learners = [], addNotif
             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Enrolled Learners</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {progLearners.length === 0 ? (
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>No learners in this program.</div>
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>No participants in this program.</div>
               ) : (
                 progLearners.map(l => {
                   const hasCert = certificates.some(c => c.email === l.email && c.programId === Number(selectedProgId));

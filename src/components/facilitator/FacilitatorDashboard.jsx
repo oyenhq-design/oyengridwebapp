@@ -313,7 +313,7 @@ export default function FacilitatorDashboard({
                   ✓ No sessions today
                 </span>
                 <p style={{ color: '#666666', fontSize: '0.95rem', margin: '0.25rem 0 1.25rem', lineHeight: '1.6' }}>
-                  You have a free schedule. Take time to prepare your upcoming sessions, review learner submissions, or update your teaching resources.
+                  You have a free schedule. Take time to prepare your upcoming sessions, review participant submissions, or update your teaching resources.
                 </p>
                 <div>
                   <button 

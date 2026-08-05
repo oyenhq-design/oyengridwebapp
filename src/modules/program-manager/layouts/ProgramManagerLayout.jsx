@@ -18,7 +18,7 @@ export default function ProgramManagerLayout({
   const navItems = [
     { id: 'Dashboard', label: 'Dashboard', icon: <Home size={18} /> },
     { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
-    { id: 'Learners', label: 'Learners', icon: <UserCheck size={18} /> },
+    { id: 'Participants', label: 'Participants', icon: <UserCheck size={18} /> },
     { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
     { id: 'Resources', label: 'Resources', icon: <FileText size={18} /> },
     { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },

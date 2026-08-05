@@ -93,7 +93,7 @@ export default function AttendanceTab({ programs = [], learners = [], addNotific
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {progLearners.length === 0 ? (
               <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', padding: '1rem 0' }}>
-                No learners enrolled in this program.
+                No participants enrolled in this program.
               </div>
             ) : (
               progLearners.map(l => {

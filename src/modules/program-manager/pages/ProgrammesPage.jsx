@@ -119,7 +119,7 @@ function Card({ prog, selected, onSelect, onOpen, onEdit, onDuplicate, onArchive
             {fac ? (fac.name || fac.email || fac) : React.createElement("em", null, "No facilitator assigned")}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: ".82rem", color: T.muted, flexWrap: "wrap" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: ".35rem" }}><Users size={13} /> {learners.length ? learners.length + " Learner" + (learners.length !== 1 ? "s" : "") : "No learners yet"}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: ".35rem" }}><Users size={13} /> {learners.length ? learners.length + " Learner" + (learners.length !== 1 ? "s" : "") : "No participants yet"}</span>
             <span style={{ display: "flex", alignItems: "center", gap: ".35rem" }}><FileText size={13} /> {res.length} Resource{res.length !== 1 ? "s" : ""}</span>
             <span style={{ display: "flex", alignItems: "center", gap: ".35rem" }}><Award size={13} /> {ass.length} Assessment{ass.length !== 1 ? "s" : ""}</span>
           </div>
@@ -172,7 +172,7 @@ function Card({ prog, selected, onSelect, onOpen, onEdit, onDuplicate, onArchive
 function Drawer({ prog, onClose }) {
   const [tab, setTab] = useState("Overview");
   if (!prog) return null;
-  const TABS = ["Overview", "Facilitators", "Learners", "Resources", "Sessions", "Assessments", "Reports", "Settings"];
+  const TABS = ["Overview", "Facilitators", "Participants", "Resources", "Sessions", "Assessments", "Reports", "Settings"];
   const sc = cfg(prog.status);
   const pct = calcPct(prog);
   const learners    = prog.learners  || prog.enrolledLearners  || [];
@@ -209,7 +209,7 @@ function Drawer({ prog, onClose }) {
           {tab === "Overview" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "1rem" }}>
-                {row(<Users size={16} />, "Learners", learners.length)}
+                {row(<Users size={16} />, "Participants", learners.length)}
                 {row(<Calendar size={16} />, "Sessions", sessions.length)}
                 {row(<FileText size={16} />, "Resources", res.length)}
               </div>
@@ -231,15 +231,15 @@ function Drawer({ prog, onClose }) {
               )) : <div style={{ textAlign: "center", padding: "2rem", color: T.muted }}><UserCheck size={32} style={{ marginBottom: ".75rem", opacity: .3 }} /><div style={{ fontSize: ".9rem", fontWeight: 600, color: T.text }}>No facilitators assigned</div></div>}
             </div>
           )}
-          {tab === "Learners" && (
+          {tab === "Participants" && (
             <div>
               <h4 style={{ margin: "0 0 1rem", fontSize: ".9rem", fontWeight: 700, color: T.text }}>Enrolled Learners ({learners.length})</h4>
               {learners.length > 0 ? learners.map((l, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: ".75rem", padding: ".85rem", backgroundColor: "#FAFAF8", borderRadius: "12px", border: "1px solid " + T.border, marginBottom: ".75rem" }}>
                   <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg," + T.gold + "," + T.goldDark + ")", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: ".85rem", flexShrink: 0 }}>{(l.name || l.email || l).substring(0, 2).toUpperCase()}</div>
-                  <div><div style={{ fontWeight: 600, fontSize: ".9rem", color: T.text }}>{l.name || l.email || l}</div><div style={{ fontSize: ".75rem", color: T.muted }}>Learner</div></div>
+                  <div><div style={{ fontWeight: 600, fontSize: ".9rem", color: T.text }}>{l.name || l.email || l}</div><div style={{ fontSize: ".75rem", color: T.muted }}>Participant</div></div>
                 </div>
-              )) : <div style={{ textAlign: "center", padding: "2rem", color: T.muted }}><Users size={32} style={{ marginBottom: ".75rem", opacity: .3 }} /><div style={{ fontSize: ".9rem", fontWeight: 600, color: T.text }}>No learners enrolled yet</div></div>}
+              )) : <div style={{ textAlign: "center", padding: "2rem", color: T.muted }}><Users size={32} style={{ marginBottom: ".75rem", opacity: .3 }} /><div style={{ fontSize: ".9rem", fontWeight: 600, color: T.text }}>No participants enrolled yet</div></div>}
             </div>
           )}
           {tab === "Sessions" && (
@@ -383,7 +383,7 @@ export default function ProgrammesPage({ wsPrograms = [], wsLearners = [], wsTea
 
   const aiInsight = useMemo(() => {
     const noL = wsPrograms.find(p => !(p.learners || p.enrolledLearners || []).length && (p.status === "Active" || p.status === "Published"));
-    if (noL) return { title: noL.name || noL.title, msg: "has no learners enrolled. Consider adding learners before the next session." };
+    if (noL) return { title: noL.name || noL.title, msg: "has no participants enrolled. Consider adding participants before the next session." };
     const od = wsPrograms.find(p => (p.sessions || []).some(s => s.status === "Overdue"));
     if (od) return { title: od.name || od.title, msg: "has overdue sessions. Review attendance before the next session." };
     return null;

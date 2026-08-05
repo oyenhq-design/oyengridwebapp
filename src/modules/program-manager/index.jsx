@@ -83,7 +83,7 @@ function ProgramManagerModuleInner({
             wsTeam={wsTeam}
           />
         );
-      case 'Learners':
+      case 'Participants':
         return (
           <LearnersPage
             user={user}

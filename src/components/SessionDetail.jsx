@@ -374,7 +374,7 @@ export default function SessionDetail({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {!hasLearners ? (
                 <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', padding: '1rem', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.01)', borderRadius: '8px' }}>
-                  No learners are enrolled in this session.
+                  No participants are enrolled in this session.
                 </div>
               ) : (
                 learners.map(learner => (

@@ -8,7 +8,7 @@ export default function AdminSidebar({ activeTab, onTabSelect, isWelcome }) {
     { id: 'Your Workspace', label: 'Your Workspace', icon: <Grid size={18} /> },
     { id: 'Team', label: 'Team', icon: <Users size={18} /> },
     { id: 'Programmes', label: 'Programmes', icon: <BookOpen size={18} /> },
-    { id: 'Learners', label: 'Participants', icon: <UserCheck size={18} /> },
+    { id: 'Participants', label: 'Participants', icon: <UserCheck size={18} /> },
     { id: 'Sessions', label: 'Sessions', icon: <Calendar size={18} /> },
     { id: 'Reports', label: 'Reports', icon: <BarChart3 size={18} /> },
     { id: 'Settings', label: 'Settings', icon: <Settings size={18} /> }

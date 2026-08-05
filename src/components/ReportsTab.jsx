@@ -165,7 +165,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
         {[
           { label: 'Total Programs', value: '12', trend: '+2 this month', isUp: true, icon: <BookOpen size={18} />, color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-          { label: 'Active Learners', value: '486', trend: '+8% this week', isUp: true, icon: <Users size={18} />, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+          { label: 'Active Participants', value: '486', trend: '+8% this week', isUp: true, icon: <Users size={18} />, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
           { label: 'Sessions Completed', value: '124', trend: '+15 this month', isUp: true, icon: <Calendar size={18} />, color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
           { label: 'Average Attendance', value: '91%', trend: '+3% improvement', isUp: true, icon: <Percent size={18} />, color: '#d97706', bg: 'rgba(217,119,6,0.1)' },
           { label: 'Assessment Completion', value: '84%', trend: '+6% this month', isUp: true, icon: <Award size={18} />, color: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
@@ -436,7 +436,7 @@ export default function ReportsTab({ programs = [], learners = [], addNotificati
             </div>
           </div>
 
-          {/* Top Active Learners List */}
+          {/* Top Active Participants List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.1rem' }}>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Active Participants</span>
             {[

@@ -122,7 +122,7 @@ export default function LearnersPage({
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: theme.textMilk, margin: '0 0 0.5rem 0' }}>Learners</h1>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: theme.textMilk, margin: '0 0 0.5rem 0' }}>Participants</h1>
             <p style={{ fontSize: '1.1rem', color: theme.textMuted, margin: 0 }}>
               Manage everyone enrolled across your assigned programmes.
             </p>
@@ -138,7 +138,7 @@ export default function LearnersPage({
               padding: '0.85rem 1.5rem', backgroundColor: theme.gold, color: '#111', border: 'none',
               borderRadius: '10px', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
             }}>
-              <UserPlus size={18} strokeWidth={2.5} /> Invite Learner
+              <UserPlus size={18} strokeWidth={2.5} /> Invite Participant
             </button>
           </div>
         </div>
@@ -146,10 +146,10 @@ export default function LearnersPage({
         {/* Summary Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
           {[
-            { label: 'Total Learners', value: totalLearners, icon: <Users size={20} color={theme.info} />, bg: theme.infoLight },
-            { label: 'Active Learners', value: activeLearners, icon: <Activity size={20} color={theme.success} />, bg: theme.successLight },
+            { label: 'Total Participants', value: totalLearners, icon: <Users size={20} color={theme.info} />, bg: theme.infoLight },
+            { label: 'Active Participants', value: activeLearners, icon: <Activity size={20} color={theme.success} />, bg: theme.successLight },
             { label: 'Awaiting Approval', value: pendingLearners, icon: <Clock size={20} color={theme.warning} />, bg: theme.warningLight },
-            { label: 'Inactive Learners', value: inactiveLearners, icon: <AlertTriangle size={20} color={theme.danger} />, bg: theme.dangerLight }
+            { label: 'Inactive Participants', value: inactiveLearners, icon: <AlertTriangle size={20} color={theme.danger} />, bg: theme.dangerLight }
           ].map((stat, idx) => (
             <div key={idx} style={{
               backgroundColor: theme.card, borderRadius: '16px', padding: '1.5rem', border: `1px solid ${theme.border}`,
@@ -175,7 +175,7 @@ export default function LearnersPage({
             <Search size={18} color={theme.textMuted} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
             <input 
               type="text" 
-              placeholder="Search learners..." 
+              placeholder="Search participants..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
@@ -219,7 +219,7 @@ export default function LearnersPage({
               <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
                 <Users size={32} color={theme.textMuted} />
               </div>
-              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem', fontWeight: 700, color: theme.textMilk }}>No learners yet</h3>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem', fontWeight: 700, color: theme.textMilk }}>No participants yet</h3>
               <p style={{ margin: '0 0 1.5rem 0', color: theme.textMuted, textAlign: 'center', maxWidth: '400px', lineHeight: 1.6 }}>
                 Once learners are invited or enrolled into your assigned programmes, they'll appear here automatically.
               </p>
@@ -227,19 +227,19 @@ export default function LearnersPage({
                 padding: '0.85rem 1.5rem', backgroundColor: theme.gold, color: '#111', border: 'none',
                 borderRadius: '10px', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
               }}>
-                <UserPlus size={18} strokeWidth={2.5} /> Invite Learners
+                <UserPlus size={18} strokeWidth={2.5} /> Invite Participants
               </button>
             </div>
           ) : filteredLearners.length === 0 ? (
             <div style={{ padding: '4rem 2rem', textAlign: 'center', color: theme.textMuted }}>
-              No learners match your current filters.
+              No participants match your current filters.
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.bgSecondary }}>
-                    <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: theme.textMuted }}>Learner</th>
+                    <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: theme.textMuted }}>Participant</th>
                     <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: theme.textMuted }}>Programme & Cohort</th>
                     <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: theme.textMuted }}>Facilitator</th>
                     <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: theme.textMuted }}>Performance</th>
@@ -341,7 +341,7 @@ export default function LearnersPage({
                   <Activity size={20} color={theme.success} />
                 </div>
                 <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: 600, color: theme.textMilk }}>Everything looks good.</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: theme.textMuted }}>No learner issues require your attention today.</p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: theme.textMuted }}>No participant issues require your attention today.</p>
               </div>
             )}
           </div>

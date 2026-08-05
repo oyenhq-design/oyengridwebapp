@@ -60,7 +60,7 @@ export default function ViewerOverview({ info, programs = [], learners = [], onN
           {[
             { label: 'Total Programs', value: totalPrograms },
             { label: 'Active Programs', value: activePrograms },
-            { label: 'Total Learners', value: totalLearnersCount },
+            { label: 'Total Participants', value: totalLearnersCount },
             { label: 'Active Facilitators', value: activeFacilitatorsCount },
             { label: 'Sessions This Month', value: sessionsThisMonth },
             { label: 'Overall Attendance', value: overallAttendance },

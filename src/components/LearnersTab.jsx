@@ -352,7 +352,7 @@ export default function LearnersTab({
             Participants
           </h2>
           <p style={{ color: '#6B7280', fontSize: '0.88rem', marginTop: '0.3rem', margin: '0.3rem 0 0' }}>
-            Manage learners enrolled across your training programs.
+            Manage participants enrolled across your training programs.
           </p>
         </div>
         {userRole !== 'Facilitator' && (

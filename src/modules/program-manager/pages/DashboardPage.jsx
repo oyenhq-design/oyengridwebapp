@@ -65,7 +65,7 @@ export default function DashboardPage({
   };
 
   const getPrimaryAction = () => {
-    if (pendingReviews > 0) return { label: 'Open Reviews', tab: 'Learners' }; // Can be mapped to specific sub-tab if needed
+    if (pendingReviews > 0) return { label: 'Open Reviews', tab: 'Participants' }; // Can be mapped to specific sub-tab if needed
     if (todaySessions.length > 0) return { label: 'Open Session', tab: 'Sessions' };
     if (draftResources > 0) return { label: 'Continue Editing Resource', tab: 'Resources' };
     return { label: 'Open Programmes', tab: 'Programmes' };
@@ -179,7 +179,7 @@ export default function DashboardPage({
                   Today's overview:
                   <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.5rem' }}>
                     <li><strong style={{ color: theme.textMilk }}>{todaySessions.length}</strong> session{todaySessions.length !== 1 ? 's' : ''} scheduled</li>
-                    <li><strong style={{ color: theme.textMilk }}>{pendingReviews}</strong> learner submission{pendingReviews !== 1 ? 's' : ''} awaiting review</li>
+                    <li><strong style={{ color: theme.textMilk }}>{pendingReviews}</strong> participant submission{pendingReviews !== 1 ? 's' : ''} awaiting review</li>
                     <li><strong style={{ color: theme.textMilk }}>{draftResources}</strong> resource{draftResources !== 1 ? 's' : ''} awaiting publication</li>
                   </ul>
                 </div>
@@ -250,7 +250,7 @@ export default function DashboardPage({
         </div>
         <div style={{ width: '1px', backgroundColor: theme.border }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '0.75rem', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Learners</div>
+          <div style={{ fontSize: '0.75rem', color: theme.textMuted, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Participants</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: theme.textMilk, marginTop: '0.25rem' }}>{safeLearners.length}</div>
         </div>
         <div style={{ width: '1px', backgroundColor: theme.border }} />
@@ -281,10 +281,10 @@ export default function DashboardPage({
           actionText="Open"
         />
         <QuickAccessCard 
-          title="Learners" 
+          title="Participants" 
           icon={<UserCheck size={20} color="#D8A325" />} 
-          description={safeLearners.length > 0 ? `${safeLearners.length} Enrolled` : 'No learners'}
-          tabId="Learners"
+          description={safeLearners.length > 0 ? `${safeLearners.length} Enrolled` : 'No participants'}
+          tabId="Participants"
           actionText="Manage"
         />
         <QuickAccessCard 

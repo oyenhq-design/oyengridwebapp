@@ -359,7 +359,7 @@ export default function SettingsTab({
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginTop: '0.2rem' }}>{programs.length} / 10</div>
                 </div>
                 <div style={{ backgroundColor: '#0A0A0A', padding: '1rem', border: `1px solid ${themeBorder}`, borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Learners</div>
+                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Participants</div>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginTop: '0.2rem' }}>{learners.length} / 200</div>
                 </div>
                 <div style={{ backgroundColor: '#0A0A0A', padding: '1rem', border: `1px solid ${themeBorder}`, borderRadius: '8px' }}>

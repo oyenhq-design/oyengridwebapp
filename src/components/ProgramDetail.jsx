@@ -328,9 +328,9 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
     nextActionHandler = () => {
       if (setActiveTab) {
         if (triggerTransition) {
-          triggerTransition(() => setActiveTab('Learners'));
+          triggerTransition(() => setActiveTab('Participants'));
         } else {
-          setActiveTab('Learners');
+          setActiveTab('Participants');
         }
       } else {
         setActiveSubTab('Participants');
@@ -469,9 +469,9 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                   { label: 'Invite Participants', done: learnerCount > 0, optional: false, tab: 'Participants', handler: () => {
                     if (setActiveTab) {
                       if (triggerTransition) {
-                        triggerTransition(() => setActiveTab('Learners'));
+                        triggerTransition(() => setActiveTab('Participants'));
                       } else {
-                        setActiveTab('Learners');
+                        setActiveTab('Participants');
                       }
                     } else {
                       setActiveSubTab('Participants');
@@ -631,9 +631,9 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                 { title: 'Invite Participants', icon: <UserPlus size={18} color="#D4A017" />, handler: () => {
                   if (setActiveTab) {
                     if (triggerTransition) {
-                      triggerTransition(() => setActiveTab('Learners'));
+                      triggerTransition(() => setActiveTab('Participants'));
                     } else {
-                      setActiveTab('Learners');
+                      setActiveTab('Participants');
                     }
                   } else {
                     setActiveSubTab('Participants');
@@ -731,7 +731,7 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
         </div>
       )}
 
-      {activeSubTab === 'Learners' && (
+      {activeSubTab === 'Participants' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {userRole === 'Team Member' && (
             <div style={{ backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1577,9 +1577,9 @@ export default function ProgramDetail({ program, programLearners = [], teamMembe
                     setShowParticipantsGuide(false);
                     if (setActiveTab) {
                       if (triggerTransition) {
-                        triggerTransition(() => setActiveTab('Learners'));
+                        triggerTransition(() => setActiveTab('Participants'));
                       } else {
-                        setActiveTab('Learners');
+                        setActiveTab('Participants');
                       }
                     }
                   }}

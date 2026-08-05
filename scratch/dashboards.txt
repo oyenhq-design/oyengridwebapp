@@ -1,0 +1,13 @@
+41: import FacilitatorDashboard from './components/facilitator/FacilitatorDashboard';
+130: const [activeTab, setActiveTab] = useState('Dashboard');
+461: setActiveTab('Dashboard');
+726: setActiveTab((role === 'Facilitator' || role === 'Team Member' || role === 'Viewer') ? 'Overview' : 'Dashboard');
+773: setActiveTab('Dashboard');
+1033: setActiveTab((role === 'Facilitator' || role === 'Team Member' || role === 'Viewer') ? 'Overview' : 'Dashboard');
+1065: setActiveTab('Dashboard');
+1657: setActiveTab('Dashboard');
+1753: // Render Dashboard Workspace Preview if Logged In
+1799: const isWelcome = activeTab === 'Welcome' || activeTab === 'Dashboard' || activeTab === 'Overview';
+1819: { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
+1849: { id: 'Overview', label: 'Dashboard', icon: <Home size={18} /> },
+2325: <FacilitatorDashboard
