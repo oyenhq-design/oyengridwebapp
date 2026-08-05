@@ -2,6 +2,7 @@ import React, { useState, Component } from 'react';
 import ProgramManagerLayout from './layouts/ProgramManagerLayout';
 import DashboardPage from './pages/DashboardPage';
 import ProgrammesPage from './pages/ProgrammesPage';
+import LearnersPage from './pages/LearnersPage';
 
 class PMErrorBoundary extends Component {
   constructor(props) {
@@ -83,6 +84,14 @@ function ProgramManagerModuleInner({
           />
         );
       case 'Learners':
+        return (
+          <LearnersPage
+            user={user}
+            wsPrograms={wsPrograms}
+            wsLearners={wsLearners}
+            wsTeam={wsTeam}
+          />
+        );
       case 'Sessions':
       case 'Resources':
       case 'Reports':
