@@ -4420,7 +4420,7 @@ export default function App() {
 
 
 
-          {(activeRoute === 'signin' || activeRoute === 'portal' || (activeRoute !== 'signup' && activeRoute !== 'public-event')) && (
+          {activeRoute === 'signin' && (
             <SignInForm 
               onSwitchForm={setActiveRoute} 
               onAuthSuccess={handleAuthSuccess}
