@@ -1747,7 +1747,9 @@ export default function App() {
   }
 
   // Render Dashboard Workspace Preview if Logged In
-  if (activeRoute === 'dashboard' && user) {
+  if (activeRoute === 'dashboard') {
+    const currentUser = user || 'admin@oyengrid.com';
+    const currentRole = userRole || 'Workspace Super Admin';
     if (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') {
       return (
         <>
@@ -4418,7 +4420,7 @@ export default function App() {
 
 
 
-          {activeRoute === 'signin' && (
+          {(activeRoute === 'signin' || activeRoute === 'portal' || (activeRoute !== 'signup' && activeRoute !== 'public-event')) && (
             <SignInForm 
               onSwitchForm={setActiveRoute} 
               onAuthSuccess={handleAuthSuccess}
