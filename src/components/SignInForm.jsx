@@ -402,19 +402,23 @@ export default function SignInForm({
           {statusMessage && (
             <div style={{
               padding: '0.8rem 1rem',
-              backgroundColor: 'rgba(239, 68, 68, 0.05)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
+              backgroundColor: statusMessage.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.08)',
+              border: statusMessage.type === 'success' ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(239, 68, 68, 0.25)',
               borderRadius: '6px',
-              color: '#ef4444',
+              color: statusMessage.type === 'success' ? '#22c55e' : '#ef4444',
               fontSize: '0.85rem',
-              fontWeight: 500,
+              fontWeight: 600,
               marginBottom: '1.5rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
               textAlign: 'left'
             }}>
-              <AlertCircle size={16} />
+              {statusMessage.type === 'success' ? (
+                <CheckCircle2 size={16} color="#22c55e" style={{ flexShrink: 0 }} />
+              ) : (
+                <AlertCircle size={16} color="#ef4444" style={{ flexShrink: 0 }} />
+              )}
               <span style={{ flex: 1 }}>{statusMessage.text}</span>
             </div>
           )}
