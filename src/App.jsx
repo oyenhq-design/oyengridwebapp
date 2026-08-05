@@ -1746,6 +1746,20 @@ export default function App() {
     );
   }
 
+  const displayPrograms = getProgramsForUser(user, userRole, wsPrograms);
+  const displaySessions = getSessionsForUser(user, userRole, wsPrograms);
+  const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
+  const displayInbox = getInboxForUser(user, userRole, wsPrograms);
+  const displayResources = getResourcesForUser(user, userRole, wsPrograms);
+
+  const adminAiInsight = useMemo(() => {
+    if (!isRoleAdmin(userRole)) return null;
+    if (!displayPrograms || !Array.isArray(displayPrograms)) return null;
+    const noP = displayPrograms.find(p => p && !(p.learners || p.enrolledLearners || p.participants || []).length && (p.status === "Active" || p.status === "Published"));
+    if (noP) return { title: noP.name || noP.title, msg: "has no participants enrolled. Consider adding participants before the next session." };
+    return null;
+  }, [displayPrograms, userRole]);
+
   // Render Dashboard Workspace Preview if Logged In
   if (activeRoute === 'dashboard') {
     const currentUser = user || 'admin@oyengrid.com';
@@ -1848,20 +1862,6 @@ export default function App() {
         { id: 'Profile', label: 'Profile', icon: <User size={18} /> }
       ];
     }
-
-    const displayPrograms = getProgramsForUser(user, userRole, wsPrograms);
-    const displaySessions = getSessionsForUser(user, userRole, wsPrograms);
-    const displayLearners = getLearnersForUser(user, userRole, wsLearners, wsPrograms);
-    const displayInbox = getInboxForUser(user, userRole, wsPrograms);
-    const displayResources = getResourcesForUser(user, userRole, wsPrograms);
-
-    const adminAiInsight = React.useMemo(() => {
-      if (userRole !== 'Administrator' && userRole !== 'Owner') return null;
-      if (!displayPrograms || !Array.isArray(displayPrograms)) return null;
-      const noP = displayPrograms.find(p => p && !(p.learners || p.enrolledLearners || p.participants || []).length && (p.status === "Active" || p.status === "Published"));
-      if (noP) return { title: noP.name || noP.title, msg: "has no participants enrolled. Consider adding participants before the next session." };
-      return null;
-    }, [displayPrograms, userRole]);
 
     return (
       <div className="dashboard-root" style={{
