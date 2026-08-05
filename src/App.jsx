@@ -2240,7 +2240,7 @@ export default function App() {
           }}>
             {/* Navigation links */}
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              {userRole === 'Facilitator' ? (
+              {isRoleFacilitator(userRole) ? (
                 <FacilitatorSidebar 
                   activeTab={activeTab} 
                   onTabSelect={(tab) => triggerTransition(() => setActiveTab(tab))} 
