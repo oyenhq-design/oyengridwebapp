@@ -198,21 +198,21 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
             <span style={{ fontSize: "0.68rem", color: "#6B7280" }}>Internal Platform Operations</span>
           </div>
 
-          {/* Vercel Status Pills & Dropdown Actions */}
+          {/* System Status Pills & Dropdown Actions */}
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <div style={{ display: "flex", gap: "0.4rem", fontSize: "0.68rem" }}>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.45rem", borderRadius: "4px" }}>Production</span>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.45rem", borderRadius: "4px" }}>
-                API <strong style={{ color: "#18B67A" }}>● Healthy</strong>
+                API <strong style={{ color: "#18B67A" }}>● Online</strong>
               </span>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.45rem", borderRadius: "4px" }}>
-                Workers <strong style={{ color: "#E5B93C" }}>● 2 Delayed</strong>
+                Auth <strong style={{ color: "#18B67A" }}>● Online</strong>
               </span>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.45rem", borderRadius: "4px" }}>
-                Database <strong style={{ color: "#18B67A" }}>● Healthy</strong>
+                Database <strong style={{ color: "#18B67A" }}>● Connected</strong>
               </span>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.45rem", borderRadius: "4px" }}>
-                AI <strong style={{ color: "#E5B93C" }}>● Elevated</strong>
+                Email <strong style={{ color: "#18B67A" }}>● Operational</strong>
               </span>
             </div>
 
