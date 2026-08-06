@@ -38,6 +38,8 @@ export default function GlobalChat({
 
   const selfId = (userRole === "Facilitator" || userRole === "Program Manager" || userRole === "Programme Manager" || userRole === "ProgramManager") ? user : (ownerEmail || "admin@oyengrid.com");
 
+  const totalUnread = visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
+
   // Local state controls for enterprise-grade workspace redesign
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
