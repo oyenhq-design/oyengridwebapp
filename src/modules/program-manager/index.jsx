@@ -5,6 +5,7 @@ import ProgrammesPage from './pages/ProgrammesPage';
 import LearnersPage from './pages/LearnersPage';
 import SessionsPage from './pages/SessionsPage';
 import ResourcesPage from './pages/ResourcesPage';
+import SettingsPage from './pages/SettingsPage';
 
 class PMErrorBoundary extends Component {
   constructor(props) {
@@ -108,10 +109,20 @@ function ProgramManagerModuleInner({
             setWsPrograms={setWsPrograms}
           />
         );
+      case 'Settings':
+        return (
+          <div style={{ padding: '2.5rem 3rem' }}>
+            <SettingsPage 
+              user={user}
+              role={role}
+              workspaceName={workspaceName}
+              wsPrograms={wsPrograms}
+            />
+          </div>
+        );
       case 'Reports':
       case 'Team':
       case 'Messages':
-      case 'Settings':
         return (
           <div style={{ padding: '3rem', fontFamily: "'Inter', sans-serif" }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: '0 0 1rem 0' }}>{activeTab}</h1>
