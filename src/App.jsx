@@ -1899,7 +1899,7 @@ export default function App() {
               <Menu size={20} />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* Org logo â€” uploaded during onboarding, fallback to gold hexagon */}
+              {/* Org logo — uploaded during onboarding, fallback to gold hexagon */}
               <div style={{
                 background: orgLogo ? 'transparent' : 'rgba(212, 175, 55, 0.1)',
                 border: orgLogo ? 'none' : '1px solid #D4AF37',
@@ -1936,75 +1936,88 @@ export default function App() {
           {/* Header Right: Search, Alerts, Profile */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', position: 'relative' }}>
             
-            {/* Expandable Search */}
-            <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-              {searchExpanded ? (
-                <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.35rem 0.75rem', width: '260px', animation: 'scaleUp 0.15s ease' }}>
-                  <Search size={16} color="rgba(255,255,255,0.4)" style={{ marginRight: '0.5rem' }} />
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="Search workspace..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.82rem', outline: 'none', width: '100%', padding: 0 }}
-                  />
-                  <button 
-                    onClick={() => { setSearchExpanded(false); setSearchQuery(''); }}
-                    style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0 0 0 0.4rem', fontSize: '0.8rem' }}
-                  >
-                    Ã¢Å“â€¢
-                  </button>
 
-                  {/* Search Results Dropdown */}
-                  {searchQuery.trim() && (
-                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', width: '280px', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 1100, overflow: 'hidden', padding: '0.5rem 0' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', padding: '0.25rem 0.85rem 0.5rem 0.85rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
-                        Search Results
-                      </div>
-                      <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                        {searchResults.length > 0 ? (
-                          searchResults.map((item, idx) => (
-                            <div 
-                              key={idx} 
-                              onClick={() => {
-                                if (item.type === 'Team Member') {
-                                  triggerTransition(() => setActiveTab('Team'));
-                                } else if (item.type === 'Program') {
-                                  triggerTransition(() => setActiveTab('Programmes'));
-                                }
-                                setSearchExpanded(false);
-                                setSearchQuery('');
-                              }}
-                              style={{ padding: '0.6rem 0.85rem', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', gap: '0.1rem', textAlign: 'left' }}
-                              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
-                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                            >
-                              <span style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 600 }}>{item.name}</span>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)' }}>
-                                <span>{item.detail}</span>
-                                <span style={{ color: '#D4AF37', fontWeight: 700 }}>{item.type}</span>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div style={{ padding: '1rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
-                            No results found for "{searchQuery}"
+            {/* Persistent Search Bar */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <div
+                style={{
+                  display: 'flex', alignItems: 'center',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${searchQuery ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: '10px', padding: '0.42rem 0.75rem', width: '240px', gap: '0.5rem',
+                  transition: 'border-color 0.2s ease', cursor: 'text',
+                  boxShadow: searchQuery ? '0 0 0 3px rgba(212,175,55,0.07)' : 'none'
+                }}
+                onClick={() => document.getElementById('nav-search-input').focus()}
+              >
+                <Search size={14} color="rgba(255,255,255,0.35)" style={{ flexShrink: 0 }} />
+                <input
+                  id="nav-search-input"
+                  type="text"
+                  placeholder="Search anything..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchExpanded(true)}
+                  onBlur={() => setTimeout(() => { setSearchExpanded(false); }, 150)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setSearchQuery(''); setSearchExpanded(false); } }}
+                  style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.82rem', outline: 'none', width: '100%', padding: 0, caretColor: '#D4AF37' }}
+                />
+                {searchQuery ? (
+                  <button
+                    onMouseDown={(e) => { e.preventDefault(); setSearchQuery(''); setSearchExpanded(false); }}
+                    style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', fontSize: '0.85rem', lineHeight: 1 }}
+                  >✕</button>
+                ) : (
+                  <kbd style={{ display: 'flex', alignItems: 'center', padding: '0.1rem 0.4rem', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '5px', fontSize: '0.65rem', color: 'rgba(255,255,255,0.38)', fontFamily: 'inherit', flexShrink: 0 }}>⌘K</kbd>
+                )}
+              </div>
+
+              {/* Search Results Dropdown */}
+              {searchExpanded && searchQuery.trim() && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, width: '320px', backgroundColor: '#0e0f14', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', boxShadow: '0 16px 48px rgba(0,0,0,0.65)', zIndex: 1200, overflow: 'hidden' }}>
+                  <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)', padding: '0.65rem 1rem 0.45rem 1rem', textTransform: 'uppercase', letterSpacing: '0.6px', fontWeight: 700, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    Results
+                  </div>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {searchResults.length > 0 ? (
+                      searchResults.slice(0, 8).map((item, idx) => (
+                        <div
+                          key={idx}
+                          onMouseDown={() => {
+                            if (item.tab) triggerTransition(() => setActiveTab(item.tab));
+                            else if (item.type === 'Team Member') triggerTransition(() => setActiveTab('Team'));
+                            else if (item.type === 'Program') triggerTransition(() => setActiveTab('Programmes'));
+                            setSearchQuery(''); setSearchExpanded(false);
+                          }}
+                          style={{ padding: '0.65rem 1rem', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.025)', display: 'flex', alignItems: 'center', gap: '0.65rem' }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <div style={{ width: '26px', height: '26px', borderRadius: '6px', backgroundColor: 'rgba(212,175,55,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Search size={12} color="#D4AF37" />
                           </div>
-                        )}
+                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                            <div style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.detail}</div>
+                          </div>
+                          <span style={{ fontSize: '0.63rem', fontWeight: 700, color: '#D4AF37', backgroundColor: 'rgba(212,175,55,0.1)', padding: '0.13rem 0.45rem', borderRadius: '4px', flexShrink: 0 }}>{item.type}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                        No results for "{searchQuery}"
                       </div>
+                    )}
+                  </div>
+                  {searchResults.length > 8 && (
+                    <div style={{ padding: '0.55rem 1rem', borderTop: '1px solid rgba(255,255,255,0.04)', textAlign: 'center', fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)' }}>
+                      +{searchResults.length - 8} more results
                     </div>
                   )}
                 </div>
-              ) : (
-                <button 
-                  onClick={() => setSearchExpanded(true)}
-                  style={{ background: 'transparent', border: 'none', color: '#a0aec0', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                >
-                  <Search size={20} />
-                </button>
               )}
             </div>
+
 
             {/* Notification Bell with Dropdown */}
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
