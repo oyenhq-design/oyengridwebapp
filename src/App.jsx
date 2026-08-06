@@ -264,7 +264,7 @@ export default function App() {
   const filteredConversations = useMemo(() => {
     if (!chatSearch.trim()) return visibleConversations;
     const q = chatSearch.toLowerCase();
-    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin@oyengrid.com');
+    const selfId = (userRole === 'Facilitator' || userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') ? user : (ownerEmail || 'admin@oyengrid.com');
 
     return visibleConversations.filter(c => {
       const peer = c.participants.find(p => p.userId.toLowerCase() !== selfId.toLowerCase()) || c.participants[0];
@@ -293,7 +293,7 @@ export default function App() {
   // Derived: the participant the current user is talking to in the active conversation
   const activePeer = useMemo(() => {
     if (!activeConversation) return null;
-    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin@oyengrid.com');
+    const selfId = (userRole === 'Facilitator' || userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') ? user : (ownerEmail || 'admin@oyengrid.com');
     return getOtherParticipant(activeConversation, selfId);
   }, [activeConversation, userRole, user, ownerEmail]);
 
@@ -397,7 +397,7 @@ export default function App() {
     e.preventDefault();
     if (!messageInput.trim() || !activeConversationId || !activeConversation) return;
 
-    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin@oyengrid.com');
+    const selfId = (userRole === 'Facilitator' || userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') ? user : (ownerEmail || 'admin@oyengrid.com');
     const peerId = activePeer?.userId || 'other';
 
     const outMsg = createMessage({

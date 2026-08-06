@@ -41,7 +41,7 @@ export default function GlobalChat({
   if (!eligibleRoles.includes(userRole)) return null;
 
   const totalUnread = visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
-  const selfId = userRole === "Facilitator" ? user : (ownerEmail || "admin@oyengrid.com");
+  const selfId = (userRole === "Facilitator" || userRole === "Program Manager" || userRole === "Programme Manager" || userRole === "ProgramManager") ? user : (ownerEmail || "admin@oyengrid.com");
 
   return (
     <>
