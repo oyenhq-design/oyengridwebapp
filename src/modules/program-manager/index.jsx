@@ -128,6 +128,9 @@ function ProgramManagerModuleInner({
       activeTab={activeTab} 
       setActiveTab={setActiveTab}
       onLogout={onLogout}
+      wsPrograms={wsPrograms}
+      wsLearners={wsLearners}
+      wsTeam={wsTeam}
     >
       {renderContent()}
     </ProgramManagerLayout>
