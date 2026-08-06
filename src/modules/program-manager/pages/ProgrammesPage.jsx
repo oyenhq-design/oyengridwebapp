@@ -381,13 +381,8 @@ export default function ProgrammesPage({ wsPrograms = [], wsLearners = [], wsTea
     archived:  wsPrograms.filter(p => p.status === "Archived").length,
   }), [wsPrograms]);
 
-  const aiInsight = useMemo(() => {
-    const noL = wsPrograms.find(p => !(p.learners || p.enrolledLearners || []).length && (p.status === "Active" || p.status === "Published"));
-    if (noL) return { title: noL.name || noL.title, msg: "has no participants enrolled. Consider adding participants before the next session." };
-    const od = wsPrograms.find(p => (p.sessions || []).some(s => s.status === "Overdue"));
-    if (od) return { title: od.name || od.title, msg: "has overdue sessions. Review attendance before the next session." };
-    return null;
-  }, [wsPrograms]);
+
+
 
   const filtered = useMemo(() => {
     let list = [...wsPrograms];
@@ -474,18 +469,6 @@ export default function ProgrammesPage({ wsPrograms = [], wsLearners = [], wsTea
           </React.Fragment>
         ))}
       </div>
-
-      {/* AI Insight */}
-      {aiInsight && (
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem", padding: "1rem 1.5rem", backgroundColor: "#FFFBEA", border: "1px solid " + T.gold, borderRadius: "16px" }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg," + T.gold + "," + T.goldDark + ")", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Zap size={16} color="#111" /></div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: ".72rem", fontWeight: 700, color: T.goldDark, textTransform: "uppercase", letterSpacing: ".5px" }}>OYEN AI</div>
-            <div style={{ fontSize: ".88rem", color: T.body, marginTop: ".15rem" }}><strong>{aiInsight.title}</strong> {aiInsight.msg}</div>
-          </div>
-          <button style={{ padding: ".4rem .85rem", backgroundColor: T.gold, color: "#111", border: "none", borderRadius: "8px", fontWeight: 700, fontSize: ".8rem", cursor: "pointer", whiteSpace: "nowrap" }}>Review</button>
-        </div>
-      )}
 
       {/* Search + Filter */}
       <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", alignItems: "center", flexWrap: "wrap" }}>

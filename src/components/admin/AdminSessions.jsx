@@ -786,24 +786,6 @@ export default function AdminSessions(props) {
             )}
           </div>
 
-          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Sparkles size={16} color="#F5C84C" />
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>OYEN AI Insights</h4>
-            </div>
-            
-            {completedCount >= 3 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.8rem', color: '#94A3B8' }}>
-                <div style={{ display: 'flex', gap: '0.4rem' }}><span style={{ color: '#F5C84C' }}>•</span> Attendance is tracking well overall at {avgAttendance?.toFixed(0)}%.</div>
-                <div style={{ padding: '0.5rem', backgroundColor: 'rgba(245,200,76,0.05)', border: '1px solid rgba(245,200,76,0.15)', borderRadius: '6px', color: '#F5C84C', fontSize: '0.72rem', fontWeight: 600, marginTop: '0.25rem' }}>
-                  Recommendation: Review engagement strategies for upcoming sessions.
-                </div>
-              </div>
-            ) : (
-              <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: 0 }}>AI insights will become available after more session activity.</p>
-            )}
-          </div>
-
         </div>
 
       </div>

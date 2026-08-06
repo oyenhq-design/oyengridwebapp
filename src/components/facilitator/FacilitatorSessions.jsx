@@ -509,29 +509,6 @@ export default function FacilitatorSessions({
             </div>
           </div>
 
-          {/* OYEN AI Assistant */}
-          <div style={{ backgroundColor: '#111111', border: '1px solid #1F2937', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Sparkles size={16} color="#F5C84C" />
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF', margin: 0, fontFamily: "'Outfit', sans-serif" }}>OYEN AI Assistant</h4>
-            </div>
-            <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: 0 }}>Need help preparing for your session?</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {['Generate Session Agenda', 'Generate Icebreaker', 'Create Quiz'].map((action, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => addNotification?.(`AI is generating: ${action}...`)}
-                  style={{ width: '100%', padding: '0.6rem 0.8rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: '#E2E8F0', fontSize: '0.78rem', fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(245,200,76,0.05)'; e.currentTarget.style.borderColor = 'rgba(245,200,76,0.3)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
-                >
-                  {action}
-                  <ArrowRight size={14} color="#6B7280" />
-                </button>
-              ))}
-            </div>
-          </div>
-
         </div>
       </div>
     </div>

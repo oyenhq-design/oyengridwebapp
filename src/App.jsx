@@ -242,13 +242,7 @@ export default function App() {
   const displayInbox = getInboxForUser(user, userRole, wsPrograms);
   const displayResources = getResourcesForUser(user, userRole, wsPrograms);
 
-  const adminAiInsight = useMemo(() => {
-    if (!isRoleAdmin(userRole)) return null;
-    if (!displayPrograms || !Array.isArray(displayPrograms)) return null;
-    const noP = displayPrograms.find(p => p && !(p.learners || p.enrolledLearners || p.participants || []).length && (p.status === "Active" || p.status === "Published"));
-    if (noP) return { title: noP.name || noP.title, msg: "has no participants enrolled. Consider adding participants before the next session." };
-    return null;
-  }, [displayPrograms, userRole]);
+
 
   const activeConversation = useMemo(
     () => conversations.find(c => c.conversationId === activeConversationId) || null,
@@ -2414,34 +2408,7 @@ export default function App() {
               />
             ) : isWelcome ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2.5rem 3rem' }}>
-                {adminAiInsight && (
-                  <div style={{
-                    backgroundColor: 'rgba(244, 197, 66, 0.15)',
-                    border: '1px solid #F4C542',
-                    borderRadius: '12px',
-                    padding: '1.25rem 1.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    color: '#fff'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                      <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#F4C542', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Zap size={20} color="#111" />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#F4C542', marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>OYEN AI</div>
-                        <div style={{ fontSize: '0.95rem', color: '#111' }}>
-                          <strong style={{ color: '#111' }}>{adminAiInsight.title}</strong> <span style={{ color: '#555' }}>{adminAiInsight.msg}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <button onClick={() => triggerTransition(() => setActiveTab('Participants'))} style={{ padding: '0.6rem 1.25rem', backgroundColor: '#F4C542', color: '#111', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 6px rgba(244, 197, 66, 0.2)' }}>
-                      Review
-                    </button>
-                  </div>
-                )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '2.5rem' }}>
                 
                 {/* Center Main Panel (Left in main layout) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -3276,7 +3243,6 @@ export default function App() {
                             {[
                               { label: 'Setup Guide', icon: <BookOpen size={14} color="#E2B235" /> },
                               { label: 'Video Tutorials', icon: <Play size={14} color="#E2B235" /> },
-                              { label: 'OYEN AI Assistant', icon: <Zap size={14} color="#E2B235" /> },
                               { label: 'Contact Support', icon: <Headphones size={14} color="#E2B235" /> },
                             ].map((r, i) => (
                               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.55rem 0.65rem', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EDE8E0'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
@@ -3785,11 +3751,6 @@ export default function App() {
                 title: "Role-Based Access",
                 desc: "Granular access control for your entire organization."
               },
-              {
-                icon: <Sparkles size={18} color="#D4AF37" />,
-                title: "Powered by OYEN AI",
-                desc: "Intelligent systems that help you run, manage and scale programs."
-              }
             ] : [
               {
                 icon: <Shield size={18} color="#D4AF37" />,
@@ -3806,11 +3767,6 @@ export default function App() {
                 title: "Zero Trust Access",
                 desc: "Only authorized organizations can activate workspaces."
               },
-              {
-                icon: <Sparkles size={18} color="#D4AF37" />,
-                title: "Powered by OYEN AI",
-                desc: "Intelligent systems that help you run, manage and scale programs."
-              }
             ]).map((f, i) => (
               <div 
                 key={i} 
