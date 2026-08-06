@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
-  Search, X, MessageCircle, Send, Paperclip, Mic, Edit2, Trash2, Smile, Reply,
-  Calendar, FileText, BookOpen, Award, ClipboardCheck, Check, CheckCheck, Sparkles
+  Search, X, MessageCircle, Send, Paperclip, Smile, Reply, Edit2, Trash2,
+  Calendar, FileText, BookOpen, Award, ClipboardCheck, Check, CheckCheck,
+  Sparkles, Pin, Star, Forward, Copy, Info, Paperclip as FileIcon, AlertCircle
 } from "lucide-react";
 
 export default function GlobalChat({
@@ -37,46 +38,77 @@ export default function GlobalChat({
 
   const selfId = (userRole === "Facilitator" || userRole === "Program Manager" || userRole === "Programme Manager" || userRole === "ProgramManager") ? user : (ownerEmail || "admin@oyengrid.com");
 
-  // Local state for editing & context controls
+  // Local state controls for enterprise-grade workspace redesign
+  const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [replyingToMessage, setReplyingToMessage] = useState(null);
+  const [selectedEmojiPickerMsgId, setSelectedEmojiPickerMsgId] = useState(null);
+  
+  // AI assistant drawer overlay inside chat
+  const [showAiSummaryPanel, setShowAiSummaryPanel] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'pinned' | 'attachments'
+
+  // Draft Messages persistence
   const [activeDrafts, setActiveDrafts] = useState(() => {
     try {
-      const saved = localStorage.getItem("oyen_chat_drafts");
+      const saved = localStorage.getItem("oyen_chat_drafts_v2");
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
     }
   });
 
-  // Save drafts locally
   useEffect(() => {
-    localStorage.setItem("oyen_chat_drafts", JSON.stringify(activeDrafts));
+    localStorage.setItem("oyen_chat_drafts_v2", JSON.stringify(activeDrafts));
   }, [activeDrafts]);
 
-  // Load draft when active conversation changes
+  // Keyboard shortcut listener (Ctrl+K to search contacts, Esc to close)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeChat();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        const searchInput = document.getElementById("global-chat-search-input");
+        if (searchInput) searchInput.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closeChat]);
+
+  // Draft load
   useEffect(() => {
     if (activeConversationId) {
       setMessageInput(activeDrafts[activeConversationId] || "");
     }
   }, [activeConversationId]);
 
-  // Save current input to draft map
   const handleInputChange = (text) => {
     setMessageInput(text);
     if (activeConversationId) {
-      setActiveDrafts(prev => ({
-        ...prev,
-        [activeConversationId]: text
-      }));
+      setActiveDrafts(prev => ({ ...prev, [activeConversationId]: text }));
     }
   };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!messageInput.trim()) return;
+
+    // Attach reply meta to the message before sending if replying
+    let finalInput = messageInput;
+    if (replyingToMessage) {
+      finalInput = `[Replying to: "${replyingToMessage.text}"] ${messageInput}`;
+      setReplyingToMessage(null);
+    }
+
+    // Set messageInput parent state to dispatch
+    setMessageInput(finalInput);
     
-    // Clear draft
+    // Clear drafts
     if (activeConversationId) {
       setActiveDrafts(prev => {
         const next = { ...prev };
@@ -84,12 +116,14 @@ export default function GlobalChat({
         return next;
       });
     }
-    
-    sendMessage(e);
+
+    setTimeout(() => {
+      sendMessage(e);
+    }, 50);
   };
 
-  // Add emoji reaction
-  const handleReact = (msgId, emoji) => {
+  // Reactions count compiler helper
+  const handleEmojiReact = (msgId, emoji) => {
     if (!activeConversation) return;
     const conversations = JSON.parse(localStorage.getItem("oyen_conversations") || "[]");
     const updated = conversations.map(c => {
@@ -115,11 +149,11 @@ export default function GlobalChat({
       return c;
     });
     localStorage.setItem("oyen_conversations", JSON.stringify(updated));
-    // Trigger storage event manually to notify App.jsx state
+    setSelectedEmojiPickerMsgId(null);
     window.dispatchEvent(new Event("storage"));
   };
 
-  // Edit message (only within 30s)
+  // Edit Message submit
   const handleStartEdit = (msg) => {
     const ageMs = Date.now() - msg.createdAt;
     if (ageMs > 30000) {
@@ -127,7 +161,7 @@ export default function GlobalChat({
       return;
     }
     setEditingMessageId(msg.messageId);
-    setEditText(msg.text || "");
+    setEditText(msg.text);
   };
 
   const submitEdit = (msgId) => {
@@ -153,11 +187,11 @@ export default function GlobalChat({
     window.dispatchEvent(new Event("storage"));
   };
 
-  // Delete message (Everyone: 5min, otherwise Delete for Me only)
-  const handleDelete = (msg) => {
+  // Deletion logic (within 5 minutes)
+  const handleDeleteMessage = (msg) => {
     const ageMs = Date.now() - msg.createdAt;
-    const forEveryone = ageMs <= 300000; // 5 minutes limit
-    
+    const forEveryone = ageMs <= 300000;
+
     const conversations = JSON.parse(localStorage.getItem("oyen_conversations") || "[]");
     const updated = conversations.map(c => {
       if (c.conversationId === activeConversation.conversationId) {
@@ -181,56 +215,98 @@ export default function GlobalChat({
     window.dispatchEvent(new Event("storage"));
   };
 
-  const totalUnread = visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
+  // Filter messages dynamically based on local filters
+  const filteredMessages = useMemo(() => {
+    if (!activeConversation) return [];
+    let list = activeConversation.messages.filter(m => !(m.hiddenFor || []).includes(selfId));
+
+    if (localSearchQuery.trim()) {
+      const q = localSearchQuery.toLowerCase();
+      list = list.filter(m => m.text.toLowerCase().includes(q));
+    }
+    if (activeFilter === "pinned") {
+      list = list.filter(m => m.isPinned);
+    } else if (activeFilter === "attachments") {
+      list = list.filter(m => m.messageType === "file" || m.messageType === "resource");
+    }
+
+    return list;
+  }, [activeConversation, localSearchQuery, activeFilter]);
+
+  // AI Assistant Summary compiler
+  const aiInsights = useMemo(() => {
+    if (!activeConversation || activeConversation.messages.length === 0) return null;
+    const texts = activeConversation.messages.map(m => m.text).join(" ");
+    
+    const summary = texts.includes("slides") || texts.includes("Slides")
+      ? "Team discussed week slides upload. Uploader has not finalized the resource visibility state yet."
+      : "No critical topics logged yet. Chat is currently in direct configuration.";
+
+    const actionItems = [];
+    if (texts.includes("slides") || texts.includes("Slides")) {
+      actionItems.push("Upload Week 4 slides to the resources folder.");
+    }
+    actionItems.push("Align timezone difference parameters with team.");
+
+    return { summary, actionItems };
+  }, [activeConversation]);
 
   return (
     <>
-      {/* Floating Chat Button */}
+      {/* Floating Chat Trigger Button */}
       <button
         onClick={openChat}
-        title="Workspace Chat"
+        title="Workspace Chat (Ctrl+K)"
         style={{
           position: "fixed", bottom: "24px", right: "24px",
           width: "58px", height: "58px", borderRadius: "50%",
-          backgroundColor: "#D9B233", border: "none", color: "#FFFFFF",
+          backgroundColor: "#111111", border: "1px solid #EBE5D9", color: "#FFFFFF",
           display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer", boxShadow: "0 4px 15px rgba(217, 178, 51, 0.4)",
-          zIndex: 1000, transition: "all 0.2s ease-in-out",
+          cursor: "pointer", boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+          zIndex: 1000, transition: "all 0.2s ease"
         }}
       >
-        <MessageCircle size={24} />
+        <MessageCircle size={22} color="#F4C542" />
         {!isChatOpen && totalUnread > 0 && (
           <span style={{
             position: "absolute", top: "-2px", right: "-2px",
             width: "18px", height: "18px", borderRadius: "50%",
             backgroundColor: "#EF4444", color: "#FFF",
-            fontSize: "0.6rem", fontWeight: 800,
+            fontSize: "0.65rem", fontWeight: 800,
             display: "flex", alignItems: "center", justifyContent: "center",
-            border: "2px solid #FFFDF9",
+            border: "2px solid #FFFDF9"
           }}>
             {totalUnread}
           </span>
         )}
       </button>
 
-      {/* Floating Chat Drawer */}
+      {/* Slide-In Drawer */}
       {isChatOpen && (
         <div style={{
           position: "fixed", top: 0, right: 0, width: "420px", height: "100vh",
-          backgroundColor: "#FFFDF9", borderLeft: "1px solid #E8E2D8",
-          boxShadow: "-6px 0 35px rgba(0,0,0,0.08)", zIndex: 1001,
-          display: "flex", flexDirection: "column"
+          backgroundColor: "#ffffff", borderLeft: "1px solid #EBE5D9",
+          boxShadow: "-10px 0 40px rgba(0,0,0,0.06)", zIndex: 1001,
+          display: "flex", flexDirection: "column",
+          borderTopLeftRadius: "24px", borderBottomLeftRadius: "24px",
+          fontFamily: "'Inter', sans-serif",
+          animation: "slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
         }}>
 
-          {/* Drawer Header */}
+          {/* Drawer Header Area */}
           <div style={{
-            padding: "1rem 1.25rem", borderBottom: "1px solid #E8E2D8",
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            backgroundColor: "#FFFDF9"
+            padding: "1.25rem", borderBottom: "1px solid #EBE5D9",
+            display: "flex", justifyContent: "space-between", alignItems: "center"
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
               {activeConversationId && (
-                <button onClick={() => setActiveConversationId(null)} style={{ background: "#F5F2ED", border: "1px solid #E8E2D8", color: "#151515", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", padding: "0.3rem 0.6rem", borderRadius: "7px" }}>
+                <button 
+                  onClick={() => {
+                    setActiveConversationId(null);
+                    setShowAiSummaryPanel(false);
+                  }} 
+                  style={{ background: "#FAFAF8", border: "1px solid #EBE5D9", color: "#111", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", padding: "0.35rem 0.65rem", borderRadius: "6px" }}
+                >
                   Back
                 </button>
               )}
@@ -238,32 +314,41 @@ export default function GlobalChat({
                 <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>
                   {activeConversation ? activePeer?.name || "Conversation" : "Workspace Chat"}
                 </h4>
-                {activeConversation && (
-                  <span style={{ fontSize: "0.67rem", color: activePeer?.online ? "#16A34A" : "#888888", display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.15rem" }}>
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: activePeer?.online ? "#10B981" : "#9CA3AF" }} />
-                    {activePeer?.online ? "Online" : "Away"} • {activePeer?.role || "Member"}
-                  </span>
-                )}
+                <span style={{ fontSize: "0.7rem", color: "#6B7280" }}>
+                  {activeConversation ? `${activePeer?.role || "Member"} • ${activePeer?.online ? "Online" : "Away"}` : "abc energy workspace"}
+                </span>
               </div>
             </div>
-            <button onClick={closeChat} style={{ background: "none", border: "none", cursor: "pointer", color: "#888888" }}>
-              <X size={18} />
-            </button>
+            
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              {activeConversationId && (
+                <button 
+                  onClick={() => setShowAiSummaryPanel(!showAiSummaryPanel)}
+                  title="Ask OYEN AI"
+                  style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.75rem", fontWeight: 700, color: "#D8A325" }}
+                >
+                  <Sparkles size={15} color="#D8A325" /> Ask AI
+                </button>
+              )}
+              <button onClick={closeChat} style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280" }}>
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
-          {/* Drawer Content */}
+          {/* VIEW A: CONVERSATION LISTS */}
           {!activeConversationId ? (
-            /* Contacts List */
             <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-              <div style={{ padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+              <div style={{ padding: "0.85rem 1.25rem", borderBottom: "1px solid #FAFAF8" }}>
                 <div style={{ position: "relative" }}>
-                  <Search size={13} color="#AAAAAA" style={{ position: "absolute", left: "0.7rem", top: "50%", transform: "translateY(-50%)" }} />
+                  <Search size={13} color="#9CA3AF" style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)" }} />
                   <input 
+                    id="global-chat-search-input"
                     type="text" 
-                    placeholder="Search contacts..." 
+                    placeholder="Search contacts... (Ctrl+K)" 
                     value={chatSearch} 
                     onChange={e => setChatSearch(e.target.value)} 
-                    style={{ width: "100%", padding: "0.5rem 0.9rem 0.5rem 2rem", borderRadius: "9px", border: "1px solid rgba(0,0,0,0.06)", backgroundColor: "#F5F2ED", fontSize: "0.78rem", outline: "none" }} 
+                    style={{ width: "100%", padding: "0.5rem 0.9rem 0.5rem 2rem", borderRadius: "8px", border: "1px solid #EBE5D9", fontSize: "0.8rem", outline: "none", boxSizing: "border-box" }} 
                   />
                 </div>
               </div>
@@ -277,38 +362,67 @@ export default function GlobalChat({
                     <div 
                       key={conv.conversationId} 
                       onClick={() => openConversation(conv.conversationId)} 
-                      style={{ padding: "0.95rem 1.25rem", borderBottom: "1px solid rgba(0,0,0,0.03)", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.85rem" }}
+                      style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #FAFAF8", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.85rem", transition: "background 0.15s" }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = "#FAFAF8"}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
                     >
-                      <div style={{ position: "relative" }}>
+                      <div style={{ position: "relative", flexShrink: 0 }}>
                         <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: peer.role === "Administrator" ? "linear-gradient(135deg, #D9B233, #9B7B1A)" : "linear-gradient(135deg, #374151, #111827)", color: "#FFFDF9", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
                           {peer.avatarInitials || "PM"}
                         </div>
-                        <span style={{ position: "absolute", bottom: "1px", right: "1px", width: "9px", height: "9px", borderRadius: "50%", backgroundColor: peer.online ? "#10B981" : "#9CA3AF", border: "2px solid #FFFDF9" }} />
+                        <span style={{ position: "absolute", bottom: "1px", right: "1px", width: "9px", height: "9px", borderRadius: "50%", backgroundColor: peer.online ? "#10B981" : "#9CA3AF", border: "2px solid #ffffff" }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span style={{ fontSize: "0.83rem", fontWeight: 700 }}>{peer.name}</span>
-                          <span style={{ fontSize: "0.67rem", color: "#AAAAAA" }}>{lastMsg ? lastMsg._time : ""}</span>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111111" }}>{peer.name}</span>
+                          <span style={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{lastMsg ? lastMsg._time : ""}</span>
                         </div>
-                        <span style={{ fontSize: "0.65rem", color: "#6B7280", fontWeight: 600 }}>{peer.role}</span>
-                        <p style={{ margin: 0, fontSize: "0.75rem", color: "#777777", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                          {lastMsg ? lastMsg.text : "Start the conversation"}
+                        <span style={{ fontSize: "0.72rem", color: "#D8A325", fontWeight: 600 }}>{peer.role}</span>
+                        <p style={{ margin: "0.15rem 0 0 0", fontSize: "0.78rem", color: "#6B7280", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                          {lastMsg ? lastMsg.text : "Start conversation"}
                         </p>
                       </div>
                     </div>
                   );
                 })}
+                {filteredConversations.length === 0 && (
+                  <div style={{ padding: "4rem 2rem", textAlign: "center", color: "#6B7280" }}>
+                    <span style={{ fontSize: "2rem" }}>💬</span>
+                    <h5 style={{ margin: "0.5rem 0 0.25rem 0", fontWeight: 700 }}>No conversations found.</h5>
+                    <p style={{ margin: 0, fontSize: "0.75rem" }}>Invite delivery team members to collaborate.</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
-            /* Active Chat Thread */
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", backgroundColor: "#FDFBF7" }}>
-              <div style={{ flex: 1, padding: "1.25rem 1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                
-                {activeConversation.messages.filter(m => !(m.hiddenFor || []).includes(selfId)).map((m, idx) => {
+            /* VIEW B: ACTIVE CHAT PANEL */
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", backgroundColor: "#ffffff", position: "relative" }}>
+              
+              {/* Filter controls tab row */}
+              <div style={{ display: "flex", borderBottom: "1px solid #EBE5D9", padding: "0.5rem 1rem", gap: "0.75rem", backgroundColor: "#FAFAF8", fontSize: "0.78rem" }}>
+                {[
+                  { id: "all", label: "All Messages" },
+                  { id: "pinned", label: "Pinned" },
+                  { id: "attachments", label: "Attachments" }
+                ].map(tab => (
+                  <button 
+                    key={tab.id}
+                    onClick={() => setActiveFilter(tab.id)}
+                    style={{
+                      border: "none", background: "none", cursor: "pointer", fontWeight: activeFilter === tab.id ? 700 : 500,
+                      color: activeFilter === tab.id ? "#111111" : "#6B7280", paddingBottom: "0.25rem",
+                      borderBottom: activeFilter === tab.id ? "2px solid #F4C542" : "none"
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Message cards virtual list */}
+              <div style={{ flex: 1, padding: "1.25rem 1rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {filteredMessages.map(m => {
                   const isMe = m.senderId === selfId || m.sender === "me";
-                  
-                  // Filter out reactions counts
                   const reactions = m.reactions || [];
                   const reactionCounts = reactions.reduce((acc, r) => {
                     acc[r.emoji] = (acc[r.emoji] || 0) + 1;
@@ -316,123 +430,189 @@ export default function GlobalChat({
                   }, {});
 
                   return (
-                    <div key={m.messageId} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
-                      
-                      {/* Message Bubble container */}
+                    <div 
+                      key={m.messageId} 
+                      onMouseEnter={() => setHoveredMessageId(m.messageId)}
+                      onMouseLeave={() => {
+                        setHoveredMessageId(null);
+                        setSelectedEmojiPickerMsgId(null);
+                      }}
+                      style={{
+                        display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start",
+                        position: "relative", padding: "0.25rem 0"
+                      }}
+                    >
+                      {/* Floating actions menu (Slack style on hover) */}
+                      {hoveredMessageId === m.messageId && !m.isDeleted && (
+                        <div style={{
+                          position: "absolute", top: "-1rem", right: isMe ? "auto" : "1rem", left: isMe ? "1rem" : "auto",
+                          backgroundColor: "#ffffff", border: "1px solid #EBE5D9", borderRadius: "6px",
+                          boxShadow: "0 4px 10px rgba(0,0,0,0.06)", display: "flex", gap: "0.35rem", padding: "0.25rem", zIndex: 10
+                        }}>
+                          <button onClick={() => setReplyingToMessage(m)} title="Reply" style={{ border: "none", background: "none", cursor: "pointer", padding: "0.15rem" }}><Reply size={14} /></button>
+                          <button onClick={() => setSelectedEmojiPickerMsgId(m.messageId)} title="React" style={{ border: "none", background: "none", cursor: "pointer", padding: "0.15rem" }}><Smile size={14} /></button>
+                          {isMe && (
+                            <>
+                              <button onClick={() => handleStartEdit(m)} title="Edit" style={{ border: "none", background: "none", cursor: "pointer", padding: "0.15rem" }}><Edit2 size={14} /></button>
+                              <button onClick={() => handleDeleteMessage(m)} title="Delete" style={{ border: "none", background: "none", cursor: "pointer", padding: "0.15rem" }}><Trash2 size={14} color="#EF4444" /></button>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Emoji Selector Bubble popup */}
+                      {selectedEmojiPickerMsgId === m.messageId && (
+                        <div style={{
+                          position: "absolute", top: "-2.5rem", right: isMe ? "auto" : "2rem", left: isMe ? "2rem" : "auto",
+                          backgroundColor: "#ffffff", border: "1px solid #EBE5D9", borderRadius: "20px", padding: "0.35rem", display: "flex", gap: "0.4rem", zIndex: 20, boxShadow: "0 6px 15px rgba(0,0,0,0.1)"
+                        }}>
+                          {["❤️", "👍", "🔥", "🎉", "👏", "😂"].map(emoji => (
+                            <button key={emoji} onClick={() => handleEmojiReact(m.messageId, emoji)} style={{ border: "none", background: "none", cursor: "pointer", fontSize: "1.1rem" }}>{emoji}</button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Quoted block for replies */}
+                      {m.text.startsWith('[Replying to:') && (
+                        <div style={{ fontSize: "0.72rem", color: "#6B7280", backgroundColor: "#FAFAF8", borderLeft: "2px solid #F4C542", padding: "0.2rem 0.5rem", marginBottom: "0.2rem", maxWidth: "70%", borderRadius: "4px" }}>
+                          {m.text.split(']')[0].replace('[Replying to: ', '')}
+                        </div>
+                      )}
+
+                      {/* Message Bubble Card */}
                       <div style={{
-                        maxWidth: "80%",
-                        backgroundColor: isMe ? "#111111" : "#F8F6F1",
-                        color: isMe ? "#FFFDF9" : "#111111",
-                        padding: "0.65rem 1rem",
-                        borderRadius: "12px",
-                        fontSize: "0.82rem",
-                        position: "relative"
+                        maxWidth: "70%",
+                        backgroundColor: isMe ? "transparent" : "#FAFAF8",
+                        border: isMe ? "1px solid #F4C542" : "1px solid #EBE5D9",
+                        color: "#111111",
+                        padding: "0.75rem 1rem",
+                        borderRadius: "14px",
+                        fontSize: "0.85rem",
+                        lineHeight: 1.5,
+                        boxSizing: "border-box"
                       }}>
                         
-                        {/* Inline Edit form */}
+                        {/* Inline edit container */}
                         {editingMessageId === m.messageId ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                            <input 
-                              type="text" 
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                            <textarea 
                               value={editText} 
                               onChange={e => setEditText(e.target.value)} 
-                              style={{ padding: "0.25rem 0.5rem", borderRadius: "4px", border: "1px solid #EBE5D9", outline: "none", color: "#111" }}
+                              rows={2}
+                              style={{ width: "100%", padding: "0.35rem", borderRadius: "6px", border: "1px solid #EBE5D9", fontSize: "0.8rem", outline: "none", resize: "none" }}
                             />
                             <div style={{ display: "flex", gap: "0.25rem" }}>
-                              <button onClick={() => submitEdit(m.messageId)} style={{ padding: "0.2rem 0.5rem", backgroundColor: "#D9B233", border: "none", borderRadius: "4px", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}>Save</button>
-                              <button onClick={() => setEditingMessageId(null)} style={{ padding: "0.2rem 0.5rem", backgroundColor: "transparent", border: "1px solid #EBE5D9", borderRadius: "4px", fontSize: "0.7rem", color: "#EF4444", cursor: "pointer" }}>Cancel</button>
+                              <button onClick={() => submitEdit(m.messageId)} style={{ padding: "0.2rem 0.55rem", backgroundColor: "#111111", border: "none", borderRadius: "4px", fontSize: "0.72rem", color: "#ffffff", fontWeight: 700, cursor: "pointer" }}>Save</button>
+                              <button onClick={() => setEditingMessageId(null)} style={{ padding: "0.2rem 0.55rem", backgroundColor: "transparent", border: "1px solid #EBE5D9", borderRadius: "4px", fontSize: "0.72rem", color: "#EF4444", cursor: "pointer" }}>Cancel</button>
                             </div>
                           </div>
                         ) : (
                           <>
-                            <p style={{ margin: 0, wordBreak: "break-word" }}>{m.text}</p>
+                            <p style={{ margin: 0, wordBreak: "break-word" }}>
+                              {m.text.includes(']') ? m.text.substring(m.text.indexOf(']') + 1).trim() : m.text}
+                            </p>
                             
-                            {/* Metadata & read receipt checkmarks */}
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.25rem", marginTop: "0.25rem", fontSize: "0.65rem", opacity: 0.8 }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.35rem", marginTop: "0.35rem", fontSize: "0.68rem", color: "#9CA3AF" }}>
                               <span>{m._time || m.time}</span>
-                              {m.isEdited && <span style={{ fontStyle: "italic" }}>(Edited)</span>}
+                              {m.isEdited && <span>• Edited</span>}
                               {isMe && !m.isDeleted && (
                                 <span>
-                                  {m.status === "seen" ? <CheckCircle2 size={10} color="#D9B233" /> : <Check size={10} />}
+                                  {m.status === "seen" ? "✓✓ Read" : m.status === "delivered" ? "✓✓ Delivered" : "✓ Sent"}
                                 </span>
                               )}
                             </div>
                           </>
                         )}
-
-                        {/* Interactive reaction toolbar shown on hover/actions */}
-                        {!m.isDeleted && (
-                          <div style={{ display: "flex", gap: "0.25rem", marginTop: "0.4rem", flexWrap: "wrap" }}>
-                            {["❤️", "👍", "🔥", "🎉"].map(emoji => (
-                              <button 
-                                key={emoji} 
-                                onClick={() => handleReact(m.messageId, emoji)}
-                                style={{
-                                  padding: "0.15rem 0.35rem",
-                                  backgroundColor: reactions.some(r => r.emoji === emoji && r.userId === selfId) ? "rgba(217, 178, 51, 0.25)" : "transparent",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  fontSize: "0.75rem",
-                                  borderRadius: "4px"
-                                }}
-                              >
-                                {emoji} {reactionCounts[emoji] || ""}
-                              </button>
-                            ))}
-                          </div>
-                        )}
                       </div>
 
-                      {/* Message actions (Edit / Delete buttons for your messages) */}
-                      {isMe && !m.isDeleted && editingMessageId !== m.messageId && (
-                        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.15rem", fontSize: "0.7rem" }}>
-                          <button onClick={() => handleStartEdit(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280" }}>Edit</button>
-                          <button onClick={() => handleDelete(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#EF4444" }}>Delete</button>
+                      {/* Display compiles emoji reactions */}
+                      {reactions.length > 0 && (
+                        <div style={{ display: "flex", gap: "0.25rem", marginTop: "0.25rem" }}>
+                          {Object.keys(reactionCounts).map(emoji => (
+                            <button
+                              key={emoji}
+                              onClick={() => handleEmojiReact(m.messageId, emoji)}
+                              style={{
+                                display: "flex", alignItems: "center", gap: "0.15rem", border: "1px solid #EBE5D9",
+                                backgroundColor: reactions.some(r => r.emoji === emoji && r.userId === selfId) ? "rgba(244, 197, 66, 0.15)" : "#ffffff",
+                                padding: "0.1rem 0.35rem", borderRadius: "10px", fontSize: "0.7rem", cursor: "pointer"
+                              }}
+                            >
+                              <span>{emoji}</span>
+                              <strong>{reactionCounts[emoji]}</strong>
+                            </button>
+                          ))}
                         </div>
                       )}
+
                     </div>
                   );
                 })}
-
-                {/* Inline OYEN AI Contextual Suggestion Banner */}
-                {activeConversation.messages.some(m => m.text.includes("Slides") || m.text.includes("slides")) && (
-                  <div style={{
-                    backgroundColor: "rgba(244, 197, 66, 0.08)",
-                    border: "1px solid #F4C542",
-                    borderRadius: "8px",
-                    padding: "0.75rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    fontSize: "0.78rem"
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#2D2D2D" }}>
-                      <Sparkles size={14} color="#D8A325" />
-                      <span>This discussion mentions slides. Attach presentation?</span>
-                    </div>
-                    <button onClick={() => alert("Slides attached")} style={{ padding: "0.25rem 0.55rem", backgroundColor: "#F4C542", border: "none", borderRadius: "4px", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Attach</button>
-                  </div>
-                )}
               </div>
 
-              {/* Chat Input form with draft listener */}
-              <form onSubmit={handleSendMessage} style={{ padding: "1rem 1.25rem", borderTop: "1px solid #E8E2D8", display: "flex", alignItems: "center", gap: "0.75rem", backgroundColor: "#FFFDF9" }}>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button type="button" onClick={() => alert("Upload progress checklist")} style={{ background: "none", border: "none", color: "#888888", display: "flex", alignItems: "center" }}><Paperclip size={16} /></button>
+              {/* Replying quote indicator above composer */}
+              {replyingToMessage && (
+                <div style={{
+                  padding: "0.5rem 1rem", borderTop: "1px solid #EBE5D9",
+                  backgroundColor: "#FAFAF8", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.78rem"
+                }}>
+                  <span style={{ color: "#6B7280" }}>Replying to: <strong style={{ color: "#111111" }}>{replyingToMessage.text}</strong></span>
+                  <button onClick={() => setReplyingToMessage(null)} style={{ border: "none", background: "none", cursor: "pointer" }}><X size={14} /></button>
                 </div>
-                <input 
-                  type="text" 
-                  placeholder="Type a message..." 
-                  value={messageInput} 
-                  onChange={e => handleInputChange(e.target.value)} 
-                  style={{ flex: 1, padding: "0.55rem 0.85rem", borderRadius: "10px", border: "1px solid rgba(0,0,0,0.06)", backgroundColor: "#F8F6F1", fontSize: "0.8rem", outline: "none" }} 
-                />
-                <button type="submit" style={{ backgroundColor: "#D9B233", border: "none", borderRadius: "10px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#FFFFFF" }}>
-                  <Send size={14} />
-                </button>
+              )}
+
+              {/* Composer */}
+              <form onSubmit={handleSendMessage} style={{ padding: "1rem", borderTop: "1px solid #EBE5D9", backgroundColor: "#ffffff" }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <button type="button" onClick={() => alert("Upload file")} style={{ border: "none", background: "none", cursor: "pointer", color: "#6B7280" }}><Paperclip size={16} /></button>
+                  <input 
+                    type="text"
+                    value={messageInput}
+                    onChange={e => handleInputChange(e.target.value)}
+                    placeholder={`Message ${activePeer?.name || "Program Manager"}...`}
+                    style={{ flex: 1, padding: "0.55rem 0.85rem", border: "1px solid #EBE5D9", borderRadius: "20px", fontSize: "0.82rem", outline: "none" }}
+                  />
+                  <button type="submit" style={{ backgroundColor: "#111111", border: "none", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", cursor: "pointer" }}>
+                    <Send size={14} color="#F4C542" />
+                  </button>
+                </div>
               </form>
+
+              {/* Side OYEN AI drawer helper panel overlay */}
+              {showAiSummaryPanel && aiInsights && (
+                <div style={{
+                  position: "absolute", top: 0, bottom: 0, left: 0, right: 0,
+                  backgroundColor: "#ffffff", borderLeft: "1px solid #EBE5D9",
+                  zIndex: 100, display: "flex", flexDirection: "column",
+                  padding: "1.5rem", animation: "fadeIn 0.15s ease"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", borderBottom: "1px solid #EBE5D9", paddingBottom: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                      <Sparkles size={16} color="#D8A325" />
+                      <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800 }}>✨ Ask OYEN AI</h4>
+                    </div>
+                    <button onClick={() => setShowAiSummaryPanel(false)} style={{ border: "none", background: "none", cursor: "pointer" }}><X size={16} /></button>
+                  </div>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", flex: 1, overflowY: "auto", fontSize: "0.85rem" }}>
+                    <div>
+                      <span style={{ fontWeight: 700, display: "block", marginBottom: "0.25rem", color: "#6B7280", textTransform: "uppercase", fontSize: "0.68rem" }}>Conversation Summary</span>
+                      <p style={{ margin: 0, lineHeight: 1.5, color: "#111111" }}>{aiInsights.summary}</p>
+                    </div>
+
+                    <div>
+                      <span style={{ fontWeight: 700, display: "block", marginBottom: "0.25rem", color: "#6B7280", textTransform: "uppercase", fontSize: "0.68rem" }}>Action Items Detected</span>
+                      <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "#111111" }}>
+                        {aiInsights.actionItems.map((item, idx) => <li key={idx} style={{ marginBottom: "0.25rem" }}>{item}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
+
         </div>
       )}
     </>
