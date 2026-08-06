@@ -92,7 +92,7 @@ export default function GlobalChat({
             backgroundColor: "#FFFDF9",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
-              {activeConversationId && userRole !== "Facilitator" && (
+              {activeConversationId && (
                 <button onClick={() => setActiveConversationId(null)} style={{ background: "#F5F2ED", border: "1px solid #E8E2D8", color: "#151515", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", padding: "0.3rem 0.6rem", borderRadius: "7px", whiteSpace: "nowrap" }}>
                   Back
                 </button>
@@ -108,7 +108,7 @@ export default function GlobalChat({
                   </span>
                 ) : (
                   <span style={{ fontSize: "0.67rem", color: "#888888", marginTop: "0.15rem", display: "block", fontWeight: 500 }}>
-                    {userRole === "Facilitator" ? "Direct line to your workspace administrator" : `${visibleConversations.length} contact${visibleConversations.length !== 1 ? "s" : ""}`}
+                    {`${visibleConversations.length} contact${visibleConversations.length !== 1 ? "s" : ""}`}
                   </span>
                 )}
               </div>
@@ -131,17 +131,17 @@ export default function GlobalChat({
             <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
               <div style={{ padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
                 <div style={{ fontSize: "0.68rem", fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "0.6rem" }}>
-                  {userRole === "Facilitator" ? "Your Administrator" : "Contacts"}
+                  Contacts
                 </div>
                 <div style={{ position: "relative" }}>
                   <Search size={13} color="#AAAAAA" style={{ position: "absolute", left: "0.7rem", top: "50%", transform: "translateY(-50%)" }} />
-                  <input type="text" placeholder={userRole === "Facilitator" ? "Search messages..." : "Search contacts..."} value={chatSearch} onChange={e => setChatSearch(e.target.value)} style={{ width: "100%", padding: "0.5rem 0.9rem 0.5rem 2rem", borderRadius: "9px", border: "1px solid rgba(0,0,0,0.06)", backgroundColor: "#F5F2ED", fontSize: "0.78rem", outline: "none", color: "#111111", boxSizing: "border-box" }} />
+                  <input type="text" placeholder="Search contacts..." value={chatSearch} onChange={e => setChatSearch(e.target.value)} style={{ width: "100%", padding: "0.5rem 0.9rem 0.5rem 2rem", borderRadius: "9px", border: "1px solid rgba(0,0,0,0.06)", backgroundColor: "#F5F2ED", fontSize: "0.78rem", outline: "none", color: "#111111", boxSizing: "border-box" }} />
                 </div>
               </div>
 
               <div style={{ flex: 1, overflowY: "auto" }}>
                 {filteredConversations.length > 0 ? filteredConversations.map(conv => {
-                  const peer = conv.participants.find(p => p.role !== (userRole === "Facilitator" ? "Facilitator" : "Administrator")) || conv.participants[0];
+                  const peer = conv.participants.find(p => p.userId.toLowerCase() !== selfId.toLowerCase()) || conv.participants[0];
                   const lastMsg = conv.lastMessage;
                   const hasUnread = (conv.unreadCount || 0) > 0;
                   return (

@@ -259,22 +259,123 @@ export function buildWorkspaceConversations(wsTeam, orgName, adminUserId) {
   if (!wsTeam || !orgName) return [];
 
   const adminDisplayName = `${toTitleCase(orgName)} Administrator`;
-  const adminId          = adminUserId || 'admin';
+  const adminId          = adminUserId || 'admin@oyengrid.com';
 
-  // Phase 1: Admin ↔ Facilitator threads
-  const facilitatorConversations = wsTeam
-    .filter(m => m.role === 'Facilitator')
-    .map((facilitator, index) =>
-      buildSingleConversation({
-        orgName,
-        adminId,
-        adminDisplayName,
-        facilitator,
-        index,
+  const list = [];
+  const facilitators = wsTeam.filter(m => m.role === 'Facilitator');
+  const programManagers = wsTeam.filter(m => m.role === 'Program Manager' || m.role === 'Programme Manager' || m.role === 'ProgramManager');
+
+  // 1. Admin ↔ Facilitator threads
+  facilitators.forEach((fac, idx) => {
+    const facId = fac.email || `facilitator-${idx}`;
+    const facName = fac.name || facId;
+    const convId = `conv-admin-${facId}`;
+    const welcome = buildWelcomeMessages(convId, adminId, facId, adminDisplayName, orgName);
+    list.push({
+      conversationId: convId,
+      workspaceId: orgName,
+      participants: [
+        { userId: adminId, role: 'Administrator', name: adminDisplayName, avatarInitials: getInitials(adminDisplayName), online: true },
+        { userId: facId, role: 'Facilitator', name: facName, email: fac.email || '', avatarInitials: getInitials(facName), online: idx % 2 === 0 }
+      ],
+      messages: welcome,
+      unreadCount: 0,
+      lastMessage: welcome[welcome.length - 1],
+      lastActivity: Date.now(),
+      typing: { userId: null, isTyping: false },
+      status: CONVERSATION_STATUS.ACTIVE,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+  });
+
+  // 2. Program Manager ↔ Facilitator threads
+  programManagers.forEach(pm => {
+    const pmId = pm.email || 'pm@oyengrid.com';
+    const pmName = pm.name || 'Program Manager';
+    facilitators.forEach((fac, idx) => {
+      const facId = fac.email || `facilitator-${idx}`;
+      const facName = fac.name || facId;
+      const convId = `conv-pm-${pmId}-${facId}`;
+      const welcome = [
+        createMessage({
+          conversationId: convId,
+          senderId: pmId,
+          receiverId: facId,
+          senderRole: 'Program Manager',
+          messageType: MESSAGE_TYPE.SYSTEM_WELCOME,
+          text: 'Workspace conversation created',
+          status: MESSAGE_STATUS.READ
+        }),
+        createMessage({
+          conversationId: convId,
+          senderId: pmId,
+          receiverId: facId,
+          senderRole: 'Program Manager',
+          messageType: MESSAGE_TYPE.TEXT,
+          text: `Hi ${facName}, I'm ${pmName}, your Program Manager. Let's use this thread to coordinate delivery of our programmes.`,
+          status: MESSAGE_STATUS.READ
+        })
+      ];
+      list.push({
+        conversationId: convId,
+        workspaceId: orgName,
+        participants: [
+          { userId: pmId, role: 'Program Manager', name: pmName, email: pmId, avatarInitials: getInitials(pmName), online: true },
+          { userId: facId, role: 'Facilitator', name: facName, email: fac.email || '', avatarInitials: getInitials(facName), online: idx % 2 === 0 }
+        ],
+        messages: welcome,
+        unreadCount: 0,
+        lastMessage: welcome[welcome.length - 1],
+        lastActivity: Date.now(),
+        typing: { userId: null, isTyping: false },
+        status: CONVERSATION_STATUS.ACTIVE,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    });
+
+    // 3. Program Manager ↔ Admin thread
+    const convId = `conv-pm-${pmId}-admin`;
+    const welcome = [
+      createMessage({
+        conversationId: convId,
+        senderId: adminId,
+        receiverId: pmId,
+        senderRole: 'Administrator',
+        messageType: MESSAGE_TYPE.SYSTEM_WELCOME,
+        text: 'Workspace conversation created',
+        status: MESSAGE_STATUS.READ
+      }),
+      createMessage({
+        conversationId: convId,
+        senderId: adminId,
+        receiverId: pmId,
+        senderRole: 'Administrator',
+        messageType: MESSAGE_TYPE.TEXT,
+        text: `Welcome, ${pmName}. This is your direct link to the workspace administrator.`,
+        status: MESSAGE_STATUS.READ
       })
-    );
+    ];
+    list.push({
+      conversationId: convId,
+      workspaceId: orgName,
+      participants: [
+        { userId: pmId, role: 'Program Manager', name: pmName, email: pmId, avatarInitials: getInitials(pmName), online: true },
+        { userId: adminId, role: 'Administrator', name: adminDisplayName, avatarInitials: getInitials(adminDisplayName), online: true }
+      ],
+      messages: welcome,
+      unreadCount: 0,
+      lastMessage: welcome[welcome.length - 1],
+      lastActivity: Date.now(),
+      typing: { userId: null, isTyping: false },
+      status: CONVERSATION_STATUS.ACTIVE,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+  });
 
-  return facilitatorConversations;
+  return list;
 }
 
 /**

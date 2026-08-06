@@ -206,14 +206,25 @@ export default function App() {
   useEffect(() => {
     if (!orgName) return;
     
-    // Ensure the active facilitator is included in the conversation generation if logged in
+    // Ensure the active facilitator or program manager is included in the conversation generation if logged in
     const teamWithFacilitator = [...(wsTeam || [])];
+    const loggedInEmail = user?.trim().toLowerCase();
     if (user && (userRole === 'Facilitator' || userRole === 'FacilitatorRole')) {
-      const exists = teamWithFacilitator.some(m => m.email?.toLowerCase() === user.toLowerCase());
+      const exists = teamWithFacilitator.some(m => m.email?.toLowerCase() === loggedInEmail);
       if (!exists) {
         teamWithFacilitator.push({
           name: user.split('@')[0].toUpperCase(),
           role: 'Facilitator',
+          email: user,
+          online: true
+        });
+      }
+    } else if (user && (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager')) {
+      const exists = teamWithFacilitator.some(m => m.email?.toLowerCase() === loggedInEmail);
+      if (!exists) {
+        teamWithFacilitator.push({
+          name: user.split('@')[0].toUpperCase(),
+          role: 'Program Manager',
           email: user,
           online: true
         });
@@ -227,21 +238,27 @@ export default function App() {
   // â”€ Computed views â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Role-filtered list of conversations visible to the current user.
-  // Phase 1: Facilitator â†” Admin only.
-  // Future: extend cases for Programme Owner, Learner, Groups.
   const visibleConversations = useMemo(() => {
+    const currentEmail = user?.trim().toLowerCase() || '';
+    
     if (userRole === 'Facilitator') {
       return conversations.filter(c =>
-        c.participants.some(p => p.role === 'Administrator')
+        c.participants.some(p => p.userId.toLowerCase() === currentEmail)
+      );
+    }
+    if (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') {
+      return conversations.filter(c =>
+        c.participants.some(p => p.userId.toLowerCase() === currentEmail)
       );
     }
     if (userRole === 'Workspace Super Admin' || userRole === 'Admin') {
+      const adminId = (ownerEmail || 'admin@oyengrid.com').trim().toLowerCase();
       return conversations.filter(c =>
-        c.participants.some(p => p.role === 'Facilitator')
+        c.participants.some(p => p.userId.toLowerCase() === adminId)
       );
     }
     return [];
-  }, [conversations, userRole]);
+  }, [conversations, userRole, user, ownerEmail]);
 
   // Search â€” Admin: filter by facilitator name/email; Facilitator: filter by message text
   const filteredConversations = useMemo(() => {
