@@ -95,51 +95,6 @@ export default function ProgrammeTeamPage({ user, wsPrograms = [], wsTeam = [], 
       }
     });
 
-    // Provide default fallback delivery team if database starts empty
-    if (list.length === 0) {
-      list.push(
-        {
-          name: 'Sarah Jenkins',
-          role: 'Facilitator',
-          email: 'sarah.j@oyengrid.com',
-          phone: '+1 (555) 432-1098',
-          programs: ['Solar Technology Fellowship'],
-          status: 'Available',
-          nextSession: 'Today • 2:00 PM',
-          workload: 4,
-          attendanceRate: '99%',
-          rating: '4.9',
-          lastActive: '5 mins ago'
-        },
-        {
-          name: 'Michael Brown',
-          role: 'Programme Coordinator',
-          email: 'michael.b@oyengrid.com',
-          phone: '+1 (555) 789-0123',
-          programs: ['Battery Storage Bootcamp'],
-          status: 'Available',
-          nextSession: 'Tomorrow • 10:00 AM',
-          workload: 1,
-          attendanceRate: '95%',
-          rating: '4.7',
-          lastActive: '1 hour ago'
-        },
-        {
-          name: 'David John',
-          role: 'Facilitator',
-          email: 'david.j@oyengrid.com',
-          phone: '+1 (555) 654-3210',
-          programs: ['Smart Grid Fellowship'],
-          status: 'Available',
-          nextSession: 'Monday • 09:00 AM',
-          workload: 1,
-          attendanceRate: '96%',
-          rating: '4.8',
-          lastActive: 'Yesterday'
-        }
-      );
-    }
-
     return list;
   }, [wsPrograms, wsTeam]);
 

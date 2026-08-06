@@ -80,7 +80,7 @@ export default function DashboardPage({
       activeProgramsCount: activeProgramsList.length,
       participantsCount: safeLearners.length,
       upcomingSessionsCount: allSessions.filter(s => s.status === 'Scheduled' || s.status === 'Live').length,
-      facilitatorsCount: Math.max(3, uniqueFacilitators.size)
+      facilitatorsCount: uniqueFacilitators.size
     };
   }, [activeProgramsList, safeLearners, allSessions, safeTeam]);
 
