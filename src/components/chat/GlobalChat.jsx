@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import {
   Search, X, MessageCircle, Send, Paperclip, Mic,
   Calendar, FileText, BookOpen, Award, ClipboardCheck, Check, CheckCheck
@@ -41,7 +41,7 @@ export default function GlobalChat({
   if (!eligibleRoles.includes(userRole)) return null;
 
   const totalUnread = visibleConversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
-  const selfId = userRole === "Facilitator" ? user : (ownerEmail || "admin");
+  const selfId = userRole === "Facilitator" ? user : (ownerEmail || "admin@oyengrid.com");
 
   return (
     <>

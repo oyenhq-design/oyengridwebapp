@@ -184,18 +184,45 @@ export default function App() {
   // â”€â”€ Workspace Chat System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Core state â€” architecture-first naming (not drawer-specific)
   const [isChatOpen,          setIsChatOpen]          = useState(false);
-  const [conversations,       setConversations]       = useState([]);
+  const [conversations,       setConversations]       = useState(() => {
+    try {
+      const saved = localStorage.getItem('oyen_conversations');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messageInput,        setMessageInput]        = useState('');
   const [chatSearch,          setChatSearch]          = useState('');
 
+  // Save conversations to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('oyen_conversations', JSON.stringify(conversations));
+  }, [conversations]);
+
   // Sync conversations whenever wsTeam or workspace metadata changes.
   // mergeConversations preserves existing message history â€” welcome messages are seeded once.
   useEffect(() => {
-    if (!wsTeam || !orgName) return;
-    const generated = buildWorkspaceConversations(wsTeam, orgName, ownerEmail || 'admin');
+    if (!orgName) return;
+    
+    // Ensure the active facilitator is included in the conversation generation if logged in
+    const teamWithFacilitator = [...(wsTeam || [])];
+    if (user && (userRole === 'Facilitator' || userRole === 'FacilitatorRole')) {
+      const exists = teamWithFacilitator.some(m => m.email?.toLowerCase() === user.toLowerCase());
+      if (!exists) {
+        teamWithFacilitator.push({
+          name: user.split('@')[0].toUpperCase(),
+          role: 'Facilitator',
+          email: user,
+          online: true
+        });
+      }
+    }
+
+    const generated = buildWorkspaceConversations(teamWithFacilitator, orgName, ownerEmail || 'admin@oyengrid.com');
     setConversations(prev => mergeConversations(prev, generated));
-  }, [wsTeam, orgName, ownerEmail]);
+  }, [wsTeam, orgName, ownerEmail, user, userRole]);
 
   // â”€ Computed views â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -252,7 +279,7 @@ export default function App() {
   // Derived: the participant the current user is talking to in the active conversation
   const activePeer = useMemo(() => {
     if (!activeConversation) return null;
-    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin');
+    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin@oyengrid.com');
     return getOtherParticipant(activeConversation, selfId);
   }, [activeConversation, userRole, user, ownerEmail]);
 
@@ -356,7 +383,7 @@ export default function App() {
     e.preventDefault();
     if (!messageInput.trim() || !activeConversationId || !activeConversation) return;
 
-    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin');
+    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin@oyengrid.com');
     const peerId = activePeer?.userId || 'other';
 
     const outMsg = createMessage({
@@ -410,6 +437,9 @@ export default function App() {
       }
       if (e.key === 'oyen_ws_invitations' && e.newValue) {
         setWsInvitations(JSON.parse(e.newValue));
+      }
+      if (e.key === 'oyen_conversations' && e.newValue) {
+        setConversations(JSON.parse(e.newValue));
       }
     };
     window.addEventListener('storage', handleStorageChange);
