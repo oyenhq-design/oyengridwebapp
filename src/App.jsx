@@ -30,6 +30,7 @@ import OrgRegistrationForm from './components/OrgRegistrationForm';
 import PublicEventForm from './components/PublicEventForm';
 import SignInForm from './components/SignInForm';
 import ProgramManagerModule from './modules/program-manager';
+import CommandCentreModule from './modules/command-centre';
 import GlobalChat from './components/chat/GlobalChat';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
@@ -1159,6 +1160,11 @@ export default function App() {
 
 
 
+
+  // Phase 1: Command Centre Routing interception
+  if (window.location.pathname.startsWith('/command-centre')) {
+    return <CommandCentreModule />;
+  }
 
   // Render Post-signup Onboarding Wizard Flow
   if (activeRoute === 'onboarding' && user) {
