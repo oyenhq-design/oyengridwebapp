@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Search, X, ShieldAlert, Key, UserCheck, RefreshCw, Layers } from "lucide-react";
+import { Search, ChevronLeft, ShieldAlert, Key, UserCheck, HardDrive, Settings, HelpCircle, Activity, Globe, Palette } from "lucide-react";
 
 export default function OrganizationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
-  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [activeProfileId, setActiveProfileId] = useState(null); // When null: show list. Otherwise: show profile.
+  const [profileTab, setProfileTab] = useState("Overview");
+  
   const [organizations, setOrganizations] = useState([]);
+  const [rawState, setRawState] = useState({
+    programs: [],
+    team: [],
+    learners: []
+  });
 
-  // Fetch real data from localStorage
-  const loadRealData = () => {
+  const loadDatabase = () => {
     try {
       const orgName = localStorage.getItem("oyen_org_name") || "ABC Energy Workspace";
       const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, "-");
@@ -23,22 +29,29 @@ export default function OrganizationsPage() {
       const learners = rawLearners ? JSON.parse(rawLearners) : [];
       
       const ownerEmail = localStorage.getItem("oyen_owner_email") || "owner@oyengrid.com";
-      const ownerName = `${localStorage.getItem("oyen_owner_first_name") || "John"} ${localStorage.getItem("oyen_owner_last_name") || "David"}`;
+      const ownerName = `${localStorage.getItem("oyen_owner_first_name") || "Shola"} ${localStorage.getItem("oyen_owner_last_name") || "Oyewole"}`;
 
-      // Calculate total sessions
+      setRawState({ programs, team, learners });
+
+      const isSuspended = localStorage.getItem(`oyen_suspended_${orgSlug}`) === "true";
+      const currentPlan = localStorage.getItem(`oyen_plan_${orgSlug}`) || "Enterprise Trial";
+
       const totalSessions = programs.reduce((sum, p) => sum + (p.sessions || []).length, 0);
+      const totalResources = programs.reduce((sum, p) => sum + (p.resources || []).length, 0);
 
-      // Determine actual system health dynamically
-      let health = "Healthy";
-      if (totalSessions === 0 || team.length === 0) {
-        health = "At Risk";
+      // Compute dynamic health metrics
+      const healthReason = [];
+      if (isSuspended) {
+        healthReason.push("⚠ Workspace is currently suspended");
+      } else {
+        healthReason.push("✓ Workspace Active");
+        if (team.length > 0) healthReason.push("✓ Active Staff Present");
+        if (programs.length > 0) healthReason.push("✓ Active Programs Sourced");
+        if (totalSessions === 0) healthReason.push("⚠ No Session Scheduled in 21 days");
       }
 
-      // Check for suspended status in database
-      const isSuspended = localStorage.getItem(`oyen_suspended_${orgSlug}`) === "true";
-      const currentPlan = localStorage.getItem(`oyen_plan_${orgSlug}`) || "Enterprise";
-
       const primaryOrg = {
+        id: "org_x82D93",
         name: orgName,
         slug: orgSlug,
         ownerName,
@@ -48,107 +61,438 @@ export default function OrganizationsPage() {
         users: String(team.length + learners.length),
         programs: String(programs.length),
         sessions: String(totalSessions),
-        health,
-        score: health === "Healthy" ? 98 : 45,
-        created: "June 18",
-        storageUsed: "2.8GB",
-        storageLimit: currentPlan === "Enterprise" ? "50GB" : "10GB",
+        resources: String(totalResources),
+        storageUsed: `${34 + totalResources * 2}MB`,
+        storageLimit: currentPlan.includes("Enterprise") ? "50GB" : "10GB",
+        created: "June 12, 2026",
+        health: isSuspended ? "At Risk" : (totalSessions > 0 ? "Good" : "Warning"),
+        healthReasons: healthReason,
+        lastLogin: "Today, 10:14 AM",
+        lastActivity: "2 minutes ago"
       };
 
-      // Add a couple of static real configurations if desired, but prioritize actual
-      const staticOrgs = [
-        {
-          name: "VoltPower Ltd",
-          slug: "voltpower-ltd",
-          ownerName: "Sarah Jenkins",
-          ownerEmail: "sarah@voltpower.co",
-          plan: "Pro",
-          status: localStorage.getItem("oyen_suspended_voltpower-ltd") === "true" ? "Suspended" : "Active",
-          users: "52",
-          programs: "2",
-          sessions: "12",
-          health: "Healthy",
-          score: 92,
-          created: "March 12",
-          storageUsed: "1.2GB",
-          storageLimit: "10GB"
-        }
-      ];
+      const voltPowerSuspended = localStorage.getItem("oyen_suspended_voltpower-ltd") === "true";
+      const voltPowerPlan = localStorage.getItem("oyen_plan_voltpower-ltd") || "Pro";
+      
+      const secondaryOrg = {
+        id: "org_z11B94",
+        name: "VoltPower Ltd",
+        slug: "voltpower-ltd",
+        ownerName: "Sarah Jenkins",
+        ownerEmail: "sarah@voltpower.co",
+        plan: voltPowerPlan,
+        status: voltPowerSuspended ? "Suspended" : "Active",
+        users: "52",
+        programs: "2",
+        sessions: "12",
+        resources: "6",
+        storageUsed: "1.2GB",
+        storageLimit: voltPowerPlan.includes("Enterprise") ? "50GB" : "10GB",
+        created: "March 12, 2026",
+        health: voltPowerSuspended ? "At Risk" : "Good",
+        healthReasons: voltPowerSuspended ? ["⚠ Workspace Suspended"] : ["✓ Workspace Active", "✓ Stable Revenue"],
+        lastLogin: "Yesterday, 4:30 PM",
+        lastActivity: "1 day ago"
+      };
 
-      setOrganizations([primaryOrg, ...staticOrgs]);
+      setOrganizations([primaryOrg, secondaryOrg]);
     } catch (e) {
-      console.error("Error loading workspace data for Command Centre:", e);
+      console.error(e);
     }
   };
 
   useEffect(() => {
-    loadRealData();
-    window.addEventListener("storage", loadRealData);
-    return () => window.removeEventListener("storage", loadRealData);
+    loadDatabase();
+    window.addEventListener("storage", loadDatabase);
+    return () => window.removeEventListener("storage", loadDatabase);
   }, []);
 
-  // Admin actions: suspend/unsuspend workspace
-  const toggleSuspend = (org) => {
+  const handleToggleSuspend = (org) => {
     const nextStatus = org.status === "Active" ? "true" : "false";
     localStorage.setItem(`oyen_suspended_${org.slug}`, nextStatus);
-    loadRealData();
-    // Update active drawer overlay reference if open
-    setSelectedOrg(prev => prev ? { ...prev, status: nextStatus === "true" ? "Suspended" : "Active" } : null);
+    loadDatabase();
     window.dispatchEvent(new Event("storage"));
   };
 
-  // Admin actions: change plans
-  const updatePlan = (org, nextPlan) => {
-    localStorage.setItem(`oyen_plan_${org.slug}`, nextPlan);
-    loadRealData();
-    setSelectedOrg(prev => prev ? { ...prev, plan: nextPlan, storageLimit: nextPlan === "Enterprise" ? "50GB" : "10GB" } : null);
+  const handleUpdatePlan = (org, plan) => {
+    localStorage.setItem(`oyen_plan_${org.slug}`, plan);
+    loadDatabase();
     window.dispatchEvent(new Event("storage"));
   };
+
+  const handleImpersonate = (org) => {
+    alert(`Bypassing auth security: Impersonating ${org.ownerName} (${org.ownerEmail})`);
+    localStorage.setItem("oyen_impersonating", "true");
+    localStorage.setItem("oyen_impersonated_org", org.name);
+    window.location.href = "/";
+  };
+
+  const activeOrg = organizations.find(o => o.id === activeProfileId);
 
   const filteredOrgs = organizations.filter(o => {
-    const matchesSearch = o.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          o.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          o.ownerEmail.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const query = searchTerm.toLowerCase();
+    const matchesSearch = o.name.toLowerCase().includes(query) ||
+                          o.ownerEmail.toLowerCase().includes(query) ||
+                          o.slug.toLowerCase().includes(query) ||
+                          o.plan.toLowerCase().includes(query);
     if (activeFilter === "all") return matchesSearch;
-    if (activeFilter === "Enterprise") return matchesSearch && o.plan === "Enterprise";
-    if (activeFilter === "Pro") return matchesSearch && o.plan === "Pro";
+    if (activeFilter === "Active") return matchesSearch && o.status === "Active";
     if (activeFilter === "Suspended") return matchesSearch && o.status === "Suspended";
     return matchesSearch;
   });
 
+  // Render detail dashboard for organization profile
+  if (activeOrg) {
+    return (
+      <div style={{ padding: "3rem", display: "flex", flexDirection: "column", gap: "2rem", boxSizing: "border-box" }}>
+        
+        {/* Back Link */}
+        <button 
+          onClick={() => setActiveProfileId(null)}
+          style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "none", border: "none", color: "#6B7280", fontSize: "0.78rem", cursor: "pointer", fontWeight: 700, padding: 0 }}
+        >
+          <ChevronLeft size={14} />
+          <span>Back to Organizations</span>
+        </button>
+
+        {/* Profile Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #E6DED0", paddingBottom: "1.5rem" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <h3 style={{ fontSize: "1.5rem", fontWeight: 800, margin: 0, color: "#1B1B1B", fontFamily: "'Outfit', sans-serif" }}>{activeOrg.name}</h3>
+              <span style={{ fontSize: "0.68rem", fontWeight: 800, backgroundColor: "#FFF7E4", border: "1px solid #E6DED0", color: "#D9A928", padding: "0.15rem 0.45rem", borderRadius: "4px" }}>
+                {activeOrg.plan}
+              </span>
+              <span style={{ fontSize: "0.68rem", fontWeight: 800, backgroundColor: activeOrg.status === "Active" ? "rgba(24, 182, 122, 0.12)" : "rgba(225, 93, 93, 0.12)", color: activeOrg.status === "Active" ? "#18B67A" : "#E15D5D", padding: "0.15rem 0.45rem", borderRadius: "4px" }}>
+                Workspace {activeOrg.status}
+              </span>
+            </div>
+            <div style={{ fontSize: "0.75rem", color: "#6B7280", marginTop: "0.4rem" }}>
+              Owner: <strong>{activeOrg.ownerName}</strong> ({activeOrg.ownerEmail}) • Created: {activeOrg.created} • ID: <span style={{ fontFamily: "monospace" }}>{activeOrg.id}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Grid: Tabs & Right Sidebar Actions */}
+        <div style={{ display: "flex", gap: "3rem" }}>
+          
+          {/* Left Column: Navigation Tabs & Views */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            
+            {/* Tabs List */}
+            <div style={{ display: "flex", gap: "1.25rem", borderBottom: "1px solid #E6DED0", fontSize: "0.82rem" }}>
+              {["Overview", "Users", "Programs", "Sessions", "Resources", "Activity", "Security", "Settings"].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setProfileTab(tab)}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer", fontWeight: profileTab === tab ? 700 : 500,
+                    color: profileTab === tab ? "#1B1B1B" : "#6B7280", paddingBottom: "0.5rem",
+                    borderBottom: profileTab === tab ? "2px solid #D9A928" : "none"
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Viewport */}
+            <div style={{ minHeight: "300px" }}>
+              
+              {profileTab === "Overview" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                  
+                  {/* Organization Health Calculation */}
+                  <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.25rem" }}>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase" }}>Organization Health</span>
+                    <h4 style={{ fontSize: "1.1rem", fontWeight: 800, margin: "0.25rem 0 0.5rem 0", color: activeOrg.health === "Good" ? "#18B67A" : "#D9A928" }}>
+                      Health: {activeOrg.health}
+                    </h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+                      {activeOrg.healthReasons.map((r, i) => (
+                        <div key={i} style={{ fontSize: "0.75rem", color: "#1B1B1B" }}>{r}</div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Telemetry metrics strip */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }}>
+                    <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Users</span>
+                      <h5 style={{ fontSize: "1.25rem", margin: "0.25rem 0 0 0", fontWeight: 800 }}>{activeOrg.users}</h5>
+                    </div>
+                    <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Programs</span>
+                      <h5 style={{ fontSize: "1.25rem", margin: "0.25rem 0 0 0", fontWeight: 800 }}>{activeOrg.programs}</h5>
+                    </div>
+                    <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Sessions</span>
+                      <h5 style={{ fontSize: "1.25rem", margin: "0.25rem 0 0 0", fontWeight: 800 }}>{activeOrg.sessions}</h5>
+                    </div>
+                    <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Storage</span>
+                      <h5 style={{ fontSize: "1.25rem", margin: "0.25rem 0 0 0", fontWeight: 800 }}>{activeOrg.storageUsed}</h5>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {profileTab === "Users" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.8rem" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#F7F4ED", borderBottom: "1px solid #E6DED0" }}>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>USER</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>ROLE</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeOrg.slug === "voltpower-ltd" ? (
+                        <>
+                          <tr style={{ borderBottom: "1px solid #E6DED0" }}>
+                            <td style={{ padding: "0.75rem 1rem" }}>Sarah Jenkins (sarah@voltpower.co)</td>
+                            <td style={{ padding: "0.75rem 1rem" }}>Administrator</td>
+                            <td style={{ padding: "0.75rem 1rem", color: "#18B67A" }}>Active</td>
+                          </tr>
+                          <tr style={{ borderBottom: "1px solid #E6DED0" }}>
+                            <td style={{ padding: "0.75rem 1rem" }}>Donald West (west@voltpower.co)</td>
+                            <td style={{ padding: "0.75rem 1rem" }}>Facilitator</td>
+                            <td style={{ padding: "0.75rem 1rem", color: "#18B67A" }}>Active</td>
+                          </tr>
+                        </>
+                      ) : (
+                        <>
+                          <tr style={{ borderBottom: "1px solid #E6DED0" }}>
+                            <td style={{ padding: "0.75rem 1rem" }}>{activeOrg.ownerName} ({activeOrg.ownerEmail})</td>
+                            <td style={{ padding: "0.75rem 1rem" }}>Administrator</td>
+                            <td style={{ padding: "0.75rem 1rem", color: "#18B67A" }}>Active</td>
+                          </tr>
+                          {rawState.team.map((member, i) => (
+                            <tr key={i} style={{ borderBottom: "1px solid #E6DED0" }}>
+                              <td style={{ padding: "0.75rem 1rem" }}>{member.name || member.email.split("@")[0].toUpperCase()} ({member.email})</td>
+                              <td style={{ padding: "0.75rem 1rem" }}>{member.role || "Member"}</td>
+                              <td style={{ padding: "0.75rem 1rem", color: "#18B67A" }}>Active</td>
+                            </tr>
+                          ))}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {profileTab === "Programs" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.8rem" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#F7F4ED", borderBottom: "1px solid #E6DED0" }}>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>PROGRAM</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>SESSIONS</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeOrg.slug === "voltpower-ltd" ? (
+                        <>
+                          <tr style={{ borderBottom: "1px solid #E6DED0" }}>
+                            <td style={{ padding: "0.75rem 1rem" }}>Solar Installation Bootcamp</td>
+                            <td style={{ padding: "0.75rem 1rem" }}>8 Sessions</td>
+                            <td style={{ padding: "0.75rem 1rem", color: "#18B67A" }}>Active</td>
+                          </tr>
+                          <tr style={{ borderBottom: "1px solid #E6DED0" }}>
+                            <td style={{ padding: "0.75rem 1rem" }}>Grid Operations Intro</td>
+                            <td style={{ padding: "0.75rem 1rem" }}>4 Sessions</td>
+                            <td style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>Archived</td>
+                          </tr>
+                        </>
+                      ) : (
+                        rawState.programs.map((prog, i) => (
+                          <tr key={i} style={{ borderBottom: "1px solid #E6DED0" }}>
+                            <td style={{ padding: "0.75rem 1rem" }}>{prog.name}</td>
+                            <td style={{ padding: "0.75rem 1rem" }}>{(prog.sessions || []).length} Sessions</td>
+                            <td style={{ padding: "0.75rem 1rem", color: "#18B67A" }}>Active</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {profileTab === "Sessions" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", fontSize: "0.8rem", color: "#6B7280", textAlign: "center" }}>
+                  {activeOrg.sessions === "0" ? "No sessions created yet. Instruct the administrator to schedule a session." : `Ecosystem supports ${activeOrg.sessions} scheduled sessions.`}
+                </div>
+              )}
+
+              {profileTab === "Resources" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", fontSize: "0.8rem", color: "#6B7280", textAlign: "center" }}>
+                  {activeOrg.resources === "0" ? "No resource documents uploaded yet." : `Ecosystem stores ${activeOrg.resources} documents.`}
+                </div>
+              )}
+
+              {profileTab === "Activity" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {[
+                    { time: "09:21", action: `John created program in ${activeOrg.name}`, meta: "Audit Log" },
+                    { time: "09:34", action: "Facilitator uploaded slides document", meta: "Audit Log" }
+                  ].map((act, i) => (
+                    <div key={i} style={{ padding: "0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", fontSize: "0.8rem", display: "flex", justifySpace: "between", justifyContent: "space-between" }}>
+                      <span>{act.time} - <strong>{act.action}</strong></span>
+                      <span style={{ color: "#6B7280" }}>{act.meta}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {profileTab === "Security" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", fontSize: "0.8rem" }}>
+                  <div>API Access Tokens: <strong>No tokens configured</strong></div>
+                  <div>2FA Status: <strong>Disabled</strong></div>
+                  <div>Recent Logins: <strong>1 active session (Mozilla/Mac OS X)</strong></div>
+                </div>
+              )}
+
+              {profileTab === "Settings" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem", fontSize: "0.8rem" }}>
+                  <div>
+                    <strong style={{ display: "block", marginBottom: "0.25rem" }}>Brand Identity Color</strong>
+                    <input type="color" defaultValue="#D9A928" style={{ border: "1px solid #E6DED0", cursor: "pointer" }} />
+                  </div>
+                  <div>
+                    <strong>Workspace Visibility</strong>
+                    <p style={{ margin: "0.15rem 0 0 0", color: "#6B7280" }}>Visible to all organization email domains.</p>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+          {/* Right Column: Admin Actions Sidebar Panel */}
+          <div style={{ width: "260px", backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <h4 style={{ fontSize: "0.72rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
+              Admin Actions
+            </h4>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              
+              <button 
+                onClick={() => {
+                  localStorage.setItem("oyen_impersonating", "true");
+                  localStorage.setItem("oyen_impersonated_org", activeOrg.name);
+                  window.location.href = "/";
+                }}
+                style={{
+                  width: "100%", padding: "0.6rem 0.85rem", border: "1px solid #E6DED0", borderRadius: "6px",
+                  backgroundColor: "#F7F4ED", color: "#1B1B1B", fontSize: "0.78rem", fontWeight: 700,
+                  cursor: "pointer", textAlign: "left"
+                }}
+              >
+                Impersonate Owner
+              </button>
+
+              <button 
+                onClick={() => handleToggleSuspend(activeOrg)}
+                style={{
+                  width: "100%", padding: "0.6rem 0.85rem", border: "1px solid #E6DED0", borderRadius: "6px",
+                  backgroundColor: "#F7F4ED", color: activeOrg.status === "Active" ? "#E15D5D" : "#18B67A", fontSize: "0.78rem", fontWeight: 700,
+                  cursor: "pointer", textAlign: "left"
+                }}
+              >
+                {activeOrg.status === "Active" ? "Suspend Organization" : "Unsuspend Organization"}
+              </button>
+
+              <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.25rem" }}>
+                <button 
+                  onClick={() => handleUpdatePlan(activeOrg, "Enterprise")}
+                  style={{
+                    flex: 1, padding: "0.45rem", border: "1px solid #E6DED0", borderRadius: "4px",
+                    backgroundColor: activeOrg.plan === "Enterprise" ? "#D9A928" : "#F7F4ED",
+                    color: activeOrg.plan === "Enterprise" ? "#FFFFFF" : "#1B1B1B",
+                    fontSize: "0.72rem", fontWeight: 700, cursor: "pointer"
+                  }}
+                >
+                  Enterprise
+                </button>
+                <button 
+                  onClick={() => handleUpdatePlan(activeOrg, "Pro")}
+                  style={{
+                    flex: 1, padding: "0.45rem", border: "1px solid #E6DED0", borderRadius: "4px",
+                    backgroundColor: activeOrg.plan === "Pro" ? "#D9A928" : "#F7F4ED",
+                    color: activeOrg.plan === "Pro" ? "#FFFFFF" : "#1B1B1B",
+                    fontSize: "0.72rem", fontWeight: 700, cursor: "pointer"
+                  }}
+                >
+                  Pro
+                </button>
+              </div>
+
+              <button 
+                onClick={() => {
+                  if(confirm("Confirm deletion? This action is irreversible.")) {
+                    localStorage.removeItem(`oyen_suspended_${activeOrg.slug}`);
+                    localStorage.removeItem(`oyen_plan_${activeOrg.slug}`);
+                    alert("Organization request staged for deletion.");
+                    setActiveProfileId(null);
+                    loadDatabase();
+                  }
+                }}
+                style={{
+                  width: "100%", padding: "0.6rem 0.85rem", border: "1px solid #E15D5D", borderRadius: "6px",
+                  backgroundColor: "rgba(225, 93, 93, 0.08)", color: "#E15D5D", fontSize: "0.78rem", fontWeight: 700,
+                  cursor: "pointer", textAlign: "left", marginTop: "1rem"
+                }}
+              >
+                Delete Organization
+              </button>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: "2.5rem", display: "flex", flexDirection: "column", gap: "2rem", height: "100%", boxSizing: "border-box", position: "relative" }}>
+    <div style={{ padding: "3rem", display: "flex", flexDirection: "column", gap: "2rem", boxSizing: "border-box" }}>
       
-      {/* Page Title */}
+      {/* List Header */}
       <div>
-        <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#1B1B1B" }}>Organizations</h3>
-        <span style={{ fontSize: "0.75rem", color: "#6B7280" }}>
-          {organizations.length} organizations queried from platform registry
-        </span>
+        <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#1B1B1B", fontFamily: "'Outfit', sans-serif" }}>Organizations</h3>
+        <span style={{ fontSize: "0.75rem", color: "#6B7280" }}>Manage every organization running on OYEN.</span>
       </div>
 
-      {/* Filter Tabs & Search Bar Row */}
+      {/* Stats summary strip */}
+      <div style={{ display: "flex", gap: "1rem", fontSize: "0.78rem", color: "#6B7280" }}>
+        <span><strong>{organizations.length}</strong> Organizations</span> •
+        <span><strong>{organizations.filter(o => o.status === "Active").length}</strong> Active</span> •
+        <span><strong>{organizations.filter(o => o.status === "Suspended").length}</strong> Suspended</span>
+      </div>
+
+      {/* Search and Filters */}
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         
-        {/* Search controls */}
+        {/* Search */}
         <div style={{ position: "relative" }}>
           <Search size={14} color="#6B7280" style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)" }} />
           <input 
             type="text" 
-            placeholder="Search organizations, workspaces, owners, subscriptions..." 
+            placeholder="Search organizations by name, slug or owner..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             style={{ width: "100%", padding: "0.5rem 0.75rem 0.5rem 2.25rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#FCFBF8", color: "#1B1B1B", fontSize: "0.8rem", outline: "none", boxSizing: "border-box" }}
           />
         </div>
 
-        {/* Filters */}
-        <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.78rem" }}>
+        {/* Filter triggers */}
+        <div style={{ display: "flex", gap: "1rem", fontSize: "0.78rem" }}>
           {[
             { id: "all", label: "All" },
-            { id: "Enterprise", label: "Enterprise" },
-            { id: "Pro", label: "Professional" },
+            { id: "Active", label: "Active" },
             { id: "Suspended", label: "Suspended" }
           ].map(tab => (
             <button
@@ -164,33 +508,33 @@ export default function OrganizationsPage() {
             </button>
           ))}
         </div>
+
       </div>
 
-      {/* Stripe-style Database Table Grid */}
+      {/* Organizations Listing Grid Table */}
       <div style={{ border: "1px solid #E6DED0", borderRadius: "8px", overflow: "hidden", backgroundColor: "#FCFBF8" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.8rem" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #E6DED0", backgroundColor: "#F7F4ED" }}>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>ORGANIZATION</th>
-              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>WORKSPACE</th>
-              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>SUBSCRIPTION</th>
-              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>STATUS</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>OWNER</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>PLAN</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>USERS</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>PROGRAMS</th>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>STORAGE</th>
-              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>HEALTH</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>STATUS</th>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}></th>
             </tr>
           </thead>
           <tbody>
             {filteredOrgs.map((org, index) => (
               <tr key={index} style={{ borderBottom: "1px solid #E6DED0" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#FFF7E4"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
-                <td style={{ padding: "1.1rem 1.25rem" }}>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <strong style={{ color: "#1B1B1B" }}>{org.name}</strong>
-                    <span style={{ fontSize: "0.68rem", color: "#6B7280" }}>Owner: {org.ownerName}</span>
-                  </div>
-                </td>
-                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280", fontFamily: "monospace" }}>{org.slug}</td>
+                <td style={{ padding: "1.1rem 1.25rem", fontWeight: 700, color: "#1B1B1B" }}>{org.name}</td>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.ownerEmail}</td>
                 <td style={{ padding: "1.1rem 1.25rem", color: "#1B1B1B", fontWeight: 600 }}>{org.plan}</td>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.users}</td>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.programs}</td>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.storageUsed}</td>
                 <td style={{ padding: "1.1rem 1.25rem" }}>
                   <span style={{
                     fontSize: "0.68rem", fontWeight: 800, padding: "0.15rem 0.45rem", borderRadius: "4px",
@@ -200,18 +544,15 @@ export default function OrganizationsPage() {
                     {org.status}
                   </span>
                 </td>
-                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.storageUsed} / {org.storageLimit}</td>
-                <td style={{ padding: "1.1rem 1.25rem" }}>
-                  <span style={{ color: org.health === "Healthy" ? "#18B67A" : "#E5B93C", fontWeight: 700 }}>
-                    {org.health}
-                  </span>
-                </td>
                 <td style={{ padding: "1.1rem 1.25rem", textAlign: "right" }}>
                   <button 
-                    onClick={() => setSelectedOrg(org)}
+                    onClick={() => {
+                      setActiveProfileId(org.id);
+                      setProfileTab("Overview");
+                    }}
                     style={{ background: "none", border: "none", color: "#D9A928", fontSize: "0.78rem", cursor: "pointer", fontWeight: 700 }}
                   >
-                    Open →
+                    Open
                   </button>
                 </td>
               </tr>
@@ -219,136 +560,6 @@ export default function OrganizationsPage() {
           </tbody>
         </table>
       </div>
-
-      {/* Sliding Organization Control Panel Drawer overlay */}
-      {selectedOrg && (
-        <div 
-          onClick={() => setSelectedOrg(null)}
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.15)", zIndex: 1000,
-            display: "flex", justifyContent: "flex-end"
-          }}
-        >
-          <div 
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: "480px", height: "100%", backgroundColor: "#FCFBF8", borderLeft: "1px solid #E6DED0",
-              boxShadow: "-10px 0 35px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column",
-              padding: "2rem", boxSizing: "border-box", gap: "2rem",
-              animation: "slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
-            }}
-          >
-            {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #E6DED0", paddingBottom: "1rem" }}>
-              <div>
-                <h3 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#1B1B1B" }}>{selectedOrg.name}</h3>
-                <span style={{ fontSize: "0.72rem", color: "#6B7280", fontFamily: "monospace" }}>{selectedOrg.slug}</span>
-              </div>
-              <button onClick={() => setSelectedOrg(null)} style={{ border: "none", background: "none", cursor: "pointer", color: "#6B7280" }}>
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Content Body split in metadata details and actions list */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", flex: 1, overflowY: "auto" }}>
-              
-              {/* Metadata panel */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", backgroundColor: "#F7F4ED", borderRadius: "8px", padding: "1.25rem" }}>
-                <div>
-                  <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase" }}>Workspace Details</span>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", fontSize: "0.8rem", marginTop: "0.5rem" }}>
-                    <div>Owner: <strong>{selectedOrg.ownerName}</strong></div>
-                    <div>Email: <strong>{selectedOrg.ownerEmail}</strong></div>
-                    <div>Created: <strong>{selectedOrg.created}</strong></div>
-                    <div>Plan: <strong>{selectedOrg.plan}</strong></div>
-                  </div>
-                </div>
-
-                <div style={{ borderTop: "1px solid #E6DED0", paddingTop: "0.75rem" }}>
-                  <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase" }}>Workspace Telemetry</span>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", fontSize: "0.8rem", marginTop: "0.5rem" }}>
-                    <div>Active Programs: <strong>{selectedOrg.programs}</strong></div>
-                    <div>Active Users: <strong>{selectedOrg.users}</strong></div>
-                    <div>Sessions: <strong>{selectedOrg.sessions}</strong></div>
-                    <div>Storage: <strong>{selectedOrg.storageUsed} / {selectedOrg.storageLimit}</strong></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Administrative Actions */}
-              <div>
-                <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", display: "block", marginBottom: "0.75rem" }}>
-                  Administrative Actions
-                </span>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  
-                  {/* Suspend Action */}
-                  <button 
-                    onClick={() => toggleSuspend(selectedOrg)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.65rem 1rem",
-                      borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#FCFBF8",
-                      color: selectedOrg.status === "Active" ? "#E15D5D" : "#18B67A", fontSize: "0.8rem",
-                      fontWeight: 700, cursor: "pointer", textAlign: "left"
-                    }}
-                  >
-                    <ShieldAlert size={14} />
-                    <span>{selectedOrg.status === "Active" ? "Suspend Workspace" : "Unsuspend Workspace"}</span>
-                  </button>
-
-                  {/* Impersonate Action */}
-                  <button 
-                    onClick={() => {
-                      alert("Bypassing credentials... Impersonating workspace user.");
-                      localStorage.setItem("oyen_impersonating", "true");
-                      localStorage.setItem("oyen_impersonated_org", selectedOrg.name);
-                      window.location.href = "/";
-                    }}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.65rem 1rem",
-                      borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#FCFBF8",
-                      color: "#1B1B1B", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", textAlign: "left"
-                    }}
-                  >
-                    <UserCheck size={14} />
-                    <span>Impersonate Workspace</span>
-                  </button>
-
-                  {/* Plan modifications */}
-                  <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
-                    <button 
-                      onClick={() => updatePlan(selectedOrg, "Enterprise")}
-                      style={{
-                        flex: 1, padding: "0.55rem", border: "1px solid #E6DED0", borderRadius: "6px",
-                        backgroundColor: selectedOrg.plan === "Enterprise" ? "#D9A928" : "#FCFBF8",
-                        color: selectedOrg.plan === "Enterprise" ? "#FFFFFF" : "#1B1B1B",
-                        fontSize: "0.78rem", fontWeight: 700, cursor: "pointer"
-                      }}
-                    >
-                      Upgrade Enterprise
-                    </button>
-                    <button 
-                      onClick={() => updatePlan(selectedOrg, "Pro")}
-                      style={{
-                        flex: 1, padding: "0.55rem", border: "1px solid #E6DED0", borderRadius: "6px",
-                        backgroundColor: selectedOrg.plan === "Pro" ? "#D9A928" : "#FCFBF8",
-                        color: selectedOrg.plan === "Pro" ? "#FFFFFF" : "#1B1B1B",
-                        fontSize: "0.78rem", fontWeight: 700, cursor: "pointer"
-                      }}
-                    >
-                      Downgrade Pro
-                    </button>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
