@@ -1,26 +1,75 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { ShieldCheck } from "lucide-react";
 
 export default function DashboardPage() {
-  const events = [
-    { time: "09:19", action: "Organization Suspended", details: "CyberCorp - Terms Violation", status: "Critical" },
-    { time: "09:18", action: "AI Summary Generated", details: "Solar Tech Bootcamp - Week 2" },
-    { time: "09:16", action: "Payment received", details: "₦2.4M from VoltPower Ltd" },
-    { time: "09:15", action: "John invited 18 facilitators", details: "Workspace Super Admin Action" },
-    { time: "09:12", action: "ABC Energy created a workspace", details: "Self-serve Registration" },
-  ];
+  const [telemetry, setTelemetry] = useState({
+    totalOrgs: 2,
+    activeOrgs: 2,
+    suspendedOrgs: 0,
+    totalUsers: 0,
+    totalPrograms: 0,
+    mrr: "₦12.8M",
+  });
 
-  const sideRailItems = {
-    incidents: [
-      { text: "AI Worker node latency spiked", type: "warning" },
-      { text: "Support queue exceeds SLA threshold", type: "info" }
-    ],
-    reviews: [
-      { text: "WindForce Partners signup verification", action: "Review" }
-    ],
-    trials: [
-      { text: " VoltPower Trial expires in 2 days" }
-    ]
+  const loadTelemetry = () => {
+    try {
+      const orgName = localStorage.getItem("oyen_org_name") || "ABC Energy Workspace";
+      const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+      
+      const rawPrograms = localStorage.getItem("oyen_ws_programs");
+      const programs = rawPrograms ? JSON.parse(rawPrograms) : [];
+      
+      const rawTeam = localStorage.getItem("oyen_ws_team");
+      const team = rawTeam ? JSON.parse(rawTeam) : [];
+      
+      const rawLearners = localStorage.getItem("oyen_ws_learners");
+      const learners = rawLearners ? JSON.parse(rawLearners) : [];
+
+      const isPrimarySuspended = localStorage.getItem(`oyen_suspended_${orgSlug}`) === "true";
+      const primaryPlan = localStorage.getItem(`oyen_plan_${orgSlug}`) || "Enterprise";
+
+      const primaryOrgActive = !isPrimarySuspended;
+      const voltPowerActive = localStorage.getItem("oyen_suspended_voltpower-ltd") !== "true";
+
+      const totalOrgs = 2;
+      const activeOrgs = (primaryOrgActive ? 1 : 0) + (voltPowerActive ? 1 : 0);
+      const suspendedOrgs = totalOrgs - activeOrgs;
+
+      const totalUsers = team.length + learners.length + 52; // Active + static VoltPower
+      const totalPrograms = programs.length + 2; // Active + static VoltPower
+
+      // Calculate MRR: Enterprise is ₦500k, Pro is ₦250k
+      const primaryRev = primaryPlan === "Enterprise" ? 500000 : 250000;
+      const voltPlan = localStorage.getItem("oyen_plan_voltpower-ltd") || "Pro";
+      const voltRev = voltPlan === "Enterprise" ? 500000 : 250000;
+      const mrrVal = ((primaryRev + voltRev) / 1000).toFixed(0);
+
+      setTelemetry({
+        totalOrgs,
+        activeOrgs,
+        suspendedOrgs,
+        totalUsers,
+        totalPrograms,
+        mrr: `₦${mrrVal}K`,
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
+
+  useEffect(() => {
+    loadTelemetry();
+    window.addEventListener("storage", loadTelemetry);
+    return () => window.removeEventListener("storage", loadTelemetry);
+  }, []);
+
+  const events = [
+    { time: "09:18", event: "Workspace Created", meta: "ABC Energy", type: "success" },
+    { time: "09:16", event: "Payment Received", meta: "Enterprise Plan", type: "success" },
+    { time: "09:14", event: "Program Published", meta: "Solar Training", type: "info" },
+    { time: "09:12", event: "AI Summary Generated", meta: "Week 4 Session", type: "info" },
+    { time: "09:09", event: "Organization Suspended", meta: "Policy Violation", type: "error" },
+  ];
 
   return (
     <div style={{ padding: "2.5rem", display: "flex", flexDirection: "column", gap: "2rem", boxSizing: "border-box" }}>
@@ -31,23 +80,23 @@ export default function DashboardPage() {
           
           <div style={{ borderRight: "1px solid #E6DED0", paddingRight: "1rem" }}>
             <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase" }}>Organizations</span>
-            <h4 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0.25rem 0", color: "#1B1B1B" }}>523</h4>
+            <h4 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0.25rem 0", color: "#1B1B1B" }}>{telemetry.totalOrgs}</h4>
             <div style={{ fontSize: "0.72rem", color: "#6B7280" }}>
-              <span style={{ color: "#18B67A", fontWeight: 700 }}>+12 Today</span> • Pending 4
+              <span style={{ color: "#18B67A", fontWeight: 700 }}>{telemetry.activeOrgs} Active</span> • {telemetry.suspendedOrgs} Suspended
             </div>
           </div>
 
           <div style={{ borderRight: "1px solid #E6DED0", paddingRight: "1rem" }}>
             <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase" }}>Users</span>
-            <h4 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0.25rem 0", color: "#1B1B1B" }}>18,492</h4>
+            <h4 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0.25rem 0", color: "#1B1B1B" }}>{telemetry.totalUsers}</h4>
             <div style={{ fontSize: "0.72rem", color: "#6B7280" }}>
-              Online 9,221 • Flagged 3
+              Queried Active Members
             </div>
           </div>
 
           <div style={{ borderRight: "1px solid #E6DED0", paddingRight: "1rem" }}>
             <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase" }}>Revenue</span>
-            <h4 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0.25rem 0", color: "#1B1B1B" }}>₦12.8M</h4>
+            <h4 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0.25rem 0", color: "#1B1B1B" }}>{telemetry.mrr}</h4>
             <div style={{ fontSize: "0.72rem", color: "#10B981" }}>
               MRR • +8.4% MoM
             </div>
@@ -85,10 +134,10 @@ export default function DashboardPage() {
             {events.map((e, idx) => (
               <div key={idx} style={{ display: "flex", alignItems: "center", gap: "1rem", fontSize: "0.8rem", borderBottom: "1px solid #F7F4ED", paddingBottom: "0.75rem" }}>
                 <span style={{ color: "#6B7280", fontFamily: "monospace", width: "45px" }}>{e.time}</span>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: e.status === "Critical" ? "#E15D5D" : "#18B67A" }} />
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: e.type === "error" ? "#E15D5D" : "#18B67A" }} />
                 <div style={{ flex: 1, display: "flex", justifyContent: "space-between" }}>
-                  <strong style={{ color: "#1B1B1B" }}>{e.action}</strong>
-                  <span style={{ color: "#6B7280" }}>{e.details}</span>
+                  <strong style={{ color: "#1B1B1B" }}>{e.event}</strong>
+                  <span style={{ color: "#6B7280" }}>{e.meta}</span>
                 </div>
               </div>
             ))}
@@ -98,44 +147,24 @@ export default function DashboardPage() {
         {/* Right Column: Ops Side Rail */}
         <div style={{ width: "300px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           
-          {/* Active Incidents panel */}
           <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.25rem" }}>
             <h4 style={{ fontSize: "0.72rem", fontWeight: 800, color: "#E15D5D", textTransform: "uppercase", letterSpacing: "0.8px", margin: "0 0 0.75rem 0" }}>
               Active Incidents (2)
             </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {sideRailItems.incidents.map((inc, i) => (
-                <div key={i} style={{ fontSize: "0.75rem", color: "#1B1B1B", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#E5B93C" }} />
-                  <span>{inc.text}</span>
-                </div>
-              ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "0.75rem" }}>
+              <div>● AI Worker node latency spiked</div>
+              <div>● Support queue exceeds SLA threshold</div>
             </div>
           </div>
 
-          {/* Pending Reviews panel */}
           <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.25rem" }}>
             <h4 style={{ fontSize: "0.72rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.8px", margin: "0 0 0.75rem 0" }}>
               Pending Reviews
             </h4>
-            {sideRailItems.reviews.map((rev, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.75rem" }}>
-                <span>{rev.text}</span>
-                <button onClick={() => alert("Verification opened")} style={{ background: "none", border: "none", color: "#D9A928", fontWeight: 700, cursor: "pointer" }}>{rev.action}</button>
-              </div>
-            ))}
-          </div>
-
-          {/* Expiring Trials panel */}
-          <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.25rem" }}>
-            <h4 style={{ fontSize: "0.72rem", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.8px", margin: "0 0 0.75rem 0" }}>
-              Expiring Trials
-            </h4>
-            {sideRailItems.trials.map((tr, i) => (
-              <div key={i} style={{ fontSize: "0.75rem", color: "#6B7280" }}>
-                {tr.text}
-              </div>
-            ))}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.75rem" }}>
+              <span>WindForce Partners verification</span>
+              <button onClick={() => alert("Verification opened")} style={{ background: "none", border: "none", color: "#D9A928", fontWeight: 700, cursor: "pointer" }}>Review</button>
+            </div>
           </div>
 
         </div>
