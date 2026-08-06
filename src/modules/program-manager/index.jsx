@@ -6,6 +6,7 @@ import LearnersPage from './pages/LearnersPage';
 import SessionsPage from './pages/SessionsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import SettingsPage from './pages/SettingsPage';
+import ProgrammeTeamPage from './pages/ProgrammeTeamPage';
 
 class PMErrorBoundary extends Component {
   constructor(props) {
@@ -120,8 +121,16 @@ function ProgramManagerModuleInner({
             />
           </div>
         );
-      case 'Reports':
       case 'Team':
+        return (
+          <ProgrammeTeamPage 
+            user={user}
+            wsPrograms={wsPrograms}
+            wsTeam={wsTeam}
+            setWsPrograms={setWsPrograms}
+          />
+        );
+      case 'Reports':
       case 'Messages':
         return (
           <div style={{ padding: '3rem', fontFamily: "'Inter', sans-serif" }}>
