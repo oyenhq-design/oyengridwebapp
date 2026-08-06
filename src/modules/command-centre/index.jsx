@@ -6,16 +6,23 @@ import CommandCentreLayout from "./layouts/CommandCentreLayout";
 // Page component imports
 import DashboardPage from "./pages/DashboardPage";
 import OrganizationsPage from "./pages/OrganizationsPage";
-import UsersPage from "./pages/UsersPage";
-import BillingPage from "./pages/BillingPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import SupportPage from "./pages/SupportPage";
-import AIPage from "./pages/AIPage";
-import SecurityPage from "./pages/SecurityPage";
-import AuditLogsPage from "./pages/AuditLogsPage";
-import FeatureFlagsPage from "./pages/FeatureFlagsPage";
-import MaintenancePage from "./pages/MaintenancePage";
 import SettingsPage from "./pages/SettingsPage";
+
+// Dynamic placeholder for any unbuilt section
+const PlaceholderPage = ({ title }) => (
+  <div style={{ padding: "3rem" }}>
+    <h3 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#FFFFFF" }}>{title}</h3>
+    <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Platform Operations Cockpit</span>
+    <div style={{
+      border: "1px dashed #1E1E1E", borderRadius: "8px", padding: "4rem 2rem",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      textAlign: "center", backgroundColor: "#111111", gap: "0.5rem", marginTop: "1.5rem"
+    }}>
+      <h4 style={{ margin: 0, color: "#FFFFFF", fontWeight: 700, fontSize: "0.9rem" }}>No entries discovered</h4>
+      <p style={{ margin: 0, color: "#6B7280", fontSize: "0.78rem" }}>Database is currently empty. Initialize a setup record to populate the cockpit grid.</p>
+    </div>
+  </div>
+);
 
 export default function CommandCentreModule() {
   const [currentTab, setCurrentTab] = useState("Dashboard");
@@ -26,28 +33,10 @@ export default function CommandCentreModule() {
         return <DashboardPage />;
       case "Organizations":
         return <OrganizationsPage />;
-      case "Users":
-        return <UsersPage />;
-      case "Billing":
-        return <BillingPage />;
-      case "Analytics":
-        return <AnalyticsPage />;
-      case "Support":
-        return <SupportPage />;
-      case "AI":
-        return <AIPage />;
-      case "Security":
-        return <SecurityPage />;
-      case "AuditLogs":
-        return <AuditLogsPage />;
-      case "FeatureFlags":
-        return <FeatureFlagsPage />;
-      case "Maintenance":
-        return <MaintenancePage />;
       case "Settings":
         return <SettingsPage />;
       default:
-        return <DashboardPage />;
+        return <PlaceholderPage title={currentTab} />;
     }
   };
 
