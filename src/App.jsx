@@ -260,25 +260,22 @@ export default function App() {
     return [];
   }, [conversations, userRole, user, ownerEmail]);
 
-  // Search â€” Admin: filter by facilitator name/email; Facilitator: filter by message text
+  // Search — Search by peer name, role, email, or message history
   const filteredConversations = useMemo(() => {
     if (!chatSearch.trim()) return visibleConversations;
     const q = chatSearch.toLowerCase();
-    if (userRole === 'Facilitator') {
-      // Search within the single conversationâ€™s message history
-      return visibleConversations.filter(c =>
+    const selfId = userRole === 'Facilitator' ? user : (ownerEmail || 'admin@oyengrid.com');
+
+    return visibleConversations.filter(c => {
+      const peer = c.participants.find(p => p.userId.toLowerCase() !== selfId.toLowerCase()) || c.participants[0];
+      return (
+        peer.name.toLowerCase().includes(q) ||
+        peer.role.toLowerCase().includes(q) ||
+        (peer.email || '').toLowerCase().includes(q) ||
         c.messages.some(m => m.text.toLowerCase().includes(q))
       );
-    }
-    // Admin: search by facilitator name or email
-    return visibleConversations.filter(c => {
-      const facilitator = c.participants.find(p => p.role === 'Facilitator');
-      return (
-        facilitator?.name.toLowerCase().includes(q) ||
-        facilitator?.email.toLowerCase().includes(q)
-      );
     });
-  }, [visibleConversations, chatSearch, userRole]);
+  }, [visibleConversations, chatSearch, userRole, user, ownerEmail]);
 
   const displayPrograms = getProgramsForUser(user, userRole, wsPrograms);
   const displaySessions = getSessionsForUser(user, userRole, wsPrograms);
