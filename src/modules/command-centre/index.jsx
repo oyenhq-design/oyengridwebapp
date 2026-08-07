@@ -11,6 +11,7 @@ import UsersPage from "./pages/UsersPage";
 import SupportPage from "./pages/SupportPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import BillingPage from "./pages/BillingPage";
+import AIPage from "./pages/AIPage";
 import SettingsPage from "./pages/SettingsPage";
 
 // Dynamic placeholder for any unbuilt section
@@ -48,6 +49,8 @@ export default function CommandCentreModule() {
         return <AnalyticsPage />;
       case "Billing":
         return <BillingPage />;
+      case "AI":
+        return <AIPage />;
       case "Settings":
         return <SettingsPage />;
       default:
