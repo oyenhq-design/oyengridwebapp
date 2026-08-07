@@ -17,6 +17,7 @@ import SecurityPage from "./pages/SecurityPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import MaintenancePage from "./pages/MaintenancePage";
 import ReleasesPage from "./pages/ReleasesPage";
+import DeploymentsPage from "./pages/DeploymentsPage";
 import SettingsPage from "./pages/SettingsPage";
 
 // Dynamic placeholder for any unbuilt section
@@ -66,6 +67,8 @@ export default function CommandCentreModule() {
         return <MaintenancePage />;
       case "Releases":
         return <ReleasesPage />;
+      case "Deployments":
+        return <DeploymentsPage />;
       case "Settings":
         return <SettingsPage />;
       default:
