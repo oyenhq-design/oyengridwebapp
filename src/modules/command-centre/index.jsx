@@ -6,19 +6,20 @@ import CommandCentreLayout from "./layouts/CommandCentreLayout";
 // Page component imports
 import DashboardPage from "./pages/DashboardPage";
 import OrganizationsPage from "./pages/OrganizationsPage";
+import WorkspacesPage from "./pages/WorkspacesPage";
 import SettingsPage from "./pages/SettingsPage";
 
 // Dynamic placeholder for any unbuilt section
 const PlaceholderPage = ({ title }) => (
-  <div style={{ padding: "3rem" }}>
-    <h3 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#FFFFFF" }}>{title}</h3>
+  <div style={{ padding: "3rem", backgroundColor: "#F7F4ED", minHeight: "100%" }}>
+    <h3 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#1B1B1B" }}>{title}</h3>
     <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Platform Operations Cockpit</span>
     <div style={{
-      border: "1px dashed #1E1E1E", borderRadius: "8px", padding: "4rem 2rem",
+      border: "1px dashed #E6DED0", borderRadius: "8px", padding: "4rem 2rem",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      textAlign: "center", backgroundColor: "#111111", gap: "0.5rem", marginTop: "1.5rem"
+      textAlign: "center", backgroundColor: "#FCFBF8", gap: "0.5rem", marginTop: "1.5rem"
     }}>
-      <h4 style={{ margin: 0, color: "#FFFFFF", fontWeight: 700, fontSize: "0.9rem" }}>No entries discovered</h4>
+      <h4 style={{ margin: 0, color: "#1B1B1B", fontWeight: 700, fontSize: "0.9rem" }}>No entries discovered</h4>
       <p style={{ margin: 0, color: "#6B7280", fontSize: "0.78rem" }}>Database is currently empty. Initialize a setup record to populate the cockpit grid.</p>
     </div>
   </div>
@@ -33,6 +34,8 @@ export default function CommandCentreModule() {
         return <DashboardPage />;
       case "Organizations":
         return <OrganizationsPage />;
+      case "Workspaces":
+        return <WorkspacesPage />;
       case "Settings":
         return <SettingsPage />;
       default:
