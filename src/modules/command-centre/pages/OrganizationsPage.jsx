@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronLeft, ShieldAlert, Key, UserCheck, HardDrive, Settings, HelpCircle, Activity, Globe, Palette } from "lucide-react";
+import { Search, ChevronLeft, MoreHorizontal, Settings, ShieldAlert, Key, UserCheck, HardDrive, HelpCircle, Activity, LayoutGrid, Layers, Calendar, CreditCard, Shield } from "lucide-react";
 
 export default function OrganizationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
-  const [activeProfileId, setActiveProfileId] = useState(null); // When null: show list. Otherwise: show profile.
+  const [sortOption, setSortOption] = useState("Newest");
+  const [activeProfileId, setActiveProfileId] = useState(null);
   const [profileTab, setProfileTab] = useState("Overview");
   
   const [organizations, setOrganizations] = useState([]);
@@ -13,6 +14,8 @@ export default function OrganizationsPage() {
     team: [],
     learners: []
   });
+
+  const [activeMenuId, setActiveMenuId] = useState(null);
 
   const loadDatabase = () => {
     try {
@@ -39,7 +42,6 @@ export default function OrganizationsPage() {
       const totalSessions = programs.reduce((sum, p) => sum + (p.sessions || []).length, 0);
       const totalResources = programs.reduce((sum, p) => sum + (p.resources || []).length, 0);
 
-      // Compute dynamic health metrics
       const healthReason = [];
       if (isSuspended) {
         healthReason.push("⚠ Workspace is currently suspended");
@@ -58,17 +60,18 @@ export default function OrganizationsPage() {
         ownerEmail,
         plan: currentPlan,
         status: isSuspended ? "Suspended" : "Active",
-        users: String(team.length + learners.length),
-        programs: String(programs.length),
-        sessions: String(totalSessions),
-        resources: String(totalResources),
+        users: team.length + learners.length,
+        programs: programs.length,
+        sessions: totalSessions,
+        resources: totalResources,
         storageUsed: `${34 + totalResources * 2}MB`,
         storageLimit: currentPlan.includes("Enterprise") ? "50GB" : "10GB",
         created: "June 12, 2026",
         health: isSuspended ? "At Risk" : (totalSessions > 0 ? "Good" : "Warning"),
         healthReasons: healthReason,
         lastLogin: "Today, 10:14 AM",
-        lastActivity: "2 minutes ago"
+        lastActivity: "2 minutes ago",
+        logo: "⚡"
       };
 
       const voltPowerSuspended = localStorage.getItem("oyen_suspended_voltpower-ltd") === "true";
@@ -82,17 +85,18 @@ export default function OrganizationsPage() {
         ownerEmail: "sarah@voltpower.co",
         plan: voltPowerPlan,
         status: voltPowerSuspended ? "Suspended" : "Active",
-        users: "52",
-        programs: "2",
-        sessions: "12",
-        resources: "6",
+        users: 52,
+        programs: 2,
+        sessions: 12,
+        resources: 6,
         storageUsed: "1.2GB",
         storageLimit: voltPowerPlan.includes("Enterprise") ? "50GB" : "10GB",
         created: "March 12, 2026",
         health: voltPowerSuspended ? "At Risk" : "Good",
         healthReasons: voltPowerSuspended ? ["⚠ Workspace Suspended"] : ["✓ Workspace Active", "✓ Stable Revenue"],
         lastLogin: "Yesterday, 4:30 PM",
-        lastActivity: "1 day ago"
+        lastActivity: "1 day ago",
+        logo: "🔋"
       };
 
       setOrganizations([primaryOrg, secondaryOrg]);
@@ -112,12 +116,14 @@ export default function OrganizationsPage() {
     localStorage.setItem(`oyen_suspended_${org.slug}`, nextStatus);
     loadDatabase();
     window.dispatchEvent(new Event("storage"));
+    setActiveMenuId(null);
   };
 
   const handleUpdatePlan = (org, plan) => {
     localStorage.setItem(`oyen_plan_${org.slug}`, plan);
     loadDatabase();
     window.dispatchEvent(new Event("storage"));
+    setActiveMenuId(null);
   };
 
   const handleImpersonate = (org) => {
@@ -129,7 +135,15 @@ export default function OrganizationsPage() {
 
   const activeOrg = organizations.find(o => o.id === activeProfileId);
 
-  const filteredOrgs = organizations.filter(o => {
+  // Sorting logic
+  const sortedOrgs = [...organizations].sort((a, b) => {
+    if (sortOption === "Most Users") return b.users - a.users;
+    if (sortOption === "Newest") return new Date(b.created) - new Date(a.created);
+    if (sortOption === "Oldest") return new Date(a.created) - new Date(b.created);
+    return 0;
+  });
+
+  const filteredOrgs = sortedOrgs.filter(o => {
     const query = searchTerm.toLowerCase();
     const matchesSearch = o.name.toLowerCase().includes(query) ||
                           o.ownerEmail.toLowerCase().includes(query) ||
@@ -138,13 +152,37 @@ export default function OrganizationsPage() {
     if (activeFilter === "all") return matchesSearch;
     if (activeFilter === "Active") return matchesSearch && o.status === "Active";
     if (activeFilter === "Suspended") return matchesSearch && o.status === "Suspended";
+    if (activeFilter === "Trial") return matchesSearch && o.plan.toLowerCase().includes("trial");
+    if (activeFilter === "Enterprise") return matchesSearch && o.plan === "Enterprise";
+    if (activeFilter === "Pro") return matchesSearch && o.plan === "Pro";
     return matchesSearch;
   });
 
   // Render detail dashboard for organization profile
   if (activeOrg) {
+    // Sourced facilitators & participants lists
+    const facilitatorsList = activeOrg.slug === "voltpower-ltd" ? [
+      { name: "Donald West", email: "west@voltpower.co", role: "Facilitator", status: "Active", joined: "March 15, 2026", lastActive: "1 day ago" }
+    ] : rawState.team.filter(m => (m.role || "").toLowerCase().includes("facilitator")).map(m => ({
+      name: m.name || m.email.split("@")[0].toUpperCase(),
+      email: m.email,
+      role: "Facilitator",
+      status: "Active",
+      joined: "June 12, 2026",
+      lastActive: "Today"
+    }));
+
+    const participantsList = activeOrg.slug === "voltpower-ltd" ? [] : rawState.learners.map(m => ({
+      name: m.name || m.email.split("@")[0].toUpperCase(),
+      email: m.email,
+      role: "Learner",
+      status: "Active",
+      joined: "June 15, 2026",
+      lastActive: "Today"
+    }));
+
     return (
-      <div style={{ padding: "3rem", display: "flex", flexDirection: "column", gap: "2rem", boxSizing: "border-box" }}>
+      <div style={{ padding: "3rem", display: "flex", flexDirection: "column", gap: "2rem", boxSizing: "border-box", backgroundColor: "#F7F4ED", minHeight: "100%" }}>
         
         {/* Back Link */}
         <button 
@@ -152,14 +190,18 @@ export default function OrganizationsPage() {
           style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "none", border: "none", color: "#6B7280", fontSize: "0.78rem", cursor: "pointer", fontWeight: 700, padding: 0 }}
         >
           <ChevronLeft size={14} />
-          <span>Back to Organizations</span>
+          <span>Back to Tenant Registry</span>
         </button>
 
         {/* Profile Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #E6DED0", paddingBottom: "1.5rem" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <h3 style={{ fontSize: "1.5rem", fontWeight: 800, margin: 0, color: "#1B1B1B", fontFamily: "'Outfit', sans-serif" }}>{activeOrg.name}</h3>
+              <div style={{ fontSize: "2rem" }}>{activeOrg.logo}</div>
+              <div>
+                <h3 style={{ fontSize: "1.5rem", fontWeight: 800, margin: 0, color: "#1B1B1B", fontFamily: "'Outfit', sans-serif" }}>{activeOrg.name}</h3>
+                <span style={{ fontSize: "0.72rem", color: "#6B7280", fontFamily: "monospace" }}>{activeOrg.slug}</span>
+              </div>
               <span style={{ fontSize: "0.68rem", fontWeight: 800, backgroundColor: "#FFF7E4", border: "1px solid #E6DED0", color: "#D9A928", padding: "0.15rem 0.45rem", borderRadius: "4px" }}>
                 {activeOrg.plan}
               </span>
@@ -180,14 +222,14 @@ export default function OrganizationsPage() {
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             
             {/* Tabs List */}
-            <div style={{ display: "flex", gap: "1.25rem", borderBottom: "1px solid #E6DED0", fontSize: "0.82rem" }}>
-              {["Overview", "Users", "Programs", "Sessions", "Resources", "Activity", "Security", "Settings"].map(tab => (
+            <div style={{ display: "flex", gap: "1.25rem", borderBottom: "1px solid #E6DED0", fontSize: "0.82rem", overflowX: "auto", paddingBottom: "0.25rem" }}>
+              {["Overview", "Users", "Programs", "Facilitators", "Participants", "Billing", "Storage", "AI Usage", "Activity", "Audit Logs", "Security", "Settings"].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setProfileTab(tab)}
                   style={{
                     background: "none", border: "none", cursor: "pointer", fontWeight: profileTab === tab ? 700 : 500,
-                    color: profileTab === tab ? "#1B1B1B" : "#6B7280", paddingBottom: "0.5rem",
+                    color: profileTab === tab ? "#1B1B1B" : "#6B7280", paddingBottom: "0.5rem", whiteSpace: "nowrap",
                     borderBottom: profileTab === tab ? "2px solid #D9A928" : "none"
                   }}
                 >
@@ -320,15 +362,83 @@ export default function OrganizationsPage() {
                 </div>
               )}
 
-              {profileTab === "Sessions" && (
-                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", fontSize: "0.8rem", color: "#6B7280", textAlign: "center" }}>
-                  {activeOrg.sessions === "0" ? "No sessions created yet. Instruct the administrator to schedule a session." : `Ecosystem supports ${activeOrg.sessions} scheduled sessions.`}
+              {profileTab === "Facilitators" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.8rem" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#F7F4ED", borderBottom: "1px solid #E6DED0" }}>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>FACILITATOR</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>EMAIL</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>JOINED</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {facilitatorsList.map((fac, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid #E6DED0" }}>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: 700 }}>{fac.name}</td>
+                          <td style={{ padding: "0.75rem 1rem" }}>{fac.email}</td>
+                          <td style={{ padding: "0.75rem 1rem" }}>{fac.joined}</td>
+                        </tr>
+                      ))}
+                      {facilitatorsList.length === 0 && (
+                        <tr>
+                          <td colSpan={3} style={{ padding: "1.5rem", textAlign: "center", color: "#6B7280" }}>No facilitators registered.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               )}
 
-              {profileTab === "Resources" && (
-                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", fontSize: "0.8rem", color: "#6B7280", textAlign: "center" }}>
-                  {activeOrg.resources === "0" ? "No resource documents uploaded yet." : `Ecosystem stores ${activeOrg.resources} documents.`}
+              {profileTab === "Participants" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.8rem" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#F7F4ED", borderBottom: "1px solid #E6DED0" }}>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>PARTICIPANT</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>EMAIL</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>JOINED</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {participantsList.map((part, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid #E6DED0" }}>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: 700 }}>{part.name}</td>
+                          <td style={{ padding: "0.75rem 1rem" }}>{part.email}</td>
+                          <td style={{ padding: "0.75rem 1rem" }}>{part.joined}</td>
+                        </tr>
+                      ))}
+                      {participantsList.length === 0 && (
+                        <tr>
+                          <td colSpan={3} style={{ padding: "1.5rem", textAlign: "center", color: "#6B7280" }}>No participants registered.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {profileTab === "Billing" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "2rem", textAlign: "center", color: "#6B7280" }}>
+                  <CreditCard size={24} style={{ marginBottom: "0.5rem" }} />
+                  <p style={{ margin: 0, fontSize: "0.8rem" }}>No billing records available yet.</p>
+                </div>
+              )}
+
+              {profileTab === "Storage" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", fontSize: "0.8rem" }}>
+                  <div>Total Used: <strong>{activeOrg.storageUsed}</strong></div>
+                  <div>Allocated Quota: <strong>{activeOrg.storageLimit}</strong></div>
+                  <div style={{ borderTop: "1px solid #E6DED0", paddingTop: "0.75rem", color: "#6B7280" }}>
+                    No large video or recording files located.
+                  </div>
+                </div>
+              )}
+
+              {profileTab === "AI Usage" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "2rem", textAlign: "center", color: "#6B7280" }}>
+                  <Cpu size={24} style={{ marginBottom: "0.5rem" }} />
+                  <p style={{ margin: 0, fontSize: "0.8rem" }}>No AI usage logs detected today.</p>
                 </div>
               )}
 
@@ -338,7 +448,7 @@ export default function OrganizationsPage() {
                     { time: "09:21", action: `John created program in ${activeOrg.name}`, meta: "Audit Log" },
                     { time: "09:34", action: "Facilitator uploaded slides document", meta: "Audit Log" }
                   ].map((act, i) => (
-                    <div key={i} style={{ padding: "0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", fontSize: "0.8rem", display: "flex", justifySpace: "between", justifyContent: "space-between" }}>
+                    <div key={i} style={{ padding: "0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", fontSize: "0.8rem", display: "flex", justifyContent: "space-between" }}>
                       <span>{act.time} - <strong>{act.action}</strong></span>
                       <span style={{ color: "#6B7280" }}>{act.meta}</span>
                     </div>
@@ -346,9 +456,30 @@ export default function OrganizationsPage() {
                 </div>
               )}
 
+              {profileTab === "Audit Logs" && (
+                <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.78rem" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#F7F4ED", borderBottom: "1px solid #E6DED0" }}>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>OPERATOR</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>ACTION</th>
+                        <th style={{ padding: "0.75rem 1rem", color: "#6B7280" }}>IP ADDRESS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style={{ borderBottom: "1px solid #E6DED0" }}>
+                        <td style={{ padding: "0.75rem 1rem" }}>John David</td>
+                        <td style={{ padding: "0.75rem 1rem" }}>Workspace Settings Update</td>
+                        <td style={{ padding: "0.75rem 1rem", fontFamily: "monospace" }}>192.168.1.42</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               {profileTab === "Security" && (
                 <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", fontSize: "0.8rem" }}>
-                  <div>API Access Tokens: <strong>No tokens configured</strong></div>
+                  <div>API Access Tokens: <strong>No active tokens configured</strong></div>
                   <div>2FA Status: <strong>Disabled</strong></div>
                   <div>Recent Logins: <strong>1 active session (Mozilla/Mac OS X)</strong></div>
                 </div>
@@ -357,12 +488,12 @@ export default function OrganizationsPage() {
               {profileTab === "Settings" && (
                 <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem", fontSize: "0.8rem" }}>
                   <div>
-                    <strong style={{ display: "block", marginBottom: "0.25rem" }}>Brand Identity Color</strong>
+                    <strong style={{ display: "block", marginBottom: "0.25rem" }}>Branding Settings</strong>
                     <input type="color" defaultValue="#D9A928" style={{ border: "1px solid #E6DED0", cursor: "pointer" }} />
                   </div>
                   <div>
-                    <strong>Workspace Visibility</strong>
-                    <p style={{ margin: "0.15rem 0 0 0", color: "#6B7280" }}>Visible to all organization email domains.</p>
+                    <strong>Allowed Domains</strong>
+                    <p style={{ margin: "0.15rem 0 0 0", color: "#6B7280" }}>Restricted to matching emails domains.</p>
                   </div>
                 </div>
               )}
@@ -379,11 +510,7 @@ export default function OrganizationsPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               
               <button 
-                onClick={() => {
-                  localStorage.setItem("oyen_impersonating", "true");
-                  localStorage.setItem("oyen_impersonated_org", activeOrg.name);
-                  window.location.href = "/";
-                }}
+                onClick={() => handleImpersonate(activeOrg)}
                 style={{
                   width: "100%", padding: "0.6rem 0.85rem", border: "1px solid #E6DED0", borderRadius: "6px",
                   backgroundColor: "#F7F4ED", color: "#1B1B1B", fontSize: "0.78rem", fontWeight: 700,
@@ -458,83 +585,117 @@ export default function OrganizationsPage() {
   }
 
   return (
-    <div style={{ padding: "3rem", display: "flex", flexDirection: "column", gap: "2rem", boxSizing: "border-box" }}>
+    <div style={{ padding: "3rem", display: "flex", flexDirection: "column", gap: "2rem", boxSizing: "border-box", backgroundColor: "#F7F4ED", minHeight: "100%" }}>
       
-      {/* List Header */}
+      {/* Header */}
       <div>
         <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#1B1B1B", fontFamily: "'Outfit', sans-serif" }}>Organizations</h3>
         <span style={{ fontSize: "0.75rem", color: "#6B7280" }}>Manage every organization running on OYEN.</span>
       </div>
 
-      {/* Stats summary strip */}
-      <div style={{ display: "flex", gap: "1rem", fontSize: "0.78rem", color: "#6B7280" }}>
-        <span><strong>{organizations.length}</strong> Organizations</span> •
-        <span><strong>{organizations.filter(o => o.status === "Active").length}</strong> Active</span> •
-        <span><strong>{organizations.filter(o => o.status === "Suspended").length}</strong> Suspended</span>
+      {/* Summary Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "1rem" }}>
+        <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", padding: "1.25rem", borderRadius: "8px" }}>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Organizations</span>
+          <h4 style={{ fontSize: "1.5rem", margin: "0.25rem 0 0 0", fontWeight: 800 }}>{organizations.length}</h4>
+        </div>
+        <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", padding: "1.25rem", borderRadius: "8px" }}>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Active</span>
+          <h4 style={{ fontSize: "1.5rem", margin: "0.25rem 0 0 0", fontWeight: 800, color: "#18B67A" }}>
+            {organizations.filter(o => o.status === "Active").length}
+          </h4>
+        </div>
+        <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", padding: "1.25rem", borderRadius: "8px" }}>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Trial</span>
+          <h4 style={{ fontSize: "1.5rem", margin: "0.25rem 0 0 0", fontWeight: 800 }}>
+            {organizations.filter(o => o.plan.toLowerCase().includes("trial")).length}
+          </h4>
+        </div>
+        <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", padding: "1.25rem", borderRadius: "8px" }}>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Suspended</span>
+          <h4 style={{ fontSize: "1.5rem", margin: "0.25rem 0 0 0", fontWeight: 800, color: "#E15D5D" }}>
+            {organizations.filter(o => o.status === "Suspended").length}
+          </h4>
+        </div>
+        <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", padding: "1.25rem", borderRadius: "8px" }}>
+          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Needs Review</span>
+          <h4 style={{ fontSize: "1.5rem", margin: "0.25rem 0 0 0", fontWeight: 800, color: "#D9A928" }}>0</h4>
+        </div>
       </div>
 
-      {/* Search and Filters */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {/* Action Bar controls */}
+      <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
         
         {/* Search */}
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", flex: 1 }}>
           <Search size={14} color="#6B7280" style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)" }} />
           <input 
             type="text" 
-            placeholder="Search organizations by name, slug or owner..." 
+            placeholder="Search organizations, owner, subscription slug..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             style={{ width: "100%", padding: "0.5rem 0.75rem 0.5rem 2.25rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#FCFBF8", color: "#1B1B1B", fontSize: "0.8rem", outline: "none", boxSizing: "border-box" }}
           />
         </div>
 
-        {/* Filter triggers */}
-        <div style={{ display: "flex", gap: "1rem", fontSize: "0.78rem" }}>
-          {[
-            { id: "all", label: "All" },
-            { id: "Active", label: "Active" },
-            { id: "Suspended", label: "Suspended" }
-          ].map(tab => (
+        {/* Filters */}
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          {["all", "Active", "Suspended", "Trial", "Enterprise"].map(tab => (
             <button
-              key={tab.id}
-              onClick={() => setActiveFilter(tab.id)}
+              key={tab}
+              onClick={() => setActiveFilter(tab)}
               style={{
-                border: "none", background: "none", cursor: "pointer", fontWeight: activeFilter === tab.id ? 700 : 500,
-                color: activeFilter === tab.id ? "#1B1B1B" : "#6B7280", paddingBottom: "0.25rem",
-                borderBottom: activeFilter === tab.id ? "2px solid #D9A928" : "none"
+                border: "1px solid #E6DED0", borderRadius: "6px", fontSize: "0.78rem",
+                padding: "0.45rem 0.85rem", cursor: "pointer",
+                backgroundColor: activeFilter === tab ? "#D9A928" : "#FCFBF8",
+                color: activeFilter === tab ? "#FFFFFF" : "#1B1B1B", fontWeight: 700
               }}
             >
-              {tab.label}
+              {tab}
             </button>
           ))}
         </div>
 
+        {/* Sorting Dropdown */}
+        <select 
+          value={sortOption}
+          onChange={e => setSortOption(e.target.value)}
+          style={{ border: "1px solid #E6DED0", padding: "0.45rem 0.85rem", borderRadius: "6px", fontSize: "0.78rem", backgroundColor: "#FCFBF8", outline: "none" }}
+        >
+          <option>Newest</option>
+          <option>Oldest</option>
+          <option>Most Users</option>
+        </select>
       </div>
 
-      {/* Organizations Listing Grid Table */}
-      <div style={{ border: "1px solid #E6DED0", borderRadius: "8px", overflow: "hidden", backgroundColor: "#FCFBF8" }}>
+      {/* Main Table Grid */}
+      <div style={{ border: "1px solid #E6DED0", borderRadius: "8px", overflow: "visible", backgroundColor: "#FCFBF8", position: "relative" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.8rem" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #E6DED0", backgroundColor: "#F7F4ED" }}>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>ORGANIZATION</th>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>OWNER</th>
-              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>PLAN</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>WORKSPACE</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>SUBSCRIPTION</th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>STATUS</th>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>USERS</th>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>PROGRAMS</th>
               <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>STORAGE</th>
-              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>STATUS</th>
-              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}></th>
+              <th style={{ padding: "0.85rem 1.25rem", color: "#6B7280", fontWeight: 700 }}>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {filteredOrgs.map((org, index) => (
               <tr key={index} style={{ borderBottom: "1px solid #E6DED0" }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#FFF7E4"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
-                <td style={{ padding: "1.1rem 1.25rem", fontWeight: 700, color: "#1B1B1B" }}>{org.name}</td>
+                <td style={{ padding: "1.1rem 1.25rem", fontWeight: 700, color: "#1B1B1B" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <span>{org.logo}</span>
+                    <span>{org.name}</span>
+                  </div>
+                </td>
                 <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.ownerEmail}</td>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280", fontFamily: "monospace" }}>{org.slug}</td>
                 <td style={{ padding: "1.1rem 1.25rem", color: "#1B1B1B", fontWeight: 600 }}>{org.plan}</td>
-                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.users}</td>
-                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.programs}</td>
-                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.storageUsed}</td>
                 <td style={{ padding: "1.1rem 1.25rem" }}>
                   <span style={{
                     fontSize: "0.68rem", fontWeight: 800, padding: "0.15rem 0.45rem", borderRadius: "4px",
@@ -544,16 +705,61 @@ export default function OrganizationsPage() {
                     {org.status}
                   </span>
                 </td>
-                <td style={{ padding: "1.1rem 1.25rem", textAlign: "right" }}>
-                  <button 
-                    onClick={() => {
-                      setActiveProfileId(org.id);
-                      setProfileTab("Overview");
-                    }}
-                    style={{ background: "none", border: "none", color: "#D9A928", fontSize: "0.78rem", cursor: "pointer", fontWeight: 700 }}
-                  >
-                    Open
-                  </button>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.users}</td>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.programs}</td>
+                <td style={{ padding: "1.1rem 1.25rem", color: "#6B7280" }}>{org.storageUsed} / {org.storageLimit}</td>
+                <td style={{ padding: "1.1rem 1.25rem", textAlign: "right", position: "relative" }}>
+                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                    <button 
+                      onClick={() => {
+                        setActiveProfileId(org.id);
+                        setProfileTab("Overview");
+                      }}
+                      style={{ border: "none", background: "none", color: "#D9A928", fontSize: "0.78rem", cursor: "pointer", fontWeight: 700 }}
+                    >
+                      Open
+                    </button>
+                    <button 
+                      onClick={() => setActiveMenuId(activeMenuId === org.id ? null : org.id)}
+                      style={{ border: "none", background: "none", color: "#6B7280", cursor: "pointer" }}
+                    >
+                      <MoreHorizontal size={14} />
+                    </button>
+
+                    {activeMenuId === org.id && (
+                      <div style={{
+                        position: "absolute", top: "30px", right: "1.25rem", width: "180px",
+                        backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "6px",
+                        boxShadow: "0 10px 25px rgba(0,0,0,0.05)", zIndex: 100, padding: "0.25rem",
+                        display: "flex", flexDirection: "column", textAlign: "left"
+                      }}>
+                        <button 
+                          onClick={() => { setActiveProfileId(org.id); setProfileTab("Overview"); setActiveMenuId(null); }}
+                          style={{ border: "none", background: "none", color: "#1B1B1B", fontSize: "0.75rem", padding: "0.5rem 0.75rem", textAlign: "left", cursor: "pointer", borderRadius: "4px" }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = "#FFF7E4"}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                        >
+                          Open Profile
+                        </button>
+                        <button 
+                          onClick={() => handleImpersonate(org)}
+                          style={{ border: "none", background: "none", color: "#1B1B1B", fontSize: "0.75rem", padding: "0.5rem 0.75rem", textAlign: "left", cursor: "pointer", borderRadius: "4px" }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = "#FFF7E4"}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                        >
+                          Impersonate Owner
+                        </button>
+                        <button 
+                          onClick={() => handleToggleSuspend(org)}
+                          style={{ border: "none", background: "none", color: org.status === "Active" ? "#E15D5D" : "#18B67A", fontSize: "0.75rem", padding: "0.5rem 0.75rem", textAlign: "left", cursor: "pointer", borderRadius: "4px" }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = "#FFF7E4"}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                        >
+                          {org.status === "Active" ? "Suspend Workspace" : "Unsuspend Workspace"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
