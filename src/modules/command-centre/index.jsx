@@ -10,6 +10,7 @@ import WorkspacesPage from "./pages/WorkspacesPage";
 import UsersPage from "./pages/UsersPage";
 import SupportPage from "./pages/SupportPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
 
 // Dynamic placeholder for any unbuilt section
@@ -45,6 +46,8 @@ export default function CommandCentreModule() {
         return <SupportPage />;
       case "Analytics":
         return <AnalyticsPage />;
+      case "Billing":
+        return <BillingPage />;
       case "Settings":
         return <SettingsPage />;
       default:
