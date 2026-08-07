@@ -19,8 +19,14 @@ import MaintenancePage from "./pages/MaintenancePage";
 import ReleasesPage from "./pages/ReleasesPage";
 import DeploymentsPage from "./pages/DeploymentsPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
-import TeamPage from "./pages/TeamPage";
-import CompanyPage from "./pages/CompanyPage";
+
+// Company subpages refactoring
+import OrganizationPage from "./pages/company/OrganizationPage";
+import TeamPage from "./pages/company/TeamPage";
+import DepartmentsPage from "./pages/company/DepartmentsPage";
+import RolesPage from "./pages/company/RolesPage";
+import PermissionsPage from "./pages/company/PermissionsPage";
+
 import SettingsPage from "./pages/SettingsPage";
 
 // Dynamic placeholder for any unbuilt section
@@ -74,10 +80,16 @@ export default function CommandCentreModule() {
         return <DeploymentsPage />;
       case "Experiments":
         return <ExperimentsPage />;
+      case "Organization":
+        return <OrganizationPage />;
       case "Team":
         return <TeamPage />;
-      case "Company":
-        return <CompanyPage />;
+      case "Departments":
+        return <DepartmentsPage />;
+      case "Roles":
+        return <RolesPage />;
+      case "Permissions":
+        return <PermissionsPage />;
       case "Settings":
         return <SettingsPage />;
       default:

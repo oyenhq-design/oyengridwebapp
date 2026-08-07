@@ -80,7 +80,11 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
       id: "Company",
       title: "Company",
       items: [
+        { id: "Organization", label: "Organization" },
         { id: "Team", label: "Team" },
+        { id: "Departments", label: "Departments" },
+        { id: "Roles", label: "Roles" },
+        { id: "Permissions", label: "Permissions" },
         { id: "APIKeys", label: "API Keys" },
         { id: "Settings", label: "Settings" }
       ]
