@@ -8,6 +8,7 @@ import DashboardPage from "./pages/DashboardPage";
 import OrganizationsPage from "./pages/OrganizationsPage";
 import WorkspacesPage from "./pages/WorkspacesPage";
 import UsersPage from "./pages/UsersPage";
+import SupportPage from "./pages/SupportPage";
 import SettingsPage from "./pages/SettingsPage";
 
 // Dynamic placeholder for any unbuilt section
@@ -39,6 +40,8 @@ export default function CommandCentreModule() {
         return <WorkspacesPage />;
       case "Users":
         return <UsersPage />;
+      case "Support":
+        return <SupportPage />;
       case "Settings":
         return <SettingsPage />;
       default:
