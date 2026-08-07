@@ -1,23 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { PermissionService } from "../../../../core/permissions/PermissionService";
 
 export default function PermissionsPage() {
   const [permissions, setPermissions] = useState({});
 
-  const loadDatabase = () => {
-    try {
-      setPermissions({
-        "Organizations": ["Read", "Create", "Manage Settings"],
-        "Workspaces": ["Read", "Archive", "Override Limits"],
-        "Security": ["Read SOC", "Terminate Session", "IP Block"],
-        "Deployments": ["Trigger Build", "Rollback Release"]
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    loadDatabase();
+    setPermissions(PermissionService.getPermissionsMatrix());
   }, []);
 
   return (

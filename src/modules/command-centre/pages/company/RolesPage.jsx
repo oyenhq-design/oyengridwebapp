@@ -1,22 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { PermissionService } from "../../../../core/permissions/PermissionService";
 
 export default function RolesPage() {
   const [roles, setRoles] = useState([]);
 
-  const loadDatabase = () => {
-    try {
-      setRoles([
-        { name: "Platform Founder", desc: "Permanent system admin role. Access to all operational parameters.", modules: "All Modules" },
-        { name: "Engineering Lead", desc: "Manages deployments, releases, and feature flags.", modules: "DevOps, Releases, Flags" },
-        { name: "Product Manager", desc: "Evaluates experiments and target flags.", modules: "Experiments, Flags" }
-      ]);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    loadDatabase();
+    setRoles(PermissionService.getRoles());
   }, []);
 
   return (

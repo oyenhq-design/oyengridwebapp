@@ -1,61 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
+import { CompanyService } from "../../../../core/company/CompanyService";
 
 export default function TeamPage() {
   const [activeEmployeeId, setActiveEmployeeId] = useState(null);
   const [employeeSubTab, setEmployeeSubTab] = useState("Overview");
   const [employees, setEmployees] = useState([]);
 
-  const loadDatabase = () => {
-    try {
-      const ownerEmail = localStorage.getItem("oyen_owner_email") || "owner@oyengrid.com";
-      const ownerFirstName = localStorage.getItem("oyen_owner_first_name") || "Shola";
-      const ownerLastName = localStorage.getItem("oyen_owner_last_name") || "Oyewole";
-
-      const emp1 = {
-        id: "emp_01",
-        name: `${ownerFirstName} ${ownerLastName}`,
-        email: ownerEmail,
-        title: "Founder & CEO",
-        dept: "Leadership",
-        role: "Platform Founder",
-        manager: "Board of Directors",
-        type: "Full-time",
-        joined: "June 12, 2026",
-        status: "Active",
-        phone: "+234 809 123 4567",
-        ownership: ["Platform", "Security", "Deployments", "Releases"],
-        activity: ["Created Organization", "Approved Deployment v2.1.0"],
-        device: { browser: "Chrome v120", os: "macOS", location: "Lagos, Nigeria", ip: "197.210.64.12" },
-        security: { mfa: "Enabled", recovery: "recovery@oyengrid.com" }
-      };
-
-      const emp2 = {
-        id: "emp_02",
-        name: "Temi Alao",
-        email: "temi@oyengrid.com",
-        title: "Co-Founder & CTO",
-        dept: "Engineering",
-        role: "Engineering Lead",
-        manager: `${ownerFirstName} ${ownerLastName}`,
-        type: "Full-time",
-        joined: "June 15, 2026",
-        status: "Active",
-        phone: "+234 809 987 6543",
-        ownership: ["AI Command", "FeatureFlags", "Infrastructure"],
-        activity: ["Approved Deployment v2.0.0"],
-        device: { browser: "Firefox v119", os: "Linux", location: "Remote, Nigeria", ip: "192.168.1.1" },
-        security: { mfa: "Enabled", recovery: "recovery-temi@oyengrid.com" }
-      };
-
-      setEmployees([emp1, emp2]);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    loadDatabase();
+    setEmployees(CompanyService.getEmployees());
   }, []);
 
   const activeEmp = employees.find(e => e.id === activeEmployeeId);

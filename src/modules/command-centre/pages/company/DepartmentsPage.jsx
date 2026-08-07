@@ -1,32 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { CompanyService } from "../../../../core/company/CompanyService";
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
 
-  const loadDatabase = () => {
-    try {
-      const ownerFirstName = localStorage.getItem("oyen_owner_first_name") || "Shola";
-      const ownerLastName = localStorage.getItem("oyen_owner_last_name") || "Oyewole";
-
-      setDepartments([
-        { name: "Leadership", manager: `${ownerFirstName} ${ownerLastName}`, count: 1 },
-        { name: "Engineering", manager: "Temi Alao", count: 1 },
-        { name: "Product", manager: "None Assigned", count: 0 },
-        { name: "Operations", manager: "None Assigned", count: 0 },
-        { name: "Support", manager: "None Assigned", count: 0 },
-        { name: "Finance", manager: "None Assigned", count: 0 },
-        { name: "AI", manager: "None Assigned", count: 0 },
-        { name: "Marketing", manager: "None Assigned", count: 0 },
-        { name: "Legal", manager: "None Assigned", count: 0 },
-        { name: "HR", manager: "None Assigned", count: 0 }
-      ]);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    loadDatabase();
+    const emps = CompanyService.getEmployees();
+    setDepartments(CompanyService.getDepartments(emps));
   }, []);
 
   return (
