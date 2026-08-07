@@ -20,6 +20,7 @@ import ReleasesPage from "./pages/ReleasesPage";
 import DeploymentsPage from "./pages/DeploymentsPage";
 import ExperimentsPage from "./pages/ExperimentsPage";
 import TeamPage from "./pages/TeamPage";
+import CompanyPage from "./pages/CompanyPage";
 import SettingsPage from "./pages/SettingsPage";
 
 // Dynamic placeholder for any unbuilt section
@@ -75,6 +76,8 @@ export default function CommandCentreModule() {
         return <ExperimentsPage />;
       case "Team":
         return <TeamPage />;
+      case "Company":
+        return <CompanyPage />;
       case "Settings":
         return <SettingsPage />;
       default:
