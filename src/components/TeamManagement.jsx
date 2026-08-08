@@ -405,10 +405,13 @@ export default function TeamManagement({ members, setMembers, pending: propsPend
     const activeEmails = new Set(members.map(m => m.email?.toLowerCase()));
     
     members.forEach((m, idx) => {
-      list.push({ ...m, type: 'active', originalIndex: idx });
+      // Participants should never appear under Workspace Team (Admins / Facilitators)
+      if (m.role !== 'Participant' && m.role !== 'Learner') {
+        list.push({ ...m, type: 'active', originalIndex: idx });
+      }
     });
     pending.forEach((p, idx) => {
-      if (!p.used && !activeEmails.has(p.email?.toLowerCase())) {
+      if (!p.used && !activeEmails.has(p.email?.toLowerCase()) && p.role !== 'Participant' && p.role !== 'Learner') {
         list.push({ ...p, type: 'pending', originalIndex: idx, name: p.name || p.email, status: 'Pending' });
       }
     });

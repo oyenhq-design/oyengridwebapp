@@ -154,7 +154,8 @@ export default function App() {
   const [wsTeam, setWsTeam]         = useState(() => {
     try {
       const saved = localStorage.getItem('oyen_ws_team');
-      return saved ? JSON.parse(saved) : [];
+      const list = saved ? JSON.parse(saved) : [];
+      return list.filter(m => (m.email || '').toLowerCase() !== 'blessing@gmail.com');
     } catch (e) {
       return [];
     }
@@ -632,7 +633,7 @@ export default function App() {
     return {
       fullName: user.split('@')[0],
       initials: (user?.[0] || 'U').toUpperCase(),
-      role: userRole || 'Workspace Facilitator',
+      role: userRole || 'Learner',
       email: user,
       photo: null,
       phone: '',
