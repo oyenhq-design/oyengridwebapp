@@ -31,7 +31,6 @@ export default function ParticipantLayout({ user, wsPrograms, wsLearners = [], o
       case 'dashboard':
         return <Dashboard setActiveTab={setActiveTab} user={user} wsPrograms={wsPrograms} wsLearners={wsLearners} />;
       case 'programme':
-        return <MyProgramme user={user} wsPrograms={wsPrograms} wsLearners={wsLearners} />;
       case 'learning':
         return <Learning user={user} wsPrograms={wsPrograms} wsLearners={wsLearners} />;
       case 'sessions':
@@ -62,7 +61,7 @@ export default function ParticipantLayout({ user, wsPrograms, wsLearners = [], o
   };
 
   return (
-    <div className="flex h-screen bg-[#07090e] text-slate-100 font-sans antialiased overflow-hidden selection:bg-amber-400 selection:text-slate-950">
+    <div className="flex h-screen bg-[#FAFAF7] text-slate-900 font-sans antialiased overflow-hidden selection:bg-amber-400 selection:text-slate-950">
       <ParticipantSidebar activeTab={activeTab} setActiveTab={setActiveTab} onSignOut={onSignOut} userName={learnerName} />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto custom-scrollbar">
         <ParticipantHeader activeTab={activeTab} setActiveTab={setActiveTab} userName={learnerName} />

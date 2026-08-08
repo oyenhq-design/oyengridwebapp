@@ -3,7 +3,7 @@ import {
   Play, Calendar, Clock, FileCheck, ArrowRight, Sparkles, 
   CheckCircle2, BookOpen, AlertCircle, Award, Video, Megaphone,
   Check, Search, History, ChevronRight, GraduationCap, MessageSquare,
-  HelpCircle, Download
+  HelpCircle, Users
 } from 'lucide-react';
 import { 
   getLearnerProgrammeData, 
@@ -28,218 +28,151 @@ export default function Dashboard({ setActiveTab, user, wsPrograms, wsLearners }
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-10 animate-in fade-in duration-200">
+    <div className="p-8 max-w-4xl mx-auto space-y-10 animate-in fade-in duration-200 selection:bg-amber-200">
       
-      {/* 1. Immersive Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-1">
-              ✨ {programme.name}
+      {/* 1. Serene Hero Section */}
+      <div className="space-y-4 pt-2">
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+          Good Morning, {programme.learnerName} 👋
+        </h1>
+        <p className="text-base text-slate-600 font-medium">
+          Ready for today's session?
+        </p>
+
+        {/* Featured Continue Learning Card */}
+        <div className="p-7 rounded-3xl bg-white border border-[#E5E5DF] shadow-sm space-y-4 hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              Continue Learning • Week {programme.currentWeek}
             </span>
-            <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight">
-              Good Morning, {programme.learnerName} 👋
-            </h1>
-            <p className="text-sm text-slate-400 mt-1 font-medium">
-              You're making great progress in your bootcamp.
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Design Systems</h2>
+            <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+              Master cohesive component libraries, design tokens, typography scales, and auto-layout systems in Figma.
             </p>
           </div>
 
           <button
             onClick={() => setActiveTab('learning')}
-            className="px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center gap-2 transition-all shadow-lg shadow-amber-400/10 shrink-0 self-start md:self-center"
+            className="px-6 py-3 rounded-2xl bg-[#F5D76E] hover:bg-[#eacb5e] text-slate-950 font-extrabold text-xs inline-flex items-center gap-2 transition-all shadow-sm"
           >
-            <Play size={14} className="fill-current" /> Continue Learning →
-          </button>
-        </div>
-
-        {/* Hero Progress Bar */}
-        <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-300 font-bold">Week {programme.currentWeek} of {programme.totalWeeks}</span>
-            <span className="text-amber-400 font-extrabold">{programme.progress}% Complete</span>
-          </div>
-          <div className="w-full h-3 rounded-full bg-slate-800 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${programme.progress}%` }}></div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Large Featured Card — Continue Learning */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <BookOpen size={15} className="text-amber-400" /> Continue Learning
-        </h3>
-
-        <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-amber-400 font-bold uppercase tracking-wider">Week 4 • Active Module</span>
-            <span className="px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 text-xs font-bold">65% Complete</span>
-          </div>
-
-          <h2 className="text-2xl font-extrabold text-slate-100">Design Systems & Component Tokens</h2>
-          <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
-            Master cohesive component libraries, design tokens, typography scales, and auto-layout systems in Figma.
-          </p>
-
-          <button
-            onClick={() => setActiveTab('learning')}
-            className="px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs inline-flex items-center gap-2 transition-all shadow-md shadow-amber-400/10"
-          >
-            Resume Lesson →
+            Resume Learning →
           </button>
         </div>
       </div>
 
-      {/* 3. Today's Actionable Goal Checklist */}
+      {/* 2. Today's Focus Checklist */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <CheckCircle2 size={15} className="text-amber-400" /> Today's Goal
+          <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+            Today's Focus
           </h3>
-          <span className="text-xs text-slate-500 font-bold">Estimated Time: {goalsData.estimatedTime}</span>
+          <span className="text-xs text-slate-500 font-semibold">{goalsData.estimatedTime}</span>
         </div>
 
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-3 shadow-xl">
+        <div className="p-6 rounded-3xl bg-white border border-[#E5E5DF] space-y-3 shadow-sm">
           {goals.map(goal => (
             <div
               key={goal.id}
               onClick={() => toggleGoal(goal.id)}
-              className={`p-4 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all ${
+              className={`p-3.5 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all ${
                 goal.completed 
-                  ? 'bg-slate-950/40 border-slate-800/60 text-slate-500 line-through' 
-                  : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-amber-400/30'
+                  ? 'bg-slate-50 border-slate-200 text-slate-400 line-through' 
+                  : 'bg-white border-[#E5E5DF] text-slate-800 hover:border-slate-300'
               }`}
             >
               <div className={`w-5 h-5 rounded-md border flex items-center justify-center text-xs transition-all ${
-                goal.completed ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-slate-700 bg-slate-900'
+                goal.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-slate-50'
               }`}>
-                {goal.completed ? <Check size={12} /> : <span className="text-[10px] text-slate-600">○</span>}
+                {goal.completed ? <Check size={12} /> : <span className="text-[10px] text-slate-400">○</span>}
               </div>
-              <span className="text-xs font-bold">{goal.title}</span>
+              <span className="text-xs font-semibold">{goal.title}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 4. Today's Agenda Timeline */}
+      {/* 3. Next Live Session */}
       <div className="space-y-3">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Calendar size={15} className="text-amber-400" /> Today's Agenda
+        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+          Live Session
         </h3>
 
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+        <div className="p-6 rounded-3xl bg-white border border-[#E5E5DF] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="px-4 py-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-amber-400 font-black text-xs">
-              10:00 AM
+            <div className="px-4 py-2 rounded-2xl bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs">
+              Today 10:00 AM
             </div>
             <div>
-              <span className="px-2 py-0.5 rounded text-[9px] font-extrabold bg-emerald-500/20 text-emerald-400 mb-1 inline-block">LIVE SESSION</span>
-              <h4 className="text-sm font-extrabold text-slate-100">Design Systems & Component Tokens</h4>
-              <p className="text-xs text-slate-400 mt-0.5">Facilitator: <span className="text-slate-200 font-semibold">Sarah Ahmed</span></p>
+              <h4 className="text-sm font-extrabold text-slate-900">Design Systems & Component Tokens</h4>
+              <p className="text-xs text-slate-500 mt-0.5">Facilitator: <span className="text-slate-800 font-semibold">Sarah Ahmed</span></p>
             </div>
           </div>
 
           <button
             onClick={() => setActiveTab('sessions')}
-            className="px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md shadow-amber-400/10 transition-all shrink-0 self-start md:self-center"
+            className="px-5 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all shrink-0 self-start md:self-center"
           >
             Join Session
           </button>
         </div>
       </div>
 
-      {/* 5. Workspace Announcements */}
+      {/* 4. Assignment Due */}
       <div className="space-y-3">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Megaphone size={15} className="text-amber-400" /> Announcements
+        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+          Assignment
         </h3>
 
-        <div className="space-y-3">
+        <div className="p-6 rounded-3xl bg-white border border-[#E5E5DF] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+          <div>
+            <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-600 font-bold text-[10px] uppercase mb-1 inline-block">Due Tomorrow</span>
+            <h4 className="text-sm font-extrabold text-slate-900">UI Design Challenge — Design System Components</h4>
+            <p className="text-xs text-slate-500 mt-0.5">Week 4: Design Systems</p>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('assignments')}
+            className="px-5 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all shrink-0 self-start md:self-center"
+          >
+            Continue →
+          </button>
+        </div>
+      </div>
+
+      {/* 5. Workspace Announcements */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+          Announcements
+        </h3>
+
+        <div className="space-y-2.5">
           {announcements.map(ann => (
-            <div key={ann.id} className="p-5 rounded-3xl bg-slate-900 border border-slate-800 flex items-start gap-4 shadow-md">
-              <span className="text-xl shrink-0">{ann.icon}</span>
+            <div key={ann.id} className="p-4 rounded-2xl bg-white border border-[#E5E5DF] flex items-start gap-3.5 shadow-sm">
+              <span className="text-base shrink-0 mt-0.5">{ann.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-slate-100">{ann.title}</h4>
-                  <span className="text-[10px] text-slate-500">{ann.time}</span>
+                  <h4 className="text-xs font-bold text-slate-900">{ann.title}</h4>
+                  <span className="text-[10px] text-slate-400">{ann.time}</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">{ann.detail}</p>
+                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{ann.detail}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 6. Programme Roadmap Journey */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <GraduationCap size={15} className="text-amber-400" /> Programme Roadmap
-        </h3>
-
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-            {[
-              { week: 1, label: 'Week 1', status: 'done' },
-              { week: 2, label: 'Week 2', status: 'done' },
-              { week: 3, label: 'Week 3', status: 'done' },
-              { week: 4, label: 'Week 4', status: 'current' },
-              { week: 5, label: 'Week 5', status: 'upcoming' },
-              { week: 6, label: 'Week 6', status: 'upcoming' },
-              { week: 7, label: 'Week 7', status: 'upcoming' },
-              { week: 8, label: 'Week 8', status: 'upcoming' },
-            ].map(step => (
-              <div
-                key={step.week}
-                className={`p-3 rounded-2xl border text-center transition-all ${
-                  step.status === 'done' 
-                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                    : step.status === 'current' 
-                      ? 'bg-amber-400 border-amber-400 text-slate-950 shadow-lg shadow-amber-400/20 font-black' 
-                      : 'bg-slate-950 border-slate-800 text-slate-600'
-                }`}
-              >
-                <span className="text-xs font-bold block">{step.label}</span>
-                <span className="text-xs block mt-1">
-                  {step.status === 'done' ? '✓' : step.status === 'current' ? '●' : '○'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 7. Assignments Due */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <FileCheck size={15} className="text-amber-400" /> Assignments Due
-        </h3>
-
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
-          <div>
-            <span className="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 font-bold text-[10px] uppercase mb-1 inline-block">Due Tomorrow</span>
-            <h4 className="text-sm font-extrabold text-slate-100">UI Design Challenge — Design System Components</h4>
-            <p className="text-xs text-slate-400 mt-0.5">Week 4: Design Systems</p>
-          </div>
-
-          <button
-            onClick={() => setActiveTab('assignments')}
-            className="px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md shadow-amber-400/10 transition-all shrink-0 self-start md:self-center"
-          >
-            Continue Submission →
-          </button>
-        </div>
-      </div>
-
-      {/* 8. Integrated OYEN AI Workspace */}
-      <div className="p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-900 to-amber-950/40 border border-amber-400/30 shadow-2xl space-y-6">
+      {/* 6. Ask OYEN AI Companion */}
+      <div className="p-8 rounded-3xl bg-white border border-[#E5E5DF] shadow-sm space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black text-base shadow-lg shadow-amber-400/20">
+          <div className="w-9 h-9 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-sm shadow-sm">
             ✨
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-slate-100">✨ OYEN AI</h3>
-            <p className="text-xs text-amber-400 font-semibold">What would you like help with?</p>
+            <h3 className="text-base font-extrabold text-slate-900">✨ Ask OYEN AI</h3>
+            <p className="text-xs text-slate-500">Need help understanding today's lesson?</p>
           </div>
         </div>
 
@@ -249,45 +182,59 @@ export default function Dashboard({ setActiveTab, user, wsPrograms, wsLearners }
             value={aiQuery}
             onChange={(e) => setAiQuery(e.target.value)}
             placeholder="Ask anything about your coursework..."
-            className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-5 py-3.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400/50 shadow-inner"
+            className="w-full bg-slate-50 border border-[#E5E5DF] rounded-2xl px-5 py-3.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white shadow-inner"
           />
-          <button type="submit" className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-2 rounded-xl bg-amber-400 text-slate-950 font-extrabold text-xs">
+          <button type="submit" className="absolute right-2.5 top-1/2 -translate-y-1/2 px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">
             Ask AI
           </button>
         </form>
 
-        <div className="space-y-2">
-          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest block">Popular Prompts</span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {['• Explain Flexbox', '• Summarize Week 4', '• Help with Assignment'].map((prompt, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveTab('ai-assistant')}
-                className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-amber-400/40 text-xs text-slate-300 hover:text-amber-400 text-left transition-all"
-              >
-                {prompt}
-              </button>
-            ))}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {['• Explain Flexbox', '• Summarize Week 4', '• Practice Quiz'].map((prompt, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveTab('ai-assistant')}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 text-xs text-slate-700 font-medium transition-all"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 7. Community Highlights */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+          Community
+        </h3>
+
+        <div className="p-5 rounded-3xl bg-white border border-[#E5E5DF] space-y-2 text-xs text-slate-600 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span><strong>3 learners</strong> completed today's design challenge</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span><strong>Sarah Ahmed</strong> shared a new Figma auto-layout design template</span>
           </div>
         </div>
       </div>
 
-      {/* 9. Recent Activity */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <History size={15} className="text-amber-400" /> Recent Activity
+      {/* 8. Progress (Placed LAST, Not First) */}
+      <div className="space-y-3 pb-8">
+        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+          Progress Overview
         </h3>
 
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-3 shadow-xl">
-          {recentActivity.map(act => (
-            <div key={act.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800/80 text-xs">
-              <div className="flex items-center gap-3">
-                <span className="text-emerald-400 font-bold">✓</span>
-                <span className="text-slate-200 font-medium">{act.title}</span>
-              </div>
-              <span className="text-[10px] text-slate-500 font-semibold">{act.date}</span>
-            </div>
-          ))}
+        <div className="p-6 rounded-3xl bg-white border border-[#E5E5DF] shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-500 font-semibold block">Week {programme.currentWeek} of {programme.totalWeeks}</span>
+            <h4 className="text-lg font-extrabold text-slate-900">{programme.name}</h4>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-black text-slate-900">{programme.progress}%</span>
+            <span className="text-xs text-slate-400 block font-medium">Completion Rate</span>
+          </div>
         </div>
       </div>
 
