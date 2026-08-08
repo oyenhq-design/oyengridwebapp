@@ -1824,11 +1824,7 @@ export default function App() {
           user={{ email: user || 'learner@oyengrid.com' }}
           wsPrograms={wsPrograms}
           wsLearners={wsLearners}
-          onSignOut={() => {
-            setUser(null);
-            setUserRole(null);
-            setActiveRoute('signin');
-          }}
+          onSignOut={handleLogOut}
         />
       );
     }
