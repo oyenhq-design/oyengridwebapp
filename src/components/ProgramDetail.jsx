@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Users, Calendar, FileText, ClipboardList,
-  CheckCircle2, Circle, Search, X, UserPlus, Play, Check, Plus, Send, BarChart3, Award, Upload, Download, RotateCcw, ShieldCheck, ChevronDown
+  CheckCircle2, Circle, Search, X, UserPlus, Play, Check, Plus, Send, BarChart3, Award, Upload, Download, RotateCcw, ShieldCheck, ChevronDown, Sparkles
 } from 'lucide-react';
 
 export default function ProgramDetail({ program, programLearners = [], teamMembers = [], setPrograms, setLearners, userRole, onBack, setActiveTab, triggerTransition }) {
