@@ -134,8 +134,37 @@ export default function SignInForm({
         console.error(err);
       }
 
-      // If user is an invited participant logging in with temporary password '123456', enforce password change
-      if (matchingLearner && password === '123456') {
+      // Check unified auth storage to see if user has already changed password
+      let registeredUser = null;
+      try {
+        const { authService } = await import('../services/authService');
+        const users = (await import('../services/authService')).getUnifiedUsers();
+        registeredUser = users.find(u => u.email.toLowerCase() === targetEmail);
+      } catch (err) {
+        console.error(err);
+      }
+
+      // If user has ALREADY created a new password, permanently block default password '123456'
+      if (registeredUser && registeredUser.password_changed) {
+        if (password === '123456') {
+          setStatusMessage({ type: 'error', text: 'Temporary password expired. Please sign in using your newly created password.' });
+          return;
+        }
+        if (password === registeredUser.passwordHash) {
+          setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
+          if (onAuthSuccess) {
+            setTimeout(() => {
+              onAuthSuccess(targetEmail, registeredUser.role);
+            }, 600);
+          }
+          return;
+        }
+        setStatusMessage({ type: 'error', text: 'Invalid email or password. Please try again.' });
+        return;
+      }
+
+      // If user is a newly invited participant logging in with temporary password '123456', enforce password change
+      if (matchingLearner && password === '123456' && (!registeredUser || !registeredUser.password_changed)) {
         const tempUser = {
           email: matchingLearner.email,
           name: matchingLearner.name,
@@ -148,11 +177,9 @@ export default function SignInForm({
         return;
       }
 
-      // Fallback check against active workspace team members & learners
+      // Fallback check against active workspace team members
       let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
-      if (matchingLearner) {
-        matchingMember = { name: matchingLearner.name, email: matchingLearner.email, role: 'Learner' };
-      } else if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
+      if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
         matchingMember = { name: 'Workspace Super Admin', email: 'admin@oyengrid.com', role: 'Admin', password: 'password123' };
       }
 
