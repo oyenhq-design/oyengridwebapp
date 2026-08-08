@@ -122,7 +122,7 @@ export default function SignInForm({
         return;
       }
 
-      // Check in local learners list (LearnersTab / Participants table)
+      // Check in local learners list (ParticipantsTab / Participants table)
       let matchingLearner = null;
       try {
         const savedLearners = localStorage.getItem('oyen_ws_learners');

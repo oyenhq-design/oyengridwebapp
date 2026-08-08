@@ -35,7 +35,7 @@ import ParticipantModule from './modules/participant';
 import GlobalChat from './components/chat/GlobalChat';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
-import LearnersTab from './components/LearnersTab';
+import ParticipantsTab from './components/ParticipantsTab';
 import AdminSidebar from './components/admin/AdminSidebar';
 import FacilitatorSidebar from './components/facilitator/FacilitatorSidebar';
 import AdminSessions from './components/admin/AdminSessions';
@@ -2900,8 +2900,8 @@ export default function App() {
                 triggerTransition={triggerTransition}
               />
             ) : (activeTab === 'Participants' || activeTab === 'Participants') ? (
-              /* Learners Tab Component */
-              <LearnersTab
+              /* Participants Tab Component */
+              <ParticipantsTab
                 programs={displayPrograms}
                 setPrograms={setWsPrograms}
                 learners={wsLearners}

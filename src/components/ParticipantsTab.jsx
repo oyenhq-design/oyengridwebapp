@@ -87,9 +87,9 @@ function Toast({ toasts }) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   LearnersTab (User-Facing: Participants)
+   ParticipantsTab
 ════════════════════════════════════════════════════════════ */
-export default function LearnersTab({
+export default function ParticipantsTab({
   programs = [],
   learners = [],
   setLearners,
