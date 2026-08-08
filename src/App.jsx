@@ -828,6 +828,17 @@ export default function App() {
     }
   }, [wsTeam, user, userRole, ownerEmail]);
 
+  // Dynamically sync real-time participant login status in wsLearners (Active when logged in, Pending/Offline when logged out)
+  useEffect(() => {
+    if (user && wsLearners && wsLearners.length > 0) {
+      const cleanEmail = user.trim().toLowerCase();
+      const needsUpdate = wsLearners.some(l => l.email && l.email.toLowerCase() === cleanEmail && l.status !== 'Active');
+      if (needsUpdate) {
+        setWsLearners(prev => prev.map(l => l.email && l.email.toLowerCase() === cleanEmail ? { ...l, status: 'Active' } : l));
+      }
+    }
+  }, [user, wsLearners]);
+
   // Dynamically ensure only real logged-in owner is active and demo members are excluded
   useEffect(() => {
     if (user) {
@@ -1120,6 +1131,10 @@ export default function App() {
   const handleLogOut = () => {
     isLoggingOutRef.current = false;
     triggerTransition(() => {
+      if (user && wsLearners && wsLearners.length > 0) {
+        const cleanEmail = user.trim().toLowerCase();
+        setWsLearners(prev => prev.map(l => l.email && l.email.toLowerCase() === cleanEmail ? { ...l, status: 'Offline' } : l));
+      }
       setUser(null);
       setUserRole(null);
       sessionStorage.removeItem('oyen_session_token');

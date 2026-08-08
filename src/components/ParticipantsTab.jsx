@@ -12,6 +12,7 @@ const LEARNER_LIMIT = 50;
 const STATUS_COLORS = {
   Active:   { color: '#16a34a', bg: '#dcfce7', border: '#bbf7d0' },
   Pending:  { color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
+  Offline:  { color: '#6b7280', bg: '#f3f4f6', border: '#e5e7eb' },
   Inactive: { color: '#6b7280', bg: '#f3f4f6', border: '#e5e7eb' },
 };
 
