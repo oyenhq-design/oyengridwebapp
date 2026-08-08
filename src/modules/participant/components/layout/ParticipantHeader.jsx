@@ -12,7 +12,7 @@ export default function ParticipantHeader({ activeTab, setActiveTab, userName = 
   ];
 
   return (
-    <header className="h-16 border-b border-[#E5E5DF] bg-[#FAFAF7]/90 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-20">
+    <header className="h-16 border-b border-[#EBEBE8] bg-[#FAFAF8]/90 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-20 text-slate-800">
       {/* Search Header */}
       <div className="flex-1 max-w-xl">
         <div className="relative w-full">
@@ -22,7 +22,7 @@ export default function ParticipantHeader({ activeTab, setActiveTab, userName = 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search lessons, resources, facilitators..."
-            className="w-full bg-white border border-[#E5E5DF] rounded-xl pl-10 pr-12 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300 transition-all shadow-sm"
+            className="w-full bg-white border border-[#EBEBE8] rounded-xl pl-10 pr-12 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300 transition-all shadow-sm"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] text-slate-500 font-mono">
             <Command size={10} />
@@ -45,14 +45,14 @@ export default function ParticipantHeader({ activeTab, setActiveTab, userName = 
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2.5 rounded-xl bg-white border border-[#E5E5DF] text-slate-600 hover:text-slate-900 transition-colors relative shadow-sm"
+            className="p-2.5 rounded-xl bg-white border border-[#EBEBE8] text-slate-600 hover:text-slate-900 transition-colors relative shadow-sm"
           >
             <Bell size={16} />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white"></span>
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E5E5DF] rounded-2xl shadow-xl py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-[#EBEBE8] rounded-2xl shadow-xl py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                 <h4 className="text-xs font-bold text-slate-900">Notifications</h4>
                 <span className="text-[10px] text-slate-500 font-bold px-2 py-0.5 rounded-full bg-slate-100">2 Unread</span>

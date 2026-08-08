@@ -61,11 +61,11 @@ export default function ParticipantLayout({ user, wsPrograms, wsLearners = [], o
   };
 
   return (
-    <div className="flex h-screen bg-[#FAFAF7] text-slate-900 font-sans antialiased overflow-hidden selection:bg-amber-400 selection:text-slate-950">
+    <div className="flex h-screen bg-[#FAFAF8] text-[#111111] font-sans antialiased overflow-hidden selection:bg-amber-200">
       <ParticipantSidebar activeTab={activeTab} setActiveTab={setActiveTab} onSignOut={onSignOut} userName={learnerName} />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto custom-scrollbar">
         <ParticipantHeader activeTab={activeTab} setActiveTab={setActiveTab} userName={learnerName} />
-        <main className="flex-1 pb-12">{renderPageContent()}</main>
+        <main className="flex-1 pb-16">{renderPageContent()}</main>
       </div>
     </div>
   );

@@ -1,70 +1,71 @@
 import React from 'react';
 import { 
-  LayoutDashboard, BookOpen, Video, FileCheck, HelpCircle, 
+  Home, GraduationCap, BookOpen, Video, FileCheck, HelpCircle, 
   FolderArchive, MessageSquare, Users, Sparkles, Award, FileBadge, 
-  User, Settings, LogOut, GraduationCap 
+  User, Settings, LogOut 
 } from 'lucide-react';
 
 export default function ParticipantSidebar({ activeTab, setActiveTab, onSignOut, userName = 'Blessing' }) {
   const groups = [
     {
-      title: 'WORKSPACE',
+      title: '',
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'dashboard', label: 'Home', icon: Home },
+        { id: 'programme', label: 'My Programme', icon: GraduationCap },
       ]
     },
     {
-      title: 'PROGRAMME',
+      title: 'LEARNING',
       items: [
         { id: 'learning', label: 'Modules', icon: BookOpen },
         { id: 'sessions', label: 'Live Sessions', icon: Video },
         { id: 'assignments', label: 'Assignments', icon: FileCheck },
         { id: 'assessments', label: 'Assessments', icon: HelpCircle },
+      ]
+    },
+    {
+      title: '',
+      items: [
         { id: 'resources', label: 'Resources', icon: FolderArchive },
-      ]
-    },
-    {
-      title: 'COMMUNICATION',
-      items: [
-        { id: 'messages', label: 'Messages', icon: MessageSquare },
         { id: 'community', label: 'Community', icon: Users },
-        { id: 'ai-assistant', label: 'OYEN AI', icon: Sparkles, badge: '✨' },
+        { id: 'messages', label: 'Messages', icon: MessageSquare },
+        { id: 'ai-assistant', label: 'AI Tutor', icon: Sparkles, badge: '✨' },
       ]
     },
     {
-      title: 'ME',
+      title: '',
       items: [
-        { id: 'achievements', label: 'Achievements', icon: Award },
-        { id: 'certificates', label: 'Certificates', icon: FileBadge },
-        { id: 'profile', label: 'Profile', icon: User },
+        { id: 'profile', label: 'Profile & Achievements', icon: User },
         { id: 'settings', label: 'Settings', icon: Settings },
       ]
     }
   ];
 
   return (
-    <aside className="w-60 bg-[#F5F5F0] border-r border-[#E5E5DF] flex flex-col justify-between h-screen sticky top-0 z-30 select-none">
+    <aside className="w-56 bg-[#F7F7F5] border-r border-[#EBEBE8] flex flex-col justify-between h-screen sticky top-0 z-30 select-none text-slate-800">
       <div>
         {/* Brand Header */}
-        <div className="p-5 border-b border-[#E5E5DF] flex items-center justify-between">
+        <div className="p-5 border-b border-[#EBEBE8] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center font-bold text-amber-400 text-xs shadow-sm">
               OG
             </div>
             <div>
-              <h1 className="font-bold text-slate-900 text-sm tracking-tight">OYEN GRID</h1>
+              <h1 className="font-extrabold text-slate-900 text-sm tracking-tight">OYEN GRID</h1>
               <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">My Workspace</p>
             </div>
           </div>
         </div>
 
         {/* Navigation List */}
-        <div className="p-3 space-y-5 overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar">
+        <div className="p-3 space-y-4 overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar">
           {groups.map((group, idx) => (
-            <div key={idx} className="space-y-1">
-              <h4 className="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">
-                {group.title}
-              </h4>
+            <div key={idx} className="space-y-0.5">
+              {group.title && (
+                <h4 className="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1 mt-2">
+                  {group.title}
+                </h4>
+              )}
               {group.items.map(item => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -74,7 +75,7 @@ export default function ParticipantSidebar({ activeTab, setActiveTab, onSignOut,
                     onClick={() => setActiveTab(item.id)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                       isActive 
-                        ? 'bg-slate-900 text-slate-100 font-semibold shadow-sm' 
+                        ? 'bg-slate-900 text-white font-semibold shadow-sm' 
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                     }`}
                   >
@@ -96,8 +97,8 @@ export default function ParticipantSidebar({ activeTab, setActiveTab, onSignOut,
       </div>
 
       {/* User Footer & Sign Out */}
-      <div className="p-3 border-t border-[#E5E5DF] bg-[#F5F5F0]">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E5E5DF] shadow-sm">
+      <div className="p-3 border-t border-[#EBEBE8] bg-[#F7F7F5]">
+        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#EBEBE8] shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-full bg-slate-900 text-amber-400 border border-slate-700 flex items-center justify-center text-xs font-bold shrink-0">
               {userName ? userName.charAt(0).toUpperCase() : 'B'}
