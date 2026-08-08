@@ -15,7 +15,7 @@ export default function ParticipantModule({ user, wsPrograms = [], wsLearners = 
       user={user}
       onSignOut={onSignOut}
     >
-      <ActiveComponent user={user} wsPrograms={wsPrograms} wsLearners={wsLearners} />
+      <ActiveComponent user={user} wsPrograms={wsPrograms} wsLearners={wsLearners} setActiveTab={setActiveTab} />
     </ParticipantLayout>
   );
 }

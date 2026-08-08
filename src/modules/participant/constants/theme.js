@@ -6,5 +6,5 @@ export const PARTICIPANT_THEME = {
   muted: '#707070',
   primaryAccent: '#E5B93C',
   hover: '#FFF8E7',
-  radius: '12px',
+  radius: '16px',
 };
