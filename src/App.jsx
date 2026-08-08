@@ -1811,7 +1811,14 @@ export default function App() {
   if (activeRoute === 'dashboard') {
     const currentUser = user || 'admin@oyengrid.com';
     const currentRole = userRole || 'Workspace Super Admin';
-    if (userRole === 'Participant' || userRole === 'Learner' || userRole === 'Student') {
+
+    // Determine if the current user is an invited/imported Participant
+    const isParticipantUser = (
+      userRole === 'Participant' || userRole === 'Learner' || userRole === 'Student' ||
+      (wsLearners || []).some(l => l.email && l.email.toLowerCase() === (user || '').toLowerCase())
+    );
+
+    if (isParticipantUser && user !== 'admin@oyengrid.com') {
       return (
         <ParticipantModule
           user={{ email: user || 'learner@oyengrid.com' }}
