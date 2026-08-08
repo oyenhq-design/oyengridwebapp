@@ -1,15 +1,22 @@
-import React from 'react';
-import * as Icons from 'lucide-react';
+import {
+  LayoutDashboard, BookOpen, Layers, Video, FileText, CheckSquare, Folder,
+  MessageSquare, Users, Sparkles, Trophy, Award, User, Settings, Circle
+} from 'lucide-react';
 import { NAV_GROUPS } from '../../routes';
 import { PARTICIPANT_THEME } from '../../constants/theme';
 import logo from '../../../../assets/logo_v2.png';
+
+const ICON_MAP = {
+  LayoutDashboard, BookOpen, Layers, Video, FileText, CheckSquare, Folder,
+  MessageSquare, Users, Sparkles, Trophy, Award, User, Settings
+};
 
 export default function ParticipantSidebar({ activeTab, setActiveTab, orgName, orgLogo }) {
   const displayOrgName = orgName || localStorage.getItem('oyen_org_name') || 'ABC Energy Workspace';
   const displayOrgLogo = orgLogo || localStorage.getItem('oyen_org_logo');
 
   const renderIcon = (iconName) => {
-    const IconComponent = Icons[iconName] || Icons.Circle;
+    const IconComponent = ICON_MAP[iconName] || Circle;
     return <IconComponent size={18} />;
   };
 
