@@ -64,16 +64,16 @@ import { useLoader } from './components/ui/LoaderProvider';
 
 
 export default function App() {
-  const [activeRoute, setActiveRoute] = useState('dashboard'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
+  const [activeRoute, setActiveRoute] = useState('signin'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
   const { showLoader, hideLoader } = useLoader();
   const [theme, setTheme] = useState('dark');
   const [invitationPrefill, setInvitationPrefill] = useState(null);
   // Trigger Vercel deploy demo validation refresh
   
   // Auth state
-  const [user, setUser] = useState('blessing@gmail.com'); 
-  const [userRole, setUserRole] = useState('Learner');
-  const [authLoading, setAuthLoading] = useState(false);
+  const [user, setUser] = useState(null); 
+  const [userRole, setUserRole] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // Sync authLoading state with context loader
   useEffect(() => {
@@ -781,10 +781,10 @@ export default function App() {
             setActiveRoute('portal');
           }
         } else {
-          setActiveRoute('dashboard');
+          setActiveRoute('signin');
         }
       } else {
-        setActiveRoute('dashboard');
+        setActiveRoute('signin');
       }
       setAuthLoading(false);
     }, 400);

@@ -134,6 +134,20 @@ export default function SignInForm({
         console.error(err);
       }
 
+      // If user is an invited participant logging in with temporary password '123456', enforce password change
+      if (matchingLearner && password === '123456') {
+        const tempUser = {
+          email: matchingLearner.email,
+          name: matchingLearner.name,
+          role: 'Learner',
+          password_changed: false
+        };
+        setUserPendingReset(tempUser);
+        setCurrentResetPassword('123456');
+        setFlowStep('first-time-reset');
+        return;
+      }
+
       // Legacy fallback logic if not in unified store
       let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
       if (matchingLearner) {
