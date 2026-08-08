@@ -1813,7 +1813,7 @@ export default function App() {
     if (userRole === 'Participant' || userRole === 'Learner' || userRole === 'Student') {
       return (
         <ParticipantModule
-          user={user || 'blessing@gmail.com'}
+          user={{ email: user || 'learner@oyengrid.com' }}
           wsPrograms={wsPrograms}
           wsLearners={wsLearners}
           onSignOut={() => {

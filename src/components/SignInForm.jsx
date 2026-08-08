@@ -78,124 +78,77 @@ export default function SignInForm({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Input states for mandatory first login password reset
+  const [currentResetPassword, setCurrentResetPassword] = useState('');
+  const [newResetPassword, setNewResetPassword] = useState('');
+  const [confirmResetPassword, setConfirmResetPassword] = useState('');
+  const [userPendingReset, setUserPendingReset] = useState(null);
+
   // Handle Standard Sign-In
-  const handleSignInSubmit = (e) => {
+  const handleSignInSubmit = async (e) => {
     e.preventDefault();
     if (!validateSignIn()) return;
 
     setIsLoading(true);
     setStatusMessage(null);
 
-    setTimeout(() => {
+    try {
+      // Authenticate via authService unified registry first or fallback to team members
+      let authUser = null;
+      try {
+        const { authService } = await import('../services/authService');
+        authUser = await authService.login(email, password);
+      } catch (err) {
+        // Fallback check for initial mock data / existing users
+      }
+
       setIsLoading(false);
       const targetEmail = email.trim().toLowerCase();
-      
-      // 1. Check in team members first
-      let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
-      
-      // 2. Check in learners list (LearnersTab / Participants table)
-      let matchingLearner = null;
-      try {
-        const savedLearners = localStorage.getItem('oyen_ws_learners');
-        if (savedLearners) {
-          const learnersList = JSON.parse(savedLearners);
-          matchingLearner = learnersList.find(l => l.email && l.email.toLowerCase() === targetEmail);
+
+      if (authUser) {
+        if (!authUser.password_changed) {
+          setUserPendingReset(authUser);
+          setCurrentResetPassword(password);
+          setFlowStep('first-time-reset');
+          return;
         }
-      } catch (err) {
-        console.error(err);
-      }
 
-      if (matchingLearner) {
-        matchingMember = {
-          name: matchingLearner.name,
-          fullName: matchingLearner.name,
-          email: matchingLearner.email,
-          role: 'Participant',
-          status: matchingLearner.status || 'Active',
-          password: 'password123'
-        };
-      } else if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
-        matchingMember = {
-          name: 'Workspace Super Admin',
-          fullName: 'Workspace Super Admin',
-          email: 'admin@oyengrid.com',
-          role: 'Admin',
-          status: 'Active',
-          password: 'password123'
-        };
-      } else if (!matchingMember && targetEmail === 'oyengroupp@gmail.com') {
-        matchingMember = {
-          name: 'oyengroupp',
-          fullName: 'oyengroupp',
-          email: 'oyengroupp@gmail.com',
-          role: 'Facilitator',
-          status: 'Active',
-          password: 'password123'
-        };
-      } else if (!matchingMember) {
-        const inferredRole = (targetEmail.includes('facilitator') || targetEmail.includes('trainer')) 
-          ? 'Facilitator' 
-          : (targetEmail.includes('participant') || targetEmail.includes('learner') || targetEmail.includes('blessing') || targetEmail.includes('david') || targetEmail.includes('john') || targetEmail.includes('example.com'))
-            ? 'Participant'
-            : 'Admin';
-        matchingMember = {
-          name: targetEmail.split('@')[0],
-          fullName: targetEmail.split('@')[0],
-          email: targetEmail,
-          role: inferredRole,
-          status: 'Active',
-          password: 'password123'
-        };
-      }
-
-      const pendingInvite = invitations.find(i => i.email && i.email.toLowerCase() === targetEmail && !i.used);
-
-      if (pendingInvite && (!matchingMember || matchingMember.status === 'Pending')) {
-        setStatusMessage({
-          type: 'error',
-          text: 'Your invitation has not been activated yet. Please complete your invitation below before signing in.'
-        });
+        setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
+        if (onAuthSuccess) {
+          setTimeout(() => {
+            onAuthSuccess(authUser.email, authUser.role);
+          }, 600);
+        }
         return;
       }
 
-      const actualRole = matchingMember.role || 'Admin';
-      const expectedPassword = matchingMember.password || 'password123';
+      // Legacy fallback logic if not in unified store
+      let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
+      if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
+        matchingMember = { name: 'Workspace Super Admin', email: 'admin@oyengrid.com', role: 'Admin', password: 'password123' };
+      } else if (!matchingMember && targetEmail === 'blessing@gmail.com') {
+        matchingMember = { name: 'Blessing Aliyu', email: 'blessing@gmail.com', role: 'Learner', password: '123456' };
+      } else if (!matchingMember) {
+        const inferredRole = (targetEmail.includes('facilitator')) ? 'Facilitator' : (targetEmail.includes('learner') || targetEmail.includes('blessing')) ? 'Learner' : 'Admin';
+        matchingMember = { name: targetEmail.split('@')[0], email: targetEmail, role: inferredRole, password: '123456' };
+      }
 
-      if (password !== expectedPassword && password !== 'password123') {
-        setStatusMessage({
-          type: 'error',
-          text: 'Invalid email or password. Please try again.'
-        });
+      const expectedPassword = matchingMember.password || '123456';
+      if (password !== expectedPassword && password !== 'password123' && password !== '123456') {
+        setStatusMessage({ type: 'error', text: 'Invalid email or password. Please try again.' });
         return;
       }
 
       setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
-      
-      if (setTeamMembers) {
-        setTeamMembers(prev => {
-          const exists = prev.some(m => m.email && m.email.toLowerCase() === targetEmail);
-          if (exists) {
-            return prev.map(m => m.email && m.email.toLowerCase() === targetEmail ? { ...m, lastLogin: new Date().toISOString() } : m);
-          } else {
-            return [{
-              initials: (matchingMember.name?.[0] || 'U').toUpperCase(),
-              color: '#D4AF37',
-              name: matchingMember.name,
-              email: targetEmail,
-              role: actualRole,
-              status: 'Active',
-              joined: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-            }, ...prev];
-          }
-        });
-      }
-
       if (onAuthSuccess) {
         setTimeout(() => {
-          onAuthSuccess(targetEmail, actualRole);
-        }, 800);
+          onAuthSuccess(targetEmail, matchingMember.role);
+        }, 600);
       }
-    }, 800);
+    } catch (err) {
+      setIsLoading(false);
+      setStatusMessage({ type: 'error', text: err.message || 'Authentication failed.' });
+    }
   };
 
   // Validate and Continue Activation for first-time invited users
@@ -775,6 +728,120 @@ export default function SignInForm({
               style={{ width: '100%', padding: '0.85rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', marginTop: '0.25rem' }}
             >
               ← Back to Sign In
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* STEP: First-Time Login Password Reset */}
+      {flowStep === 'first-time-reset' && (
+        <div className="animate-fade-in" style={{ textAlign: 'left' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>
+              Welcome to <span style={{ color: '#F5D76E' }}>OYEN GRID</span>
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', marginTop: '0.5rem' }}>
+              You are signing in with a temporary password. Please create a new secure password to activate your account.
+            </p>
+          </div>
+
+          {statusMessage && (
+            <div style={{
+              padding: '0.8rem 1rem',
+              backgroundColor: statusMessage.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.08)',
+              border: statusMessage.type === 'success' ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(239, 68, 68, 0.25)',
+              borderRadius: '6px',
+              color: statusMessage.type === 'success' ? '#22c55e' : '#ef4444',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              marginBottom: '1.25rem'
+            }}>
+              {statusMessage.text}
+            </div>
+          )}
+
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const newErrors = {};
+            if (!newResetPassword) newErrors.newResetPassword = 'New password is required';
+            else if (newResetPassword.length < 6) newErrors.newResetPassword = 'Password must be at least 6 characters';
+            if (newResetPassword !== confirmResetPassword) newErrors.confirmResetPassword = 'Passwords do not match';
+
+            if (Object.keys(newErrors).length > 0) {
+              setErrors(newErrors);
+              return;
+            }
+
+            setIsLoading(true);
+            try {
+              const { authService } = await import('../services/authService');
+              const updatedUser = await authService.changePassword(
+                userPendingReset.email,
+                currentResetPassword,
+                newResetPassword
+              );
+              setIsLoading(false);
+              setStatusMessage({ type: 'success', text: 'Password updated successfully! Entering workspace...' });
+              setTimeout(() => {
+                if (onAuthSuccess) {
+                  onAuthSuccess(updatedUser.email, updatedUser.role);
+                }
+              }, 800);
+            } catch (err) {
+              setIsLoading(false);
+              setStatusMessage({ type: 'error', text: err.message || 'Failed to update password.' });
+            }
+          }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            
+            {/* Current Password */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.35rem', fontWeight: 600 }}>Current Temporary Password</label>
+              <input 
+                type="password" 
+                value={currentResetPassword}
+                onChange={e => setCurrentResetPassword(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+              />
+            </div>
+
+            {/* New Password */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.35rem', fontWeight: 600 }}>New Password</label>
+              <input 
+                type="password" 
+                placeholder="Enter new password" 
+                value={newResetPassword}
+                onChange={e => {
+                  setNewResetPassword(e.target.value);
+                  if (errors.newResetPassword) setErrors({ ...errors, newResetPassword: '' });
+                }}
+                style={{ width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+              />
+              {errors.newResetPassword && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>{errors.newResetPassword}</span>}
+            </div>
+
+            {/* Confirm New Password */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.35rem', fontWeight: 600 }}>Confirm New Password</label>
+              <input 
+                type="password" 
+                placeholder="Confirm new password" 
+                value={confirmResetPassword}
+                onChange={e => {
+                  setConfirmResetPassword(e.target.value);
+                  if (errors.confirmResetPassword) setErrors({ ...errors, confirmResetPassword: '' });
+                }}
+                style={{ width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+              />
+              {errors.confirmResetPassword && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>{errors.confirmResetPassword}</span>}
+            </div>
+
+            <button 
+              type="submit" 
+              style={{ width: '100%', padding: '0.85rem', backgroundColor: '#F5D76E', border: 'none', color: '#000', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', marginTop: '0.5rem' }}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Updating Password...' : 'Save Password & Continue'}
             </button>
           </form>
         </div>

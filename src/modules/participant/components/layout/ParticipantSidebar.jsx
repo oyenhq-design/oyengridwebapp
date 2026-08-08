@@ -1,121 +1,94 @@
 import React from 'react';
-import { 
-  Home, GraduationCap, BookOpen, Video, FileCheck, HelpCircle, 
-  FolderArchive, MessageSquare, Users, Sparkles, Award, FileBadge, 
-  User, Settings, LogOut 
-} from 'lucide-react';
+import * as Icons from 'lucide-react';
+import { NAV_GROUPS } from '../../routes';
+import { PARTICIPANT_THEME } from '../../constants/theme';
+import logo from '../../../../assets/logo_v2.png';
 
-export default function ParticipantSidebar({ activeTab, setActiveTab, onSignOut, userName = 'Blessing' }) {
-  const groups = [
-    {
-      title: '',
-      items: [
-        { id: 'dashboard', label: 'Home', icon: Home },
-        { id: 'programme', label: 'My Programme', icon: GraduationCap },
-      ]
-    },
-    {
-      title: 'LEARNING',
-      items: [
-        { id: 'learning', label: 'Modules', icon: BookOpen },
-        { id: 'sessions', label: 'Live Sessions', icon: Video },
-        { id: 'assignments', label: 'Assignments', icon: FileCheck },
-        { id: 'assessments', label: 'Assessments', icon: HelpCircle },
-      ]
-    },
-    {
-      title: '',
-      items: [
-        { id: 'resources', label: 'Resources', icon: FolderArchive },
-        { id: 'community', label: 'Community', icon: Users },
-        { id: 'messages', label: 'Messages', icon: MessageSquare },
-        { id: 'ai-assistant', label: 'AI Tutor', icon: Sparkles, badge: '✨' },
-      ]
-    },
-    {
-      title: '',
-      items: [
-        { id: 'profile', label: 'Profile & Achievements', icon: User },
-        { id: 'settings', label: 'Settings', icon: Settings },
-      ]
-    }
-  ];
+export default function ParticipantSidebar({ activeTab, setActiveTab }) {
+  const renderIcon = (iconName) => {
+    const IconComponent = Icons[iconName] || Icons.Circle;
+    return <IconComponent size={18} />;
+  };
 
   return (
-    <aside className="w-56 bg-[#F7F7F5] border-r border-[#EBEBE8] flex flex-col justify-between h-screen sticky top-0 z-30 select-none text-slate-800">
-      <div>
-        {/* Brand Header */}
-        <div className="p-5 border-b border-[#EBEBE8] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center font-bold text-amber-400 text-xs shadow-sm">
-              OG
-            </div>
-            <div>
-              <h1 className="font-extrabold text-slate-900 text-sm tracking-tight">OYEN GRID</h1>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">My Workspace</p>
-            </div>
+    <aside style={{
+      width: '260px',
+      backgroundColor: PARTICIPANT_THEME.cardBg,
+      borderRight: `1px solid ${PARTICIPANT_THEME.border}`,
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      position: 'sticky',
+      top: 0
+    }}>
+      {/* Brand Header */}
+      <div style={{
+        height: '64px',
+        padding: '0 24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        borderBottom: `1px solid ${PARTICIPANT_THEME.border}`
+      }}>
+        <img src={logo} alt="OYEN GRID" style={{ height: '28px', width: 'auto' }} />
+        <div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: PARTICIPANT_THEME.text, letterSpacing: '-0.02em' }}>
+            OYEN GRID
           </div>
-        </div>
-
-        {/* Navigation List */}
-        <div className="p-3 space-y-4 overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar">
-          {groups.map((group, idx) => (
-            <div key={idx} className="space-y-0.5">
-              {group.title && (
-                <h4 className="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1 mt-2">
-                  {group.title}
-                </h4>
-              )}
-              {group.items.map(item => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                      isActive 
-                        ? 'bg-slate-900 text-white font-semibold shadow-sm' 
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon size={15} className={isActive ? 'text-amber-400' : 'text-slate-500'} />
-                      <span>{item.label}</span>
-                    </div>
-                    {item.badge && (
-                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-amber-400 text-slate-950">
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+          <div style={{ fontSize: '10px', fontWeight: 600, color: PARTICIPANT_THEME.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Learner Portal
+          </div>
         </div>
       </div>
 
-      {/* User Footer & Sign Out */}
-      <div className="p-3 border-t border-[#EBEBE8] bg-[#F7F7F5]">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#EBEBE8] shadow-sm">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-slate-900 text-amber-400 border border-slate-700 flex items-center justify-center text-xs font-bold shrink-0">
-              {userName ? userName.charAt(0).toUpperCase() : 'B'}
+      {/* Navigation Links */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px' }}>
+        {NAV_GROUPS.map((group, groupIdx) => (
+          <div key={groupIdx} style={{ marginBottom: '20px' }}>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: PARTICIPANT_THEME.muted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              padding: '0 12px 8px 12px'
+            }}>
+              {group.group}
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-900 truncate capitalize">{userName}</p>
-              <p className="text-[10px] text-slate-500 truncate">Learner</p>
-            </div>
+
+            {group.items.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    borderRadius: PARTICIPANT_THEME.radius,
+                    backgroundColor: isActive ? PARTICIPANT_THEME.hover : 'transparent',
+                    color: isActive ? PARTICIPANT_THEME.text : PARTICIPANT_THEME.muted,
+                    border: 'none',
+                    fontWeight: isActive ? 600 : 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    textAlign: 'left',
+                    marginBottom: '2px'
+                  }}
+                >
+                  <span style={{ color: isActive ? PARTICIPANT_THEME.primaryAccent : PARTICIPANT_THEME.muted }}>
+                    {renderIcon(item.icon)}
+                  </span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <button
-            onClick={onSignOut}
-            title="Sign Out"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-          >
-            <LogOut size={14} />
-          </button>
-        </div>
+        ))}
       </div>
     </aside>
   );

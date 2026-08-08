@@ -159,15 +159,28 @@ export default function LearnersTab({
   else if (sortBy === 'Program') filtered = [...filtered].sort((a, b) => (a.program || '').localeCompare(b.program || ''));
 
   /* ── Add Participant ── */
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (learners.length >= LEARNER_LIMIT) return;
     const name         = `${addForm.firstName.trim()} ${addForm.lastName.trim()}`.trim();
     const programLabel = programs.find(p => String(p.id) === addForm.programId)?.name || '—';
-    const newLearner = { id: Date.now(), name, email: addForm.email.trim(), program: programLabel, status: 'Active', joined: today };
+    const emailTrimmed = addForm.email.trim();
+
+    try {
+      const { authService } = await import('../services/authService');
+      await authService.inviteParticipant({
+        name,
+        email: emailTrimmed,
+        program: programLabel
+      });
+    } catch (err) {
+      console.warn('Failed to persist in authService:', err);
+    }
+
+    const newLearner = { id: Date.now(), name, email: emailTrimmed, program: programLabel, status: 'Pending', joined: today };
     setLearners(prev => [...prev, newLearner]);
-    showToast(`${name} added successfully`);
-    addNotification?.(`Participant "${name}" added to ${programLabel}`);
+    showToast(`${name} invited! Temporary Password: 123456`);
+    addNotification?.(`Participant "${name}" invited to ${programLabel} (Temp password: 123456)`);
     setAddForm({ firstName: '', lastName: '', email: '', programId: '' });
     setShowAddModal(false);
   };
