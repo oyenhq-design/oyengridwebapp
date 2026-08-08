@@ -1813,8 +1813,9 @@ export default function App() {
     if (userRole === 'Participant' || userRole === 'Learner' || userRole === 'Student') {
       return (
         <ParticipantModule
-          user={user || 'shola.alabi@abcenergy.com'}
+          user={user || 'blessing@gmail.com'}
           wsPrograms={wsPrograms}
+          wsLearners={wsLearners}
           onSignOut={() => {
             setUser(null);
             setUserRole(null);

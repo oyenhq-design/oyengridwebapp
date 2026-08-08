@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import { getLearnerProgrammeData, getLearnerAssignments } from '../services/participantDataService';
 
-export default function Dashboard({ setActiveTab, user, wsPrograms }) {
-  const programme = getLearnerProgrammeData(user, wsPrograms);
+export default function Dashboard({ setActiveTab, user, wsPrograms, wsLearners }) {
+  const programme = getLearnerProgrammeData(user, wsPrograms, wsLearners);
   const assignments = getLearnerAssignments();
   const pendingAssignment = assignments.find(a => a.status === 'Pending');
 
@@ -20,7 +20,7 @@ export default function Dashboard({ setActiveTab, user, wsPrograms }) {
               <Sparkles size={13} /> Active Enrollment
             </span>
             <h1 className="text-2xl font-bold text-slate-100 mb-1">
-              Good Morning, Shola 👋
+              Good Morning, {programme.learnerName} 👋
             </h1>
             <p className="text-sm text-slate-400">
               You are currently enrolled in <span className="text-slate-200 font-semibold">{programme.name}</span> (Week {programme.currentWeek} of {programme.totalWeeks})

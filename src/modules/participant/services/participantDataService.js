@@ -1,19 +1,32 @@
 // src/modules/participant/services/participantDataService.js
 
-export const getLearnerProgrammeData = (user, wsPrograms) => {
-  const defaultProg = wsPrograms && wsPrograms.length > 0 ? wsPrograms[0] : {
-    id: 'prog-bootcamp',
-    name: 'Product Design Bootcamp',
-    description: 'Master UI/UX design, design systems, user research, and interactive prototyping over an intensive 8-week program.',
-    duration: '8 Weeks',
-    currentWeek: 4,
-    totalWeeks: 8,
-    progress: 65,
-    facilitators: [
+export const getLearnerProgrammeData = (user, wsPrograms, wsLearners = []) => {
+  // Try to find matching learner record from workspace state
+  const userEmail = (user || '').trim().toLowerCase();
+  const matchedLearner = (wsLearners || []).find(l => l.email && l.email.trim().toLowerCase() === userEmail);
+  
+  // Try to match program assigned to learner
+  let matchedProgram = null;
+  if (matchedLearner && matchedLearner.program && Array.isArray(wsPrograms)) {
+    matchedProgram = wsPrograms.find(p => p.name && p.name.toLowerCase() === matchedLearner.program.toLowerCase());
+  }
+
+  const baseProgram = matchedProgram || (wsPrograms && wsPrograms.length > 0 ? wsPrograms[0] : null);
+
+  const defaultProg = {
+    id: baseProgram?.id || 'prog-bootcamp',
+    name: baseProgram?.name || 'Product Design Bootcamp',
+    description: baseProgram?.description || baseProgram?.desc || 'Master UI/UX design, design systems, user research, and interactive prototyping over an intensive 8-week program.',
+    duration: baseProgram?.duration || '8 Weeks',
+    currentWeek: baseProgram?.currentWeek || 4,
+    totalWeeks: baseProgram?.totalWeeks || 8,
+    progress: matchedLearner?.progress !== undefined ? matchedLearner.progress : 65,
+    learnerName: matchedLearner?.name || (user ? user.split('@')[0].replace('.', ' ') : 'Shola Alabi'),
+    facilitators: baseProgram?.facilitators || [
       { name: 'Sarah Ahmed', role: 'Lead Instructor', email: 'sarah.ahmed@abcenergy.com' },
       { name: 'Michael Ibrahim', role: 'Design Mentor', email: 'michael.ibrahim@abcenergy.com' }
     ],
-    modules: [
+    modules: baseProgram?.modules || [
       {
         id: 'm1',
         title: 'Week 1: Fundamentals of UI/UX',

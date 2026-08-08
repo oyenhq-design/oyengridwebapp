@@ -29,6 +29,11 @@ export function isRoleViewer(role) {
   return ['viewer'].includes(r);
 }
 
+export function isRoleParticipant(role) {
+  const r = (role || '').trim().toLowerCase();
+  return ['participant', 'learner', 'student', 'attendee'].includes(r);
+}
+
 export function getProgramsForUser(user, role, programs = []) {
   const safePrograms = Array.isArray(programs) ? programs : [];
   if (!user) return safePrograms;
