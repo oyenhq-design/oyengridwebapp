@@ -1839,6 +1839,8 @@ export default function App() {
           user={{ email: user || 'learner@oyengrid.com' }}
           wsPrograms={wsPrograms}
           wsLearners={wsLearners}
+          orgName={orgName || 'ABC Energy Workspace'}
+          orgLogo={orgLogo}
           onSignOut={handleLogOut}
         />
       );

@@ -4,7 +4,10 @@ import { NAV_GROUPS } from '../../routes';
 import { PARTICIPANT_THEME } from '../../constants/theme';
 import logo from '../../../../assets/logo_v2.png';
 
-export default function ParticipantSidebar({ activeTab, setActiveTab }) {
+export default function ParticipantSidebar({ activeTab, setActiveTab, orgName, orgLogo }) {
+  const displayOrgName = orgName || localStorage.getItem('oyen_org_name') || 'ABC Energy Workspace';
+  const displayOrgLogo = orgLogo || localStorage.getItem('oyen_org_logo');
+
   const renderIcon = (iconName) => {
     const IconComponent = Icons[iconName] || Icons.Circle;
     return <IconComponent size={18} />;
@@ -21,22 +24,65 @@ export default function ParticipantSidebar({ activeTab, setActiveTab }) {
       position: 'sticky',
       top: 0
     }}>
-      {/* Brand Header */}
+      {/* Workspace White-Label Brand Header */}
       <div style={{
-        height: '64px',
-        padding: '0 24px',
+        height: '68px',
+        padding: '0 20px',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
         borderBottom: `1px solid ${PARTICIPANT_THEME.border}`
       }}>
-        <img src={logo} alt="OYEN GRID" style={{ height: '28px', width: 'auto' }} />
-        <div>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: PARTICIPANT_THEME.text, letterSpacing: '-0.02em' }}>
-            OYEN GRID
+        {displayOrgLogo ? (
+          <img
+            src={displayOrgLogo}
+            alt={displayOrgName}
+            style={{
+              height: '36px',
+              width: '36px',
+              borderRadius: '8px',
+              objectFit: 'contain'
+            }}
+          />
+        ) : (
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
+            backgroundColor: PARTICIPANT_THEME.primaryAccent,
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            fontSize: '15px'
+          }}>
+            {(displayOrgName[0] || 'A').toUpperCase()}
           </div>
-          <div style={{ fontSize: '10px', fontWeight: 600, color: PARTICIPANT_THEME.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Participant Portal
+        )}
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontSize: '14.5px',
+            fontWeight: 800,
+            color: PARTICIPANT_THEME.text,
+            letterSpacing: '-0.02em',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            {displayOrgName}
+          </div>
+          <div style={{
+            fontSize: '10.5px',
+            fontWeight: 600,
+            color: PARTICIPANT_THEME.muted,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            <span>Powered by</span>
+            <img src={logo} alt="OYEN GRID" style={{ height: '10px', width: 'auto' }} />
           </div>
         </div>
       </div>

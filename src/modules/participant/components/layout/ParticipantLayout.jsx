@@ -3,7 +3,7 @@ import ParticipantSidebar from './ParticipantSidebar';
 import ParticipantHeader from './ParticipantHeader';
 import { PARTICIPANT_THEME } from '../../constants/theme';
 
-export default function ParticipantLayout({ activeTab, setActiveTab, user, onSignOut, children }) {
+export default function ParticipantLayout({ activeTab, setActiveTab, user, orgName, orgLogo, onSignOut, children }) {
   return (
     <div style={{
       display: 'flex',
@@ -13,7 +13,7 @@ export default function ParticipantLayout({ activeTab, setActiveTab, user, onSig
       fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
     }}>
       {/* Sidebar */}
-      <ParticipantSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ParticipantSidebar activeTab={activeTab} setActiveTab={setActiveTab} orgName={orgName} orgLogo={orgLogo} />
 
       {/* Main Container */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
