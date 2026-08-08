@@ -151,7 +151,7 @@ export default function SignInForm({
       // Fallback check against active workspace team members & learners
       let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
       if (matchingLearner) {
-        matchingMember = { name: matchingLearner.name, email: matchingLearner.email, role: 'Learner', password: '123456' };
+        matchingMember = { name: matchingLearner.name, email: matchingLearner.email, role: 'Learner' };
       } else if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
         matchingMember = { name: 'Workspace Super Admin', email: 'admin@oyengrid.com', role: 'Admin', password: 'password123' };
       }
@@ -162,8 +162,8 @@ export default function SignInForm({
         return;
       }
 
-      const expectedPassword = matchingMember.password || '123456';
-      if (password !== expectedPassword && password !== 'password123') {
+      const expectedPassword = matchingMember.password || 'password123';
+      if (password !== expectedPassword) {
         setStatusMessage({ type: 'error', text: 'Invalid email or password. Please try again.' });
         return;
       }
