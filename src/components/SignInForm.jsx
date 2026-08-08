@@ -148,19 +148,22 @@ export default function SignInForm({
         return;
       }
 
-      // Legacy fallback logic if not in unified store
+      // Fallback check against active workspace team members & learners
       let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
       if (matchingLearner) {
         matchingMember = { name: matchingLearner.name, email: matchingLearner.email, role: 'Learner', password: '123456' };
       } else if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
         matchingMember = { name: 'Workspace Super Admin', email: 'admin@oyengrid.com', role: 'Admin', password: 'password123' };
-      } else if (!matchingMember) {
-        const inferredRole = (targetEmail.includes('facilitator')) ? 'Facilitator' : 'Learner';
-        matchingMember = { name: targetEmail.split('@')[0], email: targetEmail, role: inferredRole, password: '123456' };
+      }
+
+      // If user was removed or not invited, reject login
+      if (!matchingMember) {
+        setStatusMessage({ type: 'error', text: 'Invalid email or password. You are not enrolled in this workspace.' });
+        return;
       }
 
       const expectedPassword = matchingMember.password || '123456';
-      if (password !== expectedPassword && password !== 'password123' && password !== '123456') {
+      if (password !== expectedPassword && password !== 'password123') {
         setStatusMessage({ type: 'error', text: 'Invalid email or password. Please try again.' });
         return;
       }
