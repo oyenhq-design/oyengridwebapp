@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileCheck, Upload, Github, Link, FileText, CheckCircle2, Clock, Award } from 'lucide-react';
+import { FileCheck, Upload, Code2, Link, FileText, CheckCircle2, Clock, Award } from 'lucide-react';
 import { getLearnerAssignments } from '../services/participantDataService';
 
 export default function Assignments() {
@@ -92,7 +92,7 @@ export default function Assignments() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     { id: 'figma', label: 'Figma URL', icon: Link },
-                    { id: 'github', label: 'GitHub', icon: Github },
+                    { id: 'github', label: 'GitHub', icon: Code2 },
                     { id: 'file', label: 'Upload File', icon: Upload },
                     { id: 'text', label: 'Text Response', icon: FileText }
                   ].map(m => {

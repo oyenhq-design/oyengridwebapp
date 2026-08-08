@@ -57,7 +57,7 @@ export default function SignInForm({
 
     // If no roles are found, fallback to standard roles
     if (rolesSet.size === 0) {
-      return ['Admin', 'Program Manager', 'Facilitator', 'Viewer'];
+      return ['Admin', 'Program Manager', 'Facilitator', 'Participant', 'Viewer'];
     }
 
     return Array.from(rolesSet);

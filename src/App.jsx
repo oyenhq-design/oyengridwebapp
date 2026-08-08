@@ -31,6 +31,7 @@ import PublicEventForm from './components/PublicEventForm';
 import SignInForm from './components/SignInForm';
 import ProgramManagerModule from './modules/program-manager';
 import CommandCentreModule from './modules/command-centre';
+import ParticipantModule from './modules/participant';
 import GlobalChat from './components/chat/GlobalChat';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
@@ -1809,6 +1810,19 @@ export default function App() {
   if (activeRoute === 'dashboard') {
     const currentUser = user || 'admin@oyengrid.com';
     const currentRole = userRole || 'Workspace Super Admin';
+    if (userRole === 'Participant' || userRole === 'Learner' || userRole === 'Student') {
+      return (
+        <ParticipantModule
+          user={user || 'shola.alabi@abcenergy.com'}
+          wsPrograms={wsPrograms}
+          onSignOut={() => {
+            setUser(null);
+            setUserRole(null);
+            setActiveRoute('signin');
+          }}
+        />
+      );
+    }
     if (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') {
       return (
         <>
