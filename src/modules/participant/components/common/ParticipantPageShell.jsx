@@ -14,7 +14,7 @@ export default function ParticipantPageShell({ title, category, description, ico
         alignItems: 'center',
         gap: '6px'
       }}>
-        <span>Learner Portal</span>
+        <span>Participant Portal</span>
         <span>/</span>
         <span>{category}</span>
         <span>/</span>

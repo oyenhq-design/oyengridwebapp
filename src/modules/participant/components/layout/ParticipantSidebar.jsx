@@ -36,7 +36,7 @@ export default function ParticipantSidebar({ activeTab, setActiveTab }) {
             OYEN GRID
           </div>
           <div style={{ fontSize: '10px', fontWeight: 600, color: PARTICIPANT_THEME.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Learner Portal
+            Participant Portal
           </div>
         </div>
       </div>

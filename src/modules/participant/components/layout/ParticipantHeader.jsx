@@ -125,7 +125,7 @@ export default function ParticipantHeader({ user, onSignOut }) {
             }}>
               <div style={{ padding: '8px 16px', borderBottom: `1px solid ${PARTICIPANT_THEME.border}` }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: PARTICIPANT_THEME.text }}>
-                  {user?.email || 'Learner'}
+                  {user?.email || 'Participant'}
                 </div>
                 <div style={{ fontSize: '11px', color: PARTICIPANT_THEME.muted }}>
                   Participant
