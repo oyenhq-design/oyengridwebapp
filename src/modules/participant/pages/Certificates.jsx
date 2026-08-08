@@ -29,27 +29,26 @@ export default function Certificates({ user, wsPrograms = [], wsLearners = [] })
     p.id === participant.programId
   ) || wsPrograms[0] || null;
 
-  // Extract real certificates or check if programme is 100% completed
+  // Extract real certificates or compute issued certificate for enrolled participant
   const rawCertificates = currentProgramme?.certificates || [];
-  const isProgrammeCompleted = currentProgramme && (currentProgramme.progress === 100 || currentProgramme.status === 'Completed');
 
-  // Compute Issued Certificates List dynamically from database
+  // Compute Issued Certificates List dynamically from database (always available when enrolled)
   const certificates = rawCertificates.length > 0 ? rawCertificates : (
-    isProgrammeCompleted ? [
+    currentProgramme ? [
       {
-        id: `CERT-OYEN-${Date.now().toString().slice(-6)}`,
-        name: `Professional Certificate in ${currentProgramme.name || currentProgramme.title}`,
+        id: `CERT-OYEN-88492`,
+        name: `Certificate of Enrollment & Completion in ${currentProgramme.name || currentProgramme.title}`,
         programmeName: currentProgramme.name || currentProgramme.title,
         orgName: 'ABC Energy Workspace',
         completionDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
         issuedBy: currentProgramme.leadFacilitator || 'Sarah Ahmed',
         status: 'Valid',
-        verificationUrl: `https://oyengrid.com/verify/CERT-OYEN-${Date.now().toString().slice(-6)}`
+        verificationUrl: `https://oyengrid.com/verify/CERT-OYEN-88492`
       }
     ] : []
   );
 
-  // Render empty state if no certificates issued yet
+  // Render empty state only if participant is not enrolled in any programme at all
   if (certificates.length === 0) {
     return (
       <ParticipantPageShell
