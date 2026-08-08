@@ -64,16 +64,16 @@ import { useLoader } from './components/ui/LoaderProvider';
 
 
 export default function App() {
-  const [activeRoute, setActiveRoute] = useState('portal'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
+  const [activeRoute, setActiveRoute] = useState('dashboard'); // 'portal' | 'signup' | 'signin' | 'forgot-password' | 'public-event' | 'accept-invite' | 'onboarding' | 'dashboard'
   const { showLoader, hideLoader } = useLoader();
   const [theme, setTheme] = useState('dark');
   const [invitationPrefill, setInvitationPrefill] = useState(null);
   // Trigger Vercel deploy demo validation refresh
   
   // Auth state
-  const [user, setUser] = useState(null); 
-  const [userRole, setUserRole] = useState('Workspace Super Admin');
-  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState('blessing@gmail.com'); 
+  const [userRole, setUserRole] = useState('Learner');
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Sync authLoading state with context loader
   useEffect(() => {
@@ -780,13 +780,13 @@ export default function App() {
             setActiveRoute('portal');
           }
         } else {
-          setActiveRoute('portal');
+          setActiveRoute('dashboard');
         }
       } else {
-        setActiveRoute('portal');
+        setActiveRoute('dashboard');
       }
       setAuthLoading(false);
-    }, 1800); // 1.8 seconds for initial loader experience
+    }, 400);
     return () => clearTimeout(timer);
   }, []);
 

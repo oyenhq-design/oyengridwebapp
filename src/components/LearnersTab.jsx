@@ -239,19 +239,33 @@ export default function LearnersTab({
   const handleDrop = (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); };
 
   /* ── Confirm import ── */
-  const handleImport = () => {
+  const handleImport = async () => {
     const available    = LEARNER_LIMIT - learners.length;
     const toImport     = importedRows.slice(0, available);
     const selectedProg = programs.find(p => String(p.id) === importProgramId);
     const progLabel    = selectedProg?.name || '—';
+
+    try {
+      const { authService } = await import('../services/authService');
+      for (const item of toImport) {
+        await authService.inviteParticipant({
+          name: item.name,
+          email: item.email,
+          program: item.program || progLabel
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to persist imported users into authService:', err);
+    }
+
     const newLearners  = toImport.map((r, i) => ({
       id: Date.now() + i, name: r.name, email: r.email,
       program: r.program || progLabel,
-      status: 'Active', joined: today,
+      status: 'Pending', joined: today,
     }));
     setLearners(prev => [...prev, ...newLearners]);
-    showToast(`${newLearners.length} participants imported`);
-    addNotification?.(`Imported ${newLearners.length} participants from "${importFileName}"`);
+    showToast(`${newLearners.length} participants imported! Default Password: 123456`);
+    addNotification?.(`Imported ${newLearners.length} participants from "${importFileName}" (Default Password: 123456)`);
     closeImport();
   };
 

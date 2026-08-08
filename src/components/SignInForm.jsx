@@ -122,14 +122,26 @@ export default function SignInForm({
         return;
       }
 
+      // Check in local learners list (LearnersTab / Participants table)
+      let matchingLearner = null;
+      try {
+        const savedLearners = localStorage.getItem('oyen_ws_learners');
+        if (savedLearners) {
+          const learnersList = JSON.parse(savedLearners);
+          matchingLearner = learnersList.find(l => l.email && l.email.toLowerCase() === targetEmail);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
       // Legacy fallback logic if not in unified store
       let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
-      if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
+      if (matchingLearner) {
+        matchingMember = { name: matchingLearner.name, email: matchingLearner.email, role: 'Learner', password: '123456' };
+      } else if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
         matchingMember = { name: 'Workspace Super Admin', email: 'admin@oyengrid.com', role: 'Admin', password: 'password123' };
-      } else if (!matchingMember && targetEmail === 'blessing@gmail.com') {
-        matchingMember = { name: 'Blessing Aliyu', email: 'blessing@gmail.com', role: 'Learner', password: '123456' };
       } else if (!matchingMember) {
-        const inferredRole = (targetEmail.includes('facilitator')) ? 'Facilitator' : (targetEmail.includes('learner') || targetEmail.includes('blessing')) ? 'Learner' : 'Admin';
+        const inferredRole = (targetEmail.includes('facilitator')) ? 'Facilitator' : 'Learner';
         matchingMember = { name: targetEmail.split('@')[0], email: targetEmail, role: inferredRole, password: '123456' };
       }
 
