@@ -1,12 +1,16 @@
 import React, { useState, Component } from 'react';
 import ProgramManagerLayout from './layouts/ProgramManagerLayout';
 import DashboardPage from './pages/DashboardPage';
-import ProgrammesPage from './pages/ProgrammesPage';
-import LearnersPage from './pages/LearnersPage';
-import SessionsPage from './pages/SessionsPage';
-import ResourcesPage from './pages/ResourcesPage';
+import ProgramsTab from '../../components/ProgramsTab';
+import ParticipantsTab from '../../components/ParticipantsTab';
+import AdminSessions from '../../components/admin/AdminSessions';
+import FacilitatorResources from '../../components/facilitator/FacilitatorResources';
+import ReportsTab from '../../components/ReportsTab';
+import AttendanceTab from '../../components/AttendanceTab';
+import AssessmentsTab from '../../components/AssessmentsTab';
+import AnnouncementsTab from '../../components/AnnouncementsTab';
+import TeamManagement from '../../components/TeamManagement';
 import SettingsPage from './pages/SettingsPage';
-import ProgrammeTeamPage from './pages/ProgrammeTeamPage';
 
 class PMErrorBoundary extends Component {
   constructor(props) {
@@ -41,6 +45,10 @@ class PMErrorBoundary extends Component {
   }
 }
 
+const addNotification = (msg) => {
+  console.log('[PM Notification]:', msg);
+};
+
 export default function ProgramManagerModule(props) {
   return (
     <PMErrorBoundary>
@@ -51,13 +59,16 @@ export default function ProgramManagerModule(props) {
 
 function ProgramManagerModuleInner({ 
   user, 
-  role, 
+  role = 'Program Manager', 
   workspaceName,
   wsPrograms = [],
   setWsPrograms,
   wsLearners = [],
+  setWsLearners,
   wsTeam = [],
+  setWsTeam,
   wsInvitations = [],
+  setWsInvitations,
   notifications = [],
   recentUpdates = [],
   onLogout 
@@ -79,35 +90,94 @@ function ProgramManagerModuleInner({
           />
         );
       case 'Programmes':
+      case 'Programs':
         return (
-          <ProgrammesPage
-            wsPrograms={wsPrograms}
-            setWsPrograms={setWsPrograms}
-            wsLearners={wsLearners}
-            wsTeam={wsTeam}
+          <ProgramsTab
+            programs={wsPrograms}
+            setPrograms={setWsPrograms}
+            learners={wsLearners}
+            setLearners={setWsLearners || (() => {})}
+            teamMembers={wsTeam}
+            addNotification={addNotification}
+            userRole={role}
+            setActiveTab={setActiveTab}
           />
         );
       case 'Participants':
+      case 'Learners':
         return (
-          <LearnersPage
-            user={user}
-            wsPrograms={wsPrograms}
-            wsLearners={wsLearners}
-            wsTeam={wsTeam}
+          <ParticipantsTab
+            programs={wsPrograms}
+            setPrograms={setWsPrograms}
+            learners={wsLearners}
+            setLearners={setWsLearners || (() => {})}
+            addNotification={addNotification}
+            onNavigateToPrograms={() => setActiveTab('Programmes')}
+            userRole={role}
           />
         );
       case 'Sessions':
         return (
-          <SessionsPage 
-            wsPrograms={wsPrograms}
-            setWsPrograms={setWsPrograms}
+          <AdminSessions
+            programs={wsPrograms}
+            setPrograms={setWsPrograms}
+            learners={wsLearners}
+            addNotification={addNotification}
+            onNavigateToPrograms={() => setActiveTab('Programmes')}
+            userRole={role}
+            teamMembers={wsTeam}
+            currentUserEmail={user}
           />
         );
       case 'Resources':
         return (
-          <ResourcesPage 
-            wsPrograms={wsPrograms}
-            setWsPrograms={setWsPrograms}
+          <FacilitatorResources
+            programs={wsPrograms}
+            setPrograms={setWsPrograms}
+            addNotification={addNotification}
+            currentUserEmail={user}
+            userRole={role}
+          />
+        );
+      case 'Reports':
+        return (
+          <ReportsTab
+            programs={wsPrograms}
+            learners={wsLearners}
+          />
+        );
+      case 'Attendance':
+        return (
+          <AttendanceTab
+            programs={wsPrograms}
+            learners={wsLearners}
+            addNotification={addNotification}
+          />
+        );
+      case 'Assessments':
+        return (
+          <AssessmentsTab
+            programs={wsPrograms}
+            addNotification={addNotification}
+          />
+        );
+      case 'Announcements':
+        return (
+          <AnnouncementsTab
+            programs={wsPrograms}
+            addNotification={addNotification}
+            userRole={role}
+          />
+        );
+      case 'Team':
+        return (
+          <TeamManagement
+            members={wsTeam}
+            setMembers={setWsTeam || (() => {})}
+            pending={wsInvitations}
+            setPending={setWsInvitations || (() => {})}
+            addNotification={addNotification}
+            onNavigateHome={() => setActiveTab('Dashboard')}
           />
         );
       case 'Settings':
@@ -119,25 +189,6 @@ function ProgramManagerModuleInner({
               workspaceName={workspaceName}
               wsPrograms={wsPrograms}
             />
-          </div>
-        );
-      case 'Team':
-        return (
-          <ProgrammeTeamPage 
-            user={user}
-            wsPrograms={wsPrograms}
-            wsTeam={wsTeam}
-            setWsPrograms={setWsPrograms}
-          />
-        );
-      case 'Reports':
-      case 'Messages':
-        return (
-          <div style={{ padding: '3rem', fontFamily: "'Inter', sans-serif" }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: '0 0 1rem 0' }}>{activeTab}</h1>
-            <p style={{ color: '#6B7280' }}>
-              This page is being prepared. It will display all workspace data related to {activeTab.toLowerCase()} when completed.
-            </p>
           </div>
         );
       default:
