@@ -120,6 +120,14 @@ export const authService = {
 
     saveUnifiedUsers(users);
     return users[index];
+  },
+
+  // Remove participant from auth registry
+  removeParticipant: async (email) => {
+    const users = getUnifiedUsers();
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const updated = users.filter(u => u.email.toLowerCase() !== cleanEmail);
+    saveUnifiedUsers(updated);
   }
 };
 

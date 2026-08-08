@@ -186,10 +186,19 @@ export default function LearnersTab({
   };
 
   /* ── Remove participant ── */
-  const handleRemove = (id, name) => {
+  const handleRemove = async (id, name) => {
+    const target = learners.find(x => x.id === id);
+    if (target && target.email) {
+      try {
+        const { authService } = await import('../services/authService');
+        await authService.removeParticipant(target.email);
+      } catch (err) {
+        console.warn('Failed to remove from authService:', err);
+      }
+    }
     setLearners(prev => prev.filter(x => x.id !== id));
     if (selectedParticipant?.id === id) { setSelectedParticipant(null); setDrawerOpen(false); }
-    showToast(`${name} removed`);
+    showToast(`${name} removed from system`);
     setOpenMenuId(null);
   };
 
