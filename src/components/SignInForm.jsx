@@ -90,8 +90,31 @@ export default function SignInForm({
       setIsLoading(false);
       const targetEmail = email.trim().toLowerCase();
       
+      // 1. Check in team members first
       let matchingMember = teamMembers.find(m => m.email && m.email.toLowerCase() === targetEmail);
-      if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
+      
+      // 2. Check in learners list (LearnersTab / Participants table)
+      let matchingLearner = null;
+      try {
+        const savedLearners = localStorage.getItem('oyen_ws_learners');
+        if (savedLearners) {
+          const learnersList = JSON.parse(savedLearners);
+          matchingLearner = learnersList.find(l => l.email && l.email.toLowerCase() === targetEmail);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      if (matchingLearner) {
+        matchingMember = {
+          name: matchingLearner.name,
+          fullName: matchingLearner.name,
+          email: matchingLearner.email,
+          role: 'Participant',
+          status: matchingLearner.status || 'Active',
+          password: 'password123'
+        };
+      } else if (!matchingMember && targetEmail === 'admin@oyengrid.com') {
         matchingMember = {
           name: 'Workspace Super Admin',
           fullName: 'Workspace Super Admin',
@@ -110,7 +133,11 @@ export default function SignInForm({
           password: 'password123'
         };
       } else if (!matchingMember) {
-        const inferredRole = (targetEmail.includes('facilitator') || targetEmail.includes('trainer')) ? 'Facilitator' : 'Admin';
+        const inferredRole = (targetEmail.includes('facilitator') || targetEmail.includes('trainer')) 
+          ? 'Facilitator' 
+          : (targetEmail.includes('participant') || targetEmail.includes('learner') || targetEmail.includes('blessing') || targetEmail.includes('david') || targetEmail.includes('john') || targetEmail.includes('example.com'))
+            ? 'Participant'
+            : 'Admin';
         matchingMember = {
           name: targetEmail.split('@')[0],
           fullName: targetEmail.split('@')[0],
