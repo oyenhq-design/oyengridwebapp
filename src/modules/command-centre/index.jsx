@@ -20,13 +20,6 @@ import SecurityPage from "./pages/SecurityPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import SettingsPage from "./pages/SettingsPage";
 
-// Legacy page support imports
-import OrganizationsPage from "./pages/OrganizationsPage";
-import WorkspacesPage from "./pages/WorkspacesPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import TeamPage from "./pages/company/TeamPage";
-import DepartmentsPage from "./pages/company/DepartmentsPage";
-
 export default function CommandCentreModule() {
   const [currentTab, setCurrentTab] = useState("Overview");
 
