@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronDown, ChevronRight, Building, Users, Shield, Cpu, Terminal, DollarSign, Activity, Layers, Settings, Home, Award, BarChart2, FolderCheck, CreditCard } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Building, Users, Shield, Cpu, Terminal, DollarSign, Activity, Layers, Settings, Home, BookOpen, CreditCard, BarChart2, ShieldCheck } from "lucide-react";
 
 export default function CommandCentreLayout({ children, currentTab, setCurrentTab }) {
   const [showCommandBar, setShowCommandBar] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [openGroup, setOpenGroup] = useState("Company");
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+
+  const toggleGroup = (groupName) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -22,81 +29,111 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Executive Domain Navigation Tree
-  const navDomains = [
-    { 
-      id: "Overview", 
-      label: "Overview", 
-      icon: <Home size={15} />,
-      subpages: []
+  // Executive Navigation Blueprint
+  const groups = [
+    {
+      id: "Company",
+      title: "Company",
+      icon: <Building size={14} />,
+      items: [
+        { id: "Company_Headquarters", label: "Headquarters" },
+        { id: "Company_Staff", label: "Staff Directory" },
+        { id: "Company_Roles", label: "Roles" },
+        { id: "Company_Viewers", label: "Viewers" }
+      ]
     },
-    { 
-      id: "Company", 
-      label: "Company", 
-      icon: <Building size={15} />,
-      subpages: ["Headquarters", "Staff", "Roles", "Viewers"]
+    {
+      id: "Organizations",
+      title: "Organizations",
+      icon: <Building size={14} />,
+      items: [
+        { id: "Organizations_List", label: "Organizations" },
+        { id: "Organizations_Verification", label: "Verification" },
+        { id: "Organizations_Domains", label: "Domains" }
+      ]
     },
-    { 
-      id: "Organizations", 
-      label: "Organizations", 
-      icon: <Layers size={15} />,
-      subpages: ["Organizations", "Verification", "Domains"]
+    {
+      id: "Customers",
+      title: "Customers",
+      icon: <Users size={14} />,
+      items: [
+        { id: "Customers_CRM", label: "CRM" },
+        { id: "Customers_Billing", label: "Billing" },
+        { id: "Customers_Support", label: "Support" }
+      ]
     },
-    { 
-      id: "Customers", 
-      label: "Customers", 
-      icon: <Users size={15} />,
-      subpages: ["CRM", "Billing", "Support"]
+    {
+      id: "Programs",
+      title: "Programs",
+      icon: <BookOpen size={14} />,
+      items: [
+        { id: "Programs_List", label: "Programs" },
+        { id: "Programs_Templates", label: "Templates" },
+        { id: "Programs_Certificates", label: "Certificates" }
+      ]
     },
-    { 
-      id: "Programs", 
-      label: "Programs", 
-      icon: <FolderCheck size={15} />,
-      subpages: ["Programs", "Templates", "Certificates"]
+    {
+      id: "Subscriptions",
+      title: "Subscriptions",
+      icon: <CreditCard size={14} />,
+      items: [
+        { id: "Subscriptions_Plans", label: "Plans" },
+        { id: "Subscriptions_Revenue", label: "Revenue" },
+        { id: "Subscriptions_Payments", label: "Payments" },
+        { id: "Subscriptions_Coupons", label: "Coupons" }
+      ]
     },
-    { 
-      id: "Subscriptions", 
-      label: "Subscriptions", 
-      icon: <CreditCard size={15} />,
-      subpages: ["Plans", "Revenue", "Payments", "Coupons"]
+    {
+      id: "Platform",
+      title: "Platform",
+      icon: <Layers size={14} />,
+      items: [
+        { id: "Platform_Services", label: "Services" },
+        { id: "Platform_AI", label: "AI Engine" },
+        { id: "Platform_Storage", label: "Storage" },
+        { id: "Platform_Notifications", label: "Notifications" }
+      ]
     },
-    { 
-      id: "Platform", 
-      label: "Platform", 
-      icon: <Cpu size={15} />,
-      subpages: ["Services", "AI", "Storage", "Notifications"]
+    {
+      id: "Analytics",
+      title: "Analytics",
+      icon: <BarChart2 size={14} />,
+      items: [
+        { id: "Analytics_Revenue", label: "Revenue" },
+        { id: "Analytics_Growth", label: "Growth" },
+        { id: "Analytics_Engagement", label: "Engagement" },
+        { id: "Analytics_Reports", label: "Reports" }
+      ]
     },
-    { 
-      id: "Analytics", 
-      label: "Analytics", 
-      icon: <BarChart2 size={15} />,
-      subpages: ["Revenue", "Growth", "Engagement", "Reports"]
+    {
+      id: "Security",
+      title: "Security",
+      icon: <ShieldCheck size={14} />,
+      items: [
+        { id: "Security_Audit", label: "Audit Logs" },
+        { id: "Security_Access", label: "Access Control" },
+        { id: "Security_Compliance", label: "Compliance" }
+      ]
     },
-    { 
-      id: "Security", 
-      label: "Security", 
-      icon: <Shield size={15} />,
-      subpages: ["Audit Logs", "Access", "Compliance"]
-    },
-    { 
-      id: "System", 
-      label: "System", 
-      icon: <Settings size={15} />,
-      subpages: ["Integrations", "Backups", "Settings"]
-    },
+    {
+      id: "System",
+      title: "System",
+      icon: <Settings size={14} />,
+      items: [
+        { id: "System_Integrations", label: "Integrations" },
+        { id: "System_Backups", label: "Backups" },
+        { id: "System_Settings", label: "Settings" }
+      ]
+    }
   ];
 
   const searchCommands = [
     { label: "Go to Executive Overview", action: () => setCurrentTab("Overview"), cat: "Navigation" },
-    { label: "Go to Company HQ & Staff", action: () => setCurrentTab("Company"), cat: "Navigation" },
-    { label: "Go to Customer Organizations", action: () => setCurrentTab("Organizations"), cat: "Navigation" },
-    { label: "Go to Customer Success CRM", action: () => setCurrentTab("Customers"), cat: "Navigation" },
-    { label: "Go to Programs & Templates", action: () => setCurrentTab("Programs"), cat: "Navigation" },
-    { label: "Go to Subscriptions & Revenue", action: () => setCurrentTab("Subscriptions"), cat: "Navigation" },
-    { label: "Go to Platform AI & Services", action: () => setCurrentTab("Platform"), cat: "Navigation" },
-    { label: "Go to Executive Analytics", action: () => setCurrentTab("Analytics"), cat: "Navigation" },
-    { label: "Go to Security & Compliance", action: () => setCurrentTab("Security"), cat: "Navigation" },
-    { label: "Go to System Configuration", action: () => setCurrentTab("System"), cat: "Navigation" },
+    { label: "Go to Company Headquarters", action: () => setCurrentTab("Company_Headquarters"), cat: "Navigation" },
+    { label: "Go to Organizations", action: () => setCurrentTab("Organizations_List"), cat: "Navigation" },
+    { label: "Go to Subscriptions & Revenue", action: () => setCurrentTab("Subscriptions_Revenue"), cat: "Navigation" },
+    { label: "Go to OYEN AI Engine", action: () => setCurrentTab("Platform_AI"), cat: "Navigation" },
+    { label: "Go to Audit Logs", action: () => setCurrentTab("Security_Audit"), cat: "Navigation" },
   ];
 
   const filteredCommands = searchCommands.filter(c =>
@@ -106,7 +143,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F7F4ED", color: "#111111", fontFamily: "'Inter', sans-serif" }}>
       
-      {/* Sidebar (Dark Panel) */}
+      {/* Sidebar Panel */}
       <aside style={{ width: "260px", backgroundColor: "#101010", borderRight: "1px solid #E6DED0", display: "flex", flexDirection: "column", padding: "1.5rem 1.1rem", boxSizing: "border-box" }}>
         
         {/* Logo header */}
@@ -122,79 +159,82 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
           </div>
         </div>
 
-        {/* Linear style search trigger */}
+        {/* Search trigger */}
         <button 
           onClick={() => setShowCommandBar(true)}
           style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             width: "100%", padding: "0.55rem 0.75rem", borderRadius: "6px",
             backgroundColor: "#181818", border: "1px solid #2A2A2A",
-            color: "#888888", fontSize: "0.75rem", cursor: "pointer", marginBottom: "1.5rem"
+            color: "#888888", fontSize: "0.75rem", cursor: "pointer", marginBottom: "1.25rem"
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
             <Search size={13} />
-            <span>Search Command Centre...</span>
+            <span>Search console...</span>
           </div>
           <span style={{ fontSize: "0.65rem", color: "#666666", backgroundColor: "#222222", padding: "0.1rem 0.35rem", borderRadius: "3px" }}>⌘K</span>
         </button>
 
-        {/* Executive Domain Tree */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", flex: 1, overflowY: "auto" }}>
-          <div style={{ fontSize: "0.65rem", fontWeight: 800, color: "#555555", textTransform: "uppercase", letterSpacing: "1px", padding: "0.25rem 0.6rem", marginBottom: "0.25rem" }}>
-            Executive Headquarters
-          </div>
+        {/* Overview item */}
+        <button
+          onClick={() => setCurrentTab("Overview")}
+          style={{
+            display: "flex", alignItems: "center", gap: "0.65rem",
+            width: "100%", textAlign: "left", padding: "0.55rem 0.75rem", borderRadius: "8px",
+            border: "none", backgroundColor: currentTab === "Overview" || currentTab === "Dashboard" ? "#181818" : "transparent",
+            color: currentTab === "Overview" || currentTab === "Dashboard" ? "#D9A928" : "#999999", fontSize: "0.82rem",
+            fontWeight: currentTab === "Overview" || currentTab === "Dashboard" ? 700 : 500, cursor: "pointer", marginBottom: "0.75rem", transition: "all 0.15s ease"
+          }}
+        >
+          <Home size={15} color={currentTab === "Overview" || currentTab === "Dashboard" ? "#D9A928" : "#666666"} />
+          <span>Overview</span>
+        </button>
 
-          {navDomains.map((domain) => {
-            const isActive = currentTab === domain.id || (currentTab === "Dashboard" && domain.id === "Overview");
-            const isOpen = openGroup === domain.id;
-            const hasSubpages = domain.subpages.length > 0;
-
+        {/* Collapsible Executive Groups */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, overflowY: "auto" }}>
+          {groups.map((group) => {
+            const isCollapsed = collapsedGroups[group.id];
+            const isGroupActive = currentTab.startsWith(group.id);
             return (
-              <div key={domain.id} style={{ display: "flex", flexDirection: "column" }}>
+              <div key={group.id} style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
                 <button
-                  onClick={() => {
-                    setCurrentTab(domain.id);
-                    if (hasSubpages) setOpenGroup(isOpen ? null : domain.id);
-                  }}
+                  onClick={() => toggleGroup(group.id)}
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
-                    width: "100%", textAlign: "left", padding: "0.55rem 0.75rem", borderRadius: "8px",
-                    border: "none", backgroundColor: isActive ? "#181818" : "transparent",
-                    color: isActive ? "#D9A928" : "#999999", fontSize: "0.82rem",
-                    fontWeight: isActive ? 700 : 500, cursor: "pointer", transition: "all 0.15s ease"
+                    width: "100%", background: "none", border: "none", color: isGroupActive ? "#D9A928" : "#777777",
+                    fontSize: "0.7rem", fontWeight: 800, textTransform: "uppercase",
+                    letterSpacing: "0.8px", padding: "0.35rem 0.5rem", cursor: "pointer"
                   }}
-                  onMouseEnter={e => { if(!isActive) e.currentTarget.style.color = "#FFFFFF"; }}
-                  onMouseLeave={e => { if(!isActive) e.currentTarget.style.color = "#999999"; }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
-                    <span style={{ color: isActive ? "#D9A928" : "#666666" }}>{domain.icon}</span>
-                    <span>{domain.label}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    {group.icon}
+                    <span>{group.title}</span>
                   </div>
-                  {hasSubpages && (
-                    <span style={{ opacity: 0.6 }}>
-                      {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                    </span>
-                  )}
+                  {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
                 </button>
 
-                {/* Subpages list */}
-                {hasSubpages && isOpen && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.15rem", paddingLeft: "2rem", marginTop: "0.2rem", marginBottom: "0.4rem" }}>
-                    {domain.subpages.map(sub => (
-                      <button
-                        key={sub}
-                        onClick={() => setCurrentTab(domain.id)}
-                        style={{
-                          border: "none", background: "none", color: "#777777", fontSize: "0.75rem",
-                          textAlign: "left", padding: "0.25rem 0.5rem", borderRadius: "4px", cursor: "pointer"
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.color = "#FFFFFF"}
-                        onMouseLeave={e => e.currentTarget.style.color = "#777777"}
-                      >
-                        {sub}
-                      </button>
-                    ))}
+                {!isCollapsed && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", paddingLeft: "0.5rem" }}>
+                    {group.items.map((item) => {
+                      const isActive = currentTab === item.id || currentTab === group.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setCurrentTab(item.id)}
+                          style={{
+                            width: "100%", textAlign: "left", padding: "0.4rem 0.75rem", borderRadius: "6px",
+                            border: "none", backgroundColor: isActive ? "#181818" : "transparent",
+                            color: isActive ? "#D9A928" : "#999999", fontSize: "0.78rem",
+                            fontWeight: isActive ? 700 : 500, cursor: "pointer", transition: "all 0.1s"
+                          }}
+                          onMouseEnter={e => { if(!isActive) e.currentTarget.style.color = "#FFFFFF"; }}
+                          onMouseLeave={e => { if(!isActive) e.currentTarget.style.color = "#999999"; }}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -202,14 +242,14 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
           })}
         </div>
 
-        {/* Bottom Workspace Separator Badge */}
-        <div style={{ borderTop: "1px solid #222222", paddingTop: "1rem", marginTop: "1rem" }}>
+        {/* Bottom Badge */}
+        <div style={{ borderTop: "1px solid #222222", paddingTop: "0.85rem", marginTop: "0.75rem" }}>
           <div style={{ fontSize: "0.65rem", color: "#666666", textTransform: "uppercase", letterSpacing: "0.5px" }}>OYEN GROUP Headquarters</div>
-          <div style={{ fontSize: "0.72rem", color: "#AAAAAA", fontWeight: 600, marginTop: "0.15rem" }}>Executive Command Realm</div>
+          <div style={{ fontSize: "0.72rem", color: "#AAAAAA", fontWeight: 600, marginTop: "0.15rem" }}>Internal Operations Realm</div>
         </div>
       </aside>
 
-      {/* Main OS Viewport */}
+      {/* Main Viewport */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         
         {/* Header */}
@@ -226,7 +266,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
             <div style={{ display: "flex", gap: "0.4rem", fontSize: "0.68rem" }}>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.5rem", borderRadius: "4px", fontWeight: 600 }}>Production</span>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
-                Platform <strong style={{ color: "#18B67A" }}>● Operational</strong>
+                Ecosystem <strong style={{ color: "#18B67A" }}>● Operational</strong>
               </span>
               <span style={{ backgroundColor: "#F7F4ED", border: "1px solid #E6DED0", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
                 AI Engine <strong style={{ color: "#18B67A" }}>● Online</strong>
@@ -253,7 +293,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
                   backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px",
                   boxShadow: "0 10px 25px rgba(0,0,0,0.08)", zIndex: 100, padding: "0.35rem", display: "flex", flexDirection: "column"
                 }}>
-                  {["Customer Org", "Internal Employee", "Feature Flag", "Security Audit"].map(act => (
+                  {["Customer Org", "Internal Staff", "Feature Flag", "Security Audit"].map(act => (
                     <button
                       key={act}
                       onClick={() => {
@@ -276,13 +316,13 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
           </div>
         </header>
 
-        {/* Main Content Viewport */}
+        {/* Content Viewport */}
         <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#F7F4ED" }}>
           {children}
         </main>
       </div>
 
-      {/* Command Bar console modal */}
+      {/* Command Bar Modal */}
       {showCommandBar && (
         <div 
           onClick={() => setShowCommandBar(false)}
@@ -305,7 +345,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
               <input 
                 autoFocus
                 type="text" 
-                placeholder="Search modules, customer orgs, staff, logs..."
+                placeholder="Search executive modules, orgs, users..."
                 value={commandSearch}
                 onChange={e => setCommandSearch(e.target.value)}
                 style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#111111", fontSize: "0.9rem" }}
