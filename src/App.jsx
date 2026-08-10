@@ -828,16 +828,46 @@ export default function App() {
     }
   }, [wsTeam, user, userRole, ownerEmail]);
 
-  // Dynamically sync real-time participant login status in wsLearners (Active when logged in, Pending/Offline when logged out)
+  // Dynamically sync real-time participant status in wsLearners:
+  // - Active: Currently logged-in participant
+  // - Offline: Participant who has previously logged in but is not currently logged in
+  // - Pending: Participant who was invited but has not logged in yet
   useEffect(() => {
-    if (user && wsLearners && wsLearners.length > 0) {
-      const cleanEmail = user.trim().toLowerCase();
-      const needsUpdate = wsLearners.some(l => l.email && l.email.toLowerCase() === cleanEmail && l.status !== 'Active');
-      if (needsUpdate) {
-        setWsLearners(prev => prev.map(l => l.email && l.email.toLowerCase() === cleanEmail ? { ...l, status: 'Active' } : l));
+    if (wsLearners && wsLearners.length > 0) {
+      const cleanEmail = user ? user.trim().toLowerCase() : null;
+      let needsChange = false;
+      const updated = wsLearners.map(l => {
+        if (!l || !l.email) return l;
+        const lEmail = l.email.trim().toLowerCase();
+        const isUserLoggedIn = cleanEmail && lEmail === cleanEmail;
+        
+        if (isUserLoggedIn) {
+          if (l.status !== 'Active' || !l.hasLoggedIn) {
+            needsChange = true;
+            return { ...l, status: 'Active', hasLoggedIn: true };
+          }
+        } else {
+          // User is not currently logged in
+          if (l.hasLoggedIn || l.status === 'Active' || l.status === 'Offline') {
+            if (l.status !== 'Offline' || !l.hasLoggedIn) {
+              needsChange = true;
+              return { ...l, status: 'Offline', hasLoggedIn: true };
+            }
+          } else {
+            if (l.status !== 'Pending') {
+              needsChange = true;
+              return { ...l, status: 'Pending' };
+            }
+          }
+        }
+        return l;
+      });
+
+      if (needsChange) {
+        setWsLearners(updated);
       }
     }
-  }, [user, wsLearners]);
+  }, [user]);
 
   // Dynamically ensure only real logged-in owner is active and demo members are excluded
   useEffect(() => {
@@ -1133,7 +1163,7 @@ export default function App() {
     triggerTransition(() => {
       if (user && wsLearners && wsLearners.length > 0) {
         const cleanEmail = user.trim().toLowerCase();
-        setWsLearners(prev => prev.map(l => l.email && l.email.toLowerCase() === cleanEmail ? { ...l, status: 'Offline' } : l));
+        setWsLearners(prev => prev.map(l => l.email && l.email.toLowerCase() === cleanEmail ? { ...l, status: 'Offline', hasLoggedIn: true } : l));
       }
       setUser(null);
       setUserRole(null);

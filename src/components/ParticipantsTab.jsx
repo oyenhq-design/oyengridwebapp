@@ -150,8 +150,8 @@ export default function ParticipantsTab({
     const matchesSearch = `${l.name} ${l.email} ${l.program}`.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = filterStatus === 'All'
       || (filterStatus === 'Active' && l.status === 'Active')
-      || (filterStatus === 'Inactive' && l.status === 'Inactive')
-      || (filterStatus === 'Pending Invite' && l.status === 'Pending');
+      || (filterStatus === 'Offline' && l.status === 'Offline')
+      || ((filterStatus === 'Pending Invite' || filterStatus === 'Pending') && l.status === 'Pending');
     return matchesSearch && matchesStatus;
   });
 
@@ -457,7 +457,7 @@ export default function ParticipantsTab({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           {/* Status filter pills */}
           <div style={{ display: 'flex', gap: '0.35rem', backgroundColor: '#F5F2ED', borderRadius: '10px', padding: '0.25rem' }}>
-            {['All', 'Active', 'Inactive', 'Pending Invite'].map(f => (
+            {['All', 'Active', 'Pending Invite', 'Offline'].map(f => (
               <button
                 key={f}
                 className="filter-pill"
