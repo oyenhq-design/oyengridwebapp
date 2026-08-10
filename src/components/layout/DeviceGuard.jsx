@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Monitor, Laptop, Smartphone, Lock, Info, Mail } from 'lucide-react';
 
-const MobileRestriction = () => {
+const MobileRestriction = ({ onBypass }) => {
   const handleSupport = () => {
     window.location.href = 'mailto:support@oyengrid.com'; 
   };
@@ -119,7 +119,7 @@ const MobileRestriction = () => {
 
         {/* Soft Premium Information Panel */}
         <div style={{
-          backgroundColor: '#FFF8E7', // Very light gold
+          backgroundColor: '#FFF8E7',
           borderRadius: '12px',
           padding: '1.25rem',
           width: '100%',
@@ -148,33 +148,35 @@ const MobileRestriction = () => {
           width: '100%',
           marginTop: '0.5rem'
         }}>
-          <button
-            onClick={() => {}} // Disabled visually/functionally as requested "Open on Desktop", could just be a visual button or copy link
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              backgroundColor: '#D4AF37',
-              color: '#FFFFFF',
-              border: 'none',
-              padding: '1rem 1.5rem',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: 'default',
-              transition: 'background-color 0.2s ease',
-              boxShadow: '0 4px 12px rgba(212, 175, 55, 0.2)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C29F32';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#D4AF37';
-            }}
-          >
-            Open on Desktop
-          </button>
+          {onBypass && (
+            <button
+              onClick={onBypass}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                backgroundColor: '#D4AF37',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '1rem 1.5rem',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                boxShadow: '0 4px 12px rgba(212, 175, 55, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#C29F32';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#D4AF37';
+              }}
+            >
+              Continue Anyway (Mobile Preview)
+            </button>
+          )}
           
           <button
             onClick={handleSupport}
@@ -229,10 +231,11 @@ const MobileRestriction = () => {
 export default function DeviceGuard({ children }) {
   const [isMobile, setIsMobile] = useState(false);
   const [hasChecked, setHasChecked] = useState(false);
+  const [bypassed, setBypassed] = useState(false);
 
   useEffect(() => {
     const checkWidth = () => {
-      setIsMobile(window.innerWidth < 1024);
+      setIsMobile(window.innerWidth < 600);
       setHasChecked(true);
     };
 
@@ -247,8 +250,8 @@ export default function DeviceGuard({ children }) {
   // Avoid flash of desktop on mobile by waiting for first check
   if (!hasChecked) return null;
 
-  if (isMobile) {
-    return <MobileRestriction />;
+  if (isMobile && !bypassed) {
+    return <MobileRestriction onBypass={() => setBypassed(true)} />;
   }
 
   return <>{children}</>;
