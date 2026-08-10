@@ -1,10 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronDown, ChevronRight, Building, Users, Shield, Cpu, Terminal, DollarSign, Activity, Layers, Settings, Home } from "lucide-react";
+import { 
+  Search, ChevronDown, ChevronRight, Building, Users, Shield, Cpu, Terminal, 
+  DollarSign, Activity, Layers, Settings, Home, BookOpen, CreditCard, BarChart3 
+} from "lucide-react";
 
 export default function CommandCentreLayout({ children, currentTab, setCurrentTab }) {
   const [showCommandBar, setShowCommandBar] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState({
+    Company: false,
+    Organizations: false,
+    Customers: false,
+    Programs: false,
+    Subscriptions: false,
+    Platform: false,
+    Analytics: false,
+    Security: false,
+    System: false,
+  });
+
+  const toggleGroup = (groupName) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -21,31 +42,97 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 10 Core Modules structure per architectural spec
-  const modules = [
+  // Executive Architecture Navigation
+  const navigation = [
     { id: "Overview", label: "Overview", icon: <Home size={15} /> },
-    { id: "Company", label: "Company", icon: <Building size={15} /> },
-    { id: "Customers", label: "Customers", icon: <Users size={15} /> },
-    { id: "Platform", label: "Platform", icon: <Layers size={15} /> },
-    { id: "Revenue", label: "Revenue", icon: <DollarSign size={15} /> },
-    { id: "Operations", label: "Operations", icon: <Activity size={15} /> },
-    { id: "AI", label: "AI", icon: <Cpu size={15} /> },
-    { id: "Engineering", label: "Engineering", icon: <Terminal size={15} /> },
-    { id: "Security", label: "Security", icon: <Shield size={15} /> },
-    { id: "System", label: "System", icon: <Settings size={15} /> },
+    { 
+      id: "Company", label: "Company", icon: <Building size={15} />,
+      subItems: [
+        { id: "Company_Headquarters", label: "Headquarters" },
+        { id: "Company_Staff", label: "Staff Directory" },
+        { id: "Company_Roles", label: "Roles & Structure" },
+        { id: "Company_Viewers", label: "Viewers & Audit" },
+      ]
+    },
+    { 
+      id: "Organizations", label: "Organizations", icon: <Building size={15} />,
+      subItems: [
+        { id: "Organizations_List", label: "Organizations" },
+        { id: "Organizations_Verification", label: "Verification" },
+        { id: "Organizations_Domains", label: "Domains" },
+      ]
+    },
+    { 
+      id: "Customers", label: "Customers", icon: <Users size={15} />,
+      subItems: [
+        { id: "Customers_CRM", label: "CRM" },
+        { id: "Customers_Billing", label: "Billing" },
+        { id: "Customers_Support", label: "Support" },
+      ]
+    },
+    { 
+      id: "Programs", label: "Programs", icon: <BookOpen size={15} />,
+      subItems: [
+        { id: "Programs_List", label: "Programs List" },
+        { id: "Programs_Templates", label: "Templates" },
+        { id: "Programs_Certificates", label: "Certificates" },
+      ]
+    },
+    { 
+      id: "Subscriptions", label: "Subscriptions", icon: <CreditCard size={15} />,
+      subItems: [
+        { id: "Subscriptions_Plans", label: "Plans" },
+        { id: "Subscriptions_Revenue", label: "Revenue" },
+        { id: "Subscriptions_Payments", label: "Payments" },
+        { id: "Subscriptions_Coupons", label: "Coupons" },
+      ]
+    },
+    { 
+      id: "Platform", label: "Platform", icon: <Layers size={15} />,
+      subItems: [
+        { id: "Platform_Services", label: "Services" },
+        { id: "Platform_AI", label: "AI Engine" },
+        { id: "Platform_Storage", label: "Storage" },
+        { id: "Platform_Notifications", label: "Notifications" },
+      ]
+    },
+    { 
+      id: "Analytics", label: "Analytics", icon: <BarChart3 size={15} />,
+      subItems: [
+        { id: "Analytics_Revenue", label: "Revenue Growth" },
+        { id: "Analytics_Growth", label: "Ecosystem Growth" },
+        { id: "Analytics_Engagement", label: "Engagement" },
+        { id: "Analytics_Reports", label: "Reports" },
+      ]
+    },
+    { 
+      id: "Security", label: "Security", icon: <Shield size={15} />,
+      subItems: [
+        { id: "Security_AuditLogs", label: "Audit Logs" },
+        { id: "Security_Access", label: "Access Controls" },
+        { id: "Security_Compliance", label: "Compliance" },
+      ]
+    },
+    { 
+      id: "System", label: "System", icon: <Settings size={15} />,
+      subItems: [
+        { id: "System_Integrations", label: "Integrations" },
+        { id: "System_Backups", label: "Backups" },
+        { id: "System_Settings", label: "Global Settings" },
+      ]
+    },
   ];
 
   const searchCommands = [
-    { label: "Go to CEO Overview", action: () => setCurrentTab("Overview"), cat: "Navigation" },
-    { label: "Go to OYEN Company OS", action: () => setCurrentTab("Company"), cat: "Navigation" },
-    { label: "Go to Customers Management", action: () => setCurrentTab("Customers"), cat: "Navigation" },
-    { label: "Go to Platform Control", action: () => setCurrentTab("Platform"), cat: "Navigation" },
-    { label: "Go to Revenue Cockpit", action: () => setCurrentTab("Revenue"), cat: "Navigation" },
-    { label: "Go to Operations", action: () => setCurrentTab("Operations"), cat: "Navigation" },
-    { label: "Go to OYEN AI Command", action: () => setCurrentTab("AI"), cat: "Navigation" },
-    { label: "Go to Engineering & Releases", action: () => setCurrentTab("Engineering"), cat: "Navigation" },
-    { label: "Go to Security & Compliance", action: () => setCurrentTab("Security"), cat: "Navigation" },
-    { label: "Go to System Configuration", action: () => setCurrentTab("System"), cat: "Navigation" },
+    { label: "Go to Executive Overview", action: () => setCurrentTab("Overview"), cat: "Navigation" },
+    { label: "Go to Company Headquarters", action: () => setCurrentTab("Company"), cat: "Navigation" },
+    { label: "Go to Customers & CRM", action: () => setCurrentTab("Customers"), cat: "Navigation" },
+    { label: "Go to Organizations", action: () => setCurrentTab("Organizations"), cat: "Navigation" },
+    { label: "Go to Subscriptions & Plans", action: () => setCurrentTab("Subscriptions"), cat: "Navigation" },
+    { label: "Go to OYEN AI Platform", action: () => setCurrentTab("Platform"), cat: "Navigation" },
+    { label: "Go to Analytics & Growth", action: () => setCurrentTab("Analytics"), cat: "Navigation" },
+    { label: "Go to Security & Audit Logs", action: () => setCurrentTab("Security"), cat: "Navigation" },
+    { label: "Go to System Settings", action: () => setCurrentTab("System"), cat: "Navigation" },
   ];
 
   const filteredCommands = searchCommands.filter(c =>
@@ -55,7 +142,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F7F4ED", color: "#111111", fontFamily: "'Inter', sans-serif" }}>
       
-      {/* Sidebar (Dark Panel) */}
+      {/* Sidebar (Dark Executive Panel) */}
       <aside style={{ width: "260px", backgroundColor: "#101010", borderRight: "1px solid #E6DED0", display: "flex", flexDirection: "column", padding: "1.5rem 1.1rem", boxSizing: "border-box" }}>
         
         {/* Logo header */}
@@ -83,36 +170,70 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
             <Search size={13} />
-            <span>Search Command Centre...</span>
+            <span>Search console...</span>
           </div>
           <span style={{ fontSize: "0.65rem", color: "#666666", backgroundColor: "#222222", padding: "0.1rem 0.35rem", borderRadius: "3px" }}>⌘K</span>
         </button>
 
-        {/* Core 10 Navigation Items */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", flex: 1, overflowY: "auto" }}>
+        {/* Navigation Item Tree */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", flex: 1, overflowY: "auto" }}>
           <div style={{ fontSize: "0.65rem", fontWeight: 800, color: "#555555", textTransform: "uppercase", letterSpacing: "1px", padding: "0.25rem 0.6rem", marginBottom: "0.25rem" }}>
-            Internal HQ Modules
+            HQ Architecture
           </div>
 
-          {modules.map((mod) => {
-            const isActive = currentTab === mod.id || (currentTab === "Dashboard" && mod.id === "Overview");
+          {navigation.map((item) => {
+            const isGroupActive = currentTab === item.id || (currentTab === "Dashboard" && item.id === "Overview");
+            const isExpanded = expandedGroups[item.id];
+
             return (
-              <button
-                key={mod.id}
-                onClick={() => setCurrentTab(mod.id)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.65rem",
-                  width: "100%", textAlign: "left", padding: "0.55rem 0.75rem", borderRadius: "8px",
-                  border: "none", backgroundColor: isActive ? "#181818" : "transparent",
-                  color: isActive ? "#D9A928" : "#999999", fontSize: "0.82rem",
-                  fontWeight: isActive ? 700 : 500, cursor: "pointer", transition: "all 0.15s ease"
-                }}
-                onMouseEnter={e => { if(!isActive) e.currentTarget.style.color = "#FFFFFF"; }}
-                onMouseLeave={e => { if(!isActive) e.currentTarget.style.color = "#999999"; }}
-              >
-                <span style={{ color: isActive ? "#D9A928" : "#666666" }}>{mod.icon}</span>
-                <span>{mod.label}</span>
-              </button>
+              <div key={item.id} style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <button
+                    onClick={() => {
+                      setCurrentTab(item.id);
+                      if (item.subItems) toggleGroup(item.id);
+                    }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "0.65rem", flex: 1,
+                      textAlign: "left", padding: "0.55rem 0.75rem", borderRadius: "8px",
+                      border: "none", backgroundColor: isGroupActive ? "#181818" : "transparent",
+                      color: isGroupActive ? "#D9A928" : "#999999", fontSize: "0.82rem",
+                      fontWeight: isGroupActive ? 700 : 500, cursor: "pointer", transition: "all 0.15s ease"
+                    }}
+                    onMouseEnter={e => { if(!isGroupActive) e.currentTarget.style.color = "#FFFFFF"; }}
+                    onMouseLeave={e => { if(!isGroupActive) e.currentTarget.style.color = "#999999"; }}
+                  >
+                    <span style={{ color: isGroupActive ? "#D9A928" : "#666666" }}>{item.icon}</span>
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {item.subItems && (
+                      <span style={{ color: "#555555" }}>
+                        {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Sub-items */}
+                {item.subItems && isExpanded && (
+                  <div style={{ display: "flex", flexDirection: "column", paddingLeft: "1.8rem", marginTop: "0.1rem", marginBottom: "0.2rem" }}>
+                    {item.subItems.map(sub => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setCurrentTab(item.id)}
+                        style={{
+                          textAlign: "left", padding: "0.35rem 0.6rem", border: "none",
+                          backgroundColor: "transparent", color: "#777777", fontSize: "0.75rem",
+                          fontWeight: 500, cursor: "pointer"
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.color = "#D9A928"}
+                        onMouseLeave={e => e.currentTarget.style.color = "#777777"}
+                      >
+                        • {sub.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -168,7 +289,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
                   backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "8px",
                   boxShadow: "0 10px 25px rgba(0,0,0,0.08)", zIndex: 100, padding: "0.35rem", display: "flex", flexDirection: "column"
                 }}>
-                  {["Customer Org", "Internal Employee", "Feature Flag", "Security Audit"].map(act => (
+                  {["Customer Org", "Internal Staff", "Feature Flag", "Security Audit"].map(act => (
                     <button
                       key={act}
                       onClick={() => {

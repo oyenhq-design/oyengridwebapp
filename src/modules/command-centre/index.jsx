@@ -19,6 +19,7 @@ import ExperimentsPage from "./pages/ExperimentsPage";
 import SecurityPage from "./pages/SecurityPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import SettingsPage from "./pages/SettingsPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 
 export default function CommandCentreModule() {
   const [currentTab, setCurrentTab] = useState("Overview");
@@ -40,6 +41,13 @@ export default function CommandCentreModule() {
       case "Workspaces":
         return <CustomersModule initialSubtab={currentTab === "Customers" ? "Organizations" : currentTab} />;
 
+      case "Programs":
+        return <CustomersModule initialSubtab="Organizations" />;
+
+      case "Subscriptions":
+      case "Revenue":
+        return <BillingPage />;
+
       case "Platform":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
@@ -48,8 +56,8 @@ export default function CommandCentreModule() {
           </div>
         );
 
-      case "Revenue":
-        return <BillingPage />;
+      case "Analytics":
+        return <AnalyticsPage />;
 
       case "Operations":
         return (
