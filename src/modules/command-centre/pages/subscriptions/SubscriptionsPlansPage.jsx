@@ -34,6 +34,10 @@ export default function SubscriptionsPlansPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
 
+  // Save / Update States
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
   // Active Form State for the Configurator Modal
   const [editForm, setEditForm] = useState({
     id: "",
@@ -55,6 +59,7 @@ export default function SubscriptionsPlansPage() {
     programmeLimit: "",
     featureCount: "",
     buttonText: "",
+    ctaDestination: "/checkout?plan=standard",
     popular: false,
     recommended: false
   });
@@ -104,10 +109,10 @@ export default function SubscriptionsPlansPage() {
           category: formatValue(item.category, "Bootcamps & Training"),
           status: item.status ? (String(item.status).charAt(0).toUpperCase() + String(item.status).slice(1)) : (item.is_active ? "Published" : "Draft"),
           orgsCount: item.orgs_count || (item.price === 450 ? 42 : item.price === 1200 ? 88 : item.price === 2800 ? 64 : 21),
-          monthlyPrice: item.price !== undefined ? Number(item.price) : 450,
-          annualPrice: item.price ? Number(item.price) * 10 : 4500,
+          monthlyPrice: item.price !== undefined ? Number(item.price) : (item.monthly_price !== undefined ? Number(item.monthly_price) : 450),
+          annualPrice: item.annual_price !== undefined ? Number(item.annual_price) : (item.price ? Number(item.price) * 10 : 4500),
           currency: formatValue(item.currency, "USD"),
-          target: formatValue(item.description, "Training providers & bootcamps"),
+          target: formatValue(item.description || item.target_customer_segment, "Training providers & bootcamps"),
           version: formatValue(item.version, "v2.4.0"),
           lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : "Aug 06, 2026",
           createdBy: formatValue(item.created_by, "Shola Oyewole (Admin)"),
@@ -118,7 +123,8 @@ export default function SubscriptionsPlansPage() {
           programmeLimit: formatValue(item.programme_limit, item.price === 450 ? "5 Running Programs" : item.price === 1200 ? "20 Running Programs" : "Unlimited Programs"),
           featureCount: formatValue(item.feature_count, item.price === 450 ? "12 Features Enabled" : item.price === 1200 ? "18 Features Enabled" : item.price === 2800 ? "24 Features Enabled" : "All 32 Features"),
           features: Array.isArray(item.features) ? item.features : null,
-          buttonText: formatValue(item.button_text, "Start Trial"),
+          buttonText: formatValue(item.cta_button_label || item.button_text, "Start Trial"),
+          ctaDestination: formatValue(item.cta_destination, "/checkout?plan=standard"),
           popular: !!item.is_popular,
           recommended: !!item.is_popular,
           is_active: item.is_active !== undefined ? item.is_active : true,
@@ -176,6 +182,7 @@ export default function SubscriptionsPlansPage() {
   // Open modal and load existing plan data into form state
   const openConfigModal = (plan) => {
     setSelectedPlanForConfig(plan);
+    setSaveError(null);
     setEditForm({
       ...plan,
       name: formatValue(plan.name),
@@ -186,22 +193,79 @@ export default function SubscriptionsPlansPage() {
       programmeLimit: formatValue(plan.programmeLimit),
       featureCount: formatValue(plan.featureCount),
       buttonText: formatValue(plan.buttonText),
+      ctaDestination: formatValue(plan.ctaDestination, "/checkout?plan=standard"),
       lastUpdated: "Just Now by Shola Oyewole (Admin)"
     });
     setConfigActiveTab("pricing");
   };
 
-  // Local Save Handler for Configurator Modal
-  const handleSavePlanConfiguration = () => {
-    if (!editForm || !editForm.id) return;
+  // Supabase UPDATE Handler for Configurator Modal
+  const handleSavePlanConfiguration = async () => {
+    if (!editForm || !editForm.id) {
+      setSaveError("Invalid plan identifier. Cannot update record.");
+      return;
+    }
 
-    setSupabasePlans(prev => prev.map(p => p.id === editForm.id ? { ...editForm, lastUpdated: "Just now" } : p));
-    setSyncStatus(prev => ({
-      ...prev,
-      pendingChanges: prev.pendingChanges + 1,
-      status: "Modified (Pending Web Publish)"
-    }));
-    setSelectedPlanForConfig(null);
+    try {
+      setSaving(true);
+      setSaveError(null);
+
+      const targetId = selectedPlanForConfig ? selectedPlanForConfig.id : editForm.id;
+
+      // Construct exact Supabase UPDATE payload matching database columns
+      const updatePayload = {
+        name: editForm.name,
+        price: Number(editForm.monthlyPrice),
+        monthly_price: Number(editForm.monthlyPrice),
+        annual_price: Number(editForm.annualPrice),
+        currency: editForm.currency || "USD",
+        description: editForm.target,
+        target_customer_segment: editForm.target,
+        button_text: editForm.buttonText,
+        cta_button_label: editForm.buttonText,
+        cta_destination: editForm.ctaDestination || "/checkout?plan=standard",
+        status: editForm.status ? editForm.status.toLowerCase() : "published",
+        is_active: editForm.status === "Published" || editForm.is_active !== false,
+        is_popular: !!editForm.popular,
+        version: editForm.version || "v2.4.0",
+        updated_at: new Date().toISOString()
+      };
+
+      console.log(`Executing Supabase UPDATE query on 'pricing_plans' for ID: ${targetId}`, updatePayload);
+
+      const { data, error } = await supabase
+        .from("pricing_plans")
+        .update(updatePayload)
+        .eq("id", targetId);
+
+      if (error) {
+        console.error("Supabase UPDATE Query Error:", error);
+        setSaveError(`Supabase Error: ${error.message || JSON.stringify(error)}`);
+        // Keep modal open and report error clearly!
+        return;
+      }
+
+      console.log("✅ Supabase UPDATE Query Succeeded for ID:", targetId);
+
+      // Close configurator modal
+      setSelectedPlanForConfig(null);
+
+      // Re-fetch pricing plans directly from Supabase so cards immediately show new values
+      await fetchPricingPlans();
+
+      setSyncStatus(prev => ({
+        ...prev,
+        pendingChanges: prev.pendingChanges + 1,
+        status: "Modified (Pending Web Publish)"
+      }));
+
+      alert(`✅ SUCCESS: '${editForm.name}' updated successfully in Supabase!`);
+    } catch (err) {
+      console.error("Supabase Save Exception:", err);
+      setSaveError(err.message || "An unexpected error occurred while updating Supabase.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePublishPricing = async () => {
@@ -255,6 +319,7 @@ export default function SubscriptionsPlansPage() {
                 programmeLimit: "10 Running Programs",
                 featureCount: "15 Features Enabled",
                 buttonText: "Subscribe Now",
+                ctaDestination: "/checkout?plan=standard",
                 popular: false,
                 recommended: false
               };
@@ -622,6 +687,14 @@ export default function SubscriptionsPlansPage() {
               </button>
             </div>
 
+            {/* Save Error Banner inside Modal if Update fails */}
+            {saveError && (
+              <div style={{ padding: "0.85rem 1.5rem", backgroundColor: "#FEF2F2", borderBottom: "1px solid #FCA5A5", color: "#991B1B", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <AlertCircle size={16} color="#DC2626" />
+                <span style={{ fontWeight: 700 }}>{saveError}</span>
+              </div>
+            )}
+
             {/* Modal Config Navigation Tabs */}
             <div style={{ display: "flex", backgroundColor: "#F7F4ED", borderBottom: "1px solid #E6DED0", padding: "0 1.5rem" }}>
               {[
@@ -720,7 +793,8 @@ export default function SubscriptionsPlansPage() {
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>CTA DESTINATION</label>
                       <input 
                         type="text" 
-                        defaultValue="/checkout?plan=standard" 
+                        value={formatValue(editForm.ctaDestination, "/checkout?plan=standard")} 
+                        onChange={e => setEditForm(prev => ({ ...prev, ctaDestination: e.target.value }))}
                         style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} 
                       />
                     </div>
@@ -861,16 +935,29 @@ export default function SubscriptionsPlansPage() {
             <div style={{ padding: "1.25rem 2rem", borderTop: "1px solid #E6DED0", backgroundColor: "#FCFBF8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <button 
                 onClick={() => setSelectedPlanForConfig(null)}
-                style={{ padding: "0.6rem 1.25rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#F7F4ED", color: "#111111", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}
+                disabled={saving}
+                style={{ padding: "0.6rem 1.25rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#F7F4ED", color: "#111111", fontSize: "0.82rem", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer" }}
               >
                 Cancel
               </button>
 
               <button 
                 onClick={handleSavePlanConfiguration}
-                style={{ padding: "0.6rem 1.5rem", border: "none", borderRadius: "6px", backgroundColor: "#D9A928", color: "#FFFFFF", fontSize: "0.82rem", fontWeight: 800, cursor: "pointer" }}
+                disabled={saving}
+                style={{ 
+                  padding: "0.6rem 1.5rem", border: "none", borderRadius: "6px", 
+                  backgroundColor: saving ? "#9CA3AF" : "#D9A928", color: "#FFFFFF", 
+                  fontSize: "0.82rem", fontWeight: 800, cursor: saving ? "wait" : "pointer",
+                  display: "flex", alignItems: "center", gap: "0.5rem"
+                }}
               >
-                Save Plan Configuration
+                {saving ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Saving to Supabase...
+                  </>
+                ) : (
+                  "Save Plan Configuration"
+                )}
               </button>
             </div>
           </div>
