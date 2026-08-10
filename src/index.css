@@ -128,8 +128,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Left Brand Panel */
 .brand-panel {
   position: relative;
-  background-image: url('./assets/mountain_bg.jpg');
-  background-size: 100% 115%;
+  background-image: url('./assets/onboarding_bg_v2.png');
+  background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   background-color: #030303;
