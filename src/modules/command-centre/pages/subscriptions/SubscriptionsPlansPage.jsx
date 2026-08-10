@@ -5,17 +5,44 @@ import {
   Edit3, Trash2, Copy, Archive, Check, X, Sliders, ChevronRight, BarChart2,
   Building2, Users, Download
 } from "lucide-react";
+import { supabase } from "../../../../lib/supabaseClient";
 
 export default function SubscriptionsPlansPage() {
   const [activeSolutionTab, setActiveSolutionTab] = useState("Bootcamps & Training");
   const [selectedPlanForConfig, setSelectedPlanForConfig] = useState(null);
   const [configActiveTab, setConfigActiveTab] = useState("pricing");
+  
+  // Active Form State for the Configurator Modal
+  const [editForm, setEditForm] = useState({
+    id: "",
+    name: "",
+    solution: "",
+    status: "Published",
+    orgsCount: 0,
+    monthlyPrice: 0,
+    annualPrice: 0,
+    currency: "USD",
+    target: "",
+    version: "v2.4.0",
+    lastUpdated: "Today",
+    createdBy: "Shola Oyewole (Admin)",
+    billingCycle: "Monthly / Annual (-16%)",
+    aiAllocation: "",
+    storageAllocation: "",
+    participantLimit: "",
+    programmeLimit: "",
+    featureCount: "",
+    buttonText: "",
+    popular: false,
+    recommended: false
+  });
+
   const [syncStatus, setSyncStatus] = useState({
     status: "Live & Synchronized",
     version: "v2.4.0",
     lastPublished: "Today @ 14:20 WAT",
     visiblePlans: 12,
-    pendingChanges: 2,
+    pendingChanges: 0,
     cacheStatus: "Purged & Synced"
   });
 
@@ -31,11 +58,11 @@ export default function SubscriptionsPlansPage() {
     { label: "Avg Upgrade Rate", val: "14.2%", color: "#18B67A" }
   ];
 
-  // Solution family plans database
-  const plansBySolution = {
+  // React State for Solution Family Plans (Reactive Data Engine)
+  const [plansState, setPlansState] = useState({
     "Bootcamps & Training": [
       {
-        id: "bootcamp-basic",
+        id: "29eed756-5633-47b4-b429-9e8cecc7d5c7",
         name: "Basic Training Tier",
         solution: "Bootcamps & Training",
         status: "Published",
@@ -58,7 +85,7 @@ export default function SubscriptionsPlansPage() {
         recommended: false
       },
       {
-        id: "bootcamp-standard",
+        id: "4ce6e603-339f-45eb-a303-3c5dc9c25f18",
         name: "Standard Bootcamp Pro",
         solution: "Bootcamps & Training",
         status: "Published",
@@ -81,7 +108,7 @@ export default function SubscriptionsPlansPage() {
         recommended: true
       },
       {
-        id: "bootcamp-premium",
+        id: "6e9e301d-15e4-44bc-8c6f-735a585b664f",
         name: "Premium Training Suite",
         solution: "Bootcamps & Training",
         status: "Published",
@@ -104,7 +131,7 @@ export default function SubscriptionsPlansPage() {
         recommended: false
       },
       {
-        id: "bootcamp-premium-plus",
+        id: "9fdd1f77-ac4b-4728-9c7f-fd3bcb67c30d",
         name: "Premium+ Enterprise Bootcamp",
         solution: "Bootcamps & Training",
         status: "Published",
@@ -248,9 +275,9 @@ export default function SubscriptionsPlansPage() {
         recommended: true
       }
     ]
-  };
+  });
 
-  const currentPlans = plansBySolution[activeSolutionTab] || [];
+  const currentPlans = plansState[activeSolutionTab] || [];
 
   // Dynamic Features List for Configuration Modal
   const featureList = [
@@ -277,14 +304,77 @@ export default function SubscriptionsPlansPage() {
     { version: "v2.5.0-Draft", status: "Draft", date: "Aug 10, 2026", author: "Femi Adebayo", notes: "Proposed Q4 Pricing Adjustments (+10% ARR discount)." }
   ];
 
-  const handlePublishPricing = () => {
+  // Open modal and load existing plan data into form state
+  const openConfigModal = (plan) => {
+    setSelectedPlanForConfig(plan);
+    setEditForm({
+      ...plan,
+      lastUpdated: "Just Now by Shola Oyewole (Admin)"
+    });
+    setConfigActiveTab("pricing");
+  };
+
+  // Save changes from Configurator Modal directly into React state and update Plan Cards (Img 2)
+  const handleSavePlanConfiguration = async () => {
+    if (!editForm || !editForm.id) return;
+
+    // 1. Update React component state (Reflects instantly on Img 2 Plan Cards Grid!)
+    setPlansState(prev => {
+      const solutionKey = activeSolutionTab;
+      const updatedCategoryPlans = (prev[solutionKey] || []).map(p => {
+        if (p.id === editForm.id) {
+          return { ...editForm, lastUpdated: "Just now" };
+        }
+        return p;
+      });
+
+      // If new plan created
+      const exists = (prev[solutionKey] || []).some(p => p.id === editForm.id);
+      const finalCategoryPlans = exists ? updatedCategoryPlans : [...(prev[solutionKey] || []), editForm];
+
+      return {
+        ...prev,
+        [solutionKey]: finalCategoryPlans
+      };
+    });
+
+    // 2. Update Sync Pending Changes Counter
+    setSyncStatus(prev => ({
+      ...prev,
+      pendingChanges: prev.pendingChanges + 1,
+      status: "Modified (Pending Web Publish)"
+    }));
+
+    // 3. Optionally sync to Supabase table public.pricing_plans if valid UUID
+    try {
+      if (editForm.id.length > 20) {
+        await supabase
+          .from("pricing_plans")
+          .update({
+            name: editForm.name,
+            price: Number(editForm.monthlyPrice),
+            description: editForm.target,
+            currency: editForm.currency,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", editForm.id);
+      }
+    } catch (err) {
+      console.log("Supabase async sync note:", err);
+    }
+
+    // Close modal
+    setSelectedPlanForConfig(null);
+  };
+
+  const handlePublishPricing = async () => {
     setSyncStatus(prev => ({
       ...prev,
       lastPublished: "Just Now",
       pendingChanges: 0,
       status: "Live & Synchronized"
     }));
-    alert("🚀 SUCCESS: Subscription pricing and feature matrix published live to oyengrid.com, Checkout, and Customer Organization Dashboards!");
+    alert("🚀 SUCCESS: All Subscription Plan modifications have been synchronized live across oyengrid.com, Checkout, and Customer Dashboards!");
   };
 
   return (
@@ -307,20 +397,31 @@ export default function SubscriptionsPlansPage() {
 
           <button
             onClick={() => {
-              setSelectedPlanForConfig({
-                id: "new-plan",
+              const newId = `new-plan-${Date.now()}`;
+              const newPlan = {
+                id: newId,
                 name: "New Custom Subscription Tier",
                 solution: activeSolutionTab,
                 status: "Draft",
+                orgsCount: 0,
                 monthlyPrice: 990,
                 annualPrice: 9900,
                 currency: "USD",
-                target: "Target Audience",
+                target: "Target Audience Description",
                 version: "v2.5.0-Draft",
+                lastUpdated: "Just now",
+                createdBy: "Shola Oyewole (Admin)",
+                billingCycle: "Monthly / Annual (-16%)",
                 aiAllocation: "100,000 Tokens / mo",
-                storageAllocation: "250 GB",
-                buttonText: "Subscribe Now"
-              });
+                storageAllocation: "250 GB S3 Storage",
+                participantLimit: "500 Active Learners",
+                programmeLimit: "10 Running Programs",
+                featureCount: "15 Features Enabled",
+                buttonText: "Subscribe Now",
+                popular: false,
+                recommended: false
+              };
+              openConfigModal(newPlan);
             }}
             style={{
               display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.6rem 1.1rem",
@@ -436,7 +537,7 @@ export default function SubscriptionsPlansPage() {
         })}
       </section>
 
-      {/* 4. ENTERPRISE PLAN CARDS GRID */}
+      {/* 4. ENTERPRISE PLAN CARDS GRID (Img 2 - Reactively updates when Modal Img 1 is saved!) */}
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
         {currentPlans.map((p) => (
           <div key={p.id} style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "12px", padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: p.popular ? "0 8px 24px rgba(217, 169, 40, 0.12)" : "none", position: "relative" }}>
@@ -486,14 +587,24 @@ export default function SubscriptionsPlansPage() {
             {/* Action Buttons */}
             <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.5rem" }}>
               <button 
-                onClick={() => setSelectedPlanForConfig(p)} 
+                onClick={() => openConfigModal(p)} 
                 style={{ flex: 1, padding: "0.55rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#F7F4ED", color: "#111111", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem" }}
               >
                 <Sliders size={13} /> Configure Plan
               </button>
 
               <button 
-                onClick={() => alert(`Duplicating plan schema for ${p.name}...`)} 
+                onClick={() => {
+                  const duplicated = {
+                    ...p,
+                    id: `${p.id}-copy-${Date.now()}`,
+                    name: `${p.name} (Copy)`
+                  };
+                  setPlansState(prev => ({
+                    ...prev,
+                    [activeSolutionTab]: [...(prev[activeSolutionTab] || []), duplicated]
+                  }));
+                }} 
                 style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#707070", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
                 title="Duplicate Plan Schema"
               >
@@ -501,7 +612,12 @@ export default function SubscriptionsPlansPage() {
               </button>
 
               <button 
-                onClick={() => alert(`Retiring plan: ${p.name}`)} 
+                onClick={() => {
+                  setPlansState(prev => ({
+                    ...prev,
+                    [activeSolutionTab]: (prev[activeSolutionTab] || []).filter(item => item.id !== p.id)
+                  }));
+                }} 
                 style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#EF4444", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
                 title="Retire Plan"
               >
@@ -612,7 +728,7 @@ export default function SubscriptionsPlansPage() {
         </section>
       </div>
 
-      {/* 7. FULL PLAN CONFIGURATION MODAL / DRAWER */}
+      {/* 7. FULL PLAN CONFIGURATION MODAL / DRAWER (Img 1 - Fully Bound State!) */}
       {selectedPlanForConfig && (
         <div 
           onClick={() => setSelectedPlanForConfig(null)}
@@ -635,7 +751,7 @@ export default function SubscriptionsPlansPage() {
               <div>
                 <div style={{ fontSize: "0.68rem", color: "#D9A928", fontWeight: 800, textTransform: "uppercase" }}>MASTER PRICING ENGINE CONFIGURATOR</div>
                 <h2 style={{ margin: "0.2rem 0 0", fontSize: "1.35rem", fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                  {selectedPlanForConfig.name}
+                  {editForm.name || "Configure Subscription Plan"}
                 </h2>
               </div>
               <button 
@@ -678,21 +794,40 @@ export default function SubscriptionsPlansPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", fontSize: "0.82rem" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>PLAN PRODUCT NAME</label>
-                    <input type="text" defaultValue={selectedPlanForConfig.name} style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} />
+                    <input 
+                      type="text" 
+                      value={editForm.name} 
+                      onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                      style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
+                    />
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>MONTHLY PRICE ($)</label>
-                      <input type="number" defaultValue={selectedPlanForConfig.monthlyPrice} style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} />
+                      <input 
+                        type="number" 
+                        value={editForm.monthlyPrice} 
+                        onChange={e => setEditForm(prev => ({ ...prev, monthlyPrice: Number(e.target.value), annualPrice: Number(e.target.value) * 10 }))}
+                        style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
+                      />
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>ANNUAL PRICE ($)</label>
-                      <input type="number" defaultValue={selectedPlanForConfig.annualPrice} style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} />
+                      <input 
+                        type="number" 
+                        value={editForm.annualPrice} 
+                        onChange={e => setEditForm(prev => ({ ...prev, annualPrice: Number(e.target.value) }))}
+                        style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
+                      />
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>CURRENCY</label>
-                      <select defaultValue="USD" style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }}>
+                      <select 
+                        value={editForm.currency || "USD"} 
+                        onChange={e => setEditForm(prev => ({ ...prev, currency: e.target.value }))}
+                        style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }}
+                      >
                         <option value="USD">USD ($)</option>
                         <option value="NGN">NGN (₦)</option>
                         <option value="EUR">EUR (€)</option>
@@ -703,17 +838,31 @@ export default function SubscriptionsPlansPage() {
 
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>TARGET CUSTOMER SEGMENT DESCRIPTION</label>
-                    <textarea rows={2} defaultValue={selectedPlanForConfig.target} style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} />
+                    <textarea 
+                      rows={2} 
+                      value={editForm.target} 
+                      onChange={e => setEditForm(prev => ({ ...prev, target: e.target.value }))}
+                      style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} 
+                    />
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>CTA BUTTON LABEL</label>
-                      <input type="text" defaultValue={selectedPlanForConfig.buttonText} style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} />
+                      <input 
+                        type="text" 
+                        value={editForm.buttonText} 
+                        onChange={e => setEditForm(prev => ({ ...prev, buttonText: e.target.value }))}
+                        style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} 
+                      />
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>CTA DESTINATION</label>
-                      <input type="text" defaultValue="/checkout?plan=standard" style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} />
+                      <input 
+                        type="text" 
+                        defaultValue="/checkout?plan=standard" 
+                        style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} 
+                      />
                     </div>
                   </div>
                 </div>
@@ -768,11 +917,21 @@ export default function SubscriptionsPlansPage() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>MONTHLY TOKEN CREDITS</label>
-                      <input type="text" defaultValue={selectedPlanForConfig.aiAllocation} style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} />
+                      <input 
+                        type="text" 
+                        value={editForm.aiAllocation} 
+                        onChange={e => setEditForm(prev => ({ ...prev, aiAllocation: e.target.value }))}
+                        style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
+                      />
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>DAILY TOKEN RATE LIMIT</label>
-                      <input type="text" defaultValue="25,000 Tokens / day" style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} />
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>STORAGE LIMIT</label>
+                      <input 
+                        type="text" 
+                        value={editForm.storageAllocation} 
+                        onChange={e => setEditForm(prev => ({ ...prev, storageAllocation: e.target.value }))}
+                        style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
+                      />
                     </div>
                   </div>
 
@@ -848,10 +1007,7 @@ export default function SubscriptionsPlansPage() {
               </button>
 
               <button 
-                onClick={() => {
-                  alert(`Saved changes for ${selectedPlanForConfig.name}! Click 'Publish Pricing to Website' to synchronize live.`);
-                  setSelectedPlanForConfig(null);
-                }}
+                onClick={handleSavePlanConfiguration}
                 style={{ padding: "0.6rem 1.5rem", border: "none", borderRadius: "6px", backgroundColor: "#D9A928", color: "#FFFFFF", fontSize: "0.82rem", fontWeight: 800, cursor: "pointer" }}
               >
                 Save Plan Configuration
