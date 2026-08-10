@@ -20,6 +20,8 @@ import SecurityPage from "./pages/SecurityPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import SettingsPage from "./pages/SettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import OrganizationsPage from "./pages/OrganizationsPage";
+import WorkspacesPage from "./pages/WorkspacesPage";
 
 export default function CommandCentreModule() {
   const [currentTab, setCurrentTab] = useState("Overview");
@@ -36,13 +38,15 @@ export default function CommandCentreModule() {
       case "Organization":
         return <CompanyModule initialSubtab={currentTab === "Company" ? "Team" : currentTab} />;
 
-      case "Customers":
       case "Organizations":
+        return <OrganizationsPage />;
+
+      case "Customers":
       case "Workspaces":
         return <CustomersModule initialSubtab={currentTab === "Customers" ? "Organizations" : currentTab} />;
 
       case "Programs":
-        return <CustomersModule initialSubtab="Organizations" />;
+        return <WorkspacesPage />;
 
       case "Subscriptions":
       case "Revenue":
