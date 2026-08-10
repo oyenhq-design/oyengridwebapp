@@ -32,10 +32,18 @@ import PlatformAIEnginePage from "./pages/platform/PlatformAIEnginePage";
 import PlatformStoragePage from "./pages/platform/PlatformStoragePage";
 import PlatformNotificationsPage from "./pages/platform/PlatformNotificationsPage";
 
-import AnalyticsPage from "./pages/AnalyticsPage";
-import SecurityPage from "./pages/SecurityPage";
-import AuditLogsPage from "./pages/AuditLogsPage";
-import SettingsPage from "./pages/SettingsPage";
+import AnalyticsRevenuePage from "./pages/analytics/AnalyticsRevenuePage";
+import AnalyticsGrowthPage from "./pages/analytics/AnalyticsGrowthPage";
+import AnalyticsEngagementPage from "./pages/analytics/AnalyticsEngagementPage";
+import AnalyticsReportsPage from "./pages/analytics/AnalyticsReportsPage";
+
+import SecurityAuditLogsPage from "./pages/security/SecurityAuditLogsPage";
+import SecurityAccessControlPage from "./pages/security/SecurityAccessControlPage";
+import SecurityCompliancePage from "./pages/security/SecurityCompliancePage";
+
+import SystemIntegrationsPage from "./pages/system/SystemIntegrationsPage";
+import SystemBackupsPage from "./pages/system/SystemBackupsPage";
+import SystemSettingsPage from "./pages/system/SystemSettingsPage";
 
 export default function CommandCentreModule() {
   const [currentTab, setCurrentTab] = useState("Overview");
@@ -79,18 +87,21 @@ export default function CommandCentreModule() {
     if (currentTab === "Platform_Storage") return <PlatformStoragePage />;
     if (currentTab === "Platform_Notifications") return <PlatformNotificationsPage />;
 
-    if (currentTab.startsWith("Analytics")) return <AnalyticsPage />;
+    // Analytics Child Pages (Read-Only)
+    if (currentTab === "Analytics_Revenue") return <AnalyticsRevenuePage />;
+    if (currentTab === "Analytics_Growth") return <AnalyticsGrowthPage />;
+    if (currentTab === "Analytics_Engagement") return <AnalyticsEngagementPage />;
+    if (currentTab === "Analytics_Reports") return <AnalyticsReportsPage />;
 
-    if (currentTab.startsWith("Security")) {
-      return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-          <SecurityPage />
-          <AuditLogsPage />
-        </div>
-      );
-    }
+    // Security Child Pages
+    if (currentTab === "Security_Audit") return <SecurityAuditLogsPage />;
+    if (currentTab === "Security_Access") return <SecurityAccessControlPage />;
+    if (currentTab === "Security_Compliance") return <SecurityCompliancePage />;
 
-    if (currentTab.startsWith("System")) return <SettingsPage />;
+    // System Child Pages
+    if (currentTab === "System_Integrations") return <SystemIntegrationsPage />;
+    if (currentTab === "System_Backups") return <SystemBackupsPage />;
+    if (currentTab === "System_Settings") return <SystemSettingsPage />;
 
     // Default fallback
     return <DashboardPage />;
