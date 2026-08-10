@@ -14,6 +14,10 @@ import CustomerCRMPage from "./pages/customers/CustomerCRMPage";
 import CustomerBillingPage from "./pages/customers/CustomerBillingPage";
 import CustomerSupportPage from "./pages/customers/CustomerSupportPage";
 
+import OrganizationsMasterPage from "./pages/organizations/OrganizationsMasterPage";
+import OrganizationsVerificationPage from "./pages/organizations/OrganizationsVerificationPage";
+import OrganizationsDomainsPage from "./pages/organizations/OrganizationsDomainsPage";
+
 import UsersPage from "./pages/UsersPage";
 import FeatureFlagsPage from "./pages/FeatureFlagsPage";
 import BillingPage from "./pages/BillingPage";
@@ -26,7 +30,6 @@ import ExperimentsPage from "./pages/ExperimentsPage";
 import SecurityPage from "./pages/SecurityPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import SettingsPage from "./pages/SettingsPage";
-import OrganizationsPage from "./pages/OrganizationsPage";
 import WorkspacesPage from "./pages/WorkspacesPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 
@@ -64,8 +67,15 @@ export default function CommandCentreModule() {
       return <CustomerSupportPage />;
     }
 
-    if (currentTab.startsWith("Organizations")) {
-      return <OrganizationsPage />;
+    // Independent Organizations Child Pages
+    if (currentTab === "Organizations_List" || currentTab === "Organizations") {
+      return <OrganizationsMasterPage />;
+    }
+    if (currentTab === "Organizations_Verification") {
+      return <OrganizationsVerificationPage />;
+    }
+    if (currentTab === "Organizations_Domains") {
+      return <OrganizationsDomainsPage />;
     }
 
     if (currentTab.startsWith("Programs")) {
