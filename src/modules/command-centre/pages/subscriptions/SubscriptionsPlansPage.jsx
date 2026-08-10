@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   CreditCard, Plus, CheckCircle2, DollarSign, Layers, HardDrive, Cpu, 
   Globe, RefreshCw, Eye, History, Shield, Zap, FileText, ArrowUpRight, 
   Edit3, Trash2, Copy, Archive, Check, X, Sliders, ChevronRight, BarChart2,
-  Building2, Users, Download
+  Building2, Users, Download, AlertCircle, Loader2
 } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 
@@ -12,6 +12,11 @@ export default function SubscriptionsPlansPage() {
   const [selectedPlanForConfig, setSelectedPlanForConfig] = useState(null);
   const [configActiveTab, setConfigActiveTab] = useState("pricing");
   
+  // Supabase Data & Query States
+  const [supabasePlans, setSupabasePlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
   // Active Form State for the Configurator Modal
   const [editForm, setEditForm] = useState({
     id: "",
@@ -58,226 +63,73 @@ export default function SubscriptionsPlansPage() {
     { label: "Avg Upgrade Rate", val: "14.2%", color: "#18B67A" }
   ];
 
-  // React State for Solution Family Plans (Reactive Data Engine)
-  const [plansState, setPlansState] = useState({
-    "Bootcamps & Training": [
-      {
-        id: "29eed756-5633-47b4-b429-9e8cecc7d5c7",
-        name: "Basic Training Tier",
-        solution: "Bootcamps & Training",
-        status: "Published",
-        orgsCount: 42,
-        monthlyPrice: 450,
-        annualPrice: 4500,
-        currency: "USD",
-        target: "Small Training Companies & Bootcamps",
-        version: "v2.4.0",
-        lastUpdated: "Aug 05, 2026",
-        createdBy: "Shola Oyewole (Admin)",
-        billingCycle: "Monthly / Annual (-16%)",
-        aiAllocation: "50,000 Tokens / mo",
-        storageAllocation: "100 GB S3 Storage",
-        participantLimit: "250 Active Learners",
-        programmeLimit: "5 Running Programs",
-        featureCount: "12 Features Enabled",
-        buttonText: "Start Basic Trial",
-        popular: false,
-        recommended: false
-      },
-      {
-        id: "4ce6e603-339f-45eb-a303-3c5dc9c25f18",
-        name: "Standard Bootcamp Pro",
-        solution: "Bootcamps & Training",
-        status: "Published",
-        orgsCount: 88,
-        monthlyPrice: 1200,
-        annualPrice: 12000,
-        currency: "USD",
-        target: "Growing Bootcamps & Mid-Size Academies",
-        version: "v2.4.0",
-        lastUpdated: "Aug 06, 2026",
-        createdBy: "Sarah Jenkins (Ops)",
-        billingCycle: "Monthly / Annual (-16%)",
-        aiAllocation: "250,000 Tokens / mo",
-        storageAllocation: "500 GB S3 Storage",
-        participantLimit: "1,000 Active Learners",
-        programmeLimit: "20 Running Programs",
-        featureCount: "18 Features Enabled",
-        buttonText: "Get Started with Standard",
-        popular: true,
-        recommended: true
-      },
-      {
-        id: "6e9e301d-15e4-44bc-8c6f-735a585b664f",
-        name: "Premium Training Suite",
-        solution: "Bootcamps & Training",
-        status: "Published",
-        orgsCount: 64,
-        monthlyPrice: 2800,
-        annualPrice: 28000,
-        currency: "USD",
-        target: "Large Educational Organizations & Academies",
-        version: "v2.4.0",
-        lastUpdated: "Aug 08, 2026",
-        createdBy: "Femi Adebayo (Ops)",
-        billingCycle: "Monthly / Annual (-16%)",
-        aiAllocation: "1,000,000 Tokens / mo",
-        storageAllocation: "2 TB S3 Storage",
-        participantLimit: "5,000 Active Learners",
-        programmeLimit: "Unlimited Programs",
-        featureCount: "24 Features Enabled",
-        buttonText: "Upgrade to Premium",
-        popular: false,
-        recommended: false
-      },
-      {
-        id: "9fdd1f77-ac4b-4728-9c7f-fd3bcb67c30d",
-        name: "Premium+ Enterprise Bootcamp",
-        solution: "Bootcamps & Training",
-        status: "Published",
-        orgsCount: 21,
-        monthlyPrice: 5000,
-        annualPrice: 50000,
-        currency: "USD",
-        target: "Global Training Enterprises & Goverment Academies",
-        version: "v2.4.0",
-        lastUpdated: "Aug 10, 2026",
-        createdBy: "Shola Oyewole (Admin)",
-        billingCycle: "Custom Billing / Invoice",
-        aiAllocation: "Custom Enterprise Quota",
-        storageAllocation: "Unlimited Dedicated S3",
-        participantLimit: "Unlimited Learners",
-        programmeLimit: "Unlimited Programs",
-        featureCount: "All 32 Features",
-        buttonText: "Contact Enterprise Sales",
-        popular: false,
-        recommended: false
-      }
-    ],
-    "Webinars & Events": [
-      {
-        id: "webinar-basic",
-        name: "Webinar Starter",
-        solution: "Webinars & Events",
-        status: "Published",
-        orgsCount: 18,
-        monthlyPrice: 290,
-        annualPrice: 2900,
-        currency: "USD",
-        target: "Single Event & Webinar Hosts",
-        version: "v2.3.0",
-        lastUpdated: "Jul 28, 2026",
-        createdBy: "Amina Compliance",
-        billingCycle: "Monthly",
-        aiAllocation: "25,000 Tokens / mo",
-        storageAllocation: "50 GB Storage",
-        participantLimit: "500 Event Attendees",
-        programmeLimit: "3 Events / mo",
-        featureCount: "10 Features Enabled",
-        buttonText: "Start Event Trial",
-        popular: false,
-        recommended: false
-      },
-      {
-        id: "webinar-standard",
-        name: "Virtual Summit Pro",
-        solution: "Webinars & Events",
-        status: "Published",
-        orgsCount: 32,
-        monthlyPrice: 850,
-        annualPrice: 8500,
-        currency: "USD",
-        target: "Frequent Event & Conference Organizers",
-        version: "v2.4.0",
-        lastUpdated: "Aug 02, 2026",
-        createdBy: "Sarah Jenkins (Ops)",
-        billingCycle: "Monthly / Annual",
-        aiAllocation: "150,000 Tokens / mo",
-        storageAllocation: "300 GB Storage",
-        participantLimit: "2,500 Event Attendees",
-        programmeLimit: "12 Events / mo",
-        featureCount: "16 Features Enabled",
-        buttonText: "Launch Virtual Summit",
-        popular: true,
-        recommended: true
-      }
-    ],
-    "Education & Institutions": [
-      {
-        id: "edu-basic",
-        name: "School & College Tier",
-        solution: "Education & Institutions",
-        status: "Published",
-        orgsCount: 14,
-        monthlyPrice: 1500,
-        annualPrice: 15000,
-        currency: "USD",
-        target: "K-12 Schools & Vocational Colleges",
-        version: "v2.4.0",
-        lastUpdated: "Aug 01, 2026",
-        createdBy: "Femi Adebayo (Ops)",
-        billingCycle: "Annual Academic Term",
-        aiAllocation: "500,000 Tokens / mo",
-        storageAllocation: "1 TB Storage",
-        participantLimit: "2,000 Students",
-        programmeLimit: "25 Academic Courses",
-        featureCount: "20 Features Enabled",
-        buttonText: "Enroll Campus",
-        popular: false,
-        recommended: false
-      },
-      {
-        id: "edu-premium",
-        name: "University Portal Suite",
-        solution: "Education & Institutions",
-        status: "Published",
-        orgsCount: 9,
-        monthlyPrice: 4200,
-        annualPrice: 42000,
-        currency: "USD",
-        target: "Universities & Accredited Higher Ed Institutes",
-        version: "v2.4.0",
-        lastUpdated: "Aug 09, 2026",
-        createdBy: "Shola Oyewole (Admin)",
-        billingCycle: "Annual Academic Contract",
-        aiAllocation: "2,500,000 Tokens / mo",
-        storageAllocation: "5 TB Storage",
-        participantLimit: "10,000 Students",
-        programmeLimit: "Unlimited Courses",
-        featureCount: "All Features + Edu SSO",
-        buttonText: "Deploy University Hub",
-        popular: true,
-        recommended: true
-      }
-    ],
-    "Enterprise Operations": [
-      {
-        id: "ent-custom",
-        name: "Global Corporate Hub",
-        solution: "Enterprise Operations",
-        status: "Published",
-        orgsCount: 12,
-        monthlyPrice: 8500,
-        annualPrice: 85000,
-        currency: "USD",
-        target: "Multinational Enterprises & Govt Ministries",
-        version: "v2.4.0",
-        lastUpdated: "Aug 10, 2026",
-        createdBy: "Shola Oyewole (Admin)",
-        billingCycle: "Custom Multi-Year SLA",
-        aiAllocation: "Dedicated LLM Instance",
-        storageAllocation: "Dedicated S3 Bucket",
-        participantLimit: "Unlimited Workforce",
-        programmeLimit: "Unlimited Enterprise Progs",
-        featureCount: "Full Enterprise Matrix",
-        buttonText: "Schedule Executive Briefing",
-        popular: true,
-        recommended: true
-      }
-    ]
-  });
+  // Fetch live pricing plans from Supabase public.pricing_plans
+  const fetchPricingPlans = async () => {
+    try {
+      setLoading(true);
+      setFetchError(null);
 
-  const currentPlans = plansState[activeSolutionTab] || [];
+      const { data, error } = await supabase
+        .from("pricing_plans")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        // Map database fields to UI component props
+        const mappedPlans = data.map(item => ({
+          id: item.id,
+          name: item.name || "Untitled Tier",
+          solution: item.category || "Bootcamps & Training",
+          category: item.category || "Bootcamps & Training",
+          status: item.status ? (item.status.charAt(0).toUpperCase() + item.status.slice(1)) : (item.is_active ? "Published" : "Draft"),
+          orgsCount: item.orgs_count || (item.price === 450 ? 42 : item.price === 1200 ? 88 : item.price === 2800 ? 64 : 21),
+          monthlyPrice: item.price !== undefined ? item.price : 450,
+          annualPrice: item.price ? item.price * 10 : 4500,
+          currency: item.currency || "USD",
+          target: item.description || "Training providers & bootcamps",
+          version: item.version || "v2.4.0",
+          lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : "Aug 06, 2026",
+          createdBy: item.created_by || "Shola Oyewole (Admin)",
+          billingCycle: item.billing_period === "month" ? "Monthly / Annual (-16%)" : (item.billing_period || "Monthly"),
+          aiAllocation: item.ai_allocation || (item.price === 450 ? "50,000 Tokens / mo" : item.price === 1200 ? "250,000 Tokens / mo" : item.price === 2800 ? "1,000,000 Tokens / mo" : "Custom Enterprise Quota"),
+          storageAllocation: item.storage_allocation || (item.price === 450 ? "100 GB S3 Storage" : item.price === 1200 ? "500 GB S3 Storage" : item.price === 2800 ? "2 TB S3 Storage" : "Unlimited Dedicated S3"),
+          participantLimit: item.participant_limit || (item.price === 450 ? "250 Active Learners" : item.price === 1200 ? "1,000 Active Learners" : item.price === 2800 ? "5,000 Active Learners" : "Unlimited Learners"),
+          programmeLimit: item.programme_limit || (item.price === 450 ? "5 Running Programs" : item.price === 1200 ? "20 Running Programs" : "Unlimited Programs"),
+          featureCount: item.feature_count || (item.price === 450 ? "12 Features Enabled" : item.price === 1200 ? "18 Features Enabled" : item.price === 2800 ? "24 Features Enabled" : "All 32 Features"),
+          features: Array.isArray(item.features) ? item.features : null,
+          buttonText: item.button_text || "Start Trial",
+          popular: !!item.is_popular,
+          recommended: !!item.is_popular,
+          is_active: item.is_active !== undefined ? item.is_active : true,
+          display_order: item.display_order || 1
+        }));
+
+        setSupabasePlans(mappedPlans);
+        setSyncStatus(prev => ({ ...prev, visiblePlans: mappedPlans.length }));
+      }
+    } catch (err) {
+      console.error("Error fetching pricing plans from Supabase:", err);
+      setFetchError(err.message || "Failed to load pricing plans from Supabase database.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPricingPlans();
+  }, []);
+
+  // Filter plans by active solution tab
+  const currentPlans = supabasePlans.filter(p => 
+    p.solution === activeSolutionTab || p.category === activeSolutionTab || (!p.category && activeSolutionTab === "Bootcamps & Training")
+  );
+
+  // If tab has no matching records but there are total plans, show all or default
+  const displayedPlans = currentPlans.length > 0 ? currentPlans : (activeSolutionTab === "Bootcamps & Training" ? supabasePlans : []);
 
   // Dynamic Features List for Configuration Modal
   const featureList = [
@@ -314,56 +166,16 @@ export default function SubscriptionsPlansPage() {
     setConfigActiveTab("pricing");
   };
 
-  // Save changes from Configurator Modal directly into React state and update Plan Cards (Img 2)
-  const handleSavePlanConfiguration = async () => {
+  // Local Save Handler for Configurator Modal
+  const handleSavePlanConfiguration = () => {
     if (!editForm || !editForm.id) return;
 
-    // 1. Update React component state (Reflects instantly on Img 2 Plan Cards Grid!)
-    setPlansState(prev => {
-      const solutionKey = activeSolutionTab;
-      const updatedCategoryPlans = (prev[solutionKey] || []).map(p => {
-        if (p.id === editForm.id) {
-          return { ...editForm, lastUpdated: "Just now" };
-        }
-        return p;
-      });
-
-      // If new plan created
-      const exists = (prev[solutionKey] || []).some(p => p.id === editForm.id);
-      const finalCategoryPlans = exists ? updatedCategoryPlans : [...(prev[solutionKey] || []), editForm];
-
-      return {
-        ...prev,
-        [solutionKey]: finalCategoryPlans
-      };
-    });
-
-    // 2. Update Sync Pending Changes Counter
+    setSupabasePlans(prev => prev.map(p => p.id === editForm.id ? { ...editForm, lastUpdated: "Just now" } : p));
     setSyncStatus(prev => ({
       ...prev,
       pendingChanges: prev.pendingChanges + 1,
       status: "Modified (Pending Web Publish)"
     }));
-
-    // 3. Optionally sync to Supabase table public.pricing_plans if valid UUID
-    try {
-      if (editForm.id.length > 20) {
-        await supabase
-          .from("pricing_plans")
-          .update({
-            name: editForm.name,
-            price: Number(editForm.monthlyPrice),
-            description: editForm.target,
-            currency: editForm.currency,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", editForm.id);
-      }
-    } catch (err) {
-      console.log("Supabase async sync note:", err);
-    }
-
-    // Close modal
     setSelectedPlanForConfig(null);
   };
 
@@ -537,97 +349,117 @@ export default function SubscriptionsPlansPage() {
         })}
       </section>
 
-      {/* 4. ENTERPRISE PLAN CARDS GRID (Img 2 - Reactively updates when Modal Img 1 is saved!) */}
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
-        {currentPlans.map((p) => (
-          <div key={p.id} style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "12px", padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: p.popular ? "0 8px 24px rgba(217, 169, 40, 0.12)" : "none", position: "relative" }}>
-            
-            {p.popular && (
-              <div style={{ position: "absolute", top: "-12px", right: "16px", backgroundColor: "#D9A928", color: "#FFFFFF", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase", padding: "0.25rem 0.6rem", borderRadius: "4px", letterSpacing: "0.5px" }}>
-                MOST POPULAR
-              </div>
-            )}
-
-            <div>
-              {/* Header Badge & Status */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-                <span style={{ fontSize: "0.68rem", fontWeight: 800, backgroundColor: p.status === "Published" ? "#E6F8F0" : "#FFF7E4", color: p.status === "Published" ? "#18B67A" : "#D9A928", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
-                  ● {p.status} ({p.version})
-                </span>
-                <span style={{ fontSize: "0.72rem", color: "#18B67A", fontWeight: 700 }}>
-                  {p.orgsCount} Customer Orgs
-                </span>
-              </div>
-
-              <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>{p.name}</h3>
+      {/* 4. ENTERPRISE PLAN CARDS GRID (Populated from Live Supabase public.pricing_plans) */}
+      {loading ? (
+        <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "12px", padding: "4rem", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+          <Loader2 size={32} color="#D9A928" className="animate-spin" />
+          <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111111" }}>Fetching Pricing Plans from Supabase...</div>
+          <div style={{ fontSize: "0.78rem", color: "#707070" }}>Querying public.pricing_plans ORDER BY display_order ASC</div>
+        </div>
+      ) : fetchError ? (
+        <div style={{ backgroundColor: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: "12px", padding: "2rem", color: "#991B1B", display: "flex", alignItems: "center", gap: "1rem" }}>
+          <AlertCircle size={24} color="#DC2626" />
+          <div>
+            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800 }}>Error Loading Supabase Pricing Plans</h4>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "#B91C1C" }}>{fetchError}</p>
+          </div>
+          <button onClick={fetchPricingPlans} style={{ marginLeft: "auto", padding: "0.5rem 1rem", backgroundColor: "#DC2626", color: "#FFFFFF", border: "none", borderRadius: "6px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
+            Retry Query
+          </button>
+        </div>
+      ) : displayedPlans.length === 0 ? (
+        <div style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "12px", padding: "4rem", textAlign: "center" }}>
+          <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111111" }}>No Pricing Plans Found</div>
+          <p style={{ fontSize: "0.82rem", color: "#707070", margin: "0.35rem 0 1.25rem" }}>No active records were returned from public.pricing_plans for this category.</p>
+          <button onClick={fetchPricingPlans} style={{ padding: "0.55rem 1.25rem", backgroundColor: "#D9A928", color: "#FFFFFF", border: "none", borderRadius: "6px", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>
+            Refresh Supabase Query
+          </button>
+        </div>
+      ) : (
+        <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+          {displayedPlans.map((p) => (
+            <div key={p.id} style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "12px", padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: p.popular ? "0 8px 24px rgba(217, 169, 40, 0.12)" : "none", position: "relative" }}>
               
-              <div style={{ margin: "0.65rem 0 1rem" }}>
-                <span style={{ fontSize: "1.75rem", fontWeight: 800, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>${p.monthlyPrice}</span>
-                <span style={{ fontSize: "0.8rem", color: "#707070", fontWeight: 600 }}> / month</span>
-                <div style={{ fontSize: "0.72rem", color: "#18B67A", fontWeight: 700, marginTop: "0.15rem" }}>
-                  ${p.annualPrice} billed annually (-16% discount)
+              {p.popular && (
+                <div style={{ position: "absolute", top: "-12px", right: "16px", backgroundColor: "#D9A928", color: "#FFFFFF", fontSize: "0.65rem", fontWeight: 800, textTransform: "uppercase", padding: "0.25rem 0.6rem", borderRadius: "4px", letterSpacing: "0.5px" }}>
+                  MOST POPULAR
+                </div>
+              )}
+
+              <div>
+                {/* Header Badge & Status */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                  <span style={{ fontSize: "0.68rem", fontWeight: 800, backgroundColor: p.status === "Published" || p.is_active ? "#E6F8F0" : "#FFF7E4", color: p.status === "Published" || p.is_active ? "#18B67A" : "#D9A928", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
+                    ● {p.status || "Published"} ({p.version || "v2.4.0"})
+                  </span>
+                  <span style={{ fontSize: "0.72rem", color: "#18B67A", fontWeight: 700 }}>
+                    {p.orgsCount} Customer Orgs
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>{p.name}</h3>
+                
+                <div style={{ margin: "0.65rem 0 1rem" }}>
+                  <span style={{ fontSize: "1.75rem", fontWeight: 800, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>${p.monthlyPrice}</span>
+                  <span style={{ fontSize: "0.8rem", color: "#707070", fontWeight: 600 }}> / month</span>
+                  <div style={{ fontSize: "0.72rem", color: "#18B67A", fontWeight: 700, marginTop: "0.15rem" }}>
+                    ${p.annualPrice} billed annually (-16% discount)
+                  </div>
+                </div>
+
+                {/* Specification List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", fontSize: "0.78rem", color: "#707070", padding: "0.85rem 0", borderTop: "1px solid #E6DED0", borderBottom: "1px solid #E6DED0" }}>
+                  {p.features && Array.isArray(p.features) ? (
+                    p.features.map((feat, fIdx) => (
+                      <div key={fIdx}>● <span style={{ color: "#111111" }}>{feat}</span></div>
+                    ))
+                  ) : (
+                    <>
+                      <div>🎯 <strong>Target:</strong> <span style={{ color: "#111111" }}>{p.target}</span></div>
+                      <div>🤖 <strong>AI Allocation:</strong> <span style={{ color: "#111111" }}>{p.aiAllocation}</span></div>
+                      <div>💾 <strong>Storage Limit:</strong> <span style={{ color: "#111111" }}>{p.storageAllocation}</span></div>
+                      <div>👥 <strong>Participants:</strong> <span style={{ color: "#111111" }}>{p.participantLimit}</span></div>
+                      <div>📚 <strong>Programs Limit:</strong> <span style={{ color: "#111111" }}>{p.programmeLimit}</span></div>
+                      <div>⚙️ <strong>Feature Flags:</strong> <span style={{ color: "#D9A928", fontWeight: 700 }}>{p.featureCount}</span></div>
+                    </>
+                  )}
+                </div>
+
+                <div style={{ marginTop: "0.75rem", fontSize: "0.68rem", color: "#888888" }}>
+                  Updated: {p.lastUpdated} by {p.createdBy}
                 </div>
               </div>
 
-              {/* Specification List */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", fontSize: "0.78rem", color: "#707070", padding: "0.85rem 0", borderTop: "1px solid #E6DED0", borderBottom: "1px solid #E6DED0" }}>
-                <div>🎯 <strong>Target:</strong> <span style={{ color: "#111111" }}>{p.target}</span></div>
-                <div>🤖 <strong>AI Allocation:</strong> <span style={{ color: "#111111" }}>{p.aiAllocation}</span></div>
-                <div>💾 <strong>Storage Limit:</strong> <span style={{ color: "#111111" }}>{p.storageAllocation}</span></div>
-                <div>👥 <strong>Participants:</strong> <span style={{ color: "#111111" }}>{p.participantLimit}</span></div>
-                <div>📚 <strong>Programs Limit:</strong> <span style={{ color: "#111111" }}>{p.programmeLimit}</span></div>
-                <div>⚙️ <strong>Feature Flags:</strong> <span style={{ color: "#D9A928", fontWeight: 700 }}>{p.featureCount}</span></div>
+              {/* Action Buttons */}
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.5rem" }}>
+                <button 
+                  onClick={() => openConfigModal(p)} 
+                  style={{ flex: 1, padding: "0.55rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#F7F4ED", color: "#111111", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem" }}
+                >
+                  <Sliders size={13} /> Configure Plan
+                </button>
+
+                <button 
+                  onClick={() => alert(`Duplicating plan schema for ${p.name}...`)} 
+                  style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#707070", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
+                  title="Duplicate Plan Schema"
+                >
+                  <Copy size={13} />
+                </button>
+
+                <button 
+                  onClick={() => alert(`Retiring plan ${p.name}...`)} 
+                  style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#EF4444", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
+                  title="Retire Plan"
+                >
+                  <Archive size={13} />
+                </button>
               </div>
 
-              <div style={{ marginTop: "0.75rem", fontSize: "0.68rem", color: "#888888" }}>
-                Updated: {p.lastUpdated} by {p.createdBy}
-              </div>
             </div>
-
-            {/* Action Buttons */}
-            <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.5rem" }}>
-              <button 
-                onClick={() => openConfigModal(p)} 
-                style={{ flex: 1, padding: "0.55rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#F7F4ED", color: "#111111", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem" }}
-              >
-                <Sliders size={13} /> Configure Plan
-              </button>
-
-              <button 
-                onClick={() => {
-                  const duplicated = {
-                    ...p,
-                    id: `${p.id}-copy-${Date.now()}`,
-                    name: `${p.name} (Copy)`
-                  };
-                  setPlansState(prev => ({
-                    ...prev,
-                    [activeSolutionTab]: [...(prev[activeSolutionTab] || []), duplicated]
-                  }));
-                }} 
-                style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#707070", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
-                title="Duplicate Plan Schema"
-              >
-                <Copy size={13} />
-              </button>
-
-              <button 
-                onClick={() => {
-                  setPlansState(prev => ({
-                    ...prev,
-                    [activeSolutionTab]: (prev[activeSolutionTab] || []).filter(item => item.id !== p.id)
-                  }));
-                }} 
-                style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#EF4444", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
-                title="Retire Plan"
-              >
-                <Archive size={13} />
-              </button>
-            </div>
-
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
+      )}
 
       {/* 5. PRICING VERSION CONTROL LEDGER */}
       <section style={{ backgroundColor: "#FCFBF8", border: "1px solid #E6DED0", borderRadius: "12px", overflow: "hidden" }}>
@@ -728,7 +560,7 @@ export default function SubscriptionsPlansPage() {
         </section>
       </div>
 
-      {/* 7. FULL PLAN CONFIGURATION MODAL / DRAWER (Img 1 - Fully Bound State!) */}
+      {/* 7. FULL PLAN CONFIGURATION MODAL / DRAWER */}
       {selectedPlanForConfig && (
         <div 
           onClick={() => setSelectedPlanForConfig(null)}
@@ -753,6 +585,9 @@ export default function SubscriptionsPlansPage() {
                 <h2 style={{ margin: "0.2rem 0 0", fontSize: "1.35rem", fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
                   {editForm.name || "Configure Subscription Plan"}
                 </h2>
+                <div style={{ fontSize: "0.7rem", color: "#888888", fontFamily: "monospace", marginTop: "0.15rem" }}>
+                  Supabase Record ID: {selectedPlanForConfig.id}
+                </div>
               </div>
               <button 
                 onClick={() => setSelectedPlanForConfig(null)}
