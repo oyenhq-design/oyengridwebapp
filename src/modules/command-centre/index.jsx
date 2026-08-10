@@ -10,7 +10,10 @@ import StaffDirectoryPage from "./pages/company/StaffDirectoryPage";
 import RolesStructurePage from "./pages/company/RolesStructurePage";
 import ViewersAuditPage from "./pages/company/ViewersAuditPage";
 
-import CustomersModule from "./pages/customers/CustomersModule";
+import CustomerCRMPage from "./pages/customers/CustomerCRMPage";
+import CustomerBillingPage from "./pages/customers/CustomerBillingPage";
+import CustomerSupportPage from "./pages/customers/CustomerSupportPage";
+
 import UsersPage from "./pages/UsersPage";
 import FeatureFlagsPage from "./pages/FeatureFlagsPage";
 import BillingPage from "./pages/BillingPage";
@@ -50,16 +53,19 @@ export default function CommandCentreModule() {
       return <ViewersAuditPage />;
     }
 
-    if (currentTab.startsWith("Organizations")) {
-      return <CustomersModule initialSubtab="Organizations" />;
+    // Independent Customers Child Pages
+    if (currentTab === "Customers_CRM") {
+      return <CustomerCRMPage />;
+    }
+    if (currentTab === "Customers_Billing") {
+      return <CustomerBillingPage />;
+    }
+    if (currentTab === "Customers_Support") {
+      return <CustomerSupportPage />;
     }
 
-    if (currentTab.startsWith("Customers")) {
-      let sub = "Organizations";
-      if (currentTab === "Customers_Billing") sub = "Subscriptions";
-      else if (currentTab === "Customers_Support") sub = "Support";
-      else if (currentTab === "Customers_CRM") sub = "CustomerSuccess";
-      return <CustomersModule initialSubtab={sub} />;
+    if (currentTab.startsWith("Organizations")) {
+      return <OrganizationsPage />;
     }
 
     if (currentTab.startsWith("Programs")) {
