@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronDown, ChevronRight, Building, Users, Shield, Cpu, Terminal, DollarSign, Activity, Layers, Settings, Home, BookOpen, CreditCard, BarChart2, ShieldCheck } from "lucide-react";
+import { 
+  Search, ChevronDown, ChevronRight, Building, Users, Shield, Cpu, Terminal, 
+  DollarSign, Activity, Layers, Settings, Home, BookOpen, CreditCard, BarChart2, 
+  ShieldCheck, PanelLeftClose, PanelLeftOpen, Menu
+} from "lucide-react";
 
 export default function CommandCentreLayout({ children, currentTab, setCurrentTab }) {
   const [showCommandBar, setShowCommandBar] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const toggleGroup = (groupName) => {
     setCollapsedGroups(prev => ({
@@ -34,7 +39,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Company",
       title: "Company",
-      icon: <Building size={14} />,
+      icon: <Building size={16} />,
       items: [
         { id: "Company_Headquarters", label: "Headquarters" },
         { id: "Company_Staff", label: "Staff Directory" },
@@ -45,7 +50,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Organizations",
       title: "Organizations",
-      icon: <Building size={14} />,
+      icon: <Building size={16} />,
       items: [
         { id: "Organizations_List", label: "Organizations" },
         { id: "Organizations_Verification", label: "Verification" },
@@ -55,7 +60,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Customers",
       title: "Customers",
-      icon: <Users size={14} />,
+      icon: <Users size={16} />,
       items: [
         { id: "Customers_CRM", label: "CRM" },
         { id: "Customers_Billing", label: "Billing" },
@@ -65,7 +70,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Programs",
       title: "Programs",
-      icon: <BookOpen size={14} />,
+      icon: <BookOpen size={16} />,
       items: [
         { id: "Programs_List", label: "Programs" },
         { id: "Programs_Templates", label: "Templates" },
@@ -75,7 +80,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Subscriptions",
       title: "Subscriptions",
-      icon: <CreditCard size={14} />,
+      icon: <CreditCard size={16} />,
       items: [
         { id: "Subscriptions_Plans", label: "Plans" },
         { id: "Subscriptions_Revenue", label: "Revenue" },
@@ -86,7 +91,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Platform",
       title: "Platform",
-      icon: <Layers size={14} />,
+      icon: <Layers size={16} />,
       items: [
         { id: "Platform_Services", label: "Services" },
         { id: "Platform_AI", label: "AI Engine" },
@@ -97,7 +102,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Analytics",
       title: "Analytics",
-      icon: <BarChart2 size={14} />,
+      icon: <BarChart2 size={16} />,
       items: [
         { id: "Analytics_Revenue", label: "Revenue" },
         { id: "Analytics_Growth", label: "Growth" },
@@ -108,7 +113,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "Security",
       title: "Security",
-      icon: <ShieldCheck size={14} />,
+      icon: <ShieldCheck size={16} />,
       items: [
         { id: "Security_Audit", label: "Audit Logs" },
         { id: "Security_Access", label: "Access Control" },
@@ -118,7 +123,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
     {
       id: "System",
       title: "System",
-      icon: <Settings size={14} />,
+      icon: <Settings size={16} />,
       items: [
         { id: "System_Integrations", label: "Integrations" },
         { id: "System_Backups", label: "Backups" },
@@ -143,59 +148,160 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F7F4ED", color: "#111111", fontFamily: "'Inter', sans-serif" }}>
       
-      {/* Sidebar Panel */}
-      <aside style={{ width: "260px", backgroundColor: "#101010", borderRight: "1px solid #E6DED0", display: "flex", flexDirection: "column", padding: "1.5rem 1.1rem", boxSizing: "border-box" }}>
+      {/* Sidebar Panel - Fixed Height Sticky with Independent Scrolling & Smooth Collapse Toggle */}
+      <aside 
+        style={{
+          width: sidebarCollapsed ? "72px" : "260px",
+          minWidth: sidebarCollapsed ? "72px" : "260px",
+          backgroundColor: "#101010",
+          borderRight: "1px solid #222222",
+          display: "flex",
+          flexDirection: "column",
+          position: "sticky",
+          top: 0,
+          height: "100vh",
+          maxHeight: "100vh",
+          boxSizing: "border-box",
+          transition: "all 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
+          zIndex: 90,
+          overflow: "hidden"
+        }}
+      >
         
-        {/* Logo header */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.5rem", cursor: "pointer", paddingLeft: "0.25rem" }} onClick={() => setCurrentTab("Overview")}>
-          <span style={{ width: "9px", height: "9px", borderRadius: "50%", backgroundColor: "#D9A928" }} />
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "1.5px", color: "#ffffff", fontFamily: "'Outfit', sans-serif" }}>
-              COMMAND CENTRE
-            </span>
-            <span style={{ fontSize: "0.65rem", color: "#888888", fontWeight: 600, letterSpacing: "0.5px" }}>
-              OYEN GROUP OS v2.0
-            </span>
+        {/* Fixed Header Section inside Sidebar */}
+        <div style={{ padding: sidebarCollapsed ? "1.25rem 0.5rem 1rem" : "1.25rem 1.1rem 1rem", borderBottom: "1px solid #1C1C1C", flexShrink: 0 }}>
+          
+          {/* Logo & Toggle Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: sidebarCollapsed ? "center" : "space-between", marginBottom: "1.25rem" }}>
+            <div 
+              style={{ display: "flex", alignItems: "center", gap: "0.6rem", cursor: "pointer" }} 
+              onClick={() => setCurrentTab("Overview")}
+              title="OYEN GROUP Command Centre"
+            >
+              <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#D9A928", flexShrink: 0 }} />
+              {!sidebarCollapsed && (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "1.5px", color: "#ffffff", fontFamily: "'Outfit', sans-serif", whiteSpace: "nowrap" }}>
+                    COMMAND CENTRE
+                  </span>
+                  <span style={{ fontSize: "0.65rem", color: "#888888", fontWeight: 600, letterSpacing: "0.5px", whiteSpace: "nowrap" }}>
+                    OYEN GROUP OS v2.0
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Toggle Collapse/Expand Button inside Sidebar */}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              style={{
+                background: "none", border: "none", color: "#888888", cursor: "pointer",
+                padding: "0.3rem", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "color 0.15s ease"
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = "#D9A928"}
+              onMouseLeave={e => e.currentTarget.style.color = "#888888"}
+              title={sidebarCollapsed ? "Expand Sidebar Menu" : "Collapse Sidebar Menu"}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </button>
           </div>
+
+          {/* Search Trigger */}
+          {sidebarCollapsed ? (
+            <button 
+              onClick={() => setShowCommandBar(true)}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: "100%", height: "36px", borderRadius: "6px",
+                backgroundColor: "#181818", border: "1px solid #2A2A2A",
+                color: "#888888", cursor: "pointer"
+              }}
+              title="Search console (⌘K)"
+            >
+              <Search size={15} />
+            </button>
+          ) : (
+            <button 
+              onClick={() => setShowCommandBar(true)}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                width: "100%", padding: "0.55rem 0.75rem", borderRadius: "6px",
+                backgroundColor: "#181818", border: "1px solid #2A2A2A",
+                color: "#888888", fontSize: "0.75rem", cursor: "pointer"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <Search size={13} />
+                <span>Search console...</span>
+              </div>
+              <span style={{ fontSize: "0.65rem", color: "#666666", backgroundColor: "#222222", padding: "0.1rem 0.35rem", borderRadius: "3px" }}>⌘K</span>
+            </button>
+          )}
+
         </div>
 
-        {/* Search trigger */}
-        <button 
-          onClick={() => setShowCommandBar(true)}
+        {/* Independently Scrollable Navigation List */}
+        <div 
           style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            width: "100%", padding: "0.55rem 0.75rem", borderRadius: "6px",
-            backgroundColor: "#181818", border: "1px solid #2A2A2A",
-            color: "#888888", fontSize: "0.75rem", cursor: "pointer", marginBottom: "1.25rem"
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: sidebarCollapsed ? "1rem 0.5rem" : "1rem 1.1rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            scrollbarWidth: "thin",
+            scrollbarColor: "#2A2A2A transparent"
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <Search size={13} />
-            <span>Search console...</span>
-          </div>
-          <span style={{ fontSize: "0.65rem", color: "#666666", backgroundColor: "#222222", padding: "0.1rem 0.35rem", borderRadius: "3px" }}>⌘K</span>
-        </button>
+          {/* Overview item */}
+          <button
+            onClick={() => setCurrentTab("Overview")}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: sidebarCollapsed ? "center" : "flex-start", gap: "0.65rem",
+              width: "100%", textAlign: "left", padding: sidebarCollapsed ? "0.6rem 0" : "0.55rem 0.75rem", borderRadius: "8px",
+              border: "none", backgroundColor: currentTab === "Overview" || currentTab === "Dashboard" ? "#181818" : "transparent",
+              color: currentTab === "Overview" || currentTab === "Dashboard" ? "#D9A928" : "#999999", fontSize: "0.82rem",
+              fontWeight: currentTab === "Overview" || currentTab === "Dashboard" ? 700 : 500, cursor: "pointer", marginBottom: "0.25rem", transition: "all 0.15s ease"
+            }}
+            title={sidebarCollapsed ? "Overview" : ""}
+          >
+            <Home size={16} color={currentTab === "Overview" || currentTab === "Dashboard" ? "#D9A928" : "#888888"} />
+            {!sidebarCollapsed && <span>Overview</span>}
+          </button>
 
-        {/* Overview item */}
-        <button
-          onClick={() => setCurrentTab("Overview")}
-          style={{
-            display: "flex", alignItems: "center", gap: "0.65rem",
-            width: "100%", textAlign: "left", padding: "0.55rem 0.75rem", borderRadius: "8px",
-            border: "none", backgroundColor: currentTab === "Overview" || currentTab === "Dashboard" ? "#181818" : "transparent",
-            color: currentTab === "Overview" || currentTab === "Dashboard" ? "#D9A928" : "#999999", fontSize: "0.82rem",
-            fontWeight: currentTab === "Overview" || currentTab === "Dashboard" ? 700 : 500, cursor: "pointer", marginBottom: "0.75rem", transition: "all 0.15s ease"
-          }}
-        >
-          <Home size={15} color={currentTab === "Overview" || currentTab === "Dashboard" ? "#D9A928" : "#666666"} />
-          <span>Overview</span>
-        </button>
-
-        {/* Collapsible Executive Groups */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, overflowY: "auto" }}>
+          {/* Collapsible Executive Groups */}
           {groups.map((group) => {
             const isCollapsed = collapsedGroups[group.id];
             const isGroupActive = currentTab.startsWith(group.id);
+
+            if (sidebarCollapsed) {
+              // Compact mode icon rendering
+              return (
+                <div key={group.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", padding: "0.2rem 0" }}>
+                  <button
+                    onClick={() => {
+                      setSidebarCollapsed(false);
+                      toggleGroup(group.id);
+                    }}
+                    style={{
+                      width: "38px", height: "38px", borderRadius: "8px", border: "none",
+                      backgroundColor: isGroupActive ? "#181818" : "transparent",
+                      color: isGroupActive ? "#D9A928" : "#888888",
+                      display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                    title={`${group.title} (Click to expand menu)`}
+                    onMouseEnter={e => { if(!isGroupActive) e.currentTarget.style.color = "#FFFFFF"; }}
+                    onMouseLeave={e => { if(!isGroupActive) e.currentTarget.style.color = "#888888"; }}
+                  >
+                    {group.icon}
+                  </button>
+                </div>
+              );
+            }
+
             return (
               <div key={group.id} style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
                 <button
@@ -211,7 +317,7 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
                     {group.icon}
                     <span>{group.title}</span>
                   </div>
-                  {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
+                  {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
                 </button>
 
                 {!isCollapsed && (
@@ -242,23 +348,46 @@ export default function CommandCentreLayout({ children, currentTab, setCurrentTa
           })}
         </div>
 
-        {/* Bottom Badge */}
-        <div style={{ borderTop: "1px solid #222222", paddingTop: "0.85rem", marginTop: "0.75rem" }}>
-          <div style={{ fontSize: "0.65rem", color: "#666666", textTransform: "uppercase", letterSpacing: "0.5px" }}>OYEN GROUP Headquarters</div>
-          <div style={{ fontSize: "0.72rem", color: "#AAAAAA", fontWeight: 600, marginTop: "0.15rem" }}>Internal Operations Realm</div>
+        {/* Fixed Footer Badge inside Sidebar */}
+        <div style={{ borderTop: "1px solid #1C1C1C", padding: sidebarCollapsed ? "0.85rem 0.25rem" : "0.85rem 1.1rem", flexShrink: 0, textAlign: sidebarCollapsed ? "center" : "left" }}>
+          {sidebarCollapsed ? (
+            <span style={{ fontSize: "0.65rem", color: "#666666", fontWeight: 700 }}>OYEN</span>
+          ) : (
+            <>
+              <div style={{ fontSize: "0.65rem", color: "#666666", textTransform: "uppercase", letterSpacing: "0.5px" }}>OYEN GROUP Headquarters</div>
+              <div style={{ fontSize: "0.72rem", color: "#AAAAAA", fontWeight: 600, marginTop: "0.15rem" }}>Internal Operations Realm</div>
+            </>
+          )}
         </div>
       </aside>
 
       {/* Main Viewport */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         
-        {/* Header */}
-        <header style={{ height: "64px", backgroundColor: "#FCFBF8", borderBottom: "1px solid #E6DED0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2.5rem", boxSizing: "border-box" }}>
-          <div>
-            <h2 style={{ fontSize: "0.95rem", fontWeight: 800, margin: 0, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>
-              OYEN GROUP Command Centre
-            </h2>
-            <span style={{ fontSize: "0.68rem", color: "#707070" }}>Enterprise Executive Headquarters</span>
+        {/* Top Header Navigation */}
+        <header style={{ height: "64px", backgroundColor: "#FCFBF8", borderBottom: "1px solid #E6DED0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2rem", boxSizing: "border-box" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            
+            {/* External Toggle Sidebar Button in Header */}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              style={{
+                background: "none", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", color: "#111111",
+                cursor: "pointer", padding: "0.4rem 0.55rem", borderRadius: "6px", display: "flex", alignItems: "center", gap: "0.4rem",
+                fontSize: "0.75rem", fontWeight: 600
+              }}
+              title={sidebarCollapsed ? "Open Sidebar Menu" : "Close Sidebar Menu"}
+            >
+              <Menu size={16} color="#111111" />
+              <span style={{ fontSize: "0.72rem", color: "#707070", display: sidebarCollapsed ? "inline" : "none" }}>Menu</span>
+            </button>
+
+            <div>
+              <h2 style={{ fontSize: "0.95rem", fontWeight: 800, margin: 0, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>
+                OYEN GROUP Command Centre
+              </h2>
+              <span style={{ fontSize: "0.68rem", color: "#707070" }}>Enterprise Executive Headquarters</span>
+            </div>
           </div>
 
           {/* System Status Pills & Actions */}
