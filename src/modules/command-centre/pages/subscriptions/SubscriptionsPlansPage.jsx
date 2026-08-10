@@ -7,6 +7,23 @@ import {
 } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 
+// Helper function to safely format React child values (prevents Error #31 when Supabase returns JSON objects)
+const formatValue = (val, fallback = "") => {
+  if (val === undefined || val === null) return fallback;
+  if (typeof val === "string" || typeof val === "number") return String(val);
+  if (typeof val === "object") {
+    if (val.tokens_per_month) return `${Number(val.tokens_per_month).toLocaleString()} Tokens / mo`;
+    if (val.allocation_type && val.value) return `${val.allocation_type}: ${val.value}`;
+    if (val.name) return String(val.name);
+    if (val.label) return String(val.label);
+    if (val.text) return String(val.text);
+    if (val.title) return String(val.title);
+    if (val.description) return String(val.description);
+    return JSON.stringify(val);
+  }
+  return String(val);
+};
+
 export default function SubscriptionsPlansPage() {
   const [activeSolutionTab, setActiveSolutionTab] = useState("Bootcamps & Training");
   const [selectedPlanForConfig, setSelectedPlanForConfig] = useState(null);
@@ -79,29 +96,29 @@ export default function SubscriptionsPlansPage() {
       }
 
       if (data) {
-        // Map database fields to UI component props
+        // Map database fields to UI component props cleanly
         const mappedPlans = data.map(item => ({
           id: item.id,
-          name: item.name || "Untitled Tier",
-          solution: item.category || "Bootcamps & Training",
-          category: item.category || "Bootcamps & Training",
-          status: item.status ? (item.status.charAt(0).toUpperCase() + item.status.slice(1)) : (item.is_active ? "Published" : "Draft"),
+          name: formatValue(item.name, "Untitled Tier"),
+          solution: formatValue(item.category, "Bootcamps & Training"),
+          category: formatValue(item.category, "Bootcamps & Training"),
+          status: item.status ? (String(item.status).charAt(0).toUpperCase() + String(item.status).slice(1)) : (item.is_active ? "Published" : "Draft"),
           orgsCount: item.orgs_count || (item.price === 450 ? 42 : item.price === 1200 ? 88 : item.price === 2800 ? 64 : 21),
-          monthlyPrice: item.price !== undefined ? item.price : 450,
-          annualPrice: item.price ? item.price * 10 : 4500,
-          currency: item.currency || "USD",
-          target: item.description || "Training providers & bootcamps",
-          version: item.version || "v2.4.0",
+          monthlyPrice: item.price !== undefined ? Number(item.price) : 450,
+          annualPrice: item.price ? Number(item.price) * 10 : 4500,
+          currency: formatValue(item.currency, "USD"),
+          target: formatValue(item.description, "Training providers & bootcamps"),
+          version: formatValue(item.version, "v2.4.0"),
           lastUpdated: item.updated_at ? new Date(item.updated_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : "Aug 06, 2026",
-          createdBy: item.created_by || "Shola Oyewole (Admin)",
-          billingCycle: item.billing_period === "month" ? "Monthly / Annual (-16%)" : (item.billing_period || "Monthly"),
-          aiAllocation: item.ai_allocation || (item.price === 450 ? "50,000 Tokens / mo" : item.price === 1200 ? "250,000 Tokens / mo" : item.price === 2800 ? "1,000,000 Tokens / mo" : "Custom Enterprise Quota"),
-          storageAllocation: item.storage_allocation || (item.price === 450 ? "100 GB S3 Storage" : item.price === 1200 ? "500 GB S3 Storage" : item.price === 2800 ? "2 TB S3 Storage" : "Unlimited Dedicated S3"),
-          participantLimit: item.participant_limit || (item.price === 450 ? "250 Active Learners" : item.price === 1200 ? "1,000 Active Learners" : item.price === 2800 ? "5,000 Active Learners" : "Unlimited Learners"),
-          programmeLimit: item.programme_limit || (item.price === 450 ? "5 Running Programs" : item.price === 1200 ? "20 Running Programs" : "Unlimited Programs"),
-          featureCount: item.feature_count || (item.price === 450 ? "12 Features Enabled" : item.price === 1200 ? "18 Features Enabled" : item.price === 2800 ? "24 Features Enabled" : "All 32 Features"),
+          createdBy: formatValue(item.created_by, "Shola Oyewole (Admin)"),
+          billingCycle: item.billing_period === "month" ? "Monthly / Annual (-16%)" : formatValue(item.billing_period, "Monthly"),
+          aiAllocation: formatValue(item.ai_allocation, item.price === 450 ? "50,000 Tokens / mo" : item.price === 1200 ? "250,000 Tokens / mo" : item.price === 2800 ? "1,000,000 Tokens / mo" : "Custom Enterprise Quota"),
+          storageAllocation: formatValue(item.storage_allocation, item.price === 450 ? "100 GB S3 Storage" : item.price === 1200 ? "500 GB S3 Storage" : item.price === 2800 ? "2 TB S3 Storage" : "Unlimited Dedicated S3"),
+          participantLimit: formatValue(item.participant_limit, item.price === 450 ? "250 Active Learners" : item.price === 1200 ? "1,000 Active Learners" : item.price === 2800 ? "5,000 Active Learners" : "Unlimited Learners"),
+          programmeLimit: formatValue(item.programme_limit, item.price === 450 ? "5 Running Programs" : item.price === 1200 ? "20 Running Programs" : "Unlimited Programs"),
+          featureCount: formatValue(item.feature_count, item.price === 450 ? "12 Features Enabled" : item.price === 1200 ? "18 Features Enabled" : item.price === 2800 ? "24 Features Enabled" : "All 32 Features"),
           features: Array.isArray(item.features) ? item.features : null,
-          buttonText: item.button_text || "Start Trial",
+          buttonText: formatValue(item.button_text, "Start Trial"),
           popular: !!item.is_popular,
           recommended: !!item.is_popular,
           is_active: item.is_active !== undefined ? item.is_active : true,
@@ -161,6 +178,14 @@ export default function SubscriptionsPlansPage() {
     setSelectedPlanForConfig(plan);
     setEditForm({
       ...plan,
+      name: formatValue(plan.name),
+      target: formatValue(plan.target),
+      aiAllocation: formatValue(plan.aiAllocation),
+      storageAllocation: formatValue(plan.storageAllocation),
+      participantLimit: formatValue(plan.participantLimit),
+      programmeLimit: formatValue(plan.programmeLimit),
+      featureCount: formatValue(plan.featureCount),
+      buttonText: formatValue(plan.buttonText),
       lastUpdated: "Just Now by Shola Oyewole (Admin)"
     });
     setConfigActiveTab("pricing");
@@ -390,20 +415,20 @@ export default function SubscriptionsPlansPage() {
                 {/* Header Badge & Status */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
                   <span style={{ fontSize: "0.68rem", fontWeight: 800, backgroundColor: p.status === "Published" || p.is_active ? "#E6F8F0" : "#FFF7E4", color: p.status === "Published" || p.is_active ? "#18B67A" : "#D9A928", padding: "0.2rem 0.5rem", borderRadius: "4px" }}>
-                    ● {p.status || "Published"} ({p.version || "v2.4.0"})
+                    ● {formatValue(p.status, "Published")} ({formatValue(p.version, "v2.4.0")})
                   </span>
                   <span style={{ fontSize: "0.72rem", color: "#18B67A", fontWeight: 700 }}>
-                    {p.orgsCount} Customer Orgs
+                    {formatValue(p.orgsCount, 0)} Customer Orgs
                   </span>
                 </div>
 
-                <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>{p.name}</h3>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>{formatValue(p.name)}</h3>
                 
                 <div style={{ margin: "0.65rem 0 1rem" }}>
-                  <span style={{ fontSize: "1.75rem", fontWeight: 800, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>${p.monthlyPrice}</span>
+                  <span style={{ fontSize: "1.75rem", fontWeight: 800, color: "#111111", fontFamily: "'Outfit', sans-serif" }}>${formatValue(p.monthlyPrice)}</span>
                   <span style={{ fontSize: "0.8rem", color: "#707070", fontWeight: 600 }}> / month</span>
                   <div style={{ fontSize: "0.72rem", color: "#18B67A", fontWeight: 700, marginTop: "0.15rem" }}>
-                    ${p.annualPrice} billed annually (-16% discount)
+                    ${formatValue(p.annualPrice)} billed annually (-16% discount)
                   </div>
                 </div>
 
@@ -411,22 +436,22 @@ export default function SubscriptionsPlansPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", fontSize: "0.78rem", color: "#707070", padding: "0.85rem 0", borderTop: "1px solid #E6DED0", borderBottom: "1px solid #E6DED0" }}>
                   {p.features && Array.isArray(p.features) ? (
                     p.features.map((feat, fIdx) => (
-                      <div key={fIdx}>● <span style={{ color: "#111111" }}>{feat}</span></div>
+                      <div key={fIdx}>● <span style={{ color: "#111111" }}>{formatValue(feat)}</span></div>
                     ))
                   ) : (
                     <>
-                      <div>🎯 <strong>Target:</strong> <span style={{ color: "#111111" }}>{p.target}</span></div>
-                      <div>🤖 <strong>AI Allocation:</strong> <span style={{ color: "#111111" }}>{p.aiAllocation}</span></div>
-                      <div>💾 <strong>Storage Limit:</strong> <span style={{ color: "#111111" }}>{p.storageAllocation}</span></div>
-                      <div>👥 <strong>Participants:</strong> <span style={{ color: "#111111" }}>{p.participantLimit}</span></div>
-                      <div>📚 <strong>Programs Limit:</strong> <span style={{ color: "#111111" }}>{p.programmeLimit}</span></div>
-                      <div>⚙️ <strong>Feature Flags:</strong> <span style={{ color: "#D9A928", fontWeight: 700 }}>{p.featureCount}</span></div>
+                      <div>🎯 <strong>Target:</strong> <span style={{ color: "#111111" }}>{formatValue(p.target)}</span></div>
+                      <div>🤖 <strong>AI Allocation:</strong> <span style={{ color: "#111111" }}>{formatValue(p.aiAllocation)}</span></div>
+                      <div>💾 <strong>Storage Limit:</strong> <span style={{ color: "#111111" }}>{formatValue(p.storageAllocation)}</span></div>
+                      <div>👥 <strong>Participants:</strong> <span style={{ color: "#111111" }}>{formatValue(p.participantLimit)}</span></div>
+                      <div>📚 <strong>Programs Limit:</strong> <span style={{ color: "#111111" }}>{formatValue(p.programmeLimit)}</span></div>
+                      <div>⚙️ <strong>Feature Flags:</strong> <span style={{ color: "#D9A928", fontWeight: 700 }}>{formatValue(p.featureCount)}</span></div>
                     </>
                   )}
                 </div>
 
                 <div style={{ marginTop: "0.75rem", fontSize: "0.68rem", color: "#888888" }}>
-                  Updated: {p.lastUpdated} by {p.createdBy}
+                  Updated: {formatValue(p.lastUpdated)} by {formatValue(p.createdBy)}
                 </div>
               </div>
 
@@ -440,7 +465,7 @@ export default function SubscriptionsPlansPage() {
                 </button>
 
                 <button 
-                  onClick={() => alert(`Duplicating plan schema for ${p.name}...`)} 
+                  onClick={() => alert(`Duplicating plan schema for ${formatValue(p.name)}...`)} 
                   style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#707070", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
                   title="Duplicate Plan Schema"
                 >
@@ -448,7 +473,7 @@ export default function SubscriptionsPlansPage() {
                 </button>
 
                 <button 
-                  onClick={() => alert(`Retiring plan ${p.name}...`)} 
+                  onClick={() => alert(`Retiring plan ${formatValue(p.name)}...`)} 
                   style={{ padding: "0.55rem 0.75rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#FCFBF8", color: "#EF4444", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
                   title="Retire Plan"
                 >
@@ -583,7 +608,7 @@ export default function SubscriptionsPlansPage() {
               <div>
                 <div style={{ fontSize: "0.68rem", color: "#D9A928", fontWeight: 800, textTransform: "uppercase" }}>MASTER PRICING ENGINE CONFIGURATOR</div>
                 <h2 style={{ margin: "0.2rem 0 0", fontSize: "1.35rem", fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                  {editForm.name || "Configure Subscription Plan"}
+                  {formatValue(editForm.name, "Configure Subscription Plan")}
                 </h2>
                 <div style={{ fontSize: "0.7rem", color: "#888888", fontFamily: "monospace", marginTop: "0.15rem" }}>
                   Supabase Record ID: {selectedPlanForConfig.id}
@@ -631,7 +656,7 @@ export default function SubscriptionsPlansPage() {
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>PLAN PRODUCT NAME</label>
                     <input 
                       type="text" 
-                      value={editForm.name} 
+                      value={formatValue(editForm.name)} 
                       onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
                       style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
                     />
@@ -659,7 +684,7 @@ export default function SubscriptionsPlansPage() {
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>CURRENCY</label>
                       <select 
-                        value={editForm.currency || "USD"} 
+                        value={formatValue(editForm.currency, "USD")} 
                         onChange={e => setEditForm(prev => ({ ...prev, currency: e.target.value }))}
                         style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }}
                       >
@@ -675,7 +700,7 @@ export default function SubscriptionsPlansPage() {
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>TARGET CUSTOMER SEGMENT DESCRIPTION</label>
                     <textarea 
                       rows={2} 
-                      value={editForm.target} 
+                      value={formatValue(editForm.target)} 
                       onChange={e => setEditForm(prev => ({ ...prev, target: e.target.value }))}
                       style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} 
                     />
@@ -686,7 +711,7 @@ export default function SubscriptionsPlansPage() {
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>CTA BUTTON LABEL</label>
                       <input 
                         type="text" 
-                        value={editForm.buttonText} 
+                        value={formatValue(editForm.buttonText)} 
                         onChange={e => setEditForm(prev => ({ ...prev, buttonText: e.target.value }))}
                         style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.82rem" }} 
                       />
@@ -754,7 +779,7 @@ export default function SubscriptionsPlansPage() {
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>MONTHLY TOKEN CREDITS</label>
                       <input 
                         type="text" 
-                        value={editForm.aiAllocation} 
+                        value={formatValue(editForm.aiAllocation)} 
                         onChange={e => setEditForm(prev => ({ ...prev, aiAllocation: e.target.value }))}
                         style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
                       />
@@ -763,7 +788,7 @@ export default function SubscriptionsPlansPage() {
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#707070", marginBottom: "0.3rem" }}>STORAGE LIMIT</label>
                       <input 
                         type="text" 
-                        value={editForm.storageAllocation} 
+                        value={formatValue(editForm.storageAllocation)} 
                         onChange={e => setEditForm(prev => ({ ...prev, storageAllocation: e.target.value }))}
                         style={{ width: "100%", padding: "0.6rem 0.8rem", borderRadius: "6px", border: "1px solid #E6DED0", backgroundColor: "#F7F4ED", fontSize: "0.85rem", fontWeight: 700 }} 
                       />
