@@ -470,6 +470,7 @@ export default function SignInForm({
                   type="email"
                   className="form-input"
                   placeholder="name@organization.com"
+                  autoComplete="username email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -496,6 +497,7 @@ export default function SignInForm({
                   type={showPassword ? 'text' : 'password'}
                   className="form-input"
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -738,6 +740,7 @@ export default function SignInForm({
               <input 
                 type="password" 
                 placeholder="Choose a password (min. 8 characters)" 
+                autoComplete="new-password"
                 value={regPassword}
                 onChange={e => {
                   setRegPassword(e.target.value);
@@ -754,6 +757,7 @@ export default function SignInForm({
               <input 
                 type="password" 
                 placeholder="Confirm your password" 
+                autoComplete="new-password"
                 value={regConfirmPassword}
                 onChange={e => {
                   setRegConfirmPassword(e.target.value);
@@ -854,6 +858,7 @@ export default function SignInForm({
               <label style={{ display: 'block', fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.35rem', fontWeight: 600 }}>Current Temporary Password</label>
               <input 
                 type="password" 
+                autoComplete="current-password"
                 value={currentResetPassword}
                 onChange={e => setCurrentResetPassword(e.target.value)}
                 style={{ width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
@@ -866,6 +871,7 @@ export default function SignInForm({
               <input 
                 type="password" 
                 placeholder="Enter new password" 
+                autoComplete="new-password"
                 value={newResetPassword}
                 onChange={e => {
                   setNewResetPassword(e.target.value);
@@ -882,6 +888,7 @@ export default function SignInForm({
               <input 
                 type="password" 
                 placeholder="Confirm new password" 
+                autoComplete="new-password"
                 value={confirmResetPassword}
                 onChange={e => {
                   setConfirmResetPassword(e.target.value);
