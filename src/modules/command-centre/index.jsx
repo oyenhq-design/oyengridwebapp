@@ -5,7 +5,11 @@ import CommandCentreLayout from "./layouts/CommandCentreLayout";
 
 // Core Module imports
 import DashboardPage from "./pages/DashboardPage";
-import CompanyModule from "./pages/company/CompanyModule";
+import HeadquartersPage from "./pages/company/HeadquartersPage";
+import StaffDirectoryPage from "./pages/company/StaffDirectoryPage";
+import RolesStructurePage from "./pages/company/RolesStructurePage";
+import ViewersAuditPage from "./pages/company/ViewersAuditPage";
+
 import CustomersModule from "./pages/customers/CustomersModule";
 import UsersPage from "./pages/UsersPage";
 import FeatureFlagsPage from "./pages/FeatureFlagsPage";
@@ -32,13 +36,18 @@ export default function CommandCentreModule() {
       return <DashboardPage />;
     }
 
-    if (currentTab.startsWith("Company") || currentTab === "Team" || currentTab === "Departments") {
-      let sub = "Team";
-      if (currentTab === "Company_Staff") sub = "Team";
-      else if (currentTab === "Company_Roles") sub = "Settings";
-      else if (currentTab === "Company_Viewers") sub = "Executives";
-      else if (currentTab === "Company_Headquarters") sub = "Team";
-      return <CompanyModule initialSubtab={sub} />;
+    // Independent Company Child Pages
+    if (currentTab === "Company_Headquarters") {
+      return <HeadquartersPage />;
+    }
+    if (currentTab === "Company_Staff" || currentTab === "Team") {
+      return <StaffDirectoryPage />;
+    }
+    if (currentTab === "Company_Roles") {
+      return <RolesStructurePage />;
+    }
+    if (currentTab === "Company_Viewers") {
+      return <ViewersAuditPage />;
     }
 
     if (currentTab.startsWith("Organizations")) {
