@@ -86,24 +86,32 @@ export default function SubscriptionsPlansPage() {
   ];
 
   // Fetch live pricing plans from Supabase public.pricing_plans
+  // Uses a resilient fetch: attempts name-ordered query first.
+  // display_order column may not exist in all schema versions — sorting by name is always safe.
   const fetchPricingPlans = async () => {
     try {
       setLoading(true);
       setFetchError(null);
 
+      // Primary fetch: order by name (universally safe, no schema dependency)
       const { data, error } = await supabase
         .from("pricing_plans")
         .select("*")
-        .order("display_order", { ascending: true });
+        .order("name", { ascending: true });
 
       if (error) {
-        throw error;
+        // Surface the exact Supabase error message for diagnosis
+        console.error("Supabase pricing_plans query error:", error);
+        throw new Error(error.message || JSON.stringify(error));
       }
 
       if (data) {
-        // Map database fields to UI component props cleanly
+        // Map database fields to UI component props.
+        // IMPORTANT: item.id is always the canonical pricing_plans.id from Supabase.
+        // Do NOT substitute or override this value with any hardcoded UUID.
         const mappedPlans = data.map(item => ({
-          id: item.id,
+          id: item.id,                                                               // ← canonical Supabase UUID, never hardcoded
+          slug: formatValue(item.slug, ""),
           name: formatValue(item.name, "Untitled Tier"),
           solution: formatValue(item.category, "Bootcamps & Training"),
           category: formatValue(item.category, "Bootcamps & Training"),
@@ -128,8 +136,12 @@ export default function SubscriptionsPlansPage() {
           popular: !!item.is_popular,
           recommended: !!item.is_popular,
           is_active: item.is_active !== undefined ? item.is_active : true,
-          display_order: item.display_order || 1
+          display_order: item.display_order || 99
         }));
+
+        // ✅ Log fetched plan IDs to console for verification
+        console.log("✅ pricing_plans fetched from Supabase:", mappedPlans.length, "records");
+        console.table(mappedPlans.map(p => ({ id: p.id, slug: p.slug, name: p.name, status: p.status })));
 
         setSupabasePlans(mappedPlans);
         setSyncStatus(prev => ({ ...prev, visiblePlans: mappedPlans.length }));
@@ -206,11 +218,20 @@ export default function SubscriptionsPlansPage() {
       return;
     }
 
+    // Guard: only allow saving against real Supabase UUIDs (36-char format)
+    // This prevents any stale/invalid ID from ever being written to the database.
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const candidateId = selectedPlanForConfig ? selectedPlanForConfig.id : editForm.id;
+    if (!uuidPattern.test(candidateId)) {
+      setSaveError(`Invalid plan ID format: "${candidateId}". Only real Supabase pricing_plans records can be updated. Please reload the page.`);
+      return;
+    }
+
     try {
       setSaving(true);
       setSaveError(null);
 
-      const targetId = selectedPlanForConfig ? selectedPlanForConfig.id : editForm.id;
+      const targetId = candidateId;
 
       // Construct exact Supabase UPDATE payload matching database columns
       const updatePayload = {
