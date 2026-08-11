@@ -105,6 +105,12 @@ export default function SubscriptionsPlansPage() {
   // after a session expires or a new sign-in happens in another tab.
   const [supabaseSession, setSupabaseSession] = useState(undefined); // undefined = loading, null = no session, object = authenticated
 
+  // ── Inline re-authentication state (shown when session is null) ─────────
+  const [reAuthEmail,    setReAuthEmail]    = useState('');
+  const [reAuthPassword, setReAuthPassword] = useState('');
+  const [reAuthError,    setReAuthError]    = useState(null);
+  const [reAuthLoading,  setReAuthLoading]  = useState(false);
+
   useEffect(() => {
     // Hydrate from existing persisted session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -410,19 +416,41 @@ export default function SubscriptionsPlansPage() {
       return;
     }
 
-    // ── AUTH GUARD: verify a Supabase session exists before touching RLS tables ──
-    // This check is intentional and must not be removed. All write tables use
-    // RLS policies that require auth.uid() to be non-null (authenticated role).
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    console.log("Pricing Command Centre auth:", {
-      userId: authUser?.id ?? null,
-      email: authUser?.email ?? null,
-    });
+    // ── PRE-SAVE AUTH DIAGNOSTIC ─────────────────────────────────────────────
+    // getSession()  → reads the locally cached JWT (fast, no network).
+    // getUser()     → validates the JWT against Supabase Auth servers (authoritative).
+    // We log both so it's immediately clear whether the issue is local cache or
+    // token validity. The save proceeds ONLY when getUser() returns a user.
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const { data: { user: currentUser } }       = await supabase.auth.getUser();
 
-    if (!authUser) {
+    console.group("🔐 Pricing Command Centre — Auth Check");
+    console.log("supabase.auth.getSession() →", {
+      sessionExists:  !!currentSession,
+      accessToken:    currentSession?.access_token
+                        ? currentSession.access_token.substring(0, 32) + "…"
+                        : null,
+      tokenType:      currentSession?.token_type ?? null,
+      expiresAt:      currentSession?.expires_at
+                        ? new Date(currentSession.expires_at * 1000).toISOString()
+                        : null,
+    });
+    console.log("supabase.auth.getUser() →", {
+      userId: currentUser?.id   ?? null,
+      email:  currentUser?.email ?? null,
+      role:   currentUser?.role  ?? null,
+    });
+    console.log("Session present:", !!currentSession, "| User present:", !!currentUser);
+    console.groupEnd();
+
+    // ── AUTH GUARD — block the save if there is no authenticated session ───
+    // All 5 pricing tables use RLS: authenticated users can manage ALL.
+    // Without a session, auth.uid() = null and every UPDATE/UPSERT matches 0 rows.
+    if (!currentUser) {
       setSaveError(
-        "No authenticated Supabase session found. " +
-        "Please sign out and sign back in as an administrator to write to the Pricing Engine."
+        "No authenticated Supabase session. " +
+        "Please sign out and sign back in as an administrator. " +
+        "Check the browser console for details on the auth state."
       );
       return;
     }
@@ -940,17 +968,80 @@ export default function SubscriptionsPlansPage() {
               </button>
             </div>
 
-            {/* ── No Session Warning — shown when auth.uid() would be null ── */}
+            {/* ── No Session: inline re-authentication panel ── */}
             {supabaseSession === null && (
-              <div style={{ padding: "0.85rem 1.5rem", backgroundColor: "#FFFBEB", borderBottom: "2px solid #FDE68A", color: "#78350F", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
-                <AlertCircle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: "0.05rem" }} />
-                <div>
-                  <div style={{ fontWeight: 800, marginBottom: "0.15rem" }}>Administrator sign-in required to save changes</div>
-                  <div style={{ fontWeight: 500, color: "#92400E" }}>
-                    Your current session is not authenticated with Supabase. The Pricing Engine uses Row Level Security (RLS) policies that require
-                    <strong> auth.uid() ≠ null</strong>. Please sign out and sign back in using your administrator email and password.
+              <div style={{ backgroundColor: "#FFFBEB", borderBottom: "2px solid #FDE68A", padding: "1rem 1.5rem", fontSize: "0.8rem" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem", marginBottom: "0.85rem" }}>
+                  <AlertCircle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: "0.05rem" }} />
+                  <div>
+                    <div style={{ fontWeight: 800, color: "#78350F", marginBottom: "0.15rem" }}>Supabase admin session required</div>
+                    <div style={{ fontWeight: 500, color: "#92400E" }}>
+                      The Pricing Engine RLS requires <strong>auth.uid() ≠ null</strong>.
+                      Enter your Supabase administrator credentials below to authenticate.
+                    </div>
                   </div>
                 </div>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setReAuthLoading(true);
+                    setReAuthError(null);
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                      email:    reAuthEmail.trim(),
+                      password: reAuthPassword,
+                    });
+                    setReAuthLoading(false);
+                    if (error) {
+                      console.error('[Oyen Auth] Inline re-auth failed:', error.message);
+                      setReAuthError(error.message);
+                    } else {
+                      console.info('[Oyen Auth] Inline re-auth succeeded for', data.user?.email,
+                        '| uid:', data.user?.id);
+                      setReAuthEmail('');
+                      setReAuthPassword('');
+                      setReAuthError(null);
+                      // supabaseSession updates automatically via onAuthStateChange
+                    }
+                  }}
+                  style={{ display: "flex", gap: "0.6rem", alignItems: "flex-end", flexWrap: "wrap" }}
+                >
+                  <div style={{ flex: "1 1 180px" }}>
+                    <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "#78350F", marginBottom: "0.25rem", textTransform: "uppercase" }}>Admin Email</label>
+                    <input
+                      type="email"
+                      required
+                      autoComplete="username"
+                      value={reAuthEmail}
+                      onChange={e => setReAuthEmail(e.target.value)}
+                      placeholder="admin@example.com"
+                      style={{ width: "100%", padding: "0.5rem 0.65rem", borderRadius: "5px", border: "1px solid #FDE68A", backgroundColor: "#FFFDF0", fontSize: "0.82rem", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div style={{ flex: "1 1 150px" }}>
+                    <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "#78350F", marginBottom: "0.25rem", textTransform: "uppercase" }}>Password</label>
+                    <input
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                      value={reAuthPassword}
+                      onChange={e => setReAuthPassword(e.target.value)}
+                      placeholder="••••••••"
+                      style={{ width: "100%", padding: "0.5rem 0.65rem", borderRadius: "5px", border: "1px solid #FDE68A", backgroundColor: "#FFFDF0", fontSize: "0.82rem", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={reAuthLoading}
+                    style={{ padding: "0.5rem 1.1rem", backgroundColor: "#D97706", color: "#FFFFFF", border: "none", borderRadius: "5px", fontSize: "0.8rem", fontWeight: 800, cursor: reAuthLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}
+                  >
+                    {reAuthLoading ? <><Loader2 size={13} className="animate-spin" /> Signing in…</> : "Sign In to Enable Saves"}
+                  </button>
+                </form>
+                {reAuthError && (
+                  <div style={{ marginTop: "0.6rem", color: "#DC2626", fontSize: "0.75rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <AlertCircle size={13} color="#DC2626" /> {reAuthError}
+                  </div>
+                )}
               </div>
             )}
 

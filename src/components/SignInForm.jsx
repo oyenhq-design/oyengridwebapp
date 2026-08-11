@@ -2,6 +2,76 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Globe, User, ChevronDown, Shield, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
+/**
+ * establishSupabaseSession
+ * ─────────────────────────────────────────────────────────────────────────
+ * Called after the app's own auth has ALREADY validated the credentials.
+ * Tries signInWithPassword first. If Supabase returns "Invalid login
+ * credentials" the account doesn't exist in Supabase Auth yet, so we create
+ * it with signUp (email confirmation disabled in project settings), then
+ * immediately sign in again.
+ *
+ * This is safe: signUp only runs after authService.login() succeeded, so
+ * we never create a Supabase Auth account for credentials we haven't already
+ * verified against the app's own registry.
+ *
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<{session: object|null, error: string|null}>}
+ */
+async function establishSupabaseSession(email, password) {
+  // ── Attempt 1: sign in with existing account ──────────────────────────
+  const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (!signInErr) {
+    console.info('[Oyen Auth] Supabase session established via signIn for', signInData.user?.email);
+    return { session: signInData.session, error: null };
+  }
+
+  // ── Attempt 2: account doesn't exist yet — create it then sign in ────
+  // Only bootstrap when the error is "credentials" (no account), not e.g.
+  // "Email not confirmed" or network errors.
+  const credentialsError = [
+    'Invalid login credentials',
+    'invalid_credentials',
+  ].some(msg => signInErr.message?.includes(msg) || signInErr.code === msg);
+
+  if (!credentialsError) {
+    // A different error (e.g. email unconfirmed, rate-limited) — surface it.
+    console.error('[Oyen Auth] Supabase signIn failed (non-credentials error):', signInErr.message);
+    return { session: null, error: signInErr.message };
+  }
+
+  console.info('[Oyen Auth] No Supabase Auth account found — bootstrapping via signUp…');
+  const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: null }, // disable confirmation redirect
+  });
+
+  if (signUpErr) {
+    console.error('[Oyen Auth] signUp failed:', signUpErr.message);
+    return { session: null, error: signUpErr.message };
+  }
+
+  // If email confirmation is enabled in the project the session will be null
+  // even after signUp. Attempt a signIn immediately to get the token.
+  if (signUpData.session) {
+    console.info('[Oyen Auth] Supabase session established via signUp for', signUpData.user?.email);
+    return { session: signUpData.session, error: null };
+  }
+
+  // Try sign-in one more time (account now exists)
+  const { data: finalData, error: finalErr } = await supabase.auth.signInWithPassword({ email, password });
+  if (finalErr) {
+    console.error('[Oyen Auth] signIn after signUp failed:', finalErr.message);
+    return { session: null, error: finalErr.message };
+  }
+
+  console.info('[Oyen Auth] Supabase session established via signUp+signIn for', finalData.user?.email);
+  return { session: finalData.session, error: null };
+}
+
 export default function SignInForm({ 
   onSwitchForm, 
   onAuthSuccess, 
@@ -115,19 +185,13 @@ export default function SignInForm({
         }
 
         // ── Establish Supabase Auth session so RLS authenticated checks pass ──
-        // Silent: non-admin users may not have a Supabase Auth account, that's fine.
-        try {
-          const { data: sbData, error: sbErr } = await supabase.auth.signInWithPassword({
-            email: authUser.email,
-            password,
-          });
-          if (sbErr) {
-            console.warn('[Oyen] Supabase Auth sign-in skipped (no Supabase account):', sbErr.message);
-          } else {
-            console.info('[Oyen] Supabase Auth session established for', sbData.user?.email, '| role:', sbData.user?.role);
-          }
-        } catch (sbCatch) {
-          console.warn('[Oyen] Supabase Auth sign-in exception:', sbCatch.message);
+        const { session: sbSession, error: sbError } = await establishSupabaseSession(authUser.email, password);
+        if (sbError) {
+          console.warn('[Oyen Auth] Could not establish Supabase session:', sbError,
+            '\n  Pricing Engine writes will be blocked until this is resolved.');
+        } else if (sbSession) {
+          console.info('[Oyen Auth] Session active — access_token prefix:',
+            sbSession.access_token?.substring(0, 20) + '…');
         }
 
         setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
@@ -214,19 +278,12 @@ export default function SignInForm({
 
       setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
       if (onAuthSuccess) {
-        // ── Also attempt Supabase Auth for admin/owner accounts ──
-        try {
-          const { data: sbData, error: sbErr } = await supabase.auth.signInWithPassword({
-            email: targetEmail,
-            password,
-          });
-          if (sbErr) {
-            console.warn('[Oyen] Supabase Auth sign-in skipped (fallback path):', sbErr.message);
-          } else {
-            console.info('[Oyen] Supabase Auth session established (fallback path) for', sbData.user?.email);
-          }
-        } catch (sbCatch) {
-          console.warn('[Oyen] Supabase Auth sign-in exception (fallback):', sbCatch.message);
+        // ── Also establish Supabase Auth session for team-member sign-in path ──
+        const { session: sbSession, error: sbError } = await establishSupabaseSession(targetEmail, password);
+        if (sbError) {
+          console.warn('[Oyen Auth] Could not establish Supabase session (team-member path):', sbError);
+        } else if (sbSession) {
+          console.info('[Oyen Auth] Session active (team-member path) — uid:', sbSession.user?.id);
         }
         setTimeout(() => {
           onAuthSuccess(targetEmail, matchingMember.role);
