@@ -100,6 +100,25 @@ export default function SubscriptionsPlansPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
+  // ── Supabase Auth session tracking ──────────────────────────────────────
+  // Listens for real-time auth state changes so the guard stays in sync even
+  // after a session expires or a new sign-in happens in another tab.
+  const [supabaseSession, setSupabaseSession] = useState(undefined); // undefined = loading, null = no session, object = authenticated
+
+  useEffect(() => {
+    // Hydrate from existing persisted session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSupabaseSession(session ?? null);
+    });
+
+    // Keep in sync with live auth state changes (sign-in, sign-out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSupabaseSession(session ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const [syncStatus, setSyncStatus] = useState({
     status: "Live & Synchronized",
     version: "v2.4.0",
@@ -388,6 +407,23 @@ export default function SubscriptionsPlansPage() {
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidPattern.test(editPlan.id)) {
       setSaveError(`Invalid plan ID: "${editPlan.id}". Reload the page.`);
+      return;
+    }
+
+    // ── AUTH GUARD: verify a Supabase session exists before touching RLS tables ──
+    // This check is intentional and must not be removed. All write tables use
+    // RLS policies that require auth.uid() to be non-null (authenticated role).
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    console.log("Pricing Command Centre auth:", {
+      userId: authUser?.id ?? null,
+      email: authUser?.email ?? null,
+    });
+
+    if (!authUser) {
+      setSaveError(
+        "No authenticated Supabase session found. " +
+        "Please sign out and sign back in as an administrator to write to the Pricing Engine."
+      );
       return;
     }
 
@@ -873,7 +909,25 @@ export default function SubscriptionsPlansPage() {
             {/* Header */}
             <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid #E6DED0", backgroundColor: "#101010", color: "#FFFFFF", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontSize: "0.68rem", color: "#D9A928", fontWeight: 800, textTransform: "uppercase" }}>MASTER PRICING ENGINE CONFIGURATOR</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.15rem" }}>
+                  <div style={{ fontSize: "0.68rem", color: "#D9A928", fontWeight: 800, textTransform: "uppercase" }}>MASTER PRICING ENGINE CONFIGURATOR</div>
+                  {/* ── Supabase Auth Session Indicator ── */}
+                  {supabaseSession === undefined && (
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, padding: "0.15rem 0.5rem", borderRadius: "4px", backgroundColor: "#282828", color: "#888888" }}>
+                      ● Checking Auth…
+                    </span>
+                  )}
+                  {supabaseSession === null && (
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, padding: "0.15rem 0.5rem", borderRadius: "4px", backgroundColor: "rgba(239,68,68,0.15)", color: "#F87171" }}>
+                      ● No Admin Session
+                    </span>
+                  )}
+                  {supabaseSession && (
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, padding: "0.15rem 0.5rem", borderRadius: "4px", backgroundColor: "rgba(24,182,122,0.15)", color: "#34D399" }}>
+                      ● Authenticated · {supabaseSession.user?.email}
+                    </span>
+                  )}
+                </div>
                 <h2 style={{ margin: "0.2rem 0 0", fontSize: "1.35rem", fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
                   {formatValue(editPlan.name, "Configure Subscription Plan")}
                 </h2>
@@ -885,6 +939,20 @@ export default function SubscriptionsPlansPage() {
                 <X size={20} />
               </button>
             </div>
+
+            {/* ── No Session Warning — shown when auth.uid() would be null ── */}
+            {supabaseSession === null && (
+              <div style={{ padding: "0.85rem 1.5rem", backgroundColor: "#FFFBEB", borderBottom: "2px solid #FDE68A", color: "#78350F", fontSize: "0.8rem", display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
+                <AlertCircle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: "0.05rem" }} />
+                <div>
+                  <div style={{ fontWeight: 800, marginBottom: "0.15rem" }}>Administrator sign-in required to save changes</div>
+                  <div style={{ fontWeight: 500, color: "#92400E" }}>
+                    Your current session is not authenticated with Supabase. The Pricing Engine uses Row Level Security (RLS) policies that require
+                    <strong> auth.uid() ≠ null</strong>. Please sign out and sign back in using your administrator email and password.
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Error Banner */}
             {saveError && (
@@ -1176,12 +1244,44 @@ export default function SubscriptionsPlansPage() {
             </div>
 
             {/* Footer */}
-            <div style={{ padding: "1.25rem 2rem", borderTop: "1px solid #E6DED0", backgroundColor: "#FCFBF8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <button onClick={() => setSelectedPlanForConfig(null)} disabled={saving} style={{ padding: "0.6rem 1.25rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#F7F4ED", color: "#111111", fontSize: "0.82rem", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer" }}>
+            <div style={{ padding: "1.25rem 2rem", borderTop: "1px solid #E6DED0", backgroundColor: "#FCFBF8", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
+              <button
+                onClick={() => setSelectedPlanForConfig(null)}
+                disabled={saving}
+                style={{ padding: "0.6rem 1.25rem", border: "1px solid #E6DED0", borderRadius: "6px", backgroundColor: "#F7F4ED", color: "#111111", fontSize: "0.82rem", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer" }}
+              >
                 Cancel
               </button>
-              <button onClick={handleSavePlanConfiguration} disabled={saving || modalLoading} style={{ padding: "0.6rem 1.5rem", border: "none", borderRadius: "6px", backgroundColor: saving ? "#9CA3AF" : "#D9A928", color: "#FFFFFF", fontSize: "0.82rem", fontWeight: 800, cursor: saving ? "wait" : "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                {saving ? <><Loader2 size={14} className="animate-spin" /> Saving to Supabase...</> : "Save Plan Configuration"}
+              <button
+                onClick={handleSavePlanConfiguration}
+                disabled={saving || modalLoading || supabaseSession === null}
+                aria-label={supabaseSession === null ? "Sign in as administrator to enable saving" : "Save plan configuration to Supabase"}
+                style={{
+                  padding: "0.6rem 1.5rem",
+                  border: "none",
+                  borderRadius: "6px",
+                  backgroundColor: saving
+                    ? "#9CA3AF"
+                    : supabaseSession === null
+                    ? "#D1D5DB"
+                    : "#D9A928",
+                  color: supabaseSession === null ? "#6B7280" : "#FFFFFF",
+                  fontSize: "0.82rem",
+                  fontWeight: 800,
+                  cursor: saving || supabaseSession === null ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  opacity: supabaseSession === null ? 0.7 : 1,
+                }}
+              >
+                {saving ? (
+                  <><Loader2 size={14} className="animate-spin" /> Saving to Supabase…</>
+                ) : supabaseSession === null ? (
+                  "Sign In as Admin to Save"
+                ) : (
+                  "Save Plan Configuration"
+                )}
               </button>
             </div>
           </div>

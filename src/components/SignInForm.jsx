@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Globe, User, ChevronDown, Shield, ShieldCheck } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 export default function SignInForm({ 
   onSwitchForm, 
@@ -113,6 +114,22 @@ export default function SignInForm({
           return;
         }
 
+        // ── Establish Supabase Auth session so RLS authenticated checks pass ──
+        // Silent: non-admin users may not have a Supabase Auth account, that's fine.
+        try {
+          const { data: sbData, error: sbErr } = await supabase.auth.signInWithPassword({
+            email: authUser.email,
+            password,
+          });
+          if (sbErr) {
+            console.warn('[Oyen] Supabase Auth sign-in skipped (no Supabase account):', sbErr.message);
+          } else {
+            console.info('[Oyen] Supabase Auth session established for', sbData.user?.email, '| role:', sbData.user?.role);
+          }
+        } catch (sbCatch) {
+          console.warn('[Oyen] Supabase Auth sign-in exception:', sbCatch.message);
+        }
+
         setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
         if (onAuthSuccess) {
           setTimeout(() => {
@@ -197,6 +214,20 @@ export default function SignInForm({
 
       setStatusMessage({ type: 'success', text: 'Authentication successful! Welcome back.' });
       if (onAuthSuccess) {
+        // ── Also attempt Supabase Auth for admin/owner accounts ──
+        try {
+          const { data: sbData, error: sbErr } = await supabase.auth.signInWithPassword({
+            email: targetEmail,
+            password,
+          });
+          if (sbErr) {
+            console.warn('[Oyen] Supabase Auth sign-in skipped (fallback path):', sbErr.message);
+          } else {
+            console.info('[Oyen] Supabase Auth session established (fallback path) for', sbData.user?.email);
+          }
+        } catch (sbCatch) {
+          console.warn('[Oyen] Supabase Auth sign-in exception (fallback):', sbCatch.message);
+        }
         setTimeout(() => {
           onAuthSuccess(targetEmail, matchingMember.role);
         }, 600);
