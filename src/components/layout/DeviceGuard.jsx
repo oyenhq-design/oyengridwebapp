@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Monitor, Laptop, Smartphone, Lock, Info, Mail } from 'lucide-react';
 
-const MobileRestriction = ({ onBypass }) => {
+const MobileRestriction = () => {
   const handleSupport = () => {
     window.location.href = 'mailto:support@oyengrid.com'; 
   };
@@ -148,35 +148,6 @@ const MobileRestriction = ({ onBypass }) => {
           width: '100%',
           marginTop: '0.5rem'
         }}>
-          {onBypass && (
-            <button
-              onClick={onBypass}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                backgroundColor: '#D4AF37',
-                color: '#FFFFFF',
-                border: 'none',
-                padding: '1rem 1.5rem',
-                borderRadius: '12px',
-                fontSize: '1rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
-                boxShadow: '0 4px 12px rgba(212, 175, 55, 0.2)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#C29F32';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#D4AF37';
-              }}
-            >
-              Continue Anyway (Mobile Preview)
-            </button>
-          )}
           
           <button
             onClick={handleSupport}
@@ -231,7 +202,6 @@ const MobileRestriction = ({ onBypass }) => {
 export default function DeviceGuard({ children }) {
   const [isMobile, setIsMobile] = useState(false);
   const [hasChecked, setHasChecked] = useState(false);
-  const [bypassed, setBypassed] = useState(false);
 
   useEffect(() => {
     const checkWidth = () => {
@@ -250,8 +220,8 @@ export default function DeviceGuard({ children }) {
   // Avoid flash of desktop on mobile by waiting for first check
   if (!hasChecked) return null;
 
-  if (isMobile && !bypassed) {
-    return <MobileRestriction onBypass={() => setBypassed(true)} />;
+  if (isMobile) {
+    return <MobileRestriction />;
   }
 
   return <>{children}</>;
