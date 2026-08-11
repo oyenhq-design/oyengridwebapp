@@ -153,8 +153,8 @@ export default function SubscriptionsPlansPage() {
       }
 
       if (data) {
+        // Map only real pricing_plans columns
         const mappedPlans = data.map(item => ({
-          // Canonical ID from Supabase — never overridden
           id: item.id,
           slug: item.slug || "",
           name: formatValue(item.name, "Untitled Tier"),
@@ -185,13 +185,61 @@ export default function SubscriptionsPlansPage() {
           lastUpdated: item.updated_at
             ? new Date(item.updated_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })
             : "",
+          // Related-table fields populated below after parallel fetch
+          _segment: "", _recommended_for: "",
+          _tokens_per_month: null, _storage_limit: "", _tier_level: "", _llm_models: [],
+          _feature_count: 0, _enabled_feature_count: 0,
+          _marketing_headline: "", _popular_badge_text: "",
         }));
 
-        console.log("✅ pricing_plans fetched:", mappedPlans.length, "records");
-        console.table(mappedPlans.map(p => ({ id: p.id, slug: p.slug, name: p.name, status: p.status })));
+        // ── Enrich cards: fetch all 4 child tables in one round-trip each ──
+        const planIds = mappedPlans.map(p => p.id);
+        const [aiRes, audRes, mktRes, featRes] = await Promise.all([
+          supabase.from("pricing_plan_ai_allocation")
+            .select("plan_id, tokens_per_month, tier_level, storage_limit, accessible_llm_models")
+            .in("plan_id", planIds),
+          supabase.from("pricing_plan_target_audience")
+            .select("plan_id, segment, recommended_for")
+            .in("plan_id", planIds),
+          supabase.from("pricing_plan_marketing_copy")
+            .select("plan_id, headline, popular_badge_text")
+            .in("plan_id", planIds),
+          supabase.from("pricing_plan_features")
+            .select("plan_id, enabled")
+            .in("plan_id", planIds),
+        ]);
 
-        setSupabasePlans(mappedPlans);
-        setSyncStatus(prev => ({ ...prev, visiblePlans: mappedPlans.length }));
+        // Build lookup maps keyed by plan_id
+        const aiMap  = {}; (aiRes.data  || []).forEach(r => { aiMap[r.plan_id]  = r; });
+        const audMap = {}; (audRes.data || []).forEach(r => { audMap[r.plan_id] = r; });
+        const mktMap = {}; (mktRes.data || []).forEach(r => { mktMap[r.plan_id] = r; });
+        const featMap = {};
+        (featRes.data || []).forEach(r => {
+          if (!featMap[r.plan_id]) featMap[r.plan_id] = { total: 0, enabled: 0 };
+          featMap[r.plan_id].total++;
+          if (r.enabled) featMap[r.plan_id].enabled++;
+        });
+
+        // Merge enrichment into each card
+        const enrichedPlans = mappedPlans.map(p => ({
+          ...p,
+          _segment:              audMap[p.id]?.segment            || "",
+          _recommended_for:      audMap[p.id]?.recommended_for    || "",
+          _tokens_per_month:     aiMap[p.id]?.tokens_per_month    ?? null,
+          _storage_limit:        aiMap[p.id]?.storage_limit       || "",
+          _tier_level:           aiMap[p.id]?.tier_level          || "",
+          _llm_models:           Array.isArray(aiMap[p.id]?.accessible_llm_models) ? aiMap[p.id].accessible_llm_models : [],
+          _feature_count:        featMap[p.id]?.total             || 0,
+          _enabled_feature_count: featMap[p.id]?.enabled          || 0,
+          _marketing_headline:   mktMap[p.id]?.headline           || "",
+          _popular_badge_text:   mktMap[p.id]?.popular_badge_text || "",
+        }));
+
+        console.log("✅ pricing_plans fetched & enriched:", enrichedPlans.length, "records");
+        console.table(enrichedPlans.map(p => ({ id: p.id, name: p.name, status: p.status, segment: p._segment, tokens: p._tokens_per_month })));
+
+        setSupabasePlans(enrichedPlans);
+        setSyncStatus(prev => ({ ...prev, visiblePlans: enrichedPlans.length }));
       }
     } catch (err) {
       console.error("Error fetching pricing plans:", err);
@@ -613,10 +661,30 @@ export default function SubscriptionsPlansPage() {
                   )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", fontSize: "0.78rem", color: "#707070", padding: "0.85rem 0", borderTop: "1px solid #E6DED0", borderBottom: "1px solid #E6DED0" }}>
-                  {p.description && <div>🎯 <strong>Description:</strong> <span style={{ color: "#111111" }}>{p.description}</span></div>}
-                  {p.currency && <div>💱 <strong>Currency:</strong> <span style={{ color: "#111111" }}>{p.currency}</span></div>}
-                  {p.trial_days > 0 && <div>🕐 <strong>Trial:</strong> <span style={{ color: "#111111" }}>{p.trial_days} days</span></div>}
-                  {p.buttonText && <div>🔗 <strong>CTA:</strong> <span style={{ color: "#111111" }}>{p.buttonText}</span></div>}
+                  {/* ── pricing_plans ── */}
+                  {p.description      && <div>📋 <strong>Description:</strong>  <span style={{ color: "#111111" }}>{p.description}</span></div>}
+                  {p.currency         && <div>💱 <strong>Currency:</strong>     <span style={{ color: "#111111" }}>{p.currency}{p.billing_period ? ` · ${p.billing_period}` : ""}</span></div>}
+                  {p.trial_days > 0   && <div>🕐 <strong>Trial:</strong>        <span style={{ color: "#111111" }}>{p.trial_days} days free</span></div>}
+                  {p.buttonText       && <div>🔗 <strong>CTA:</strong>          <span style={{ color: "#111111" }}>{p.buttonText}</span></div>}
+                  {/* ── pricing_plan_target_audience ── */}
+                  {p._segment         && <div>🎯 <strong>Target:</strong>       <span style={{ color: "#111111" }}>{p._segment}</span></div>}
+                  {p._recommended_for && <div>✅ <strong>Best for:</strong>     <span style={{ color: "#111111" }}>{p._recommended_for}</span></div>}
+                  {/* ── pricing_plan_ai_allocation ── */}
+                  {p._tokens_per_month != null && (
+                    <div>🤖 <strong>AI Tokens:</strong>    <span style={{ color: "#111111" }}>{Number(p._tokens_per_month).toLocaleString()} / mo{p._tier_level ? ` · ${p._tier_level}` : ""}</span></div>
+                  )}
+                  {p._storage_limit   && <div>💾 <strong>Storage:</strong>      <span style={{ color: "#111111" }}>{p._storage_limit}</span></div>}
+                  {p._llm_models.length > 0 && (
+                    <div>🧠 <strong>Models:</strong>       <span style={{ color: "#111111" }}>{p._llm_models.join(", ")}</span></div>
+                  )}
+                  {/* ── pricing_plan_features ── */}
+                  {p._feature_count > 0 && (
+                    <div>⚙️ <strong>Features:</strong>     <span style={{ color: "#D9A928", fontWeight: 700 }}>{p._enabled_feature_count} of {p._feature_count} enabled</span></div>
+                  )}
+                  {/* ── pricing_plan_marketing_copy ── */}
+                  {p._marketing_headline && (
+                    <div>📣 <strong>Headline:</strong>     <span style={{ color: "#111111" }}>{p._marketing_headline}</span></div>
+                  )}
                 </div>
                 <div style={{ marginTop: "0.75rem", fontSize: "0.68rem", color: "#888888" }}>
                   Updated: {formatValue(p.lastUpdated, "—")}
