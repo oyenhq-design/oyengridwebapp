@@ -416,41 +416,37 @@ export default function SubscriptionsPlansPage() {
       return;
     }
 
-    // ── PRE-SAVE AUTH DIAGNOSTIC ─────────────────────────────────────────────
-    // getSession()  → reads the locally cached JWT (fast, no network).
-    // getUser()     → validates the JWT against Supabase Auth servers (authoritative).
-    // We log both so it's immediately clear whether the issue is local cache or
-    // token validity. The save proceeds ONLY when getUser() returns a user.
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    const { data: { user: currentUser } }       = await supabase.auth.getUser();
+    // ── PRE-SAVE AUTH DIAGNOSTIC ─────────────────────────────────────────
+    // Uses the single supabase instance imported at the top of this file.
+    // getSession() = local cache read. getUser() = server-validated.
+    const {
+      data: { session },
+      error: sessionError
+    } = await supabase.auth.getSession();
 
-    console.group("🔐 Pricing Command Centre — Auth Check");
-    console.log("supabase.auth.getSession() →", {
-      sessionExists:  !!currentSession,
-      accessToken:    currentSession?.access_token
-                        ? currentSession.access_token.substring(0, 32) + "…"
-                        : null,
-      tokenType:      currentSession?.token_type ?? null,
-      expiresAt:      currentSession?.expires_at
-                        ? new Date(currentSession.expires_at * 1000).toISOString()
-                        : null,
-    });
-    console.log("supabase.auth.getUser() →", {
-      userId: currentUser?.id   ?? null,
-      email:  currentUser?.email ?? null,
-      role:   currentUser?.role  ?? null,
-    });
-    console.log("Session present:", !!currentSession, "| User present:", !!currentUser);
-    console.groupEnd();
+    console.log("========== SUPABASE SAVE AUTH ==========");
+    console.log("supabase URL:", supabase.supabaseUrl);
+    console.log("session exists:", !!session);
+    console.log("user id:", session?.user?.id ?? null);
+    console.log("user email:", session?.user?.email ?? null);
+    console.log("access token exists:", !!session?.access_token);
+    console.log("session error:", sessionError);
 
-    // ── AUTH GUARD — block the save if there is no authenticated session ───
-    // All 5 pricing tables use RLS: authenticated users can manage ALL.
-    // Without a session, auth.uid() = null and every UPDATE/UPSERT matches 0 rows.
-    if (!currentUser) {
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser();
+
+    console.log("getUser user id:", user?.id ?? null);
+    console.log("getUser email:", user?.email ?? null);
+    console.log("getUser error:", userError);
+
+    // ── AUTH GUARD — block save when no authenticated session exists ───
+    if (!user) {
       setSaveError(
         "No authenticated Supabase session. " +
         "Please sign out and sign back in as an administrator. " +
-        "Check the browser console for details on the auth state."
+        "Check the browser console (========== SUPABASE SAVE AUTH ==========) for details."
       );
       return;
     }
@@ -492,12 +488,12 @@ export default function SubscriptionsPlansPage() {
         internal_notes:          editPlan.internal_notes || "",
       };
       console.log("1️⃣  pricing_plans payload:", planPayload);
-      const { data: planData, error: planErr } = await supabase
+      const { data: planData, error: planErr, count: planCount } = await supabase
         .from("pricing_plans")
         .update(planPayload)
         .eq("id", planId)
         .select();
-      console.log("1️⃣  pricing_plans response — data:", planData, "error:", planErr);
+      console.log("pricing_plans UPDATE:", { data: planData, error: planErr, count: planCount });
       if (planErr) throw new Error(`pricing_plans UPDATE failed: ${planErr.message} (code: ${planErr.code})`);
       if (!planData || planData.length === 0) {
         throw new Error(
