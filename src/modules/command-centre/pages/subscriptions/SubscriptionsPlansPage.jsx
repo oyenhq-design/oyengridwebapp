@@ -503,9 +503,58 @@ export default function SubscriptionsPlansPage() {
       }
 
       console.log("✅ All tables updated for plan_id:", planId);
+
+      // ── Optimistic update: apply changes to plan card state immediately ──
+      // This makes the card update in the same render cycle as the modal closing,
+      // without waiting for the async refetch to complete.
+      setSupabasePlans(prev => prev.map(p => {
+        if (p.id !== planId) return p;
+        return {
+          ...p,
+          // pricing_plans fields
+          name:                  editPlan.name,
+          description:           editPlan.description,
+          monthlyPrice:          Number(editPlan.monthlyPrice),
+          annualPrice:           Number(editPlan.annualPrice),
+          annual_discount_percent: Number(editPlan.annual_discount_percent) || 0,
+          currency:              editPlan.currency || "USD",
+          billing_period:        editPlan.billing_period || "",
+          setup_fee:             Number(editPlan.setup_fee) || 0,
+          trial_days:            Number(editPlan.trial_days) || 0,
+          buttonText:            editPlan.cta_button_label || "",
+          ctaDestination:        editPlan.cta_destination || "",
+          badge:                 editPlan.badge || "",
+          is_popular:            !!editPlan.is_popular,
+          popular:               !!editPlan.is_popular,
+          is_active:             editPlan.is_active !== false,
+          status:                editPlan.status
+                                   ? (editPlan.status.charAt(0).toUpperCase() + editPlan.status.slice(1))
+                                   : p.status,
+          version:               editPlan.version || "",
+          internal_notes:        editPlan.internal_notes || "",
+          lastUpdated:           new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+          // pricing_plan_target_audience
+          _segment:              editAudience.id ? (editAudience.segment || "")        : p._segment,
+          _recommended_for:      editAudience.id ? (editAudience.recommended_for || "") : p._recommended_for,
+          // pricing_plan_ai_allocation
+          _tokens_per_month:     editAI.id ? (editAI.tokens_per_month !== "" ? Number(editAI.tokens_per_month) : null) : p._tokens_per_month,
+          _storage_limit:        editAI.id ? (editAI.storage_limit || "")        : p._storage_limit,
+          _tier_level:           editAI.id ? (editAI.tier_level || "")           : p._tier_level,
+          _llm_models:           editAI.id ? (editAI.accessible_llm_models || []) : p._llm_models,
+          // pricing_plan_marketing_copy
+          _marketing_headline:   editMarketing.id ? (editMarketing.headline || "")           : p._marketing_headline,
+          _popular_badge_text:   editMarketing.id ? (editMarketing.popular_badge_text || "") : p._popular_badge_text,
+          // Note: _feature_count / _enabled_feature_count confirmed by background refetch
+        };
+      }));
+
+      // Close modal immediately
       setSelectedPlanForConfig(null);
-      await fetchPricingPlans();
       setSyncStatus(prev => ({ ...prev, pendingChanges: prev.pendingChanges + 1, status: "Modified (Pending Web Publish)" }));
+
+      // Background refetch to confirm server data (non-blocking)
+      fetchPricingPlans();
+
       alert(`✅ SUCCESS: '${editPlan.name}' saved to all Supabase tables!`);
     } catch (err) {
       console.error("Save error:", err);
