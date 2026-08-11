@@ -379,186 +379,218 @@ export default function SubscriptionsPlansPage() {
     }
   };
 
-  // ── Save — writes to each normalized table separately ────────────────────
+  // ── Save — fully debugged, UPSERT for child tables, .select() on every op ─
   const handleSavePlanConfiguration = async () => {
     if (!editPlan.id) {
-      setSaveError("Invalid plan identifier. Cannot update record.");
+      setSaveError("No plan ID found. Cannot save.");
+      return;
+    }
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(editPlan.id)) {
+      setSaveError(`Invalid plan ID: "${editPlan.id}". Reload the page.`);
       return;
     }
 
-    // UUID format guard — prevents any synthetic ID from reaching Supabase
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidPattern.test(editPlan.id)) {
-      setSaveError(`Invalid plan ID: "${editPlan.id}". Only real Supabase records can be updated. Reload the page.`);
-      return;
-    }
+    const planId = editPlan.id;
+
+    console.group(`💾 SAVE PLAN — plan_id: ${planId}`);
+    console.log("editPlan:",     JSON.parse(JSON.stringify(editPlan)));
+    console.log("editAI:",       JSON.parse(JSON.stringify(editAI)));
+    console.log("editAudience:", JSON.parse(JSON.stringify(editAudience)));
+    console.log("editMarketing:",JSON.parse(JSON.stringify(editMarketing)));
+    console.log("editFeatures:", JSON.parse(JSON.stringify(editFeatures)));
 
     try {
       setSaving(true);
       setSaveError(null);
-      const planId = editPlan.id;
 
-      // ── 1. UPDATE pricing_plans ─────────────────────────────────────────
-      // Only include columns that exist in the pricing_plans schema
+      // ═══════════════════════════════════════════════════════
+      // 1. pricing_plans  — UPDATE, confirm with .select()
+      // ═══════════════════════════════════════════════════════
       const planPayload = {
-        name: editPlan.name,
-        description: editPlan.description,
-        price: Number(editPlan.monthlyPrice),
-        monthly_price: Number(editPlan.monthlyPrice),
-        annual_price: Number(editPlan.annualPrice),
+        name:                    editPlan.name,
+        description:             editPlan.description,
+        price:                   Number(editPlan.monthlyPrice),
+        monthly_price:           Number(editPlan.monthlyPrice),
+        annual_price:            Number(editPlan.annualPrice),
         annual_discount_percent: Number(editPlan.annual_discount_percent) || 0,
-        currency: editPlan.currency || "USD",
-        billing_period: editPlan.billing_period || "",
-        setup_fee: Number(editPlan.setup_fee) || 0,
-        trial_days: Number(editPlan.trial_days) || 0,
-        cta_button_label: editPlan.cta_button_label,
-        cta_destination: editPlan.cta_destination || "",
-        badge: editPlan.badge || "",
-        is_popular: !!editPlan.is_popular,
-        is_active: editPlan.is_active !== false,
-        status: editPlan.status ? editPlan.status.toLowerCase() : "published",
-        version: editPlan.version || "",
-        internal_notes: editPlan.internal_notes || "",
-        updated_at: new Date().toISOString(),
+        currency:                editPlan.currency || "USD",
+        billing_period:          editPlan.billing_period || "",
+        setup_fee:               Number(editPlan.setup_fee) || 0,
+        trial_days:              Number(editPlan.trial_days) || 0,
+        cta_button_label:        editPlan.cta_button_label || "",
+        cta_destination:         editPlan.cta_destination || "",
+        badge:                   editPlan.badge || "",
+        is_popular:              !!editPlan.is_popular,
+        is_active:               editPlan.is_active !== false,
+        status:                  editPlan.status ? editPlan.status.toLowerCase() : "published",
+        version:                 editPlan.version || "",
+        internal_notes:          editPlan.internal_notes || "",
       };
-
-      console.log(`UPDATE pricing_plans id=${planId}`, planPayload);
-      const { error: planErr } = await supabase
+      console.log("1️⃣  pricing_plans payload:", planPayload);
+      const { data: planData, error: planErr } = await supabase
         .from("pricing_plans")
         .update(planPayload)
-        .eq("id", planId);
-      if (planErr) throw new Error(`pricing_plans: ${planErr.message}`);
+        .eq("id", planId)
+        .select();
+      console.log("1️⃣  pricing_plans response — data:", planData, "error:", planErr);
+      if (planErr) throw new Error(`pricing_plans UPDATE failed: ${planErr.message} (code: ${planErr.code})`);
+      if (!planData || planData.length === 0) {
+        throw new Error(
+          `pricing_plans UPDATE matched 0 rows for id=${planId}. ` +
+          `Check Supabase RLS — the anon/service key may not have UPDATE permission on pricing_plans.`
+        );
+      }
+      console.log("✅ pricing_plans saved:", planData[0]);
 
-      // ── 2. UPSERT pricing_plan_features ────────────────────────────────
-      // Update each existing feature row by its own id
+      // ═══════════════════════════════════════════════════════
+      // 2. pricing_plan_features  — UPDATE each row by id
+      // ═══════════════════════════════════════════════════════
+      if (editFeatures.length === 0) {
+        console.log("2️⃣  pricing_plan_features: no rows — skip");
+      }
       for (const feat of editFeatures) {
-        if (!feat.id) continue;
-        const { error: fErr } = await supabase
+        if (!feat.id) { console.warn("2️⃣  feature missing id, skip:", feat); continue; }
+        const featPayload = {
+          feature_name: feat.feature_name,
+          category:     feat.category,
+          enabled:      !!feat.enabled,
+          usage_limit:  feat.usage_limit || "",
+        };
+        console.log(`2️⃣  pricing_plan_features UPDATE id=${feat.id}:`, featPayload);
+        const { data: fData, error: fErr } = await supabase
           .from("pricing_plan_features")
-          .update({
-            feature_name: feat.feature_name,
-            category: feat.category,
-            enabled: !!feat.enabled,
-            usage_limit: feat.usage_limit || "",
-            updated_at: new Date().toISOString(),
-          })
+          .update(featPayload)
           .eq("id", feat.id)
-          .eq("plan_id", planId);
-        if (fErr) console.warn("pricing_plan_features update error:", fErr.message);
+          .eq("plan_id", planId)
+          .select();
+        console.log("2️⃣  response — data:", fData, "error:", fErr);
+        if (fErr) throw new Error(`pricing_plan_features UPDATE failed id=${feat.id}: ${fErr.message}`);
+        if (!fData || fData.length === 0) console.warn(`2️⃣  UPDATE matched 0 rows for feature id=${feat.id} — check RLS`);
       }
 
-      // ── 3. UPDATE pricing_plan_ai_allocation ───────────────────────────
-      if (editAI.id) {
-        const aiPayload = {
-          allocation_type: editAI.allocation_type || "",
-          tokens_per_month: editAI.tokens_per_month !== "" ? Number(editAI.tokens_per_month) : null,
-          tier_level: editAI.tier_level || "",
-          storage_limit: editAI.storage_limit || "",
-          accessible_llm_models: editAI.accessible_llm_models || [],
-          updated_at: new Date().toISOString(),
-        };
-        console.log(`UPDATE pricing_plan_ai_allocation plan_id=${planId}`, aiPayload);
-        const { error: aiErr } = await supabase
-          .from("pricing_plan_ai_allocation")
-          .update(aiPayload)
-          .eq("id", editAI.id)
-          .eq("plan_id", planId);
-        if (aiErr) throw new Error(`pricing_plan_ai_allocation: ${aiErr.message}`);
-      }
+      // ═══════════════════════════════════════════════════════
+      // 3. pricing_plan_ai_allocation — UPSERT by plan_id
+      //    UPSERT creates the row if it doesn't exist yet,
+      //    instead of silently updating 0 rows.
+      // ═══════════════════════════════════════════════════════
+      const aiPayload = {
+        plan_id:               planId,
+        allocation_type:       editAI.allocation_type || "",
+        tokens_per_month:      (editAI.tokens_per_month !== "" && editAI.tokens_per_month != null)
+                                 ? Number(editAI.tokens_per_month) : null,
+        tier_level:            editAI.tier_level || "",
+        storage_limit:         editAI.storage_limit || "",
+        accessible_llm_models: Array.isArray(editAI.accessible_llm_models) ? editAI.accessible_llm_models : [],
+      };
+      if (editAI.id) aiPayload.id = editAI.id;
+      console.log("3️⃣  pricing_plan_ai_allocation UPSERT:", aiPayload);
+      const { data: aiData, error: aiErr } = await supabase
+        .from("pricing_plan_ai_allocation")
+        .upsert(aiPayload, { onConflict: "plan_id" })
+        .select();
+      console.log("3️⃣  response — data:", aiData, "error:", aiErr);
+      if (aiErr) throw new Error(`pricing_plan_ai_allocation UPSERT failed: ${aiErr.message} (code: ${aiErr.code})`);
+      console.log("✅ pricing_plan_ai_allocation saved:", aiData);
 
-      // ── 4. UPDATE pricing_plan_target_audience ─────────────────────────
-      if (editAudience.id) {
-        const audPayload = {
-          segment: editAudience.segment || "",
-          recommended_for: editAudience.recommended_for || "",
-          organization_size: editAudience.organization_size || "",
-          updated_at: new Date().toISOString(),
-        };
-        console.log(`UPDATE pricing_plan_target_audience plan_id=${planId}`, audPayload);
-        const { error: audErr } = await supabase
-          .from("pricing_plan_target_audience")
-          .update(audPayload)
-          .eq("id", editAudience.id)
-          .eq("plan_id", planId);
-        if (audErr) throw new Error(`pricing_plan_target_audience: ${audErr.message}`);
-      }
+      // ═══════════════════════════════════════════════════════
+      // 4. pricing_plan_target_audience — UPSERT by plan_id
+      // ═══════════════════════════════════════════════════════
+      const audPayload = {
+        plan_id:           planId,
+        segment:           editAudience.segment || "",
+        recommended_for:   editAudience.recommended_for || "",
+        organization_size: editAudience.organization_size || "",
+      };
+      if (editAudience.id) audPayload.id = editAudience.id;
+      console.log("4️⃣  pricing_plan_target_audience UPSERT:", audPayload);
+      const { data: audData, error: audErr } = await supabase
+        .from("pricing_plan_target_audience")
+        .upsert(audPayload, { onConflict: "plan_id" })
+        .select();
+      console.log("4️⃣  response — data:", audData, "error:", audErr);
+      if (audErr) throw new Error(`pricing_plan_target_audience UPSERT failed: ${audErr.message} (code: ${audErr.code})`);
+      console.log("✅ pricing_plan_target_audience saved:", audData);
 
-      // ── 5. UPDATE pricing_plan_marketing_copy ──────────────────────────
-      if (editMarketing.id) {
-        const mktPayload = {
-          cta: editMarketing.cta || "",
-          headline: editMarketing.headline || "",
-          subheadline: editMarketing.subheadline || "",
-          popular_badge_text: editMarketing.popular_badge_text || "",
-          enterprise_custom_contact_cta: editMarketing.enterprise_custom_contact_cta || "",
-          updated_at: new Date().toISOString(),
-        };
-        console.log(`UPDATE pricing_plan_marketing_copy plan_id=${planId}`, mktPayload);
-        const { error: mktErr } = await supabase
-          .from("pricing_plan_marketing_copy")
-          .update(mktPayload)
-          .eq("id", editMarketing.id)
-          .eq("plan_id", planId);
-        if (mktErr) throw new Error(`pricing_plan_marketing_copy: ${mktErr.message}`);
-      }
+      // ═══════════════════════════════════════════════════════
+      // 5. pricing_plan_marketing_copy — UPSERT by plan_id
+      // ═══════════════════════════════════════════════════════
+      const mktPayload = {
+        plan_id:                       planId,
+        cta:                           editMarketing.cta || "",
+        headline:                      editMarketing.headline || "",
+        subheadline:                   editMarketing.subheadline || "",
+        popular_badge_text:            editMarketing.popular_badge_text || "",
+        enterprise_custom_contact_cta: editMarketing.enterprise_custom_contact_cta || "",
+      };
+      if (editMarketing.id) mktPayload.id = editMarketing.id;
+      console.log("5️⃣  pricing_plan_marketing_copy UPSERT:", mktPayload);
+      const { data: mktData, error: mktErr } = await supabase
+        .from("pricing_plan_marketing_copy")
+        .upsert(mktPayload, { onConflict: "plan_id" })
+        .select();
+      console.log("5️⃣  response — data:", mktData, "error:", mktErr);
+      if (mktErr) throw new Error(`pricing_plan_marketing_copy UPSERT failed: ${mktErr.message} (code: ${mktErr.code})`);
+      console.log("✅ pricing_plan_marketing_copy saved:", mktData);
 
-      console.log("✅ All tables updated for plan_id:", planId);
+      console.log("🎉 ALL 5 tables written for plan_id:", planId);
+      console.groupEnd();
 
-      // ── Optimistic update: apply changes to plan card state immediately ──
-      // This makes the card update in the same render cycle as the modal closing,
-      // without waiting for the async refetch to complete.
+      // ── Optimistic UI update — use confirmed server data ──────────
+      const savedPlan = planData[0];
+      const savedAI   = aiData  && aiData[0]  ? aiData[0]  : null;
+      const savedAud  = audData && audData[0]  ? audData[0] : null;
+      const savedMkt  = mktData && mktData[0]  ? mktData[0] : null;
+
       setSupabasePlans(prev => prev.map(p => {
         if (p.id !== planId) return p;
         return {
           ...p,
-          // pricing_plans fields
-          name:                  editPlan.name,
-          description:           editPlan.description,
-          monthlyPrice:          Number(editPlan.monthlyPrice),
-          annualPrice:           Number(editPlan.annualPrice),
-          annual_discount_percent: Number(editPlan.annual_discount_percent) || 0,
-          currency:              editPlan.currency || "USD",
-          billing_period:        editPlan.billing_period || "",
-          setup_fee:             Number(editPlan.setup_fee) || 0,
-          trial_days:            Number(editPlan.trial_days) || 0,
-          buttonText:            editPlan.cta_button_label || "",
-          ctaDestination:        editPlan.cta_destination || "",
-          badge:                 editPlan.badge || "",
-          is_popular:            !!editPlan.is_popular,
-          popular:               !!editPlan.is_popular,
-          is_active:             editPlan.is_active !== false,
-          status:                editPlan.status
-                                   ? (editPlan.status.charAt(0).toUpperCase() + editPlan.status.slice(1))
-                                   : p.status,
-          version:               editPlan.version || "",
-          internal_notes:        editPlan.internal_notes || "",
-          lastUpdated:           new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-          // pricing_plan_target_audience
-          _segment:              editAudience.id ? (editAudience.segment || "")        : p._segment,
-          _recommended_for:      editAudience.id ? (editAudience.recommended_for || "") : p._recommended_for,
-          // pricing_plan_ai_allocation
-          _tokens_per_month:     editAI.id ? (editAI.tokens_per_month !== "" ? Number(editAI.tokens_per_month) : null) : p._tokens_per_month,
-          _storage_limit:        editAI.id ? (editAI.storage_limit || "")        : p._storage_limit,
-          _tier_level:           editAI.id ? (editAI.tier_level || "")           : p._tier_level,
-          _llm_models:           editAI.id ? (editAI.accessible_llm_models || []) : p._llm_models,
-          // pricing_plan_marketing_copy
-          _marketing_headline:   editMarketing.id ? (editMarketing.headline || "")           : p._marketing_headline,
-          _popular_badge_text:   editMarketing.id ? (editMarketing.popular_badge_text || "") : p._popular_badge_text,
-          // Note: _feature_count / _enabled_feature_count confirmed by background refetch
+          name:                   savedPlan.name,
+          description:            savedPlan.description || "",
+          monthlyPrice:           savedPlan.price ?? Number(editPlan.monthlyPrice),
+          annualPrice:            savedPlan.annual_price ?? Number(editPlan.annualPrice),
+          annual_discount_percent: savedPlan.annual_discount_percent ?? 0,
+          currency:               savedPlan.currency || "USD",
+          billing_period:         savedPlan.billing_period || "",
+          trial_days:             savedPlan.trial_days ?? 0,
+          buttonText:             savedPlan.cta_button_label || "",
+          ctaDestination:         savedPlan.cta_destination || "",
+          badge:                  savedPlan.badge || "",
+          is_popular:             !!savedPlan.is_popular,
+          popular:                !!savedPlan.is_popular,
+          is_active:              savedPlan.is_active !== false,
+          status:                 savedPlan.status
+                                    ? (savedPlan.status.charAt(0).toUpperCase() + savedPlan.status.slice(1))
+                                    : p.status,
+          version:                savedPlan.version || "",
+          lastUpdated:            new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+          _segment:              savedAud?.segment             || editAudience.segment,
+          _recommended_for:      savedAud?.recommended_for     || editAudience.recommended_for,
+          _tokens_per_month:     savedAI?.tokens_per_month     ?? (editAI.tokens_per_month !== "" ? Number(editAI.tokens_per_month) : null),
+          _storage_limit:        savedAI?.storage_limit        || editAI.storage_limit,
+          _tier_level:           savedAI?.tier_level           || editAI.tier_level,
+          _llm_models:           savedAI?.accessible_llm_models ?? editAI.accessible_llm_models ?? [],
+          _marketing_headline:   savedMkt?.headline            || editMarketing.headline,
+          _popular_badge_text:   savedMkt?.popular_badge_text  || editMarketing.popular_badge_text,
         };
       }));
 
-      // Close modal immediately
+      // Persist confirmed row IDs into form state for future saves
+      if (savedAI)  setEditAI(prev  => ({ ...prev,  id: savedAI.id  }));
+      if (savedAud) setEditAudience(prev => ({ ...prev, id: savedAud.id }));
+      if (savedMkt) setEditMarketing(prev => ({ ...prev, id: savedMkt.id }));
+
       setSelectedPlanForConfig(null);
       setSyncStatus(prev => ({ ...prev, pendingChanges: prev.pendingChanges + 1, status: "Modified (Pending Web Publish)" }));
+      fetchPricingPlans(); // background confirmation
 
-      // Background refetch to confirm server data (non-blocking)
-      fetchPricingPlans();
+      alert(`✅ SUCCESS: '${editPlan.name}' saved. Check console for Supabase confirmation.`);
 
-      alert(`✅ SUCCESS: '${editPlan.name}' saved to all Supabase tables!`);
     } catch (err) {
-      console.error("Save error:", err);
-      setSaveError(`Supabase Error: ${err.message}`);
+      console.error("❌ SAVE FAILED:", err.message);
+      console.groupEnd();
+      setSaveError(`Save failed: ${err.message}`);
     } finally {
       setSaving(false);
     }
