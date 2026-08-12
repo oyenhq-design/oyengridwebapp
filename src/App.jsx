@@ -31,7 +31,7 @@ import PublicEventForm from './components/PublicEventForm';
 import SignInForm from './components/SignInForm';
 import ProgramManagerModule from './modules/program-manager';
 import CommandCentreModule from './modules/command-centre';
-import ParticipantModule from './modules/participant';
+// ParticipantModule removed — learner portal rebuilt as standalone workspace
 import GlobalChat from './components/chat/GlobalChat';
 import TeamManagement from './components/TeamManagement';
 import ProgramsTab from './components/ProgramsTab';
@@ -1857,22 +1857,29 @@ export default function App() {
     const currentUser = user || 'admin@oyengrid.com';
     const currentRole = userRole || 'Workspace Super Admin';
 
-    // Determine if the current user is an invited/imported Participant
+    // ParticipantModule removed — learner portal is being rebuilt.
+    // For now, learner/participant roles are redirected to sign-out cleanly.
     const isParticipantUser = (
       userRole === 'Participant' || userRole === 'Learner' || userRole === 'Student' ||
       (wsLearners || []).some(l => l.email && l.email.toLowerCase() === (user || '').toLowerCase())
     );
 
     if (isParticipantUser && user !== 'admin@oyengrid.com') {
+      // Learner portal is offline — sign out and redirect to sign-in
       return (
-        <ParticipantModule
-          user={{ email: user || 'learner@oyengrid.com' }}
-          wsPrograms={wsPrograms}
-          wsLearners={wsLearners}
-          orgName={orgName || 'ABC Energy Workspace'}
-          orgLogo={orgLogo}
-          onSignOut={handleLogOut}
-        />
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#07090e', fontFamily: "'Inter', sans-serif" }}>
+          <div style={{ textAlign: 'center', color: '#FFFFFF', maxWidth: '400px', padding: '2rem' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚧</div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Learner Workspace</h2>
+            <p style={{ color: '#888888', fontSize: '0.9rem', marginBottom: '2rem' }}>Your personalised learning workspace is coming soon. Please check back shortly.</p>
+            <button
+              onClick={() => { setUser(null); setUserRole(null); setActiveRoute('signin'); }}
+              style={{ padding: '0.75rem 1.5rem', backgroundColor: '#D9A928', color: '#FFFFFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </div>
       );
     }
     if (userRole === 'Program Manager' || userRole === 'Programme Manager' || userRole === 'ProgramManager') {

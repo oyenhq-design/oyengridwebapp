@@ -65,7 +65,7 @@ const BLANK_AI_FORM = {
 const BLANK_AUDIENCE_FORM = {
   id: null,
   segment: "",
-  recommended_for: "",
+  recommended_for: [],    // text[] column — always a JS array
   organization_size: "",
 };
 
@@ -376,10 +376,20 @@ export default function SubscriptionsPlansPage() {
       // Target Audience
       if (audRes.error) console.warn("pricing_plan_target_audience fetch error:", audRes.error.message);
       else if (audRes.data) {
+        // recommended_for is text[] in Postgres; Supabase JS returns it as a JS array.
+        // Guard against it arriving as a JSON string (edge-case from older data).
+        const rawRF = audRes.data.recommended_for;
+        let loadedRF = [];
+        if (Array.isArray(rawRF)) {
+          loadedRF = rawRF;
+        } else if (typeof rawRF === "string" && rawRF.trim() !== "") {
+          try { const p = JSON.parse(rawRF); loadedRF = Array.isArray(p) ? p : []; }
+          catch { loadedRF = []; }
+        }
         setEditAudience({
           id: audRes.data.id,
           segment: formatValue(audRes.data.segment, ""),
-          recommended_for: formatValue(audRes.data.recommended_for, ""),
+          recommended_for: loadedRF,
           organization_size: formatValue(audRes.data.organization_size, ""),
         });
       }
@@ -531,8 +541,6 @@ export default function SubscriptionsPlansPage() {
 
       // ═══════════════════════════════════════════════════════
       // 3. pricing_plan_ai_allocation — UPSERT by plan_id
-      //    UPSERT creates the row if it doesn't exist yet,
-      //    instead of silently updating 0 rows.
       // ═══════════════════════════════════════════════════════
       const aiPayload = {
         plan_id:               planId,
@@ -555,11 +563,30 @@ export default function SubscriptionsPlansPage() {
 
       // ═══════════════════════════════════════════════════════
       // 4. pricing_plan_target_audience — UPSERT by plan_id
-      // ═══════════════════════════════════════════════════════
+      // ───────────────────────────────────────────────────────
+      // recommended_for is a Postgres text[] column.
+      // Normalise to a real JS array regardless of what state holds.
+      const recommendedFor = Array.isArray(editAudience.recommended_for)
+        ? editAudience.recommended_for
+        : typeof editAudience.recommended_for === "string"
+          ? (() => {
+              try {
+                const parsed = JSON.parse(editAudience.recommended_for);
+                return Array.isArray(parsed) ? parsed : [];
+              } catch { return []; }
+            })()
+          : [];
+
+      console.log("TARGET AUDIENCE PAYLOAD", {
+        recommended_for: recommendedFor,
+        isArray: Array.isArray(recommendedFor),
+        type: typeof recommendedFor,
+      });
+
       const audPayload = {
         plan_id:           planId,
         segment:           editAudience.segment || "",
-        recommended_for:   editAudience.recommended_for || "",
+        recommended_for:   recommendedFor,
         organization_size: editAudience.organization_size || "",
       };
       if (editAudience.id) audPayload.id = editAudience.id;
@@ -1286,8 +1313,41 @@ export default function SubscriptionsPlansPage() {
                     <textarea rows={2} style={textareaStyle} value={editAudience.segment} onChange={e => setEditAudience(p => ({ ...p, segment: e.target.value }))} disabled={!editAudience.id} placeholder="e.g. Training providers & bootcamps" />
                   </div>
                   <div>
-                    <label style={labelStyle}>RECOMMENDED FOR</label>
-                    <textarea rows={2} style={textareaStyle} value={editAudience.recommended_for} onChange={e => setEditAudience(p => ({ ...p, recommended_for: e.target.value }))} disabled={!editAudience.id} placeholder="e.g. Bootcamps, Corporate Training, NGOs" />
+                    <label style={labelStyle}>RECOMMENDED FOR (comma-separated)</label>
+                    {/* ── FIX: Always store recommended_for as a real JS array ──
+                        The textarea displays the array joined for editing.
+                        On change, we split on commas → trimmed string array → real JS array.
+                        This prevents the malformed array literal Postgres error (22P02). */}
+                    <textarea
+                      rows={2}
+                      style={textareaStyle}
+                      disabled={!editAudience.id}
+                      placeholder="e.g. Bootcamps, Corporate Training, NGOs"
+                      value={
+                        Array.isArray(editAudience.recommended_for)
+                          ? editAudience.recommended_for.join(", ")
+                          : (editAudience.recommended_for || "")
+                      }
+                      onChange={e => {
+                        // Split the typed string into a trimmed JS array immediately
+                        const raw = e.target.value;
+                        const asArray = raw
+                          .split(",")
+                          .map(s => s.trim())
+                          .filter(s => s.length > 0);
+                        setEditAudience(p => ({ ...p, recommended_for: asArray }));
+                      }}
+                    />
+                    {/* Live preview confirming the array that will be sent to Supabase */}
+                    {Array.isArray(editAudience.recommended_for) && editAudience.recommended_for.length > 0 && (
+                      <div style={{ marginTop: "0.4rem", display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                        {editAudience.recommended_for.map((item, i) => (
+                          <span key={i} style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.15rem 0.5rem", borderRadius: "4px", backgroundColor: "#E6F8F0", color: "#18B67A" }}>
+                            ✓ {item}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label style={labelStyle}>ORGANIZATION SIZE</label>
