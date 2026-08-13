@@ -134,10 +134,23 @@ export default function SubscriptionsPlansPage() {
     cacheStatus: "Purged & Synced"
   });
 
+  // Dynamically calculate visible plans count when active tab or plans change
+  useEffect(() => {
+    const visibleCount = supabasePlans.filter(p =>
+      (p.solution === activeSolutionTab || p.category === activeSolutionTab ||
+      (!p.category && activeSolutionTab === "Bootcamps & Training")) && p.is_active
+    ).length;
+    setSyncStatus(prev => ({ ...prev, visiblePlans: visibleCount }));
+  }, [supabasePlans, activeSolutionTab]);
+
+  const totalActive = supabasePlans.filter(p => p.is_active).length;
+  const totalPublished = supabasePlans.filter(p => p.status === "Published").length;
+  const totalDraft = supabasePlans.filter(p => p.status === "Draft").length;
+
   const stats = [
-    { label: "Total Active Plans", val: "16 Tiers", color: "#111111" },
-    { label: "Published Plans", val: "12 Published", color: "#18B67A" },
-    { label: "Draft Plans", val: "4 Drafts", color: "#D9A928" },
+    { label: "Total Active Plans", val: `${totalActive} Tiers`, color: "#111111" },
+    { label: "Published Plans", val: `${totalPublished} Published`, color: "#18B67A" },
+    { label: "Draft Plans", val: `${totalDraft} Drafts`, color: "#D9A928" },
     { label: "Orgs Using Plans", val: "215 Orgs", color: "#2563EB" },
     { label: "Monthly Revenue (MRR)", val: "$48,250", color: "#18B67A" },
     { label: "Active Free Trials", val: "18 Trials", color: "#D9A928" },
@@ -264,7 +277,6 @@ export default function SubscriptionsPlansPage() {
         console.table(enrichedPlans.map(p => ({ id: p.id, name: p.name, status: p.status, segment: p._segment, tokens: p._tokens_per_month })));
 
         setSupabasePlans(enrichedPlans);
-        setSyncStatus(prev => ({ ...prev, visiblePlans: enrichedPlans.length }));
       }
     } catch (err) {
       console.error("Error fetching pricing plans:", err);
