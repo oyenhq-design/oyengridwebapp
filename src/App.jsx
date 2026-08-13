@@ -45,6 +45,7 @@ import FacilitatorResources from './components/facilitator/FacilitatorResources'
 import FacilitatorNotifications from './components/facilitator/FacilitatorNotifications';
 import FacilitatorProfile from './components/facilitator/FacilitatorProfile';
 import oyenLogo from './assets/logo_v2.png';
+import mountainBg from './assets/mountain_bg.jpg';
 import onboardingBg from './assets/onboarding_bg_v2.png';
 import dashboardHeroIllustration from './assets/dashboard_hero_illustration.jpg';
 import ReportsTab from './components/ReportsTab';
@@ -3823,7 +3824,7 @@ export default function App() {
   return (
     <div className="auth-container">
       {/* Brand Panel (Left) */}
-      <section className="brand-panel" style={{ position: 'relative', overflow: 'hidden' }}>
+      <section className="brand-panel" style={{ position: 'relative', overflow: 'hidden', backgroundImage: `url(${mountainBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
         <div className="brand-overlay" style={{
           position: 'absolute',
           top: 0,

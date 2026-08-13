@@ -316,6 +316,9 @@ export default function SubscriptionsPlansPage() {
       version: plan.version || "",
       internal_notes: plan.internal_notes || "",
       solution: plan.solution || "",
+      display_order: plan.display_order || 99,
+      published_at: plan.published_at || null,
+      published_by: plan.published_by || "",
     });
 
     // Reset child table states
@@ -479,6 +482,8 @@ export default function SubscriptionsPlansPage() {
       // ═══════════════════════════════════════════════════════
       const planPayload = {
         name:                    editPlan.name,
+        slug:                    editPlan.slug,
+        category:                editPlan.category,
         description:             editPlan.description,
         price:                   Number(editPlan.monthlyPrice),
         monthly_price:           Number(editPlan.monthlyPrice),
@@ -493,8 +498,11 @@ export default function SubscriptionsPlansPage() {
         badge:                   editPlan.badge || "",
         is_popular:              !!editPlan.is_popular,
         is_active:               editPlan.is_active !== false,
+        display_order:           Number(editPlan.display_order) || 99,
         status:                  editPlan.status ? editPlan.status.toLowerCase() : "published",
         version:                 editPlan.version || "",
+        published_at:            editPlan.published_at || null,
+        published_by:            editPlan.published_by || "",
         internal_notes:          editPlan.internal_notes || "",
       };
       console.log("1️⃣  pricing_plans payload:", planPayload);
@@ -514,29 +522,32 @@ export default function SubscriptionsPlansPage() {
       console.log("✅ pricing_plans saved:", planData[0]);
 
       // ═══════════════════════════════════════════════════════
-      // 2. pricing_plan_features  — UPDATE each row by id
+      // 2. pricing_plan_features  — UPSERT each row by plan_id, feature_name
       // ═══════════════════════════════════════════════════════
       if (editFeatures.length === 0) {
         console.log("2️⃣  pricing_plan_features: no rows — skip");
       }
       for (const feat of editFeatures) {
-        if (!feat.id) { console.warn("2️⃣  feature missing id, skip:", feat); continue; }
+        if (!feat.feature_name) { console.warn("2️⃣  feature missing feature_name, skip:", feat); continue; }
         const featPayload = {
+          plan_id:      planId,
           feature_name: feat.feature_name,
-          category:     feat.category,
+          category:     feat.category || "",
           enabled:      !!feat.enabled,
           usage_limit:  feat.usage_limit || "",
         };
-        console.log(`2️⃣  pricing_plan_features UPDATE id=${feat.id}:`, featPayload);
+        if (feat.id) featPayload.id = feat.id;
+        
+        console.log(`2️⃣  pricing_plan_features UPSERT:`, featPayload);
         const { data: fData, error: fErr } = await supabase
           .from("pricing_plan_features")
-          .update(featPayload)
-          .eq("id", feat.id)
-          .eq("plan_id", planId)
+          .upsert(featPayload, { onConflict: "plan_id, feature_name" })
           .select();
         console.log("2️⃣  response — data:", fData, "error:", fErr);
-        if (fErr) throw new Error(`pricing_plan_features UPDATE failed id=${feat.id}: ${fErr.message}`);
-        if (!fData || fData.length === 0) console.warn(`2️⃣  UPDATE matched 0 rows for feature id=${feat.id} — check RLS`);
+        if (fErr) throw new Error(`pricing_plan_features UPSERT failed for '${feat.feature_name}': ${fErr.message}`);
+        if (!fData || fData.length === 0) {
+          throw new Error(`pricing_plan_features UPSERT for '${feat.feature_name}' returned 0 affected rows.`);
+        }
       }
 
       // ═══════════════════════════════════════════════════════
@@ -559,6 +570,9 @@ export default function SubscriptionsPlansPage() {
         .select();
       console.log("3️⃣  response — data:", aiData, "error:", aiErr);
       if (aiErr) throw new Error(`pricing_plan_ai_allocation UPSERT failed: ${aiErr.message} (code: ${aiErr.code})`);
+      if (!aiData || aiData.length === 0) {
+        throw new Error("pricing_plan_ai_allocation UPSERT returned 0 affected rows.");
+      }
       console.log("✅ pricing_plan_ai_allocation saved:", aiData);
 
       // ═══════════════════════════════════════════════════════
@@ -597,6 +611,9 @@ export default function SubscriptionsPlansPage() {
         .select();
       console.log("4️⃣  response — data:", audData, "error:", audErr);
       if (audErr) throw new Error(`pricing_plan_target_audience UPSERT failed: ${audErr.message} (code: ${audErr.code})`);
+      if (!audData || audData.length === 0) {
+        throw new Error("pricing_plan_target_audience UPSERT returned 0 affected rows.");
+      }
       console.log("✅ pricing_plan_target_audience saved:", audData);
 
       // ═══════════════════════════════════════════════════════
@@ -618,6 +635,9 @@ export default function SubscriptionsPlansPage() {
         .select();
       console.log("5️⃣  response — data:", mktData, "error:", mktErr);
       if (mktErr) throw new Error(`pricing_plan_marketing_copy UPSERT failed: ${mktErr.message} (code: ${mktErr.code})`);
+      if (!mktData || mktData.length === 0) {
+        throw new Error("pricing_plan_marketing_copy UPSERT returned 0 affected rows.");
+      }
       console.log("✅ pricing_plan_marketing_copy saved:", mktData);
 
       console.log("🎉 ALL 5 tables written for plan_id:", planId);
@@ -634,12 +654,16 @@ export default function SubscriptionsPlansPage() {
         return {
           ...p,
           name:                   savedPlan.name,
+          slug:                   savedPlan.slug || "",
+          category:               savedPlan.category || "",
+          solution:               savedPlan.category || "",
           description:            savedPlan.description || "",
           monthlyPrice:           savedPlan.price ?? Number(editPlan.monthlyPrice),
           annualPrice:            savedPlan.annual_price ?? Number(editPlan.annualPrice),
           annual_discount_percent: savedPlan.annual_discount_percent ?? 0,
           currency:               savedPlan.currency || "USD",
           billing_period:         savedPlan.billing_period || "",
+          setup_fee:              savedPlan.setup_fee || 0,
           trial_days:             savedPlan.trial_days ?? 0,
           buttonText:             savedPlan.cta_button_label || "",
           ctaDestination:         savedPlan.cta_destination || "",
@@ -647,11 +671,15 @@ export default function SubscriptionsPlansPage() {
           is_popular:             !!savedPlan.is_popular,
           popular:                !!savedPlan.is_popular,
           is_active:              savedPlan.is_active !== false,
+          display_order:          savedPlan.display_order || 99,
           status:                 savedPlan.status
                                     ? (savedPlan.status.charAt(0).toUpperCase() + savedPlan.status.slice(1))
                                     : p.status,
           version:                savedPlan.version || "",
           lastUpdated:            new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+          published_at:           savedPlan.published_at || null,
+          published_by:           savedPlan.published_by || "",
+          internal_notes:         savedPlan.internal_notes || "",
           _segment:              savedAud?.segment             || editAudience.segment,
           _recommended_for:      savedAud?.recommended_for     || editAudience.recommended_for,
           _tokens_per_month:     savedAI?.tokens_per_month     ?? (editAI.tokens_per_month !== "" ? Number(editAI.tokens_per_month) : null),
@@ -1109,9 +1137,19 @@ export default function SubscriptionsPlansPage() {
                     <label style={labelStyle}>PLAN PRODUCT NAME</label>
                     <input type="text" style={inputStyle} value={editPlan.name} onChange={e => setEditPlan(p => ({ ...p, name: e.target.value }))} />
                   </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div>
+                      <label style={labelStyle}>SLUG</label>
+                      <input type="text" style={{ ...inputStyle, fontFamily: "monospace", color: "#D9A928" }} value={editPlan.slug} onChange={e => setEditPlan(p => ({ ...p, slug: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>CATEGORY</label>
+                      <input type="text" style={inputStyle} value={editPlan.category} onChange={e => setEditPlan(p => ({ ...p, category: e.target.value }))} />
+                    </div>
+                  </div>
                   <div>
-                    <label style={labelStyle}>SLUG</label>
-                    <input type="text" style={{ ...inputStyle, fontFamily: "monospace", color: "#D9A928" }} value={editPlan.slug} onChange={e => setEditPlan(p => ({ ...p, slug: e.target.value }))} />
+                    <label style={labelStyle}>DISPLAY ORDER</label>
+                    <input type="number" style={inputStyle} value={editPlan.display_order} onChange={e => setEditPlan(p => ({ ...p, display_order: Number(e.target.value) }))} />
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
                     <div>
@@ -1182,6 +1220,16 @@ export default function SubscriptionsPlansPage() {
                     <div>
                       <label style={labelStyle}>BADGE TEXT</label>
                       <input type="text" style={inputStyle} value={editPlan.badge} onChange={e => setEditPlan(p => ({ ...p, badge: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div>
+                      <label style={labelStyle}>PUBLISHED AT</label>
+                      <input type="text" style={inputStyle} value={editPlan.published_at || ""} onChange={e => setEditPlan(p => ({ ...p, published_at: e.target.value || null }))} placeholder="e.g. 2026-08-12T14:20:00Z" />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>PUBLISHED BY</label>
+                      <input type="text" style={inputStyle} value={editPlan.published_by || ""} onChange={e => setEditPlan(p => ({ ...p, published_by: e.target.value }))} />
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
