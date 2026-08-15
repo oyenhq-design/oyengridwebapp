@@ -1487,8 +1487,7 @@ export default function SubscriptionsPlansPage() {
                 ) : supabaseSession === null ? (
                   "Sign In as Admin to Save"
                 ) : (
-                  "Save Plan Configuration"
-                )}
+                  "Save Plan Configuration"                )}
               </button>
             </div>
           </div>
