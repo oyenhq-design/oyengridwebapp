@@ -60,6 +60,9 @@ import AssessmentsTab from './components/AssessmentsTab';
 import AnnouncementsTab from './components/AnnouncementsTab';
 import CertificatesTab from './components/CertificatesTab';
 import NotificationsTab from './components/NotificationsTab';
+import PricingPage from './pages/payment/PricingPage';
+import CheckoutPage from './pages/payment/CheckoutPage';
+import PaymentCallbackPage from './pages/payment/PaymentCallbackPage';
 import { useLoader } from './components/ui/LoaderProvider';
 
 
@@ -1209,9 +1212,18 @@ export default function App() {
 
 
 
-  // Phase 1: Command Centre Routing interception
+  // Phase 1: Command Centre & Payment Routing interception
   if (window.location.pathname.startsWith('/command-centre')) {
     return <CommandCentreModule />;
+  }
+  if (window.location.pathname.startsWith('/pricing')) {
+    return <PricingPage />;
+  }
+  if (window.location.pathname.startsWith('/checkout')) {
+    return <CheckoutPage />;
+  }
+  if (window.location.pathname.startsWith('/payment/callback')) {
+    return <PaymentCallbackPage />;
   }
 
   // Render Post-signup Onboarding Wizard Flow

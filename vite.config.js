@@ -1,6 +1,8 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import paystackInitializeHandler from './api/paystack-initialize.js'
+import paystackWebhookHandler from './api/paystack-webhook.js'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -14,6 +16,12 @@ export default defineConfig(({ mode }) => {
         configureServer(server) {
           server.middlewares.use((req, res, next) => {
             console.log('Vite middleware incoming:', req.url, 'method:', req.method);
+            
+            // Set environment variables for local middleware executions
+            process.env.PAYSTACK_SECRET_KEY = env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_SECRET_KEY;
+            process.env.VITE_SUPABASE_URL = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+            process.env.VITE_SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
             if (req.url.startsWith('/api/invite') && req.method === 'POST') {
               console.log('Server received /api/invite request');
               let body = '';
@@ -86,6 +94,38 @@ export default defineConfig(({ mode }) => {
                   res.statusCode = 500;
                   res.setHeader('Content-Type', 'application/json');
                   res.end(JSON.stringify({ error: err.message }));
+                }
+              });
+            } else if (req.url.startsWith('/api/paystack-initialize') && req.method === 'POST') {
+              console.log('Server received /api/paystack-initialize request');
+              let body = '';
+              req.on('data', chunk => {
+                body += chunk;
+              });
+              req.on('end', async () => {
+                try {
+                  req.body = body ? JSON.parse(body) : {};
+                  await paystackInitializeHandler(req, res);
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: e.message }));
+                }
+              });
+            } else if (req.url.startsWith('/api/paystack-webhook') && req.method === 'POST') {
+              console.log('Server received /api/paystack-webhook request');
+              let body = '';
+              req.on('data', chunk => {
+                body += chunk;
+              });
+              req.on('end', async () => {
+                try {
+                  req.body = body; // Pass raw body for hmac signature verification
+                  await paystackWebhookHandler(req, res);
+                } catch (e) {
+                  res.statusCode = 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: e.message }));
                 }
               });
             } else {
