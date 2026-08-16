@@ -795,6 +795,42 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Self-healing: Automatically synchronize live active subscription plan state from Supabase transactions to localStorage
+  useEffect(() => {
+    async function syncSubscriptionFromDb() {
+      try {
+        const orgName = localStorage.getItem("oyen_org_name") || "ABC Energy Workspace";
+        const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+
+        // Fetch the latest successful transaction
+        const { data: txns, error } = await supabase
+          .from("payment_transactions")
+          .select("*, pricing_plans(name)")
+          .eq("status", "successful")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!error && txns && txns.length > 0) {
+          const latestPlanName = txns[0].pricing_plans?.name;
+          if (latestPlanName) {
+            const currentPlan = localStorage.getItem(`oyen_plan_${orgSlug}`);
+            if (currentPlan !== latestPlanName) {
+              localStorage.setItem(`oyen_plan_${orgSlug}`, latestPlanName);
+              localStorage.setItem(`oyen_suspended_${orgSlug}`, "false");
+              window.dispatchEvent(new Event("storage"));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to synchronize active database subscription:", err);
+      }
+    }
+
+    // Delay slightly to prevent race condition with auth sessions load
+    const timer = setTimeout(syncSubscriptionFromDb, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Save session & workspace changes to sessionStorage in real-time
   useEffect(() => {
     if (user) {

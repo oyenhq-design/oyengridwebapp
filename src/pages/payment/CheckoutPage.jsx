@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CreditCard, Shield, ArrowRight, Loader2, ArrowLeft, Building, Mail, Sparkles } from "lucide-react";
+import { CreditCard, Shield, ArrowRight, Loader2, ArrowLeft, Building, Mail, Phone } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function CheckoutPage() {
@@ -9,6 +9,7 @@ export default function CheckoutPage() {
 
   // Form Inputs
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
@@ -50,20 +51,49 @@ export default function CheckoutPage() {
     e.preventDefault();
     setCheckoutError(null);
 
+    // Client-side validations
     if (!customerEmail.trim()) {
       setCheckoutError("Email is required");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerEmail.trim())) {
+      setCheckoutError("Invalid customer email address");
+      return;
+    }
+
+    if (!plan || !plan.is_active || plan.status !== "published") {
+      setCheckoutError("The selected plan is currently inactive or unavailable");
+      return;
+    }
+
+    const supportedCurrencies = ["NGN", "USD"];
+    if (!supportedCurrencies.includes(plan.currency)) {
+      setCheckoutError(`Currency ${plan.currency} is not supported`);
       return;
     }
 
     try {
       setCheckoutLoading(true);
 
+      const orgNameRef = organizationId.trim();
+      const orgSlugRef = orgNameRef ? orgNameRef.toLowerCase().replace(/[^a-z0-9]/g, "-") : `org-${Math.floor(10000 + Math.random() * 90000)}`;
+
       const payload = {
         customerEmail: customerEmail.trim(),
         planId: plan.id,
-        organizationId: organizationId.trim() || `ORG-${Math.floor(10000 + Math.random() * 90000)}`,
-        callbackUrl: `${window.location.origin}/payment/callback`
+        organizationId: orgSlugRef,
+        callbackUrl: `${window.location.origin}/payment/callback`,
+        metadata: {
+          customer_phone: customerPhone.trim(),
+          organization_name: orgNameRef || "Default Organization"
+        }
       };
+
+      // Safely preserve organization registration states locally to support onboarding/command-centre integrations
+      localStorage.setItem("oyen_org_name", orgNameRef || "Default Organization");
+      localStorage.setItem("oyen_owner_email", customerEmail.trim());
 
       const response = await fetch("/api/paystack-initialize", {
         method: "POST",
@@ -171,6 +201,28 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Phone */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>
+                  Phone Number
+                </label>
+                <div style={{ position: "relative" }}>
+                  <Phone size={16} style={{ position: "absolute", left: "0.8rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }} />
+                  <input
+                    type="tel"
+                    placeholder="+234 (80) 1234 5678"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    style={{
+                      width: "100%", padding: "0.75rem 0.8rem 0.75rem 2.2rem",
+                      borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
+                      backgroundColor: "rgba(255,255,255,0.02)", color: "#ffffff",
+                      fontSize: "0.85rem", outline: "none", boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+              </div>
+
               {/* Organization ID */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                 <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>
@@ -180,7 +232,7 @@ export default function CheckoutPage() {
                   <Building size={16} style={{ position: "absolute", left: "0.8rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }} />
                   <input
                     type="text"
-                    placeholder="e.g. ORG-4402 or ABC Energy"
+                    placeholder="e.g. ABC Energy"
                     value={organizationId}
                     onChange={(e) => setOrganizationId(e.target.value)}
                     style={{
@@ -247,13 +299,22 @@ export default function CheckoutPage() {
                 <div>
                   <div style={{ fontSize: "1.15rem", fontWeight: 700 }}>{plan.name}</div>
                   <div style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.4)", marginTop: "0.2rem" }}>{plan.category}</div>
+                  <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.5)", marginTop: "0.5rem", lineHeight: "1.4" }}>
+                    {plan.description}
+                  </div>
                 </div>
 
                 <div style={{ borderTop: "1px dashed rgba(255,255,255,0.1)", borderBottom: "1px dashed rgba(255,255,255,0.1)", padding: "1rem 0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem" }}>
-                    <span style={{ color: "rgba(255,255,255,0.6)" }}>Base Rate:</span>
-                    <span>{formatPrice(plan.monthly_price || plan.price, plan.currency)} / mo</span>
+                    <span style={{ color: "rgba(255,255,255,0.6)" }}>Monthly Price:</span>
+                    <span>{formatPrice(plan.monthly_price || plan.price, plan.currency)}</span>
                   </div>
+                  {plan.annual_price > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginTop: "0.5rem" }}>
+                      <span style={{ color: "rgba(255,255,255,0.6)" }}>Annual Price:</span>
+                      <span>{formatPrice(plan.annual_price, plan.currency)}</span>
+                    </div>
+                  )}
                   {plan.setup_fee > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginTop: "0.5rem" }}>
                       <span style={{ color: "rgba(255,255,255,0.6)" }}>Setup Fee:</span>
@@ -263,7 +324,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: "0.5rem" }}>
-                  <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>Due Today:</span>
+                  <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>Due Today ({plan.billing_period || "month"}):</span>
                   <span style={{ fontSize: "1.45rem", fontWeight: 900, color: "#D4AF37", fontFamily: "'Outfit', sans-serif" }}>
                     {formatPrice(plan.monthly_price || plan.price, plan.currency)}
                   </span>

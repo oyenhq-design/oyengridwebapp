@@ -218,7 +218,7 @@ export default function PricingPage() {
                 {/* CTA Button */}
                 <button
                   onClick={() => {
-                    window.location.href = `/checkout?plan_id=${plan.id}`;
+                    window.location.href = `/checkout?plan=${encodeURIComponent(plan.slug)}`;
                   }}
                   style={{
                     width: "100%",

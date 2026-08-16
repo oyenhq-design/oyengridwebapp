@@ -37,16 +37,30 @@ export default function PaymentCallbackPage() {
         setTxn(transaction);
 
         // Fetch plan details to render
+        let planData = null;
         if (transaction.plan_id) {
-          const { data: planData } = await supabase
+          const { data } = await supabase
             .from("pricing_plans")
             .select("name, category")
             .eq("id", transaction.plan_id)
             .single();
-          if (planData) setPlan(planData);
+          if (data) {
+            planData = data;
+            setPlan(data);
+          }
         }
 
         if (transaction.status === "successful") {
+          // Perform dynamic subscription activation
+          const orgName = localStorage.getItem("oyen_org_name") || "ABC Energy Workspace";
+          const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+          
+          if (planData) {
+            localStorage.setItem(`oyen_plan_${orgSlug}`, planData.name);
+            localStorage.setItem(`oyen_suspended_${orgSlug}`, "false");
+            window.dispatchEvent(new Event("storage"));
+          }
+
           setVerificationState("success");
           clearInterval(intervalId);
         } else if (transaction.status === "failed") {

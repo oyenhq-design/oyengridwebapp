@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Search, Play, RefreshCw, Cpu, Brain, HardDrive, ShieldAlert, Sliders, Database, Layers, CheckCircle2 } from "lucide-react";
+import { usePlanFeatures } from "../../../context/PlanFeaturesContext";
 
 export default function AIPage() {
+  const { aiAllocation, activePlanName } = usePlanFeatures();
+
   const [activeConfig, setActiveConfig] = useState({
     sessionSummaries: true,
     suggestions: true,
@@ -44,6 +47,8 @@ export default function AIPage() {
     return () => window.removeEventListener("storage", loadDatabase);
   }, []);
 
+  const tokensLimit = aiAllocation ? Number(aiAllocation.tokens_per_month) : 0;
+
   return (
     <div style={{ padding: "2.5rem", display: "flex", flexDirection: "column", gap: "2.5rem", boxSizing: "border-box", backgroundColor: "#F7F4ED", minHeight: "100%" }}>
       
@@ -73,16 +78,18 @@ export default function AIPage() {
         </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1.5rem", fontSize: "0.8rem" }}>
           <div style={{ borderRight: "1px solid #E6DED0", paddingRight: "1rem" }}>
-            <span style={{ color: "#6B7280" }}>AI Service</span>
-            <strong style={{ display: "block", color: "#18B67A", fontSize: "1rem", marginTop: "0.25rem" }}>Operational</strong>
+            <span style={{ color: "#6B7280" }}>Active Subscription Plan</span>
+            <strong style={{ display: "block", color: "#D9A928", fontSize: "1rem", marginTop: "0.25rem" }}>{activePlanName || "Trial Mode"}</strong>
           </div>
           <div style={{ borderRight: "1px solid #E6DED0", paddingRight: "1rem" }}>
-            <span style={{ color: "#6B7280" }}>Current Model</span>
+            <span style={{ color: "#6B7280" }}>Monthly AI Token Allocation</span>
+            <strong style={{ display: "block", fontSize: "1rem", marginTop: "0.25rem" }}>
+              {tokensLimit > 0 ? tokensLimit.toLocaleString() : "0"} Tokens
+            </strong>
+          </div>
+          <div style={{ borderRight: "1px solid #E6DED0", paddingRight: "1rem" }}>
+            <span style={{ color: "#6B7280" }}>Current AI Model</span>
             <strong style={{ display: "block", fontSize: "1rem", marginTop: "0.25rem" }}>{activeConfig.model}</strong>
-          </div>
-          <div style={{ borderRight: "1px solid #E6DED0", paddingRight: "1rem" }}>
-            <span style={{ color: "#6B7280" }}>Avg Response Latency</span>
-            <strong style={{ display: "block", fontSize: "1rem", marginTop: "0.25rem" }}>180ms</strong>
           </div>
           <div>
             <span style={{ color: "#6B7280" }}>Queue Status</span>

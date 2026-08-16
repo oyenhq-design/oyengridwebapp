@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { LoaderProvider } from './components/ui/LoaderProvider.jsx'
+import { PlanFeaturesProvider } from './context/PlanFeaturesContext.jsx'
 import DeviceGuard from './components/layout/DeviceGuard.jsx'
 import { testSupabasePricingPlansConnection } from './services/testSupabaseConnection.js'
 
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <DeviceGuard>
       <LoaderProvider>
-        <App />
+        <PlanFeaturesProvider>
+          <App />
+        </PlanFeaturesProvider>
       </LoaderProvider>
     </DeviceGuard>
   </StrictMode>,
