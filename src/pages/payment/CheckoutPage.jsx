@@ -16,9 +16,10 @@ export default function CheckoutPage() {
 
   const queryParams = new URLSearchParams(window.location.search);
   const planId = queryParams.get("plan_id");
+  const planSlug = queryParams.get("plan");
 
   useEffect(() => {
-    if (!planId) {
+    if (!planId && !planSlug) {
       setErrorPlan("No plan selected. Please go back to the pricing page.");
       setLoadingPlan(false);
       return;
@@ -27,11 +28,14 @@ export default function CheckoutPage() {
     async function loadPlanDetails() {
       try {
         setLoadingPlan(true);
-        const { data, error } = await supabase
-          .from("pricing_plans")
-          .select("*")
-          .eq("id", planId)
-          .single();
+        let query = supabase.from("pricing_plans").select("*");
+        if (planId) {
+          query = query.eq("id", planId);
+        } else {
+          query = query.eq("slug", planSlug);
+        }
+
+        const { data, error } = await query.single();
 
         if (error || !data) {
           throw new Error("Plan details not found");
@@ -45,7 +49,7 @@ export default function CheckoutPage() {
       }
     }
     loadPlanDetails();
-  }, [planId]);
+  }, [planId, planSlug]);
 
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
@@ -175,7 +179,31 @@ export default function CheckoutPage() {
               <span style={{ fontSize: "0.85rem" }}>Retrieving plan matrix...</span>
             </div>
           ) : errorPlan ? (
-            <div style={{ color: "#ef4444", fontSize: "0.85rem" }}>{errorPlan}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ color: "#ef4444", fontSize: "0.9rem", fontWeight: 600 }}>{errorPlan}</div>
+              <button
+                onClick={() => window.location.href = "/pricing"}
+                style={{
+                  alignSelf: "flex-start",
+                  padding: "0.6rem 1.2rem",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                  color: "#ffffff",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                  transition: "background-color 0.2s"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)"}
+              >
+                <ArrowLeft size={14} /> Back to Pricing
+              </button>
+            </div>
           ) : (
             <form onSubmit={handleCheckoutSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
               {/* Email */}
